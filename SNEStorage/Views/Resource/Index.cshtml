@@ -1,0 +1,42 @@
+﻿@model List<Resource>
+
+<table class="col-lg-12">
+    <thead>
+        <tr>
+            <th class="col-lg-5 text-center">Resource</th>
+            <th class="col-lg-2 text-center">Type</th>
+            <th class="col-lg-3 text-center">Usage</th>
+            <th class="col-lg-2 text-center">Downloads</th>
+        </tr>
+    </thead>
+    <tbody>
+        @{
+            bool light = true;
+            int i = 0;
+            string tdClass;
+            foreach (var resource in Model)
+            {
+                tdClass = light ? "light" : "dark";
+                <tr>
+                    <td class="col-lg-5 name @tdClass">
+                        <p>@resource.Name @resource.Version<small> by Anonimzwx</small></p>
+                        <small>@resource.Videogame!.Name</small>
+                        <br />
+                        <small>14-08-2024</small>
+                    </td>
+                    <td class="col-lg-2 text-center @tdClass">@resource.ResourceType!.Name</td>
+                    <td class="col-lg-3 text-center @tdClass">@resource.Usage</td>
+                    <td class="col-lg-2 name text-center @tdClass">
+                        <a href="@Url.Action("Download","Resource",new {id = resource.Id})">
+                            <img src="~/Content/Images/download.png" />
+                        </a>
+                        <br />
+                        <small>@resource.Downloads</small>
+                    </td>
+                </tr>
+                light = !light;
+                i++;
+            }
+        }
+    </tbody>
+</table>

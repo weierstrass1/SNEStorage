@@ -1,0 +1,83 @@
+html {
+  font-size: 14px;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+html {
+  position: relative;
+  min-height: 100%;
+}
+
+body {
+    margin-bottom: 60px;
+    background-image: url(../Content/Images/background.png);
+}
+
+Table {
+    border: 0px solid #000000;
+    background-color: #141E3F;
+    color: white;
+    background-image: none;
+    border-collapse: separate;
+    border-spacing: 3px;
+    margin: 0;
+    letter-spacing: 1px;
+}
+
+th {
+    font-size: 16px;
+    font-weight: bold; 
+    line-height: 2em;
+}
+
+td {
+    font-size: 16px;
+    line-height: 2em;
+    color: #FFFFFF;
+    background-image: none;
+    text-align: left;
+    vertical-align: middle;
+    font-family: Arial;
+    padding: 0.5em;
+}
+    td.name {
+        padding-top: 0.6em;
+        padding-bottom: 0.6em;
+        line-height: 0.8em;
+    }
+
+    td > p {
+        padding: 0;
+        margin: 0;
+        font-weight: bold;
+
+    }
+    td > small {
+        padding: 0;
+        margin: 0;
+        font-weight: lighter;
+        color: #C0C0C0;
+        font-size:8px;
+    }
+
+    td.light {
+        background-color: #15529B;
+    }
+    td.dark {
+        background-color: #1E2C5B;
+    }
+
+p > small {
+    font-size: 10px;
+    font-weight:bold;
+}
+
