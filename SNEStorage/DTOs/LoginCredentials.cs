@@ -1,0 +1,12 @@
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace SNEStorage.DTOs
+{
+    public class LoginCredentials
+    {
+        [Required]
+        public string User { get; set; }
+        [Required]
+        public string Password { get; set; }
+    }
+}

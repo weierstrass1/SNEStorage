@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SNEStorage.Models;
 
@@ -6,6 +8,7 @@ namespace SNEStorage.Controllers
 {
     public class ResourceController(SnestorageContext context) : Controller
     {
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         public async Task<IActionResult> Index()
         {
             List<Resource> resources = await context.Resources
