@@ -15,6 +15,9 @@ public partial class Team
             .HasColumnName("id")
             .ValueGeneratedOnAdd();
 
+        entity.Property(e => e.CreatedAt)
+            .HasColumnName("created_at");
+
         entity.Property(e => e.Name)
             .HasColumnType("text")
             .HasColumnName("name");

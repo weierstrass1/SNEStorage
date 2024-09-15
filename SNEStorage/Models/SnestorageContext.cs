@@ -19,8 +19,11 @@ public partial class SnestorageContext : IdentityDbContext
     public virtual DbSet<LikeUsers> LikesUsers { get; set; }
     public virtual DbSet<Reason> Reasons { get; set; }
     public virtual DbSet<Resource> Resources { get; set; }
+    public virtual DbSet<ResourceAuthors> ResourcesAuthors { get; set; }
     public virtual DbSet<ResourceComments> ResourcesComments { get; set; }
+    public virtual DbSet<ResourceExternalAuthor> ResourcesExternalAuthors { get; set; }
     public virtual DbSet<ResourceFlags> ResourcesFlags { get; set; }
+    public virtual DbSet<ResourceTeams> ResourcesTeams { get; set; }
     public virtual DbSet<ResourceType> ResourceTypes { get; set; }
     public virtual DbSet<Score> Scores { get; set; }
     public virtual DbSet<ScoreUsers> ScoresUsers { get; set; }
@@ -41,8 +44,11 @@ public partial class SnestorageContext : IdentityDbContext
         modelBuilder.Entity<LikeUsers>(LikeUsers.Build);
         modelBuilder.Entity<Reason>(Reason.Build);
         modelBuilder.Entity<Resource>(Resource.Build);
+        modelBuilder.Entity<ResourceAuthors>(ResourceAuthors.Build);
         modelBuilder.Entity<ResourceComments>(ResourceComments.Build);
+        modelBuilder.Entity<ResourceExternalAuthor>(ResourceExternalAuthor.Build);
         modelBuilder.Entity<ResourceFlags>(ResourceFlags.Build);
+        modelBuilder.Entity<ResourceTeams>(ResourceTeams.Build);
         modelBuilder.Entity<ResourceType>(ResourceType.Build);
         modelBuilder.Entity<Score>(Score.Build);
         modelBuilder.Entity<ScoreUsers>(ScoreUsers.Build);

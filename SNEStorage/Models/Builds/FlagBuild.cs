@@ -15,6 +15,9 @@ public partial class Flag
             .HasColumnName("id")
             .ValueGeneratedOnAdd();
 
+        entity.Property(e => e.Date)
+            .HasColumnName("date");
+
         entity.Property(e => e.UserId)
             .HasColumnType("nvarchar(450)")
             .HasColumnName("user_id");

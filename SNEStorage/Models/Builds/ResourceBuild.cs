@@ -30,6 +30,10 @@ public partial class Resource
 
         entity.Property(e => e.Downloads)
             .HasColumnName("downloads");
+        entity.Property(e => e.CreatedAt)
+            .HasColumnName("created_at");
+        entity.Property(e => e.LastUpdate)
+            .HasColumnName("last_update");
 
         entity.Property(e => e.IncludesPorn)
             .HasColumnName("includes_porn");

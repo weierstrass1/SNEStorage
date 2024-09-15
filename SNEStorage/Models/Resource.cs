@@ -12,6 +12,8 @@ public partial class Resource
     public string? Description { get; set; }
     public string? Version { get; set; }
     public int? Downloads { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime LastUpdate { get; set; }
     public bool IncludesPorn { get; set; }
     public bool IncludesGore { get; set; }
     public bool IncludesPolitics { get; set; }
@@ -29,4 +31,7 @@ public partial class Resource
     public virtual Visibility? Visibility { get; set; }
     public virtual ICollection<ResourceComments> ResourceComments { get; set; } = [];
     public virtual ICollection<ResourceFlags> ResourceFlags { get; set; } = [];
+    public virtual ICollection<ResourceAuthors> ResourcesAuthors { get; set; } = [];
+    public virtual ICollection<ResourceTeams> ResourcesTeams { get; set; } = [];
+    public virtual ICollection<ResourceExternalAuthor> ResourceExternalAuthors { get; set; } = [];
 }
