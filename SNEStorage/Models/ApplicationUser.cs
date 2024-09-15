@@ -11,5 +11,6 @@ public class ApplicationUser : IdentityUser
     public virtual ICollection<TeamUsers> TeamsUsers { get; set; } = [];
     public virtual ICollection<Flag> Flags { get; set; } = [];
     public virtual ICollection<ResourceAuthors> ResourcesAuthors { get; set; } = [];
+    public virtual ICollection<Ban> Bans { get; set; } = [];
     public virtual UserInfo? UserInfo { get; set; }
 }

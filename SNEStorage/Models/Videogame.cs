@@ -7,4 +7,5 @@ public partial class Videogame
     public DateOnly? ReleaseDate { get; set; }
     public string? Publisher { get; set; }
     public virtual ICollection<Resource> Resources { get; set; } = [];
+    public virtual ICollection<MemoryAddress> MemoryAddresses { get; set; } = [];
 }

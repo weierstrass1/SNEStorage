@@ -34,4 +34,5 @@ public partial class Resource
     public virtual ICollection<ResourceAuthors> ResourcesAuthors { get; set; } = [];
     public virtual ICollection<ResourceTeams> ResourcesTeams { get; set; } = [];
     public virtual ICollection<ResourceExternalAuthor> ResourceExternalAuthors { get; set; } = [];
+    public virtual ICollection<ResourceTags> ResourceTags { get; set; } = [];
 }

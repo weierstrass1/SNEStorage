@@ -9,4 +9,5 @@ public partial class Flag
     public virtual ApplicationUser? User { get; set; }
     public virtual Reason? Reason { get; set; }
     public virtual ResourceFlags? ResourceFlags { get; set; }
+    public virtual MemoryAddressFlags? MemoryAddressFlags { get; set; }
 }
