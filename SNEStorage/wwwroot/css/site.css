@@ -81,3 +81,85 @@ p > small {
     font-weight:bold;
 }
 
+.margin-mid {
+    margin: 0.025em;
+}
+
+.margin-1{
+    margin: 0.05em;
+}
+
+.margin-2 {
+    margin: 0.1em;
+}
+
+.margin-side-mid {
+    margin-left: 0.025em;
+    margin-right: 0.025em;
+}
+
+.margin-side-1 {
+    margin-left: 0.05em;
+    margin-right: 0.05em;
+}
+
+.margin-side-2 {
+    margin-left: 0.1em;
+    margin-right: 0.1em;
+}
+
+.padding-quarter {
+    padding: 0.25em;
+}
+
+.padding-mid {
+    padding: 0.5em;
+}
+
+.padding-1{
+    padding: 1em;
+}
+
+.padding-2 {
+    padding: 2em;
+}
+
+.padding-side-quarter {
+    padding-left: 0.25em;
+    padding-right: 0.25em;
+}
+
+.padding-side-mid {
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+}
+
+.padding-side-1 {
+    padding-left: 1em;
+    padding-right: 1em;
+}
+
+.padding-side-2 {
+    padding-left: 2em;
+    padding-right: 2em;
+}
+
+.padding-v-quarter {
+    padding-top: 0.25em;
+    padding-bottom: 0.25em;
+}
+
+.padding-v-mid {
+    padding-top: 0.5em;
+    padding-bottom: 0.5em;
+}
+
+.padding-v-1 {
+    padding-top: 1em;
+    padding-bottom: 1em;
+}
+
+.padding-v-2 {
+    padding-top: 2em;
+    padding-bottom: 2em;
+}

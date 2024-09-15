@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SNEStorage.Models;
 
@@ -11,9 +12,11 @@ using SNEStorage.Models;
 namespace SNEStorage.Migrations
 {
     [DbContext(typeof(SnestorageContext))]
-    partial class SnestorageContextModelSnapshot : ModelSnapshot
+    [Migration("20240915004027_update14")]
+    partial class update14
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -317,34 +320,6 @@ namespace SNEStorage.Migrations
                     b.ToTable("file_type", (string)null);
                 });
 
-            modelBuilder.Entity("SNEStorage.Models.Flag", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasColumnName("id");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<long>("ReasonId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("reason_id");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("Id")
-                        .HasName("PK_Flag");
-
-                    b.HasIndex("ReasonId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("flag", (string)null);
-                });
-
             modelBuilder.Entity("SNEStorage.Models.LikeUsers", b =>
                 {
                     b.Property<long>("Id")
@@ -377,26 +352,6 @@ namespace SNEStorage.Migrations
                     b.ToTable("like_users", (string)null);
                 });
 
-            modelBuilder.Entity("SNEStorage.Models.Reason", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasColumnName("id");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("description");
-
-                    b.HasKey("Id")
-                        .HasName("PK_Reason");
-
-                    b.ToTable("reason", (string)null);
-                });
-
             modelBuilder.Entity("SNEStorage.Models.Resource", b =>
                 {
                     b.Property<long>("Id")
@@ -417,26 +372,6 @@ namespace SNEStorage.Migrations
                     b.Property<long>("FileId")
                         .HasColumnType("bigint")
                         .HasColumnName("file_id");
-
-                    b.Property<bool>("IncludesGore")
-                        .HasColumnType("bit")
-                        .HasColumnName("includes_gore");
-
-                    b.Property<bool>("IncludesPolitics")
-                        .HasColumnType("bit")
-                        .HasColumnName("includes_politics");
-
-                    b.Property<bool>("IncludesPorn")
-                        .HasColumnType("bit")
-                        .HasColumnName("includes_porn");
-
-                    b.Property<bool>("IncludesSensitiveContent")
-                        .HasColumnType("bit")
-                        .HasColumnName("includes_sensitive_content");
-
-                    b.Property<bool>("IncludesSlurs")
-                        .HasColumnType("bit")
-                        .HasColumnName("includes_slurs");
 
                     b.Property<string>("Name")
                         .HasColumnType("text")
@@ -467,10 +402,6 @@ namespace SNEStorage.Migrations
                         .HasColumnType("bigint")
                         .HasColumnName("videogame_id");
 
-                    b.Property<long>("VisibilityId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("visibility_id");
-
                     b.HasKey("Id")
                         .HasName("PK_Resource");
 
@@ -483,8 +414,6 @@ namespace SNEStorage.Migrations
                     b.HasIndex("SubmitterUserId");
 
                     b.HasIndex("VideogameId");
-
-                    b.HasIndex("VisibilityId");
 
                     b.ToTable("resource", (string)null);
                 });
@@ -514,34 +443,6 @@ namespace SNEStorage.Migrations
                     b.HasIndex("ResourceId");
 
                     b.ToTable("resource_comments", (string)null);
-                });
-
-            modelBuilder.Entity("SNEStorage.Models.ResourceFlags", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasColumnName("id");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<long>("FlagId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("flag_id");
-
-                    b.Property<long>("ResourceId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("resource_id");
-
-                    b.HasKey("Id")
-                        .HasName("PK_Resource_Flags");
-
-                    b.HasIndex("FlagId")
-                        .IsUnique();
-
-                    b.HasIndex("ResourceId");
-
-                    b.ToTable("resource_flags", (string)null);
                 });
 
             modelBuilder.Entity("SNEStorage.Models.ResourceType", b =>
@@ -608,54 +509,6 @@ namespace SNEStorage.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("score_users", (string)null);
-                });
-
-            modelBuilder.Entity("SNEStorage.Models.Team", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasColumnName("id");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("name");
-
-                    b.HasKey("Id")
-                        .HasName("PK_Team");
-
-                    b.ToTable("team", (string)null);
-                });
-
-            modelBuilder.Entity("SNEStorage.Models.TeamUsers", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasColumnName("id");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<long>("TeamId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("team_id");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("Id")
-                        .HasName("PK_Team_Users");
-
-                    b.HasIndex("TeamId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("team_users", (string)null);
                 });
 
             modelBuilder.Entity("SNEStorage.Models.TimeZone", b =>
@@ -914,27 +767,6 @@ namespace SNEStorage.Migrations
                     b.Navigation("FileType");
                 });
 
-            modelBuilder.Entity("SNEStorage.Models.Flag", b =>
-                {
-                    b.HasOne("SNEStorage.Models.Reason", "Reason")
-                        .WithMany("Flags")
-                        .HasForeignKey("ReasonId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_flag_reason");
-
-                    b.HasOne("SNEStorage.Models.ApplicationUser", "User")
-                        .WithMany("Flags")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_flag_user");
-
-                    b.Navigation("Reason");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("SNEStorage.Models.LikeUsers", b =>
                 {
                     b.HasOne("SNEStorage.Models.Score", "Score")
@@ -991,13 +823,6 @@ namespace SNEStorage.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .HasConstraintName("FK_resource_videogame");
 
-                    b.HasOne("SNEStorage.Models.Visibility", "Visibility")
-                        .WithMany("Resources")
-                        .HasForeignKey("VisibilityId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_resource_visibility");
-
                     b.Navigation("File");
 
                     b.Navigation("ResourceType");
@@ -1007,8 +832,6 @@ namespace SNEStorage.Migrations
                     b.Navigation("SubmitterUser");
 
                     b.Navigation("Videogame");
-
-                    b.Navigation("Visibility");
                 });
 
             modelBuilder.Entity("SNEStorage.Models.ResourceComments", b =>
@@ -1032,27 +855,6 @@ namespace SNEStorage.Migrations
                     b.Navigation("Resource");
                 });
 
-            modelBuilder.Entity("SNEStorage.Models.ResourceFlags", b =>
-                {
-                    b.HasOne("SNEStorage.Models.Flag", "Flag")
-                        .WithOne("ResourceFlags")
-                        .HasForeignKey("SNEStorage.Models.ResourceFlags", "FlagId")
-                        .OnDelete(DeleteBehavior.ClientCascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_resource_flags_flag");
-
-                    b.HasOne("SNEStorage.Models.Resource", "Resource")
-                        .WithMany("ResourceFlags")
-                        .HasForeignKey("ResourceId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_resource_flags_resource");
-
-                    b.Navigation("Flag");
-
-                    b.Navigation("Resource");
-                });
-
             modelBuilder.Entity("SNEStorage.Models.ScoreUsers", b =>
                 {
                     b.HasOne("SNEStorage.Models.Score", "Score")
@@ -1070,27 +872,6 @@ namespace SNEStorage.Migrations
                         .HasConstraintName("FK_score_users_user");
 
                     b.Navigation("Score");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("SNEStorage.Models.TeamUsers", b =>
-                {
-                    b.HasOne("SNEStorage.Models.Team", "Team")
-                        .WithMany("TeamsUsers")
-                        .HasForeignKey("TeamId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_team_users_team");
-
-                    b.HasOne("SNEStorage.Models.ApplicationUser", "User")
-                        .WithMany("TeamsUsers")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_team_users_user");
-
-                    b.Navigation("Team");
 
                     b.Navigation("User");
                 });
@@ -1151,21 +932,9 @@ namespace SNEStorage.Migrations
                     b.Navigation("Files");
                 });
 
-            modelBuilder.Entity("SNEStorage.Models.Flag", b =>
-                {
-                    b.Navigation("ResourceFlags");
-                });
-
-            modelBuilder.Entity("SNEStorage.Models.Reason", b =>
-                {
-                    b.Navigation("Flags");
-                });
-
             modelBuilder.Entity("SNEStorage.Models.Resource", b =>
                 {
                     b.Navigation("ResourceComments");
-
-                    b.Navigation("ResourceFlags");
                 });
 
             modelBuilder.Entity("SNEStorage.Models.ResourceType", b =>
@@ -1184,11 +953,6 @@ namespace SNEStorage.Migrations
                     b.Navigation("ScoresUsers");
                 });
 
-            modelBuilder.Entity("SNEStorage.Models.Team", b =>
-                {
-                    b.Navigation("TeamsUsers");
-                });
-
             modelBuilder.Entity("SNEStorage.Models.TimeZone", b =>
                 {
                     b.Navigation("UserInfos");
@@ -1201,8 +965,6 @@ namespace SNEStorage.Migrations
 
             modelBuilder.Entity("SNEStorage.Models.Visibility", b =>
                 {
-                    b.Navigation("Resources");
-
                     b.Navigation("UserInfos");
                 });
 
@@ -1210,15 +972,11 @@ namespace SNEStorage.Migrations
                 {
                     b.Navigation("Comments");
 
-                    b.Navigation("Flags");
-
                     b.Navigation("LikesUsers");
 
                     b.Navigation("Resources");
 
                     b.Navigation("ScoresUsers");
-
-                    b.Navigation("TeamsUsers");
 
                     b.Navigation("UserInfo");
                 });

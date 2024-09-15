@@ -18,14 +18,14 @@ public partial class ResourceComments
             .HasColumnName("resource_id");
         entity.HasOne(d => d.Resource).WithMany(p => p.ResourceComments)
             .HasForeignKey(d => d.ResourceId)
-            .OnDelete(DeleteBehavior.Cascade)
-            .HasConstraintName("FK_resource_comment_resource");
+            .OnDelete(DeleteBehavior.ClientCascade)
+            .HasConstraintName("FK_resource_comments_resource");
 
         entity.Property(e => e.CommentId)
             .HasColumnName("comment_id");
         entity.HasOne(d => d.Comment).WithMany(p => p.ResourceComments)
             .HasForeignKey(d => d.CommentId)
-            .OnDelete(DeleteBehavior.Cascade)
-            .HasConstraintName("FK_resource_comment_comment");
+            .OnDelete(DeleteBehavior.ClientCascade)
+            .HasConstraintName("FK_resource_comments_comment");
     }
 }

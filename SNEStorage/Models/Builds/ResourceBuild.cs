@@ -31,6 +31,17 @@ public partial class Resource
         entity.Property(e => e.Downloads)
             .HasColumnName("downloads");
 
+        entity.Property(e => e.IncludesPorn)
+            .HasColumnName("includes_porn");
+        entity.Property(e => e.IncludesGore)
+            .HasColumnName("includes_gore");
+        entity.Property(e => e.IncludesPolitics)
+            .HasColumnName("includes_politics");
+        entity.Property(e => e.IncludesSlurs)
+            .HasColumnName("includes_slurs");
+        entity.Property(e => e.IncludesSensitiveContent)
+            .HasColumnName("includes_sensitive_content");
+
         entity.Property(e => e.VideogameId)
             .HasColumnName("videogame_id");
         entity.HasOne(d => d.Videogame).WithMany(p => p.Resources)
@@ -53,6 +64,7 @@ public partial class Resource
             .HasConstraintName("FK_resource_file");
 
         entity.Property(e => e.SubmitterUserId)
+            .HasColumnType("nvarchar(450)")
             .HasColumnName("submitter_user_id");
         entity.HasOne(d => d.SubmitterUser).WithMany(p => p.Resources)
             .HasForeignKey(d => d.SubmitterUserId)
@@ -66,5 +78,11 @@ public partial class Resource
             .OnDelete(DeleteBehavior.Cascade)
             .HasConstraintName("FK_resource_score");
 
+        entity.Property(e => e.VisibilityId)
+            .HasColumnName("visibility_id");
+        entity.HasOne(d => d.Visibility).WithMany(p => p.Resources)
+            .HasForeignKey(d => d.VisibilityId)
+            .OnDelete(DeleteBehavior.Cascade)
+            .HasConstraintName("FK_resource_visibility");
     }
 }

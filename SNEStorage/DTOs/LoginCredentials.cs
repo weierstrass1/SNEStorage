@@ -1,12 +1,15 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace SNEStorage.DTOs
+namespace SNEStorage.DTOs;
+
+public class LoginCredentials
 {
-    public class LoginCredentials
+    [Required]
+    public string User { get; set; }
+    [Required]
+    public string Password { get; set; }
+    public override string ToString()
     {
-        [Required]
-        public string User { get; set; }
-        [Required]
-        public string Password { get; set; }
+        return $"{User}-{Password}";
     }
 }

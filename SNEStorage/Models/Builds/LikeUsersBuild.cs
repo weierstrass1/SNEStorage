@@ -25,6 +25,7 @@ public partial class LikeUsers
             .HasConstraintName("FK_like_users_score");
 
         entity.Property(e => e.UserId)
+            .HasColumnType("nvarchar(450)")
             .HasColumnName("user_id");
         entity.HasOne(d => d.User).WithMany(p => p.LikesUsers)
             .HasForeignKey(d => d.UserId)

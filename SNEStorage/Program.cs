@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using SNEStorage.Controllers;
 using SNEStorage.Models;
 using System.Text;
 
@@ -25,6 +27,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .GetBytes(builder.Configuration["JWTKey"]!)),
         ClockSkew = TimeSpan.Zero
     });
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("Admin", pol => pol.RequireClaim("Admin"));
+    options.AddPolicy("Moderator", pol => pol.RequireClaim("Moderator"));
+});
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo
@@ -59,6 +66,14 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddIdentity<IdentityUser, IdentityRole>()
     .AddEntityFrameworkStores<SnestorageContext>()
     .AddDefaultTokenProviders();
+builder.Services.AddTransient<AccountController, AccountController>();
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(b =>
+    {
+        b.WithOrigins("*").AllowAnyMethod().AllowAnyHeader();
+    });
+});
 
 var app = builder.Build();
 
@@ -83,6 +98,8 @@ app.UseSwaggerUI(c =>
 {
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "Api SNEStorage REST");
 });
+
+app.UseCors();
 
 app.MapControllerRoute(
     name: "default",

@@ -12,13 +12,21 @@ public partial class Resource
     public string? Description { get; set; }
     public string? Version { get; set; }
     public int? Downloads { get; set; }
+    public bool IncludesPorn { get; set; }
+    public bool IncludesGore { get; set; }
+    public bool IncludesPolitics { get; set; }
+    public bool IncludesSlurs { get; set; }
+    public bool IncludesSensitiveContent { get; set; }
     public long FileId { get; set; }
-    public long SubmitterUserId { get; set; }
+    public required string SubmitterUserId { get; set; }
     public long ScoreId { get; set; }
+    public long VisibilityId { get; set; }
     public virtual ResourceType? ResourceType { get; set; }
     public virtual Videogame? Videogame { get; set; }
     public virtual File? File { get; set; }
     public virtual ApplicationUser? SubmitterUser { get; set; }
     public virtual Score? Score { get; set; }
+    public virtual Visibility? Visibility { get; set; }
     public virtual ICollection<ResourceComments> ResourceComments { get; set; } = [];
+    public virtual ICollection<ResourceFlags> ResourceFlags { get; set; } = [];
 }

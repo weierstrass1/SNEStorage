@@ -22,6 +22,7 @@ public partial class Comment
             .HasColumnName("publish_date");
 
         entity.Property(e => e.UserId)
+            .HasColumnType("nvarchar(450)")
             .HasColumnName("user_id");
         entity.HasOne(d => d.User).WithMany(p => p.Comments)
             .HasForeignKey(d => d.UserId)
