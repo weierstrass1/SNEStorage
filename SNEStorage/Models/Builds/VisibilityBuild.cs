@@ -18,5 +18,8 @@ public partial class Visibility
         entity.Property(e => e.Name)
             .HasColumnType("text")
             .HasColumnName("name");
+
+        entity.Property(e => e.ResourceOnly)
+            .HasColumnName("resource_only");
     }
 }

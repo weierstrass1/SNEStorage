@@ -28,7 +28,7 @@ public class AccountController : ControllerBase
         SignInManager = signInManager;
     }
     [HttpPost("register")]
-    public async Task<ActionResult<AuthenticationResponse>> Register(Credentials credentials)
+    public async Task<ActionResult<AuthenticationResponse>> Register(RegisterInfo credentials)
     {
         IdentityUser user = new(credentials.User)
         {

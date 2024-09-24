@@ -1,1 +1,81 @@
-﻿
+﻿@using SNEStorage.DTOs
+@model RegisterInfo
+
+<div class="container">
+    <div class="row">
+        <h2 class="col-12 padding-mid text-center text-primary">Register</h2>
+    </div>
+    <div class="row">
+        <div class="col-2"></div>
+        <form class="col-8" asp-controller="Register" asp-action="Register" method="post">
+            <div class="row padding-mid form-group mt-1">
+                <div class="col-1"></div>
+                @Html.LabelFor(m => m.User, new { @class = "col-4 padding-side-mid padding-v-quarter text-end text-primary" })
+                @Html.TextBoxFor(m => m.User, new { @class = "col-6 padding-side-mid", placeholder = "Enter your Username" })
+                <div class="col-1"></div>
+                <span asp-validation-for="User" class="col-12 padding-side-mid padding-v-quarter text-center text-danger"/>
+            </div>
+            <div class="row padding-mid form-group mt-1">
+                <div class="col-1"></div>
+                @Html.LabelFor(m => m.UsernameColor, new { @class = "col-4 padding-side-mid padding-v-quarter text-end text-primary" })
+                @Html.TextBoxFor(m => m.UsernameColor, new { @class = "col-6 padding-side-mid", placeholder = "Enter a Color", Type = "color" })
+                <div class="col-1"></div>
+                <span asp-validation-for="UsernameColor" class="col-12 padding-side-mid padding-v-quarter text-center text-danger" />
+            </div>
+            <div class="row padding-mid form-group mt-1">
+                <div class="col-1"></div>
+                @Html.LabelFor(m => m.Email, new { @class = "col-4 padding-side-mid padding-v-quarter text-end text-primary" })
+                @Html.TextBoxFor(m => m.Email, new { @class = "col-6 padding-side-mid", placeholder = "Enter your Email" })
+                <div class="col-1"></div>
+                <span asp-validation-for="Email" class="col-12 padding-side-mid padding-v-quarter text-center text-danger" />
+            </div>
+            <div class="row padding-mid form-group mt-1">
+                <div class="col-1"></div>
+                @Html.LabelFor(m => m.Password, new { @class = "col-4 padding-side-mid padding-v-quarter text-end text-primary" })
+                @Html.PasswordFor(m => m.Password, new { @class = "col-6 padding-side-mid", placeholder = "Enter your Password" })
+                <div class="col-1"></div>
+                <span asp-validation-for="Password" class="col-12 padding-side-mid padding-v-quarter text-center text-danger" />
+            </div>
+            <div class="row padding-mid form-group mt-1">
+                <div class="col-1"></div>
+                @Html.LabelFor(m => m.PasswordRepeat, new { @class = "col-4 padding-side-mid padding-v-quarter text-end text-primary" })
+                @Html.PasswordFor(m => m.PasswordRepeat, new { @class = "col-6 padding-side-mid", placeholder = "Enter your Password Again" })
+                <div class="col-1"></div>
+                <span asp-validation-for="PasswordRepeat" class="col-12 padding-side-mid padding-v-quarter text-center text-danger" />
+            </div>
+            <div class="row padding-mid form-group mt-1">
+                <div class="col-1"></div>
+                @Html.LabelFor(m => m.Birthday, new { @class = "col-4 padding-side-mid padding-v-quarter text-end text-primary" })
+                @Html.TextBoxFor(m => m.Birthday, new { @class = "col-6 padding-side-mid", type = "date" })
+                <div class="col-1"></div>
+                <span asp-validation-for="Birthday" class="col-12 padding-side-mid padding-v-quarter text-center text-danger" />
+            </div>
+            <div class="row padding-mid form-group mt-1">
+                <div class="col-1"></div>
+                @Html.LabelFor(m => m.TimeZoneId, new { @class = "col-4 padding-side-mid padding-v-quarter text-end text-primary" })
+                <select asp-for="TimeZoneId" class="col-6 padding-side-mid" asp-items="ViewBag.TimeZones">
+                </select>
+                <div class="col-1"></div>
+            </div>
+            <div class="row padding-mid form-group mt-1">
+                <div class="col-1"></div>
+                @Html.LabelFor(m => m.EmailVisibilityId, new { @class = "col-4 padding-side-mid padding-v-quarter text-end text-primary" })
+                <select asp-for="EmailVisibilityId" class="col-6 padding-side-mid" asp-items="ViewBag.Visibilities">
+                </select>
+                <div class="col-1"></div>
+            </div>
+            <form method="post" enctype="multipart/form-data" class="row padding-mid form-group mt-1">
+                <div class="col-2"></div>
+                <input class="col-6 form-control padding-side-mid padding-v-quarter text-end text-primary" type="file" asp-for="Avatar" accept=".png,.jpg,.jpeg" />
+                <input class="col-2 padding-side-mid" type="submit" />
+                <div class="col-2"></div>
+            </form>
+            <div class="row padding-mid form-group mt-1">
+                <div class="col-5"></div>
+                <button type="submit" class="col-2 padding-quarter btn btn-primary">Register</button>
+                <div class="col-5"></div>
+            </div>
+        </form>
+        <div class="col-2"></div>
+    </div>
+</div>

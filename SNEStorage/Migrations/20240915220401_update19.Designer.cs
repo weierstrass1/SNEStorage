@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SNEStorage.Models;
 
@@ -11,9 +12,11 @@ using SNEStorage.Models;
 namespace SNEStorage.Migrations
 {
     [DbContext(typeof(SnestorageContext))]
-    partial class SnestorageContextModelSnapshot : ModelSnapshot
+    [Migration("20240915220401_update19")]
+    partial class update19
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

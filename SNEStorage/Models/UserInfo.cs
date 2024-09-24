@@ -8,6 +8,9 @@ public partial class UserInfo
     public long AvatarId { get; set; }
     public DateOnly Birthday { get; set; }
     public string? Bio {  get; set; }
+    public string? Patreon { get; set; }
+    public string? Paypal { get; set; }
+    public string? BuyMeACoffee { get; set; }
     public string? Discord { get; set; }
     public string? Twitter { get; set; }
     public string? Facebook { get; set; }

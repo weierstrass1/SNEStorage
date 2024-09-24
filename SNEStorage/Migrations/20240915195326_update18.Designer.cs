@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SNEStorage.Models;
 
@@ -11,9 +12,11 @@ using SNEStorage.Models;
 namespace SNEStorage.Migrations
 {
     [DbContext(typeof(SnestorageContext))]
-    partial class SnestorageContextModelSnapshot : ModelSnapshot
+    [Migration("20240915195326_update18")]
+    partial class update18
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1170,10 +1173,6 @@ namespace SNEStorage.Migrations
                     b.Property<string>("Name")
                         .HasColumnType("text")
                         .HasColumnName("name");
-
-                    b.Property<bool>("ResourceOnly")
-                        .HasColumnType("bit")
-                        .HasColumnName("resource_only");
 
                     b.HasKey("Id")
                         .HasName("PK_Visibility");

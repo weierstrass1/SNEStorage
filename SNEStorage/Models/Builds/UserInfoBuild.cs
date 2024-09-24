@@ -34,6 +34,18 @@ public partial class UserInfo
             .HasColumnType("text")
             .HasColumnName("bio");
 
+        entity.Property(e => e.Patreon)
+            .HasColumnType("text")
+            .HasColumnName("patreon");
+
+        entity.Property(e => e.Paypal)
+            .HasColumnType("text")
+            .HasColumnName("paypal");
+
+        entity.Property(e => e.BuyMeACoffee)
+            .HasColumnType("text")
+            .HasColumnName("buy_me_a_coffee");
+
         entity.Property(e => e.Discord)
             .HasColumnType("text")
             .HasColumnName("discord");

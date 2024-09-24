@@ -4,6 +4,7 @@
     {
         public long Id { get; set; }
         public string? Name { get; set; }
+        public bool ResourceOnly { get; set; }
         public virtual ICollection<UserInfo> UserInfos { get; set; } = [];
         public virtual ICollection<Resource> Resources { get; set; } = [];
     }
