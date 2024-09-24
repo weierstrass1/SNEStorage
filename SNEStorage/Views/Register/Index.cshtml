@@ -18,7 +18,7 @@
             <div class="row padding-mid form-group mt-1">
                 <div class="col-1"></div>
                 @Html.LabelFor(m => m.UsernameColor, new { @class = "col-4 padding-side-mid padding-v-quarter text-end text-primary" })
-                @Html.TextBoxFor(m => m.UsernameColor, new { @class = "col-6 padding-side-mid", placeholder = "Enter a Color", Type = "color" })
+                @Html.TextBoxFor(m => m.UsernameColor, new { @class = "col-6 padding-side-mid", value = "#FFFFFF", placeholder = "Enter a Color", Type = "color" })
                 <div class="col-1"></div>
                 <span asp-validation-for="UsernameColor" class="col-12 padding-side-mid padding-v-quarter text-center text-danger" />
             </div>
@@ -64,12 +64,11 @@
                 </select>
                 <div class="col-1"></div>
             </div>
-            <form method="post" enctype="multipart/form-data" class="row padding-mid form-group mt-1">
+            <div class="row padding-mid form-group mt-1">
                 <div class="col-2"></div>
-                <input class="col-6 form-control padding-side-mid padding-v-quarter text-end text-primary" type="file" asp-for="Avatar" accept=".png,.jpg,.jpeg" />
-                <input class="col-2 padding-side-mid" type="submit" />
+                <input class="col-8 padding-side-mid padding-v-quarter text-end text-primary" type="file" asp-for="Avatar" accept=".png,.jpg,.jpeg" />
                 <div class="col-2"></div>
-            </form>
+            </div>
             <div class="row padding-mid form-group mt-1">
                 <div class="col-5"></div>
                 <button type="submit" class="col-2 padding-quarter btn btn-primary">Register</button>

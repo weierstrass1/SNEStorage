@@ -48,7 +48,7 @@ public class AccountController : ControllerBase
         var result = await SignInManager.PasswordSignInAsync(credentials.User, credentials.Password,
             false, false);
         if (!result.Succeeded)
-            return BadRequest("Incorrect Log In");
+            return BadRequest("Incorrect Login");
         var res = await buildToken(credentials.User);
         if (res == null)
             return BadRequest();
