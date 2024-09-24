@@ -6,6 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using SNEStorage.Controllers;
 using SNEStorage.Models;
+using SNEStorage.Services;
 using System.Text;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -16,6 +17,7 @@ builder.Services.AddDbContext<SnestorageContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("SNEStorageContext"));
 });
+builder.Services.AddRazorPages();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options => options.TokenValidationParameters = new TokenValidationParameters
     {
@@ -67,6 +69,7 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>()
     .AddEntityFrameworkStores<SnestorageContext>()
     .AddDefaultTokenProviders();
 builder.Services.AddTransient<AccountController, AccountController>();
+builder.Services.AddTransient<APIConfig>();
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(b =>
@@ -104,5 +107,6 @@ app.UseCors();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+app.MapRazorPages();
 
 app.Run();

@@ -1,8 +1,7 @@
-﻿@using SNEStorage.DTOs
-@model LoginCredentials
-@{
-    ViewData["Title"] = "Login";
-}
+﻿@page
+@using SNEStorage.Pages.Login
+@model IndexModel
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 
 <div class="container">
     <div class="row">
@@ -10,17 +9,17 @@
     </div>
     <div class="row">
         <div class="col-2"></div>
-        <form class="col-8" asp-controller="Account" asp-action="Login" method="post">
+        <form class="col-8" method="post">
             <div class="row padding-mid form-group mt-1">
                 <div class="col-2"></div>
-                @Html.LabelFor(m => m.User, new { @class = "col-2 padding-side-mid padding-v-quarter text-end text-primary" })
-                @Html.TextBoxFor(m => m.User, new { @class = "col-6 padding-side-mid", placeholder = "Enter your Username" })
+                @Html.LabelFor(m => m.DTO.User, new { @class = "col-2 padding-side-mid padding-v-quarter text-end text-primary" })
+                @Html.TextBoxFor(m => m.DTO.User, new { @class = "col-6 padding-side-mid", placeholder = "Enter your Username" })
                 <div class="col-2"></div>
             </div>
             <div class="row padding-mid form-group mt-1">
                 <div class="col-2"></div>
-                @Html.LabelFor(m => m.Password, new { @class = "col-2 padding-side-mid padding-v-quarter text-end text-primary" })
-                @Html.PasswordFor(m => m.Password, new { @class = "col-6 padding-side-mid", placeholder = "Enter your Password" })
+                @Html.LabelFor(m => m.DTO.Password, new { @class = "col-2 padding-side-mid padding-v-quarter text-end text-primary" })
+                @Html.PasswordFor(m => m.DTO.Password, new { @class = "col-6 padding-side-mid", placeholder = "Enter your Password" })
                 <div class="col-2"></div>
             </div>
             <div class="row padding-mid form-group mt-1">
