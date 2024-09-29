@@ -13,5 +13,7 @@ namespace SNEStorage.Services
         }
         public string APIURL => $"{DTO.Host}";
         public string AccountAPIURL => $"{DTO.Host}/{DTO.Account}";
+        public string LoginAPIURL => $"{DTO.Host}/{DTO.Account}/{DTO.Login}";
+        public string RegisterAPIURL => $"{DTO.Host}/{DTO.Account}/{DTO.Register}";
     }
 }

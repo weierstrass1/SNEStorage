@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using SNEStorage.Controllers;
@@ -17,7 +17,10 @@ builder.Services.AddDbContext<SnestorageContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("SNEStorageContext"));
 });
-builder.Services.AddRazorPages();
+builder.Services.AddRazorPages(opts =>
+{
+    opts.Conventions.AddPageRoute("/Home/Index", "");
+});
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options => options.TokenValidationParameters = new TokenValidationParameters
     {
@@ -77,8 +80,22 @@ builder.Services.AddCors(options =>
         b.WithOrigins("*").AllowAnyMethod().AllowAnyHeader();
     });
 });
+builder.Services.AddSession();
 
 var app = builder.Build();
+
+app.UseSession();
+
+//add token to request header.
+app.Use(async (context, next) =>
+{
+    var token = context.Session.GetString("Token");
+    if (!string.IsNullOrEmpty(token))
+    {
+        context.Request.Headers.Append("Authorization", "Bearer " + token);
+    }
+    await next();
+});
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

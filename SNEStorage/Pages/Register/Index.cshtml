@@ -1,5 +1,9 @@
-﻿@using SNEStorage.DTOs
-@model RegisterInfo
+﻿@page
+@using SNEStorage.Pages.Register
+@model RegisterModel
+@{
+    Layout = "_Layout";
+}
 
 <div class="container">
     <div class="row">
@@ -10,56 +14,56 @@
         <form class="col-8" asp-controller="Register" asp-action="Register" method="post">
             <div class="row padding-mid form-group mt-1">
                 <div class="col-1"></div>
-                @Html.LabelFor(m => m.User, new { @class = "col-4 padding-side-mid padding-v-quarter text-end text-primary" })
-                @Html.TextBoxFor(m => m.User, new { @class = "col-6 padding-side-mid", placeholder = "Enter your Username" })
+                @Html.LabelFor(m => m.DTO.User, new { @class = "col-4 padding-side-mid padding-v-quarter text-end text-primary" })
+                @Html.TextBoxFor(m => m.DTO.User, new { @class = "col-6 padding-side-mid", placeholder = "Enter your Username" })
                 <div class="col-1"></div>
-                <span asp-validation-for="User" class="col-12 padding-side-mid padding-v-quarter text-center text-danger"/>
+                <span asp-validation-for="User" class="col-12 padding-side-mid padding-v-quarter text-center text-danger" />
             </div>
             <div class="row padding-mid form-group mt-1">
                 <div class="col-1"></div>
-                @Html.LabelFor(m => m.UsernameColor, new { @class = "col-4 padding-side-mid padding-v-quarter text-end text-primary" })
-                @Html.TextBoxFor(m => m.UsernameColor, new { @class = "col-6 padding-side-mid", value = "#FFFFFF", placeholder = "Enter a Color", Type = "color" })
+                @Html.LabelFor(m => m.DTO.UsernameColor, new { @class = "col-4 padding-side-mid padding-v-quarter text-end text-primary" })
+                @Html.TextBoxFor(m => m.DTO.UsernameColor, new { @class = "col-6 padding-side-mid", value = "#FFFFFF", placeholder = "Enter a Color", Type = "color" })
                 <div class="col-1"></div>
                 <span asp-validation-for="UsernameColor" class="col-12 padding-side-mid padding-v-quarter text-center text-danger" />
             </div>
             <div class="row padding-mid form-group mt-1">
                 <div class="col-1"></div>
-                @Html.LabelFor(m => m.Email, new { @class = "col-4 padding-side-mid padding-v-quarter text-end text-primary" })
-                @Html.TextBoxFor(m => m.Email, new { @class = "col-6 padding-side-mid", placeholder = "Enter your Email" })
+                @Html.LabelFor(m => m.DTO.Email, new { @class = "col-4 padding-side-mid padding-v-quarter text-end text-primary" })
+                @Html.TextBoxFor(m => m.DTO.Email, new { @class = "col-6 padding-side-mid", placeholder = "Enter your Email" })
                 <div class="col-1"></div>
                 <span asp-validation-for="Email" class="col-12 padding-side-mid padding-v-quarter text-center text-danger" />
             </div>
             <div class="row padding-mid form-group mt-1">
                 <div class="col-1"></div>
-                @Html.LabelFor(m => m.Password, new { @class = "col-4 padding-side-mid padding-v-quarter text-end text-primary" })
-                @Html.PasswordFor(m => m.Password, new { @class = "col-6 padding-side-mid", placeholder = "Enter your Password" })
+                @Html.LabelFor(m => m.DTO.Password, new { @class = "col-4 padding-side-mid padding-v-quarter text-end text-primary" })
+                @Html.PasswordFor(m => m.DTO.Password, new { @class = "col-6 padding-side-mid", placeholder = "Enter your Password" })
                 <div class="col-1"></div>
                 <span asp-validation-for="Password" class="col-12 padding-side-mid padding-v-quarter text-center text-danger" />
             </div>
             <div class="row padding-mid form-group mt-1">
                 <div class="col-1"></div>
-                @Html.LabelFor(m => m.PasswordRepeat, new { @class = "col-4 padding-side-mid padding-v-quarter text-end text-primary" })
-                @Html.PasswordFor(m => m.PasswordRepeat, new { @class = "col-6 padding-side-mid", placeholder = "Enter your Password Again" })
+                @Html.LabelFor(m => m.DTO.PasswordRepeat, new { @class = "col-4 padding-side-mid padding-v-quarter text-end text-primary" })
+                @Html.PasswordFor(m => m.DTO.PasswordRepeat, new { @class = "col-6 padding-side-mid", placeholder = "Enter your Password Again" })
                 <div class="col-1"></div>
                 <span asp-validation-for="PasswordRepeat" class="col-12 padding-side-mid padding-v-quarter text-center text-danger" />
             </div>
             <div class="row padding-mid form-group mt-1">
                 <div class="col-1"></div>
-                @Html.LabelFor(m => m.Birthday, new { @class = "col-4 padding-side-mid padding-v-quarter text-end text-primary" })
-                @Html.TextBoxFor(m => m.Birthday, new { @class = "col-6 padding-side-mid", type = "date" })
+                @Html.LabelFor(m => m.DTO.Birthday, new { @class = "col-4 padding-side-mid padding-v-quarter text-end text-primary" })
+                @Html.TextBoxFor(m => m.DTO.Birthday, new { @class = "col-6 padding-side-mid", type = "date" })
                 <div class="col-1"></div>
                 <span asp-validation-for="Birthday" class="col-12 padding-side-mid padding-v-quarter text-center text-danger" />
             </div>
             <div class="row padding-mid form-group mt-1">
                 <div class="col-1"></div>
-                @Html.LabelFor(m => m.TimeZoneId, new { @class = "col-4 padding-side-mid padding-v-quarter text-end text-primary" })
+                @Html.LabelFor(m => m.DTO.TimeZoneId, new { @class = "col-4 padding-side-mid padding-v-quarter text-end text-primary" })
                 <select asp-for="TimeZoneId" class="col-6 padding-side-mid" asp-items="ViewBag.TimeZones">
                 </select>
                 <div class="col-1"></div>
             </div>
             <div class="row padding-mid form-group mt-1">
                 <div class="col-1"></div>
-                @Html.LabelFor(m => m.EmailVisibilityId, new { @class = "col-4 padding-side-mid padding-v-quarter text-end text-primary" })
+                @Html.LabelFor(m => m.DTO.EmailVisibilityId, new { @class = "col-4 padding-side-mid padding-v-quarter text-end text-primary" })
                 <select asp-for="EmailVisibilityId" class="col-6 padding-side-mid" asp-items="ViewBag.Visibilities">
                 </select>
                 <div class="col-1"></div>

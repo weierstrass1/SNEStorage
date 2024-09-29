@@ -1,7 +1,9 @@
 ﻿@page
 @using SNEStorage.Pages.Login
-@model IndexModel
-@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@model LoginModel
+@{
+    Layout = "_Layout";
+}
 
 <div class="container">
     <div class="row">
@@ -15,12 +17,14 @@
                 @Html.LabelFor(m => m.DTO.User, new { @class = "col-2 padding-side-mid padding-v-quarter text-end text-primary" })
                 @Html.TextBoxFor(m => m.DTO.User, new { @class = "col-6 padding-side-mid", placeholder = "Enter your Username" })
                 <div class="col-2"></div>
+                <span asp-validation-for="User" class="col-12 padding-side-mid padding-v-quarter text-center text-danger"/>
             </div>
             <div class="row padding-mid form-group mt-1">
                 <div class="col-2"></div>
                 @Html.LabelFor(m => m.DTO.Password, new { @class = "col-2 padding-side-mid padding-v-quarter text-end text-primary" })
                 @Html.PasswordFor(m => m.DTO.Password, new { @class = "col-6 padding-side-mid", placeholder = "Enter your Password" })
                 <div class="col-2"></div>
+                <span asp-validation-for="Password" class="col-12 padding-side-mid padding-v-quarter text-center text-danger" />
             </div>
             <div class="row padding-mid form-group mt-1">
                 <div class="col-5"></div>

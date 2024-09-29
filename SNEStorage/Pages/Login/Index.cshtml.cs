@@ -7,20 +7,21 @@ using System.Text;
 
 namespace SNEStorage.Pages.Login
 {
-    public class IndexModel : PageModel
+    public class LoginModel : PageModel
     {
         static HttpClient httpClient = new();
         [BindProperty]
         public LoginCredentials? DTO { get; set; }
         public APIConfig ApiConfig { get; }
-        public IndexModel(APIConfig apiConfig)
+
+        public LoginModel(APIConfig apiConfig)
         {
             ApiConfig = apiConfig;
         }
         public async Task<IActionResult> OnPostAsync()
         {
             string payload = JsonConvert.SerializeObject(DTO);
-            string path = ApiConfig.AccountAPIURL;
+            string path = ApiConfig.LoginAPIURL;
 
             HttpRequestMessage httpRequestMessage = new()
             {
@@ -32,13 +33,15 @@ namespace SNEStorage.Pages.Login
                 HttpResponseMessage responseMessage = await httpClient.PostAsync(path, httpRequestMessage.Content);
                 HttpContent content = responseMessage.Content;
                 string message = await content.ReadAsStringAsync();
-                RedirectToPage();
+                AuthenticationResponse auth = JsonConvert.DeserializeObject<AuthenticationResponse>(message)!;
+                HttpContext.Session.SetString("Token", auth.Token);
+                return RedirectToPage("home");
             }
             catch (HttpRequestException exception)
             {
                 Console.WriteLine("An HTTP request exception occurred. {0}", exception.Message);
+                return RedirectToPage("error");
             }
-            return RedirectToPage();
         }
     }
 }

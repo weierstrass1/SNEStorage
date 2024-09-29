@@ -1,10 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using SNEStorage.DTOs;
+using SNEStorage.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -18,14 +18,17 @@ public class AccountController : ControllerBase
     public UserManager<IdentityUser> UserManager { get; }
     public IConfiguration Configuration { get; }
     public SignInManager<IdentityUser> SignInManager { get; }
+    public SnestorageContext Context { get; }
 
     public AccountController(UserManager<IdentityUser> userManager, 
         IConfiguration configuration,
-        SignInManager<IdentityUser> signInManager)
+        SignInManager<IdentityUser> signInManager,
+        SnestorageContext context)
     {
         UserManager = userManager;
         Configuration = configuration;
         SignInManager = signInManager;
+        Context = context;
     }
     [HttpPost("register")]
     public async Task<ActionResult<AuthenticationResponse>> Register(RegisterInfo credentials)
@@ -40,13 +43,20 @@ public class AccountController : ControllerBase
         var res = await buildToken(credentials.User);
         if (res == null)
             return BadRequest();
+
+        UserInfo info = new()
+        {
+            UserId = user.Id,
+            UsernameColor = credentials.UsernameColor,
+            
+        };
         return res;
     }
     [HttpPost("login")]
     public async Task<ActionResult<AuthenticationResponse>> Login(LoginCredentials credentials)
     {
-        var result = await SignInManager.PasswordSignInAsync(credentials.User, credentials.Password,
-            false, false);
+        var result = await SignInManager.PasswordSignInAsync(credentials.User,
+            credentials.Password, false, false);
         if (!result.Succeeded)
             return BadRequest("Incorrect Login");
         var res = await buildToken(credentials.User);
