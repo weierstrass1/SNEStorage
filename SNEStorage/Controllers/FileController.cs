@@ -19,18 +19,24 @@ public class FileController : Controller
         Environment = environment;
     }
     [HttpPost]
-    public async Task<ActionResult<FileResponse>> Create(FileParams pars)
+    public async Task<ActionResult<FileResponse>> Create(IFormFile fileRequest, string destinationPath)
     {
+        string filetype = fileRequest.ContentType;
+
         FileType? type = await Context.FileTypes
-            .FirstOrDefaultAsync(f => f.Value == pars.File.ContentType);
+            .FirstOrDefaultAsync(f => f.Value.Contains(filetype));
         if (type == null)
             return BadRequest();
-        string path = Path.Combine(Environment.WebRootPath, pars.DestinationPath);
-        pars.File.CopyTo(new FileStream(path, FileMode.Create));
+        string path = Path.Combine(Environment.WebRootPath, destinationPath);
+
+        using (FileStream stream = System.IO.File.Create(path))
+        {
+            await fileRequest.CopyToAsync(stream);
+        }
 
         Models.File file = new()
         {
-            URL = pars.DestinationPath,
+            URL = destinationPath,
             FileTypeId = type.Id
         };
 
