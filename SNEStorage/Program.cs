@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using SNEStorage.Controllers;
@@ -10,18 +9,18 @@ using SNEStorage.Services;
 using System.Text;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
-
+IServiceCollection services = builder.Services;
 // Add services to the container.
-builder.Services.AddControllersWithViews();
-builder.Services.AddDbContext<SnestorageContext>(options =>
+services.AddControllersWithViews();
+services.AddDbContext<SnestorageContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("SNEStorageContext"));
 });
-builder.Services.AddRazorPages(opts =>
+services.AddRazorPages(opts =>
 {
     opts.Conventions.AddPageRoute("/Home/Index", "");
 });
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options => options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = false,
@@ -32,12 +31,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .GetBytes(builder.Configuration["JWTKey"]!)),
         ClockSkew = TimeSpan.Zero
     });
-builder.Services.AddAuthorization(options =>
+services.AddAuthorization(options =>
 {
     options.AddPolicy("Admin", pol => pol.RequireClaim("Admin"));
     options.AddPolicy("Moderator", pol => pol.RequireClaim("Moderator"));
 });
-builder.Services.AddSwaggerGen(c =>
+services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo
         { 
@@ -68,19 +67,21 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
-builder.Services.AddIdentity<IdentityUser, IdentityRole>()
+services.AddIdentity<IdentityUser, IdentityRole>()
     .AddEntityFrameworkStores<SnestorageContext>()
     .AddDefaultTokenProviders();
-builder.Services.AddTransient<AccountController, AccountController>();
-builder.Services.AddTransient<APIConfig>();
-builder.Services.AddCors(options =>
+services.AddHttpContextAccessor();
+services.AddTransient<APIConfig>();
+services.AddTransient<FileService>();
+services.AddTransient<AccountService>();
+services.AddCors(options =>
 {
     options.AddDefaultPolicy(b =>
     {
         b.WithOrigins("*").AllowAnyMethod().AllowAnyHeader();
     });
 });
-builder.Services.AddSession();
+services.AddSession();
 
 var app = builder.Build();
 

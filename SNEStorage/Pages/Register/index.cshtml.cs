@@ -7,14 +7,21 @@ namespace SNEStorage.Pages.Register
 {
     public class RegisterModel : PageModel
     {
-        static HttpClient httpClient = new();
         [BindProperty]
         public RegisterInfo? DTO { get; set; }
-        public APIConfig ApiConfig { get; }
+        public AccountService AccountService { get; }
 
-        public RegisterModel(APIConfig apiConfig)
+        public RegisterModel(AccountService accountService)
         {
-            ApiConfig = apiConfig;
+            AccountService = accountService;
+        }
+        public async Task<IActionResult> OnPostAsync()
+        {
+            var res = await AccountService.Register(DTO!);
+            string page = res == null ?
+                "error" :
+                "login";
+            return RedirectToPage(page);
         }
     }
 }
