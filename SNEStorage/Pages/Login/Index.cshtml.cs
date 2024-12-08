@@ -5,6 +5,7 @@ using SNEStorage.Services;
 
 namespace SNEStorage.Pages.Login
 {
+    [IgnoreAntiforgeryToken(Order = 1001)]
     public class LoginModel : PageModel
     {
         [BindProperty]

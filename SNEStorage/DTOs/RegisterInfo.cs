@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using SNEStorage.Models;
 using System.ComponentModel.DataAnnotations;
 
@@ -24,6 +25,8 @@ public class RegisterInfo
     public long EmailVisibilityId { get; set; }
     [Display(Name = "Time Zone")]
     public long TimeZoneId { get; set; }
+    [Required]
+    [Display(Name = "Avatar")]
     [BindProperty]
     public IFormFile Avatar { get; set; }
 }
