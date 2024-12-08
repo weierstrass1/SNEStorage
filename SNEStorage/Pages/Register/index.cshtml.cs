@@ -39,7 +39,7 @@ namespace SNEStorage.Pages.Register
             var res = await AccountService.Register(DTO!);
             if (res?.Value == null)
                 return Redirect("registerfailed");
-            return Redirect("registersuccess");
+            return Redirect("login");
         }
     }
 }
