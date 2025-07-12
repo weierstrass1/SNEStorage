@@ -1,0 +1,17 @@
+﻿body, .form-control, label, textarea, select, option, input, h2 {
+    color: white !important;
+    background-color: transparent;
+}
+
+.form-control {
+    background-color: #333 !important;
+    border-color: #555;
+}
+
+.form-check-label {
+    color: white !important;
+}
+
+.btn {
+    color: white;
+}

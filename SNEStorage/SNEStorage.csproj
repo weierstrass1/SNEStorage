@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <None Include="wwwroot\Content\Images\download.png" />
+    <None Include="wwwroot\css\Create.css" />
   </ItemGroup>
 
   <ItemGroup>

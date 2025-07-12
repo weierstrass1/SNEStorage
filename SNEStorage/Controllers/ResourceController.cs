@@ -8,16 +8,17 @@ namespace SNEStorage.Controllers;
 
 public class ResourceController(SnestorageContext context) : Controller
 {
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    public async Task<IActionResult> Index()
+    public IActionResult Index()
     {
-        List<Resource> resources = await context.Resources
+        /*List<Resource> resources = await context.Resources
             .Include(x => x.ResourceType)
             .Include(x => x.Videogame)
             .AsNoTracking()
             .ToListAsync();
-        return View(resources);
+        return View(resources);*/
+        return View();
     }
+
     public async Task<IActionResult> Download(long id)
     {
         Resource? res = await context.Resources

@@ -1,0 +1,101 @@
+﻿@model SNEStorage.DTOs.ViewModels.RecursoViewModel
+@{
+    ViewData["Title"] = "Subir Recurso";
+}
+@section Styles {
+    <link href="~/css/Create.css" rel="stylesheet" />
+}
+
+<h2>Subir Recurso</h2>
+
+<form asp-action="Create" method="post" enctype="multipart/form-data">
+    <div class="form-group">
+        <label asp-for="Name"></label>
+        <input asp-for="Name" class="form-control" />
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+
+    <!-- Videojuego -->
+    <div class="form-group">
+        <label asp-for="VideogameId">Videojuego</label>
+        <select asp-for="VideogameId" asp-items="Model.VideogameOptions" class="form-control">
+            <option value="">-- Selecciona un videojuego --</option>
+        </select>
+        <span asp-validation-for="VideogameId" class="text-danger"></span>
+    </div>
+
+    <!-- Tipo de recurso -->
+    <div class="form-group">
+        <label asp-for="ResourceTypeId">Tipo de Recurso</label>
+        <select asp-for="ResourceTypeId" asp-items="Model.ResourceTypeOptions" class="form-control">
+            <option value="">-- Selecciona tipo de recurso --</option>
+        </select>
+        <span asp-validation-for="ResourceTypeId" class="text-danger"></span>
+    </div>
+
+    <!-- Uso -->
+    <div class="form-group">
+        <label asp-for="Usage"></label>
+        <textarea asp-for="Usage" class="form-control"></textarea>
+        <span asp-validation-for="Usage" class="text-danger"></span>
+    </div>
+
+    <!-- Descripción -->
+    <div class="form-group">
+        <label asp-for="Description"></label>
+        <textarea asp-for="Description" class="form-control"></textarea>
+        <span asp-validation-for="Description" class="text-danger"></span>
+    </div>
+
+    <!-- Versión -->
+    <div class="form-group">
+        <label asp-for="Version"></label>
+        <input asp-for="Version" class="form-control" />
+        <span asp-validation-for="Version" class="text-danger"></span>
+    </div>
+
+    <!-- Flags -->
+    <div class="form-check">
+        <input asp-for="IncludesGore" class="form-check-input" />
+        <label asp-for="IncludesGore" class="form-check-label">Incluye violencia/gore</label>
+    </div>
+    <div class="form-check">
+        <input asp-for="IncludesPolitics" class="form-check-input" />
+        <label asp-for="IncludesPolitics" class="form-check-label">Incluye política</label>
+    </div>
+    <div class="form-check">
+        <input asp-for="IncludesPorn" class="form-check-input" />
+        <label asp-for="IncludesPorn" class="form-check-label">Incluye contenido sexual</label>
+    </div>
+    <div class="form-check">
+        <input asp-for="IncludesSensitiveContent" class="form-check-input" />
+        <label asp-for="IncludesSensitiveContent" class="form-check-label">Contenido sensible</label>
+    </div>
+    <div class="form-check">
+        <input asp-for="IncludesSlurs" class="form-check-input" />
+        <label asp-for="IncludesSlurs" class="form-check-label">Contiene insultos/discriminación</label>
+    </div>
+
+    <!-- Visibilidad -->
+    <div class="form-group">
+        <label asp-for="VisibilityId">Visibilidad</label>
+        <select asp-for="VisibilityId" asp-items="Model.VisibilityOptions" class="form-control">
+            <option value="">-- Selecciona nivel de visibilidad --</option>
+        </select>
+        <span asp-validation-for="VisibilityId" class="text-danger"></span>
+    </div>
+
+    <!-- Archivo -->
+    <div class="form-group">
+        <label for="File">Archivo</label>
+        <input type="file" name="File" class="form-control" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Subir Recurso</button>
+</form>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
