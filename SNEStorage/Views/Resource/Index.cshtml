@@ -19,7 +19,7 @@
                 tdClass = light ? "light" : "dark";
                 <tr>
                     <td class="col-lg-5 name @tdClass">
-                        <p>@resource.Name @resource.Version<small> by Anonimzwx</small></p>
+                        <p>@resource.Name @resource.Version<small> @resource.SubmitterUser?.UserName</small></p>
                         <small>@resource.Videogame!.Name</small>
                         <br />
                         <small>14-08-2024</small>

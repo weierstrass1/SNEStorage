@@ -65,7 +65,7 @@ services.AddSwaggerGen(c =>
         }
     });
 });
-services.AddIdentity<IdentityUser, IdentityRole>()
+services.AddIdentity<ApplicationUser, IdentityRole>()
     .AddEntityFrameworkStores<SnestorageContext>()
     .AddDefaultTokenProviders();
 services.AddHttpContextAccessor();

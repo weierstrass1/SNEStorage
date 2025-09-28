@@ -11,19 +11,19 @@ namespace SNEStorage.Services
 {
     public class AccountService
     {
-        public UserManager<IdentityUser> UserManager { get; }
+        public UserManager<ApplicationUser> UserManager { get; }
+        public SignInManager<ApplicationUser> SignInManager { get; }
         public IConfiguration Configuration { get; }
-        public SignInManager<IdentityUser> SignInManager { get; }
         public SnestorageContext Context { get; }
         public FileService FileService { get; }
         public IHttpContextAccessor HttpContextAccessor { get; }
 
-        public AccountService(UserManager<IdentityUser> userManager,
-            IConfiguration configuration,
-            SignInManager<IdentityUser> signInManager,
-            SnestorageContext context,
-            FileService fileService,
-            IHttpContextAccessor httpContextAccessor)
+        public AccountService(UserManager<ApplicationUser> userManager,
+                              IConfiguration configuration,
+                              SignInManager<ApplicationUser> signInManager,
+                              SnestorageContext context,
+                              FileService fileService,
+                              IHttpContextAccessor httpContextAccessor)
         {
             UserManager = userManager;
             Configuration = configuration;
@@ -34,53 +34,61 @@ namespace SNEStorage.Services
         }
         public async Task<ActionResult<AuthenticationResponse>?> Register(RegisterInfo registerInfo)
         {
-            IdentityUser user = new(registerInfo.User)
-            {
-                Email = registerInfo.Email
-            };
+            var user = new ApplicationUser { UserName = registerInfo.User, Email = registerInfo.Email };
             var result = await UserManager.CreateAsync(user, registerInfo.Password);
-            if (!result.Succeeded)
-                return null;
+            if (!result.Succeeded) return null;
+
             var res = await BuildToken(registerInfo.User);
-            if (res == null)
-                return null;
+            if (res == null) return null;
+
             var avatar = registerInfo.Avatar;
-            var res2 = await FileService.Create(avatar, $"Content/Avatars/{user.Id}_{user.UserName}{Path.GetExtension(avatar.FileName)}");
-            if(res == null)
-                return null;
-            UserInfo info = new()
+            var path = $"Content/Avatars/{user.Id}_{user.UserName}{Path.GetExtension(avatar.FileName)}";
+            var res2 = await FileService.CreateAsync(avatar, path, CancellationToken.None);
+            if (res2 == null) return null;                 // antes chequeabas 'res' por error
+
+            var info = new UserInfo
             {
                 UserId = user.Id,
                 UsernameColor = registerInfo.UsernameColor,
-                AvatarId = res2.Value!.Id,
+                AvatarId = res2.Id,
                 Birthday = registerInfo.Birthday,
                 TimeZoneId = registerInfo.TimeZoneId,
                 EmailVisibilityId = registerInfo.EmailVisibilityId
             };
             Context.Add(info);
-            Context.SaveChanges();
+            await Context.SaveChangesAsync();
+
             return res;
         }
+
         public async Task<ActionResult<AuthenticationResponse>?> Login(LoginCredentials credentials)
         {
-            var result = await SignInManager.PasswordSignInAsync(credentials.User!,
-                credentials.Password!, false, false);
-            if (!result.Succeeded)
-                return null;
-            var res = await BuildToken(credentials.User!);
-            if (res == null)
-                return null;
-            return res;
+            var result = await SignInManager.PasswordSignInAsync(credentials.User!, credentials.Password!, false, false);
+            if (!result.Succeeded) return null;
+            return await BuildToken(credentials.User!);
         }
+
         public async Task<ActionResult<AuthenticationResponse>?> RefreshToken()
         {
-            string user = HttpContextAccessor.HttpContext!.User.Claims
-                            .FirstOrDefault(claim => claim.Type == "user")!
-                            .Value;
-            var res = await BuildToken(user);
-            if (res == null)
-                return null;
-            return res;
+            var user = HttpContextAccessor.HttpContext!.User.FindFirstValue("user");
+            if (string.IsNullOrEmpty(user)) return null;
+            return await BuildToken(user);
+        }
+
+        public async Task<AuthenticationResponse?> BuildToken(string user)
+        {
+            var u = await UserManager.FindByNameAsync(user);
+            if (u == null) return null;
+
+            var claims = new List<Claim> { new("user", user) };
+            claims.AddRange(await UserManager.GetClaimsAsync(u));
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["JWTKey"]!));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            var exp = DateTime.UtcNow.AddMinutes(30);
+
+            var jwt = new JwtSecurityToken(claims: claims, expires: exp, signingCredentials: creds);
+            return new AuthenticationResponse { Token = new JwtSecurityTokenHandler().WriteToken(jwt), ExpireTime = exp };
         }
         public async Task<ActionResult<bool>> AddRole(EditRole editRole)
         {
@@ -104,27 +112,6 @@ namespace SNEStorage.Services
             await UserManager.RemoveClaimAsync(user, new(editRole.RoleName, "1"));
             return true;
         }
-        public async Task<AuthenticationResponse?> BuildToken(string user)
-        {
-            List<Claim> claims = [new("user", user)];
-            var usr = await UserManager.FindByNameAsync(user);
-            if (usr == null)
-                return null;
-            var usrClaims = await UserManager.GetClaimsAsync(usr);
-            claims.AddRange(usrClaims);
-
-            SymmetricSecurityKey key = new(Encoding.UTF8.GetBytes(Configuration["JWTKey"]!));
-            SigningCredentials creds = new(key, SecurityAlgorithms.HmacSha256);
-            DateTime expiration = DateTime.UtcNow.AddMinutes(30);
-            JwtSecurityToken token = new(
-                claims: claims,
-                expires: expiration,
-                signingCredentials: creds);
-            return new()
-            {
-                Token = new JwtSecurityTokenHandler().WriteToken(token),
-                ExpireTime = expiration
-            };
-        }
+        
     }
 }

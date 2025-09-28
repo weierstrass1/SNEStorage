@@ -87,8 +87,9 @@
 
     <!-- Archivo -->
     <div class="form-group">
-        <label for="File">Archivo</label>
-        <input type="file" name="File" class="form-control" />
+        <label asp-for="File"></label>
+        <input asp-for="File" type="file" class="form-control" />
+        <span asp-validation-for="File" class="text-danger"></span>
     </div>
 
     <button type="submit" class="btn btn-primary">Subir Recurso</button>

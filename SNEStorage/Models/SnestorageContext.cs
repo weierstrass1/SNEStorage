@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace SNEStorage.Models;
 
-public partial class SnestorageContext : IdentityDbContext
+public partial class SnestorageContext : IdentityDbContext<ApplicationUser>
 {
     public SnestorageContext()
     {

@@ -23,6 +23,8 @@ namespace SNEStorage.DTOs.ViewModels
         public IEnumerable<SelectListItem> VideogameOptions { get; set; }
         public IEnumerable<SelectListItem> ResourceTypeOptions { get; set; }
         public IEnumerable<SelectListItem> VisibilityOptions { get; set; }
+
+        public IFormFile File { get; set; }  // con setter público
     }
 
 }
