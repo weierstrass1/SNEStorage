@@ -1,23 +1,31 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using SNEStorage.DTOs;
+using SNEStorage.Models;
 using SNEStorage.Services;
 
 namespace SNEStorage.Controllers;
 
 [ApiController]
-[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 [Route("api/file")]
-public sealed class FileController(FileService files, ResourceAccessService access) : Controller
+public class FileController : Controller
 {
+    public SnestorageContext Context { get; }
+    public IWebHostEnvironment Environment { get; }
+    public FileService FileService { get; }
+
+    public FileController(SnestorageContext context,
+        IWebHostEnvironment environment,
+        FileService fileService)
+    {
+        Context = context;
+        Environment = environment;
+        FileService = fileService;
+    }
     [HttpPost]
     public async Task<ActionResult<FileResponse>> Create(IFormFile fileRequest, string destinationPath)
     {
-        if (!access.CanUpload(User))
-            return Forbid();
-
-        var result = await files.Create(fileRequest, destinationPath);
-        return result is null ? BadRequest() : result;
+        var res = await FileService.Create(fileRequest, destinationPath);
+        return res == null ? BadRequest() : res;
     }
 }

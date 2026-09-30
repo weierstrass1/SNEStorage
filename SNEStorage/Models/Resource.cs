@@ -30,7 +30,6 @@ public partial class Resource
     public virtual Score? Score { get; set; }
     public virtual Visibility? Visibility { get; set; }
     public virtual ICollection<ResourceComments> ResourceComments { get; set; } = [];
-    public virtual ICollection<ResourceMedia> PreviewMedia { get; set; } = [];
     public virtual ICollection<ResourceFlags> ResourceFlags { get; set; } = [];
     public virtual ICollection<ResourceAuthors> ResourcesAuthors { get; set; } = [];
     public virtual ICollection<ResourceTeams> ResourcesTeams { get; set; } = [];

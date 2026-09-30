@@ -35,12 +35,5 @@ public partial class Comment
             .HasForeignKey(d => d.ScoreId)
             .OnDelete(DeleteBehavior.Cascade)
             .HasConstraintName("FK_comment_score");
-
-        entity.Property(e => e.ParentCommentId)
-            .HasColumnName("parent_comment_id");
-        entity.HasOne(d => d.ParentComment).WithMany(p => p.Replies)
-            .HasForeignKey(d => d.ParentCommentId)
-            .OnDelete(DeleteBehavior.Restrict)
-            .HasConstraintName("FK_comment_parent_comment");
     }
 }

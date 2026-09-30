@@ -1,0 +1,46 @@
+﻿@page
+@using SNEStorage.Pages.Login
+@model LoginModel
+@{
+    Layout = "_Layout";
+}
+
+@{
+    if (User.Identity.IsAuthenticated)
+    {
+        <div class="text-center">
+            <h1 class="display-4 text-primary">You are already logged in</h1>
+        </div>
+        return;
+    }
+    <div class="container">
+        <div class="row">
+            <h2 class="col-12 padding-mid text-center text-primary">Login</h2>
+        </div>
+        <div class="row">
+            <div class="col-2"></div>
+            <form class="col-8" method="post">
+                <div class="row padding-mid form-group mt-1">
+                    <div class="col-2"></div>
+                    @Html.LabelFor(m => m.DTO.User, new { @class = "col-2 padding-side-mid padding-v-quarter text-end text-primary" })
+                    @Html.TextBoxFor(m => m.DTO.User, new { @class = "col-6 padding-side-mid", placeholder = "Enter your Username" })
+                    <div class="col-2"></div>
+                    <span asp-validation-for="User" class="col-12 padding-side-mid padding-v-quarter text-center text-danger" />
+                </div>
+                <div class="row padding-mid form-group mt-1">
+                    <div class="col-2"></div>
+                    @Html.LabelFor(m => m.DTO.Password, new { @class = "col-2 padding-side-mid padding-v-quarter text-end text-primary" })
+                    @Html.PasswordFor(m => m.DTO.Password, new { @class = "col-6 padding-side-mid", placeholder = "Enter your Password" })
+                    <div class="col-2"></div>
+                    <span asp-validation-for="Password" class="col-12 padding-side-mid padding-v-quarter text-center text-danger" />
+                </div>
+                <div class="row padding-mid form-group mt-1">
+                    <div class="col-5"></div>
+                    <button type="submit" class="col-2 padding-quarter btn btn-primary">Login</button>
+                    <div class="col-5"></div>
+                </div>
+            </form>
+            <div class="col-2"></div>
+        </div>
+    </div>
+}
