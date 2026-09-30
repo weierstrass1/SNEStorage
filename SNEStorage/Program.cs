@@ -13,7 +13,7 @@ IServiceCollection services = builder.Services;
 services.AddControllersWithViews();
 services.AddDbContext<SnestorageContext>(options =>
 {
-    options.UseInMemoryDatabase("SNEStorageContext");
+    options.UseSqlServer(builder.Configuration.GetConnectionString("SNEStorageContext"));
 });
 services.AddRazorPages(opts =>
 {
