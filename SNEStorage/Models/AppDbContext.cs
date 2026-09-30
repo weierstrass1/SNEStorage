@@ -16,15 +16,6 @@ namespace SNEStorage.Models
         {
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<Resource>()
-                .HasMany(r => r.Tags)
-                .WithMany(t => t.Resources);
-
-            modelBuilder.Entity<Resource>()
-                .HasOne(r => r.Author)
-                .WithMany(u => u.Resources)
-                .HasForeignKey(r => r.AuthorId)
-                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

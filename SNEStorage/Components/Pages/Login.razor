@@ -1,0 +1,46 @@
+@page "/Login"
+@using Microsoft.AspNetCore.Components
+
+<PageTitle>Sign in | SNEStorage</PageTitle>
+
+<section class="w auth-panel narrow">
+    <p class="eyebrow">MEMBER SIGN IN</p>
+    <h1>Sign in</h1>
+    <p class="mu">Sign in to rate, comment, and access your private resources.</p>
+
+    @if (Error == "credentials")
+    {
+        <div class="notice" role="alert">The username or password is incorrect.</div>
+    }
+    else if (Error == "invalid")
+    {
+        <div class="notice" role="alert">Complete all fields to continue.</div>
+    }
+    @if (Registered == "1")
+    {
+        <div class="success-notice" role="status">Account created. You can now sign in.</div>
+    }
+
+    <form method="post" action="/auth/login" class="auth-form">
+        <AntiforgeryToken />
+        <input type="hidden" name="returnUrl" value="@ReturnUrl" />
+        <div class="f"><label for="login-user">Username</label><input id="login-user" name="User" autocomplete="username" required /></div>
+
+        <div class="f"><label for="login-password">Password</label><input id="login-password" name="Password" type="password" autocomplete="current-password" required /></div>
+
+        <button class="y" type="submit">Sign in</button>
+    </form>
+
+    <p class="auth-foot">First time here? <a href="/Register">Create an account</a></p>
+</section>
+
+@code {
+    [SupplyParameterFromQuery(Name = "error")]
+    public string? Error { get; set; }
+
+    [SupplyParameterFromQuery(Name = "registered")]
+    public string? Registered { get; set; }
+
+    [SupplyParameterFromQuery(Name = "returnUrl")]
+    public string? ReturnUrl { get; set; }
+}

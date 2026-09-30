@@ -29,6 +29,7 @@ public partial class SnestorageContext : IdentityDbContext<ApplicationUser>
     public virtual DbSet<ResourceComments> ResourcesComments { get; set; }
     public virtual DbSet<ResourceExternalAuthor> ResourcesExternalAuthors { get; set; }
     public virtual DbSet<ResourceFlags> ResourcesFlags { get; set; }
+    public virtual DbSet<ResourceMedia> ResourcesMedia { get; set; }
     public virtual DbSet<ResourceTags> ResourcesTags { get; set; }
     public virtual DbSet<ResourceTeams> ResourcesTeams { get; set; }
     public virtual DbSet<ResourceType> ResourceTypes { get; set; }
@@ -62,6 +63,7 @@ public partial class SnestorageContext : IdentityDbContext<ApplicationUser>
         modelBuilder.Entity<ResourceComments>(ResourceComments.Build);
         modelBuilder.Entity<ResourceExternalAuthor>(ResourceExternalAuthor.Build);
         modelBuilder.Entity<ResourceFlags>(ResourceFlags.Build);
+        modelBuilder.Entity<ResourceMedia>(ResourceMedia.Build);
         modelBuilder.Entity<ResourceTags>(ResourceTags.Build);
         modelBuilder.Entity<ResourceTeams>(ResourceTeams.Build);
         modelBuilder.Entity<ResourceType>(ResourceType.Build);

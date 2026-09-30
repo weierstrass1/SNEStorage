@@ -1,0 +1,73 @@
+@if (Items.Count == 0)
+{
+    <div class="thumb gallery-empty" role="img" aria-label="No preview">SNEStorage</div>
+}
+else if (Active is { } active && active.File is { } file)
+{
+    <section class="media-carousel" aria-label="Resource gallery">
+        <div class="media-stage">
+            @if (IsVideo(file))
+            {
+                <video src="@MediaUrl(file.Id)"
+                       poster="@PosterUrl(active)"
+                       preload="none"
+                       controls
+                       playsinline>
+                    Your browser cannot play this video.
+                </video>
+            }
+            else if (IsImage(file))
+            {
+                <img src="@MediaUrl(file.Id)" alt="@(active.Caption ?? $"Preview {ActiveIndex + 1}")" />
+            }
+            else
+            {
+                <div class="thumb">VISTA PREVIA</div>
+            }
+            @if (Items.Count > 1)
+            {
+                <button class="carousel-arrow previous" type="button" @onclick="Previous" aria-label="Previous preview">‹</button>
+                <button class="carousel-arrow next" type="button" @onclick="Next" aria-label="Next preview">›</button>
+            }
+        </div>
+        <div class="carousel-caption">
+            <span>@(active.Caption ?? (IsVideo(file) ? "Video" : "Imagen"))</span>
+            <span class="mu">@(ActiveIndex + 1) / @Items.Count</span>
+        </div>
+        @if (Items.Count > 1)
+        {
+            <div class="carousel-dots" role="group" aria-label="Choose preview">
+                @for (var index = 0; index < Items.Count; index++)
+                {
+                    var target = index;
+                    <button type="button"
+                            class="@(target == ActiveIndex ? "cur" : null)"
+                            @onclick="() => Select(target)"
+                            aria-label="Show preview @(target + 1)"></button>
+                }
+            </div>
+        }
+    </section>
+}
+
+@code {
+    [Parameter] public IReadOnlyList<ResourceMedia>? Media { get; set; }
+    [Parameter] public long ResourceId { get; set; }
+
+    private IReadOnlyList<ResourceMedia> Items => Media ?? Array.Empty<ResourceMedia>();
+    private int ActiveIndex { get; set; }
+    private ResourceMedia? Active => Items.Count == 0 ? null : Items[Math.Clamp(ActiveIndex, 0, Items.Count - 1)];
+
+    private void Previous() => ActiveIndex = (ActiveIndex + Items.Count - 1) % Items.Count;
+    private void Next() => ActiveIndex = (ActiveIndex + 1) % Items.Count;
+    private void Select(int index) => ActiveIndex = index;
+
+    private string MediaUrl(long fileId) => $"/Resource/Media/{fileId}?resourceId={ResourceId}";
+    private string PosterUrl(ResourceMedia media) => media.PosterFileId is long posterId ? MediaUrl(posterId) : "/images/logo-box.png";
+
+    private static bool IsVideo(SNEStorage.Models.File file) =>
+        file.FileType?.Value?.StartsWith("video/", StringComparison.OrdinalIgnoreCase) == true;
+
+    private static bool IsImage(SNEStorage.Models.File file) =>
+        file.FileType?.Value?.StartsWith("image/", StringComparison.OrdinalIgnoreCase) == true;
+}

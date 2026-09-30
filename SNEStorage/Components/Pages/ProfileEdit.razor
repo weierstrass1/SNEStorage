@@ -1,0 +1,242 @@
+@page "/Profile/Edit"
+@attribute [Authorize]
+@inject SnestorageContext Context
+@inject UserManager<ApplicationUser> UserManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject FileService FileService
+@inject NavigationManager Navigation
+@inject ILogger<ProfileEdit> Logger
+
+<PageTitle>Edit profile | SNEStorage</PageTitle>
+
+<section class="page-heading"><p class="eyebrow">ACCOUNT SETTINGS</p><h1>Edit my details</h1><p class="mu">Update the information you share on SNEStorage.</p></section>
+
+<section class="w profile-edit-panel">
+    @if (_loading)
+    {
+        <p class="mu" role="status">Loading details…</p>
+    }
+    else if (!string.IsNullOrWhiteSpace(_message))
+    {
+        <div class="notice" role="alert">@_message</div>
+    }
+
+    @if (!_loading && _user is not null && _form is not null)
+    {
+        <div class="profile-edit-heading"><img src="@($"/User/Avatar/{_user.Id}")" alt="Avatar actual" /><span><strong>@_user.UserName</strong><br /><span class="mu">@_user.Email</span></span></div>
+        <EditForm Model="_form" OnValidSubmit="SaveAsync" FormName="profile-edit">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="err-msg" />
+            <div class="row">
+                <div class="f"><label for="profile-email">Email address</label><InputText id="profile-email" type="email" @bind-Value="_form.Email" autocomplete="email" /></div>
+                <div class="f"><label for="profile-title">Title</label><InputText id="profile-title" @bind-Value="_form.Title" maxlength="80" /></div>
+                <div class="f"><label for="profile-color">Name color</label><InputText id="profile-color" type="color" @bind-Value="_form.UsernameColor" /></div>
+                <div class="f"><label for="profile-birthday">Date of birth</label><InputDate id="profile-birthday" @bind-Value="_form.Birthday" /></div>
+                <div class="f">
+                    <label for="profile-timezone">Time zone</label>
+                    <InputSelect id="profile-timezone" @bind-Value="_form.TimeZoneId">
+                        @foreach (var zone in _timeZones) { <option value="@zone.Id">@zone.Name</option> }
+                    </InputSelect>
+                </div>
+                <div class="f">
+                    <label for="profile-email-visibility">Email visibility</label>
+                    <InputSelect id="profile-email-visibility" @bind-Value="_form.EmailVisibilityId">
+                        @foreach (var visibility in _emailVisibilities) { <option value="@visibility.Id">@visibility.Name</option> }
+                    </InputSelect>
+                </div>
+                <div class="f f-wide"><label for="profile-bio">Bio</label><InputTextArea id="profile-bio" @bind-Value="_form.Bio" rows="5" maxlength="2000" /></div>
+                <div class="f"><label for="profile-discord">Discord</label><InputText id="profile-discord" @bind-Value="_form.Discord" /></div>
+                <div class="f"><label for="profile-github">GitHub</label><InputText id="profile-github" @bind-Value="_form.Github" /></div>
+                <div class="f"><label for="profile-youtube">YouTube</label><InputText id="profile-youtube" @bind-Value="_form.Youtube" /></div>
+                <div class="f"><label for="profile-twitch">Twitch</label><InputText id="profile-twitch" @bind-Value="_form.Twitch" /></div>
+                <div class="f"><label for="profile-steam">Steam</label><InputText id="profile-steam" @bind-Value="_form.Steam" /></div>
+                <div class="f"><label for="profile-patreon">Patreon</label><InputText id="profile-patreon" @bind-Value="_form.Patreon" /></div>
+                <div class="f"><label for="profile-paypal">PayPal</label><InputText id="profile-paypal" @bind-Value="_form.Paypal" /></div>
+                <div class="f"><label for="profile-coffee">Buy Me a Coffee</label><InputText id="profile-coffee" @bind-Value="_form.BuyMeACoffee" /></div>
+                <div class="f"><label for="profile-twitter">Twitter / X</label><InputText id="profile-twitter" @bind-Value="_form.Twitter" /></div>
+                <div class="f"><label for="profile-facebook">Facebook</label><InputText id="profile-facebook" @bind-Value="_form.Facebook" /></div>
+                <div class="f"><label for="profile-instagram">Instagram</label><InputText id="profile-instagram" @bind-Value="_form.Instagram" /></div>
+                <div class="f"><label for="profile-nintendo">Nintendo Network</label><InputText id="profile-nintendo" @bind-Value="_form.NintendoNetwork" /></div>
+                <div class="f f-wide"><label for="profile-avatar">Change avatar (PNG/JPG, up to 5 MB)</label><InputFile id="profile-avatar" OnChange="SelectAvatar" accept="image/png,image/jpeg" />@if (_avatar is not null) { <small>@_avatar.Name</small> }</div>
+            </div>
+            <div class="form-actions"><button class="y" type="submit" disabled="@_saving">@(_saving ? "Saving…" : "Save changes")</button><a class="btn" href="/Profile">Cancel</a></div>
+        </EditForm>
+    }
+</section>
+
+@code {
+    private const long MaxAvatarSize = 5 * 1024 * 1024;
+    private ApplicationUser? _user;
+    private UserInfo? _info;
+    private ProfileForm? _form;
+    private List<SNEStorage.Models.TimeZone> _timeZones = [];
+    private List<Visibility> _emailVisibilities = [];
+    private IBrowserFile? _avatar;
+    private string? _message;
+    private bool _loading = true;
+    private bool _saving;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var principal = (await AuthenticationStateProvider.GetAuthenticationStateAsync()).User;
+        var userId = principal.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            _loading = false;
+            return;
+        }
+
+        _user = await UserManager.FindByIdAsync(userId);
+        _info = await Context.UserInfos.FirstOrDefaultAsync(info => info.UserId == userId);
+        if (_user is not null && _info is not null)
+        {
+            _form = ProfileForm.From(_user, _info);
+            _timeZones = await Context.TimeZones.AsNoTracking().OrderBy(zone => zone.Name).ToListAsync();
+            _emailVisibilities = await Context.Visibilities.AsNoTracking().Where(item => !item.ResourceOnly).OrderBy(item => item.Name).ToListAsync();
+        }
+        _loading = false;
+    }
+
+    private void SelectAvatar(InputFileChangeEventArgs args) => _avatar = args.File;
+
+    private async Task SaveAsync()
+    {
+        if (_user is null || _info is null || _form is null)
+            return;
+
+        _saving = true;
+        _message = null;
+        try
+        {
+            if (_form.UsernameColor is not { Length: 7 } color || color[0] != '#' || !color[1..].All(Uri.IsHexDigit))
+            {
+                _message = "The username color is invalid.";
+                return;
+            }
+            if (_form.TimeZoneId <= 0 || _form.EmailVisibilityId <= 0)
+            {
+                _message = "Choose a valid time zone and email visibility.";
+                return;
+            }
+        if (_avatar is not null && (_avatar.Size is <= 0 or > MaxAvatarSize || _avatar.ContentType is not ("image/png" or "image/jpeg")))
+        {
+            _message = "The avatar must be a PNG or JPG and no larger than 5 MB.";
+            return;
+        }
+
+            var email = _form.Email.Trim();
+            if (!string.Equals(email, _user.Email, StringComparison.OrdinalIgnoreCase))
+            {
+                var emailResult = await UserManager.SetEmailAsync(_user, email);
+                if (!emailResult.Succeeded)
+                {
+                    _message = string.Join(" ", emailResult.Errors.Select(error => error.Description));
+                    return;
+                }
+            }
+
+            _info.Title = Clean(_form.Title, 80);
+            _info.Bio = Clean(_form.Bio, 2000);
+            _info.UsernameColor = color;
+            _info.Birthday = _form.Birthday;
+            _info.TimeZoneId = _form.TimeZoneId;
+            _info.EmailVisibilityId = _form.EmailVisibilityId;
+            _info.Discord = Clean(_form.Discord, 160);
+            _info.Github = Clean(_form.Github, 200);
+            _info.Youtube = Clean(_form.Youtube, 200);
+            _info.Twitch = Clean(_form.Twitch, 200);
+            _info.Steam = Clean(_form.Steam, 200);
+            _info.Patreon = Clean(_form.Patreon, 200);
+            _info.Paypal = Clean(_form.Paypal, 200);
+            _info.BuyMeACoffee = Clean(_form.BuyMeACoffee, 200);
+            _info.Twitter = Clean(_form.Twitter, 200);
+            _info.Facebook = Clean(_form.Facebook, 200);
+            _info.Instagram = Clean(_form.Instagram, 200);
+            _info.NintendoNetwork = Clean(_form.NintendoNetwork, 200);
+
+            if (_avatar is not null)
+            {
+                await using var buffer = new MemoryStream();
+                await _avatar.OpenReadStream(MaxAvatarSize).CopyToAsync(buffer);
+                buffer.Position = 0;
+                var upload = new FormFile(buffer, 0, buffer.Length, "File", Path.GetFileName(_avatar.Name))
+                {
+                    Headers = new HeaderDictionary(),
+                    ContentType = _avatar.ContentType
+                };
+                var path = Path.Combine("avatars", $"{Guid.NewGuid():N}{(_avatar.ContentType == "image/png" ? ".png" : ".jpg")}");
+                var saved = await FileService.CreateAsync(upload, path, CancellationToken.None);
+                if (saved is null)
+                {
+                    _message = "The new avatar could not be saved.";
+                    return;
+                }
+                _info.AvatarId = saved.Id;
+            }
+
+            await Context.SaveChangesAsync();
+            Navigation.NavigateTo("/Profile");
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(exception, "Profile update failed.");
+            _message = "Your changes could not be saved.";
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private static string? Clean(string? value, int maxLength)
+    {
+        var trimmed = value?.Trim();
+        return string.IsNullOrEmpty(trimmed) ? null : trimmed[..Math.Min(trimmed.Length, maxLength)];
+    }
+
+    private sealed class ProfileForm
+    {
+        [Required, EmailAddress] public string Email { get; set; } = string.Empty;
+        [StringLength(80)] public string? Title { get; set; }
+        [StringLength(2000)] public string? Bio { get; set; }
+        public string UsernameColor { get; set; } = "#E7E2FF";
+        public DateOnly Birthday { get; set; }
+        public long TimeZoneId { get; set; }
+        public long EmailVisibilityId { get; set; }
+        public string? Discord { get; set; }
+        public string? Github { get; set; }
+        public string? Youtube { get; set; }
+        public string? Twitch { get; set; }
+        public string? Steam { get; set; }
+        public string? Patreon { get; set; }
+        public string? Paypal { get; set; }
+        public string? BuyMeACoffee { get; set; }
+        public string? Twitter { get; set; }
+        public string? Facebook { get; set; }
+        public string? Instagram { get; set; }
+        public string? NintendoNetwork { get; set; }
+
+        public static ProfileForm From(ApplicationUser user, UserInfo info) => new()
+        {
+            Email = user.Email ?? string.Empty,
+            Title = info.Title,
+            Bio = info.Bio,
+            UsernameColor = info.UsernameColor ?? "#E7E2FF",
+            Birthday = info.Birthday,
+            TimeZoneId = info.TimeZoneId,
+            EmailVisibilityId = info.EmailVisibilityId,
+            Discord = info.Discord,
+            Github = info.Github,
+            Youtube = info.Youtube,
+            Twitch = info.Twitch,
+            Steam = info.Steam,
+            Patreon = info.Patreon,
+            Paypal = info.Paypal,
+            BuyMeACoffee = info.BuyMeACoffee,
+            Twitter = info.Twitter,
+            Facebook = info.Facebook,
+            Instagram = info.Instagram,
+            NintendoNetwork = info.NintendoNetwork
+        };
+    }
+}

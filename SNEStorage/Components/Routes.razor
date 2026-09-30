@@ -1,0 +1,27 @@
+<Router AppAssembly="typeof(Program).Assembly">
+    <Found Context="routeData">
+        <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(MainLayout)">
+            <NotAuthorized>
+                <LayoutView Layout="typeof(MainLayout)">
+                    <section class="w errp">
+                        <p class="code">401</p>
+                        <h1>Sign in to continue</h1>
+                        <p>This section is available to SNEStorage members.</p>
+                        <a class="btn y" href="/Login">Sign in</a>
+                    </section>
+                </LayoutView>
+            </NotAuthorized>
+        </AuthorizeRouteView>
+        <FocusOnNavigate RouteData="routeData" Selector="h1" />
+    </Found>
+    <NotFound>
+        <LayoutView Layout="typeof(MainLayout)">
+            <PageTitle>Error 404 | SNEStorage</PageTitle>
+            <section class="w errp">
+                <p class="code">404</p>
+                <h1>Page not found</h1>
+                <a class="btn y" href="/">Back to home</a>
+            </section>
+        </LayoutView>
+    </NotFound>
+</Router>

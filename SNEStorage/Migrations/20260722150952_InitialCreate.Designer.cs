@@ -13,7 +13,7 @@ namespace SNEStorage.Migrations
 {
     [DbContext(typeof(AppDbContext))]
     [Migration("20260722150952_InitialCreate")]
-    partial class InitialCreate
+    partial class AppDbContextInitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

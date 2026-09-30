@@ -281,6 +281,10 @@ namespace SNEStorage.Migrations
                         .HasColumnType("datetime2")
                         .HasColumnName("publish_date");
 
+                    b.Property<long?>("ParentCommentId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("parent_comment_id");
+
                     b.Property<long>("ScoreId")
                         .HasColumnType("bigint")
                         .HasColumnName("score_id");
@@ -299,6 +303,8 @@ namespace SNEStorage.Migrations
                         .HasName("PK_Comment");
 
                     b.HasIndex("ScoreId");
+
+                    b.HasIndex("ParentCommentId");
 
                     b.HasIndex("UserId");
 
@@ -698,6 +704,48 @@ namespace SNEStorage.Migrations
                     b.HasIndex("VisibilityId");
 
                     b.ToTable("resource", (string)null);
+                });
+
+            modelBuilder.Entity("SNEStorage.Models.ResourceMedia", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Caption")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)")
+                        .HasColumnName("caption");
+
+                    b.Property<long>("FileId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("file_id");
+
+                    b.Property<long?>("PosterFileId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("poster_file_id");
+
+                    b.Property<long>("ResourceId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("resource_id");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int")
+                        .HasColumnName("sort_order");
+
+                    b.HasKey("Id")
+                        .HasName("PK_Resource_Media");
+
+                    b.HasIndex("FileId");
+
+                    b.HasIndex("PosterFileId");
+
+                    b.HasIndex("ResourceId");
+
+                    b.ToTable("resource_media", (string)null);
                 });
 
             modelBuilder.Entity("SNEStorage.Models.ResourceAuthors", b =>
@@ -1253,6 +1301,12 @@ namespace SNEStorage.Migrations
 
             modelBuilder.Entity("SNEStorage.Models.Comment", b =>
                 {
+                    b.HasOne("SNEStorage.Models.Comment", "ParentComment")
+                        .WithMany("Replies")
+                        .HasForeignKey("ParentCommentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("FK_comment_parent_comment");
+
                     b.HasOne("SNEStorage.Models.Score", "Score")
                         .WithMany("Comments")
                         .HasForeignKey("ScoreId")
@@ -1268,6 +1322,8 @@ namespace SNEStorage.Migrations
                         .HasConstraintName("FK_comment_user");
 
                     b.Navigation("Score");
+
+                    b.Navigation("ParentComment");
 
                     b.Navigation("User");
                 });
@@ -1454,6 +1510,35 @@ namespace SNEStorage.Migrations
                     b.Navigation("Videogame");
 
                     b.Navigation("Visibility");
+                });
+
+            modelBuilder.Entity("SNEStorage.Models.ResourceMedia", b =>
+                {
+                    b.HasOne("SNEStorage.Models.File", "File")
+                        .WithMany("PreviewMedia")
+                        .HasForeignKey("FileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_resource_media_file");
+
+                    b.HasOne("SNEStorage.Models.File", "PosterFile")
+                        .WithMany()
+                        .HasForeignKey("PosterFileId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("FK_resource_media_poster_file");
+
+                    b.HasOne("SNEStorage.Models.Resource", "Resource")
+                        .WithMany("PreviewMedia")
+                        .HasForeignKey("ResourceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_resource_media_resource");
+
+                    b.Navigation("File");
+
+                    b.Navigation("PosterFile");
+
+                    b.Navigation("Resource");
                 });
 
             modelBuilder.Entity("SNEStorage.Models.ResourceAuthors", b =>
@@ -1655,12 +1740,16 @@ namespace SNEStorage.Migrations
 
             modelBuilder.Entity("SNEStorage.Models.Comment", b =>
                 {
+                    b.Navigation("Replies");
+
                     b.Navigation("ResourceComments");
                 });
 
             modelBuilder.Entity("SNEStorage.Models.File", b =>
                 {
                     b.Navigation("Resources");
+
+                    b.Navigation("PreviewMedia");
 
                     b.Navigation("UserInfo");
                 });
@@ -1699,6 +1788,8 @@ namespace SNEStorage.Migrations
             modelBuilder.Entity("SNEStorage.Models.Resource", b =>
                 {
                     b.Navigation("ResourceComments");
+
+                    b.Navigation("PreviewMedia");
 
                     b.Navigation("ResourceExternalAuthors");
 

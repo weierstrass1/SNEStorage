@@ -1,0 +1,80 @@
+<article class="comment-thread">
+    <div class="cm">
+        <img src="@($"/User/Avatar/{Comment.UserId}")" alt="" loading="lazy" />
+        <div class="body">
+            <div class="comment-heading">
+                <strong>@(Comment.User?.UserName ?? "Member")</strong>
+                <span class="t">@Comment.PublishDate.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</span>
+            </div>
+            <p class="comment-text">@Comment.Text</p>
+            <div class="act">
+                <button type="button" @onclick="() => VoteAsync(true)" disabled="@(!CanInteract)" aria-label="Like">
+                    ▲ @LikeCount
+                </button>
+                <button type="button" @onclick="() => VoteAsync(false)" disabled="@(!CanInteract)" aria-label="Dislike">
+                    ▼ @DislikeCount
+                </button>
+                @if (CanInteract)
+                {
+                    <button type="button" @onclick="ToggleReply">@(ReplyOpen ? "Cancel" : "Reply")</button>
+                }
+            </div>
+            @if (ReplyOpen)
+            {
+                <form class="reply-form" @onsubmit="SubmitReplyAsync" @onsubmit:preventDefault>
+                    <label for="reply-@Comment.Id">Your reply</label>
+                    <textarea id="reply-@Comment.Id" @bind="ReplyText" maxlength="2000" required></textarea>
+                    <button class="btn sm" type="submit" disabled="@string.IsNullOrWhiteSpace(ReplyText)">Send reply</button>
+                </form>
+            }
+        </div>
+    </div>
+    @if (Replies.Count > 0)
+    {
+        <div class="rep">
+            @foreach (var reply in Replies)
+            {
+                <CommentThread @key="reply.Id"
+                               Comment="reply"
+                               AllComments="AllComments"
+                               CanInteract="CanInteract"
+                               OnVote="OnVote"
+                               OnReply="OnReply" />
+            }
+        </div>
+    }
+</article>
+
+@code {
+    [Parameter, EditorRequired] public SNEStorage.Models.Comment Comment { get; set; } = default!;
+    [Parameter, EditorRequired] public IReadOnlyList<SNEStorage.Models.Comment> AllComments { get; set; } = [];
+    [Parameter] public bool CanInteract { get; set; }
+    [Parameter] public EventCallback<CommentVoteRequest> OnVote { get; set; }
+    [Parameter] public EventCallback<CommentReplyRequest> OnReply { get; set; }
+
+    private bool ReplyOpen { get; set; }
+    private string ReplyText { get; set; } = string.Empty;
+    private IReadOnlyList<SNEStorage.Models.Comment> Replies => AllComments
+        .Where(item => item.ParentCommentId == Comment.Id)
+        .OrderBy(item => item.PublishDate)
+        .ToList();
+    private int LikeCount => Comment.Score?.LikesUsers.Count(item => item.Value) ?? 0;
+    private int DislikeCount => Comment.Score?.LikesUsers.Count(item => !item.Value) ?? 0;
+
+    private Task VoteAsync(bool isLike) => Comment.Score is null
+        ? Task.CompletedTask
+        : OnVote.InvokeAsync(new CommentVoteRequest(Comment.Score.Id, isLike));
+
+    private void ToggleReply() => ReplyOpen = !ReplyOpen;
+
+    private async Task SubmitReplyAsync()
+    {
+        var text = ReplyText.Trim();
+        if (text.Length == 0)
+            return;
+
+        await OnReply.InvokeAsync(new CommentReplyRequest(Comment.Id, text));
+        ReplyText = string.Empty;
+        ReplyOpen = false;
+    }
+}

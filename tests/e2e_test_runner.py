@@ -6,9 +6,9 @@ Requirement-Driven Multi-Tier Test Suite for SNEStorage Frontend Redesign
 
 Tiers:
   - Tier 1: Feature Coverage (dotnet build verification, dotnet run startup verification, HTTP GET `/` and `/Resource`)
-  - Tier 2: Boundary & Corner Cases (strict audit of all .cshtml files ensuring ZERO Bootstrap classes exist)
-  - Tier 3: Cross-Feature Combinations (verifying logo_final.png tag on homepage, CRT overlay class existence)
-  - Tier 4: Real-World Scenarios (verifying responsive retro table rendering and SA-1 badges)
+  - Tier 2: Boundary & Corner Cases (audit Blazor components for Bootstrap classes)
+  - Tier 3: Cross-Feature Combinations (homepage logo and scanline treatment)
+  - Tier 4: Real-World Scenarios (resource table and authenticated upload form)
 
 Usage:
   python tests/e2e_test_runner.py
@@ -28,7 +28,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PROJECT_DIR = REPO_ROOT / "SNEStorage"
 CSPROJ_PATH = PROJECT_DIR / "SNEStorage.csproj"
-VIEWS_DIR = PROJECT_DIR / "Views"
+COMPONENTS_DIR = PROJECT_DIR / "Components"
 WWWROOT_DIR = PROJECT_DIR / "wwwroot"
 SITE_CSS_PATH = WWWROOT_DIR / "css" / "site.css"
 LOGO_IMG_PATH = WWWROOT_DIR / "images" / "logo_final.png"
@@ -65,10 +65,10 @@ class E2ETestRunner:
         # Tier 2: Boundary & Corner Cases (Bootstrap Class Purge Audit)
         self.run_tier_2()
         
-        # Tier 3: Cross-Feature Combinations (Logo & CRT Overlay)
+        # Tier 3: Cross-Feature Combinations (Logo & Scanline Effect)
         self.run_tier_3()
         
-        # Tier 4: Real-World Scenarios (Retro Tables & SA-1 Badges)
+        # Tier 4: Real-World Scenarios (Resource Table & Upload Form)
         self.run_tier_4()
 
         total_duration = time.time() - start_time
@@ -167,15 +167,15 @@ class E2ETestRunner:
         self._record_result(res_startup)
 
     # -------------------------------------------------------------------------
-    # TIER 2: Boundary & Corner Cases (Strict Audit of all .cshtml files)
+    # TIER 2: Boundary & Corner Cases (Strict Audit of Blazor components)
     # -------------------------------------------------------------------------
     def run_tier_2(self):
-        print("\n--- TIER 2: Boundary & Corner Cases (Strict Bootstrap Class Audit) ---")
+        print("\n--- TIER 2: Boundary & Corner Cases (Blazor Bootstrap Class Audit) ---")
         
         res_audit = TestResult(
             "Tier 2", 
             "StrictBootstrapPurgeAudit", 
-            "Audit all .cshtml Razor views to ensure ZERO Bootstrap classes (col-md-, btn-primary, container, etc.) exist"
+            "Audit all Blazor components to ensure ZERO Bootstrap classes exist"
         )
         t0 = time.time()
 
@@ -199,9 +199,9 @@ class E2ETestRunner:
         compiled_regexes = [re.compile(p, re.IGNORECASE) for p in bootstrap_patterns]
         
         violations = []
-        cshtml_files = list(VIEWS_DIR.glob("**/*.cshtml"))
+        component_files = list(COMPONENTS_DIR.glob("**/*.razor"))
         
-        for file_path in cshtml_files:
+        for file_path in component_files:
             rel_path = file_path.relative_to(REPO_ROOT)
             content = file_path.read_text(encoding='utf-8')
             lines = content.splitlines()
@@ -219,37 +219,36 @@ class E2ETestRunner:
 
         res_audit.duration_ms = (time.time() - t0) * 1000
 
-        if not cshtml_files:
+        if not component_files:
             res_audit.passed = False
-            res_audit.details = "No .cshtml files found in Views directory!"
+            res_audit.details = "No Blazor .razor components found!"
         elif not violations:
             res_audit.passed = True
-            res_audit.details = f"Audited {len(cshtml_files)} .cshtml files. ZERO Bootstrap classes or framework artifacts found!"
+            res_audit.details = f"Audited {len(component_files)} Blazor components. ZERO Bootstrap classes or framework artifacts found!"
         else:
             res_audit.passed = False
-            res_audit.details = f"Found {len(violations)} Bootstrap violation(s) in .cshtml files:\n" + "\n".join(violations[:15])
+            res_audit.details = f"Found {len(violations)} Bootstrap violation(s) in Blazor components:\n" + "\n".join(violations[:15])
 
         self._record_result(res_audit)
 
     # -------------------------------------------------------------------------
-    # TIER 3: Cross-Feature Combinations (Logo Integration & CRT Overlay)
+    # TIER 3: Cross-Feature Combinations (Logo & Scanline Treatment)
     # -------------------------------------------------------------------------
     def run_tier_3(self):
-        print("\n--- TIER 3: Cross-Feature Combinations (Logo Centerpiece & CRT Overlay) ---")
+        print("\n--- TIER 3: Cross-Feature Combinations (Logo & Scanline Treatment) ---")
         
         # Test 3.1: Logo Final Integration
         res_logo = TestResult(
             "Tier 3", 
             "HomepageLogoIntegration", 
-            "Verify logo_final.png centerpiece tag exists on homepage and asset file exists"
+            "Verify logo_final.png appears in the Blazor homepage and the asset exists"
         )
         t0 = time.time()
         
         logo_file_exists = LOGO_IMG_PATH.exists() and LOGO_IMG_PATH.stat().st_size > 0
-        layout_content = (VIEWS_DIR / "Shared" / "_Layout.cshtml").read_text(encoding='utf-8')
+        homepage_component = (COMPONENTS_DIR / "Pages" / "Home.razor").read_text(encoding='utf-8')
         
-        logo_tag_in_layout = ('<img src="~/images/logo_final.png"' in layout_content or 
-                              'logo_final.png' in layout_content)
+        logo_tag_in_layout = 'logo_final.png' in homepage_component
         
         homepage_live_has_logo = False
         if hasattr(self, 'fetched_homepage') and self.fetched_homepage:
@@ -261,7 +260,7 @@ class E2ETestRunner:
             res_logo.passed = True
             res_logo.details = (
                 f"logo_final.png exists ({LOGO_IMG_PATH.stat().st_size} bytes). "
-                f"Tag present in _Layout.cshtml. "
+                f"Tag present in Home.razor. "
                 f"Live HTML rendered tag: {homepage_live_has_logo}."
             )
         else:
@@ -272,43 +271,43 @@ class E2ETestRunner:
             )
         self._record_result(res_logo)
 
-        # Test 3.2: CRT Overlay Class & Styling
+        # Test 3.2: Scanline treatment and styling
         res_crt = TestResult(
-            "Tier 3", 
-            "CRTOverlayVisualEffect", 
-            "Verify CRT overlay class snes-crt-overlay exists in layout, CSS, and rendered markup"
+            "Tier 3",
+            "HomepageScanlineTreatment",
+            "Verify the homepage scanline treatment is present in markup and CSS"
         )
         t0 = time.time()
 
-        layout_has_crt = "snes-crt-overlay" in layout_content or "crt-overlay" in layout_content
+        layout_has_crt = "snes-scanline" in homepage_component
         site_css_content = SITE_CSS_PATH.read_text(encoding='utf-8') if SITE_CSS_PATH.exists() else ""
-        css_has_crt = ".snes-crt-overlay" in site_css_content or ".crt-overlay" in site_css_content
+        css_has_crt = ".snes-scanline" in site_css_content
         
         res_crt.duration_ms = (time.time() - t0) * 1000
         
         if layout_has_crt and css_has_crt:
             res_crt.passed = True
-            res_crt.details = "CRT overlay class snes-crt-overlay is present in _Layout.cshtml and defined with scanline/flicker animations in site.css."
+            res_crt.details = "The scanline element is present in Home.razor and styled in site.css."
         else:
             res_crt.passed = False
-            res_crt.details = f"CRT Overlay checks failed: Layout has class={layout_has_crt}, CSS defines class={css_has_crt}"
+            res_crt.details = f"Scanline checks failed: homepage markup={layout_has_crt}, CSS rule={css_has_crt}"
         self._record_result(res_crt)
 
     # -------------------------------------------------------------------------
     # TIER 4: Real-World Scenarios (Retro Tables & SA-1 Badges)
     # -------------------------------------------------------------------------
     def run_tier_4(self):
-        print("\n--- TIER 4: Real-World Scenarios (Responsive Retro Table & SA-1 Badges) ---")
+        print("\n--- TIER 4: Real-World Scenarios (Resource Table & Upload Form) ---")
         
         # Test 4.1: Responsive Retro Table Rendering
         res_table = TestResult(
             "Tier 4", 
             "ResponsiveRetroTableRendering", 
-            "Verify responsive retro table structure snes-table & snes-table-wrapper in Resource/Index.cshtml and CSS"
+            "Verify responsive resource table markup and styling in Blazor"
         )
         t0 = time.time()
 
-        resource_view_path = VIEWS_DIR / "Resource" / "Index.cshtml"
+        resource_view_path = COMPONENTS_DIR / "Pages" / "Resources.razor"
         resource_view_content = resource_view_path.read_text(encoding='utf-8') if resource_view_path.exists() else ""
         
         view_has_table = "snes-table" in resource_view_content and "snes-table-wrapper" in resource_view_content
@@ -319,32 +318,33 @@ class E2ETestRunner:
         
         if view_has_table and css_has_table:
             res_table.passed = True
-            res_table.details = "Retro table markup (snes-table, snes-table-wrapper) found in Resource/Index.cshtml and styled in site.css."
+            res_table.details = "Responsive table markup is present in Resources.razor and styled in site.css."
         else:
             res_table.passed = False
-            res_table.details = f"Retro table check failed: View markup={view_has_table}, CSS rules={css_has_table}"
+            res_table.details = f"Resource table check failed: component markup={view_has_table}, CSS rules={css_has_table}"
         self._record_result(res_table)
 
-        # Test 4.2: SA-1 Badges & Compatibility Indicators
-        res_sa1 = TestResult(
+        # Test 4.2: Authenticated resource upload
+        res_upload = TestResult(
             "Tier 4", 
-            "SA1BadgeCompatibilityIndicators", 
-            "Verify SA-1 badges and status flags (snes-badge, snes-cell-sa1, snes-text-success/danger) in Resource view and CSS"
+            "AuthenticatedResourceUploadForm",
+            "Verify resource upload is an authorized Blazor page with a file input"
         )
         t0 = time.time()
 
-        view_has_sa1 = "snes-badge" in resource_view_content and ("RequiresSA1" in resource_view_content or "snes-cell-sa1" in resource_view_content)
-        css_has_sa1 = ".snes-badge" in site_css_content and (".snes-text-success" in site_css_content or ".snes-status-flag" in site_css_content)
+        upload_path = COMPONENTS_DIR / "Pages" / "UploadResource.razor"
+        upload_content = upload_path.read_text(encoding='utf-8') if upload_path.exists() else ""
+        upload_is_protected = "@attribute [Authorize]" in upload_content
+        upload_has_file_input = "<InputFile" in upload_content
+        res_upload.duration_ms = (time.time() - t0) * 1000
         
-        res_sa1.duration_ms = (time.time() - t0) * 1000
-        
-        if view_has_sa1 and css_has_sa1:
-            res_sa1.passed = True
-            res_sa1.details = "SA-1 badges & compatibility flags (snes-badge, RequiresSA1 logic, status flags) verified in Resource view & site.css."
+        if upload_is_protected and upload_has_file_input:
+            res_upload.passed = True
+            res_upload.details = "UploadResource.razor requires authorization and renders a file input."
         else:
-            res_sa1.passed = False
-            res_sa1.details = f"SA-1 badge check failed: View logic={view_has_sa1}, CSS styles={css_has_sa1}"
-        self._record_result(res_sa1)
+            res_upload.passed = False
+            res_upload.details = f"Upload form check failed: authorized={upload_is_protected}, file input={upload_has_file_input}"
+        self._record_result(res_upload)
 
     # -------------------------------------------------------------------------
     # Helper & Summary Methods

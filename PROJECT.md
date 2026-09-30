@@ -1,37 +1,41 @@
-# Project: SNEStorage Frontend Redesign
+# SNEStorage
 
 ## Architecture
-- Target Application: ASP.NET Core MVC (`SNEStorage`)
-- Core Framework: .NET 8.0 / C# Controllers + CSHTML Razor Views
-- UI Styling: 100% Pure Vanilla CSS (No Bootstrap, no external CSS frameworks)
-- Visual Style: Retro 90s SNES-style aesthetic (CRT scanlines, custom animations, retro color palette, custom typography/styling, `snes-*` class namespace)
-- Key Assets: `logo_final.png` centerpiece on homepage
 
-## Code Layout
-- Web App Root: `c:\Users\Vivian\Desktop\SNEStorage-main\SNEStorage`
-- Controllers: `SNEStorage/Controllers/` (100% untouched)
-- Views: `SNEStorage/Views/` (`_ViewStart.cshtml`, `_ViewImports.cshtml`, `Shared/_Layout.cshtml`, `Shared/Error.cshtml`, `Home/Index.cshtml`, `Resource/Index.cshtml`)
-- Static Web Assets: `SNEStorage/wwwroot/` (`css/site.css`, `images/logo_final.png`)
+- ASP.NET Core 10 web application with a Blazor Web App using Interactive Server rendering.
+- ASP.NET Core Identity cookies serve browser sign-in; JWT endpoints remain for the API.
+- `SnestorageContext` is currently configured with EF Core InMemory. Lookup catalogs are seeded when the app starts in this mode.
+- Uploaded files and generated video posters are stored under `SNEStorage/App_Data/files`, outside `wwwroot`.
+- The visual system follows the supplied neon and 16-bit landing mockup, with project-owned CSS and image assets.
 
-## Milestones
-| # | Name | Scope | Dependencies | Status |
-|---|------|-------|-------------|--------|
-| 1 | Exploration & Codebase Analysis | Analyze views, controllers, assets, build setup, logo placement | none | DONE |
-| 2 | E2E Testing Track (Test Suite & Infra) | Create requirement-driven test suite & publish `TEST_READY.md` | M1 | DONE |
-| 3 | Vanilla CSS Engine & Razor Views Rebuild | Apply pure Vanilla CSS styling (`snes-*`), rebuild all Razor views, integrate `logo_final.png`, purge Bootstrap | M1 | DONE |
-| 4 | Verification, Adversarial Hardening & Audit | Verification by Reviewers, Challengers, and Forensic Auditor | M2, M3 | DONE |
+## Browser pages
 
-## Interface Contracts
-### Controller ↔ View Contracts
-- `ViewData["Title"]`: String title for layout template.
-- `ViewData["ShowHero"]`: Boolean flag for homepage logo hero centerpiece.
-- Models: `IEnumerable<SNEStorage.Models.Resource>` for Resource view; `ErrorViewModel` for Error view.
-- Controller C# code remains 100% untouched.
+- `/`: landing page and five newest resources that the current visitor may list.
+- `/Resource`: searchable, filterable, sortable, paginated resource catalog. Ordinary visitors see public resources; moderators and admins can list all visibility levels.
+- `/Resource/{id}`: detail page, preview carousel, download, tags, authors, ratings, comments and nested replies.
+- `/Resources/Create`: authenticated resource submission with visibility, tags, authors, content warnings and media previews. Any signed-in member can submit; the uploader is stored separately from resource authors.
+- `/Login`, `/Register`, `/Profile`, `/Profile/Edit`, `/Rules`, `/Error/{code}`: account, profile, rules and error pages.
+- Private resources are visible only to their submitter, registered authors, moderators and admins. Unlisted resources stay out of catalogs and can be opened through their direct link.
+- Browser video uses the native HTML5 player. It does not autoplay or preload the video; a poster is generated from the first frame when the uploader selects the video.
 
-## Acceptance Criteria Checklist
-- [x] `dotnet build` completes with 0 errors.
-- [x] `dotnet run` starts and runs application without crashing (200 OK on `/` and `/Resource`).
-- [x] No Bootstrap or external CSS framework classes exist in any `.cshtml` file (`col-md-6`, `btn-primary`, `container`, etc. absent).
-- [x] `logo_final.png` is displayed prominently on the homepage as centerpiece.
-- [x] Final UI strongly reflects a polished retro 90s SNES aesthetic.
-- [x] Forensic Auditor verdict is CLEAN.
+## Editable site copy
+
+Edit these UTF-8 text files and restart the app to update the corresponding copy:
+
+- `SNEStorage/Content/landing.txt`
+- `SNEStorage/Content/rules.txt`
+- `SNEStorage/Content/disclaimer.txt`
+
+The compact and full brand images are in `SNEStorage/wwwroot/images/logo-box.png` and `logo-full.png`.
+
+## Data and file storage
+
+- `CatalogInitializer` seeds visibility, file type, timezone, game and resource type lookups only for the current InMemory provider.
+- The InMemory provider loses users, resources, ratings and comments when the process stops. SQL Server is not configured as the active provider yet.
+- Migration `20260930120000_ResourceMediaAndCommentReplies` adds the resource preview gallery and comment reply relationship for `SnestorageContext`.
+- Download and preview endpoints check the resource visibility before serving private files. `/api/file` requires an authenticated JWT.
+
+## Verification status
+
+- `dotnet build SNEStorage.sln --no-restore --verbosity quiet -clp:ErrorsOnly` succeeds with 0 errors and 24 existing nullable-reference warnings.
+- The E2E runner has not been run against these views. See `TEST_READY.md`.

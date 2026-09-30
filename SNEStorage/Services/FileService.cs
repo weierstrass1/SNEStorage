@@ -1,80 +1,54 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SNEStorage.DTOs;
 using SNEStorage.Models;
 
 namespace SNEStorage.Services;
 
-public class FileService
+public class FileService(SnestorageContext context, IWebHostEnvironment environment)
 {
-    public SnestorageContext Context { get; }
-    public IWebHostEnvironment Environment { get; }
+    private string StorageRoot => Path.Combine(environment.ContentRootPath, "App_Data", "files");
 
-    public FileService(SnestorageContext context,
-        IWebHostEnvironment environment)
-    {
-        Context = context;
-        Environment = environment;
-    }
     public async Task<ActionResult<FileResponse>?> Create(IFormFile fileRequest, string destinationPath)
     {
-        string filetype = fileRequest.ContentType;
+        var file = await CreateAsync(fileRequest, destinationPath, CancellationToken.None);
+        return file is null ? null : new ActionResult<FileResponse>(file);
+    }
 
-        FileType? type = await Context.FileTypes
-            .FirstOrDefaultAsync(f => f.Value.Contains(filetype));
-        if (type == null)
+    public async Task<FileResponse?> CreateAsync(
+        IFormFile fileRequest,
+        string relativeDestinationPath,
+        CancellationToken cancellationToken)
+    {
+        if (fileRequest.Length <= 0)
             return null;
-        string path = Path.Combine(Environment.WebRootPath, destinationPath);
 
-        using (FileStream stream = System.IO.File.Create(path))
+        var contentType = string.IsNullOrWhiteSpace(fileRequest.ContentType)
+            ? "application/octet-stream"
+            : fileRequest.ContentType;
+
+        var type = await context.FileTypes
+            .FirstOrDefaultAsync(item => item.Value.Contains(contentType), cancellationToken);
+        if (type is null)
         {
-            await fileRequest.CopyToAsync(stream);
+            type = new FileType { Name = contentType, Value = contentType };
+            context.FileTypes.Add(type);
+            await context.SaveChangesAsync(cancellationToken);
         }
 
-        Models.File file = new()
+        var absolutePath = ResolveStoragePath(relativeDestinationPath);
+        Directory.CreateDirectory(Path.GetDirectoryName(absolutePath)!);
+        await using (var stream = System.IO.File.Create(absolutePath))
+            await fileRequest.CopyToAsync(stream, cancellationToken);
+
+        var file = new Models.File
         {
-            URL = destinationPath,
+            URL = NormalizeRelativePath(relativeDestinationPath),
             FileTypeId = type.Id
         };
 
-        Context.Add(file);
-        Context.SaveChanges();
-
-        FileResponse result = new()
-        {
-            Id = file.Id,
-            URL = file.URL,
-            FileTypeId = file.FileTypeId
-        };
-        return result;
-    }
-    public async Task<FileResponse?> CreateAsync(IFormFile fileRequest, string relativeDestinationPath, CancellationToken ct)
-    {
-        // Resolver tipo por ContentType
-        var filetype = fileRequest.ContentType;
-        var type = await Context.FileTypes
-            .FirstOrDefaultAsync(f => EF.Functions.Like(f.Value, $"%{filetype}%"), ct);
-        if (type is null) return null;
-
-        // Asegurar carpeta y guardar físico en wwwroot
-        var absolutePath = Path.Combine(Environment.WebRootPath, relativeDestinationPath);
-        Directory.CreateDirectory(Path.GetDirectoryName(absolutePath)!);
-        await using (var stream = System.IO.File.Create(absolutePath))
-            await fileRequest.CopyToAsync(stream, ct);
-
-        // Insert en [file]
-        var file = new Models.File
-        {
-            URL = relativeDestinationPath.Replace('\\', '/'),
-            FileTypeId = type.Id,
-            // Si tu tabla [file] tiene estas columnas, mapéalas:
-            // Name = Path.GetFileName(fileRequest.FileName),
-            // Size = fileRequest.Length,
-            // CreatedAt = DateTime.UtcNow
-        };
-
-        Context.Files.Add(file);
-        await Context.SaveChangesAsync(ct);
+        context.Files.Add(file);
+        await context.SaveChangesAsync(cancellationToken);
 
         return new FileResponse
         {
@@ -82,5 +56,29 @@ public class FileService
             URL = file.URL,
             FileTypeId = file.FileTypeId
         };
+    }
+
+    public string ResolveStoragePath(string relativePath)
+    {
+        var normalized = NormalizeRelativePath(relativePath);
+        var root = Path.GetFullPath(StorageRoot);
+        var fullPath = Path.GetFullPath(Path.Combine(root, normalized.Replace('/', Path.DirectorySeparatorChar)));
+        var rootPrefix = root.EndsWith(Path.DirectorySeparatorChar)
+            ? root
+            : root + Path.DirectorySeparatorChar;
+
+        if (!fullPath.StartsWith(rootPrefix, StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("The requested file path is outside the storage directory.");
+
+        return fullPath;
+    }
+
+    private static string NormalizeRelativePath(string path)
+    {
+        var normalized = path.Replace('\\', '/').TrimStart('/');
+        if (string.IsNullOrWhiteSpace(normalized) || normalized.Split('/').Any(segment => segment is "" or "." or ".."))
+            throw new InvalidOperationException("The file path is invalid.");
+
+        return normalized;
     }
 }
