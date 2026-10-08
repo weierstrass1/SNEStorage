@@ -1,0 +1,12 @@
+<div class="quality-request">
+    <div class="quality-request-copy">
+        <label class="quality-check">
+            <InputCheckbox name="SealOfQualityRequested" Value="Value" ValueChanged="ValueChanged" ValueExpression="() => Value" aria-describedby="@DescriptionId" />
+            <strong>Request the Seal of Quality</strong>
+        </label>
+        <p id="@DescriptionId" class="quality-description">@Description</p>
+    </div>
+    <div class="quality-request-seal">
+        <ResourceQualitySeal Size="72" Title="@Description" />
+    </div>
+</div>

@@ -1,0 +1,5 @@
+@page "/Resource/{ResourceId:long}/Edit"
+@using SNEStorage.Components.Resources
+
+<PageTitle>Edit resource | SNEStorage</PageTitle>
+<ResourceEditor @key="ResourceId" ResourceId="ResourceId" Mode="ResourceEditorMode.Resource" />

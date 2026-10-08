@@ -1,0 +1,25 @@
+<div class="existing-previews">
+    <h3>Existing previews</h3>
+    <p class="preview-help">Remove previews or undo removals before saving. @Values.Length existing previews will be kept.</p>
+    @if (Previews.Count == 0)
+    {
+        <p class="preview-help">This resource has no existing previews.</p>
+    }
+    else
+    {
+        <div class="existing-carousel">
+            <ResourceMediaCarousel ResourceId="ResourceId" ResourceName="@ResourceName" Previews="KeptPreviews" LoadMedia="LoadMedia" />
+        </div>
+        <ul class="existing-preview-list">
+            @foreach (var preview in Previews)
+            {
+                var kept = Values.Contains(preview.Id);
+                <li @key="preview.Id" class="@(!kept ? "pending-removal" : null)">
+                    @if (kept) { <input type="hidden" name="KeptPreviewIDs" value="@preview.Id" /> }
+                    <span><strong>@FileName(preview)</strong>@if (!kept) { <small>Will be removed when you save</small> }</span>
+                    <button type="button" @onclick="() => ToggleAsync(preview.Id)" aria-label="@($"{(kept ? "Remove" : "Keep")} {FileName(preview)}")">@(kept ? "Remove" : "Undo")</button>
+                </li>
+            }
+        </ul>
+    }
+</div>

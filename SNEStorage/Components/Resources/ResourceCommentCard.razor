@@ -1,0 +1,117 @@
+<article class="resource-comment" id="@($"comment-{Comment.Id}")" data-comment-id="@Comment.Id" tabindex="-1">
+    <header>
+        <img class="comment-avatar" src="@AvatarUrl" alt="" width="40" height="40" loading="lazy" />
+        <div class="comment-author">
+            @if (JustPosted)
+            {
+                <span class="comment-just-posted">Just posted</span>
+            }
+            @if (ProfileUrl is { } profileUrl)
+            {
+                <NavLink href="@profileUrl" style="@($"color: {UsernameColor}")">@Username</NavLink>
+            }
+            else
+            {
+                <strong style="@($"color: {UsernameColor}")">@Username</strong>
+            }
+            <div class="comment-dates">
+                <span>Published <time datetime="@Comment.PublishDate.ToString("O")">@FormatDate(Comment.PublishDate)</time></span>
+                @if (Comment.UpdatedAt is { } updated)
+                {
+                    <span>Edited <time datetime="@updated.ToString("O")">@FormatDate(updated)</time></span>
+                }
+            </div>
+        </div>
+    </header>
+    @if (Comment.Deleted)
+    {
+        <p class="comment-deleted">This comment has been deleted.</p>
+    }
+    else
+    {
+        <p class="comment-text">@Comment.Text</p>
+        @if (Likes + Dislikes > 0)
+        {
+            <p class="comment-votes" aria-live="polite">
+                <span>@Likes @(Likes == 1 ? "like" : "likes")</span>
+                <span>@Dislikes @(Dislikes == 1 ? "dislike" : "dislikes")</span>
+                <span class="comment-approval" title="Likes as a percentage of all votes">@Approval% approval</span>
+            </p>
+        }
+    }
+    <div class="comment-actions">
+        @if (CanVote)
+        {
+            <button type="button" class="comment-vote-button @(MyVote == true ? "is-liked" : "")"
+                    @onclick="LikeAsync" disabled="@Saving" aria-pressed="@(MyVote == true ? "true" : "false")"
+                    aria-label="@(MyVote == true ? "Remove your like" : "Like this comment")"
+                    title="@(MyVote == true ? "Remove your like" : "Like this comment")">
+                <span aria-hidden="true">👍</span> Like
+            </button>
+            <button type="button" class="comment-vote-button @(MyVote == false ? "is-disliked" : "")"
+                    @onclick="DislikeAsync" disabled="@Saving" aria-pressed="@(MyVote == false ? "true" : "false")"
+                    aria-label="@(MyVote == false ? "Remove your dislike" : "Dislike this comment")"
+                    title="@(MyVote == false ? "Remove your dislike" : "Dislike this comment")">
+                <span aria-hidden="true">👎</span> Dislike
+            </button>
+        }
+        @if (HasReplies)
+        {
+            <button type="button" @onclick="ToggleReplies" aria-expanded="@(_showReplies ? "true" : "false")">@(_showReplies ? "Hide replies" : "Show replies")</button>
+        }
+        @if (CanReply)
+        {
+            <button type="button" class="comment-reply-button" @onclick="BeginReply" disabled="@Saving"
+                    aria-expanded="@(_replying ? "true" : "false")" aria-controls="@($"reply-form-{Comment.Id}")">Reply</button>
+        }
+        @if (CanManage)
+        {
+            <button type="button" @onclick="BeginEdit" disabled="@Saving">Edit</button>
+            <button type="button" @onclick="BeginDelete" disabled="@Saving">Delete</button>
+        }
+    </div>
+    @if (_replying && CanReply)
+    {
+        <EditForm id="@($"reply-form-{Comment.Id}")" Model="_reply" OnSubmit="ReplyAsync" class="comment-editor" aria-busy="@Saving">
+            <label for="@($"reply-{Comment.Id}")">Reply to @Username</label>
+            <InputTextArea id="@($"reply-{Comment.Id}")" @bind-Value="_reply.Text" @oninput="ReplyChanged" rows="3" disabled="@Saving" />
+            <div class="comment-actions">
+                <button type="submit" disabled="@(Saving || string.IsNullOrWhiteSpace(_reply.Text))">@(Saving ? "Posting…" : "Post reply")</button>
+                <button type="button" @onclick="CloseEditor" disabled="@Saving">Cancel</button>
+            </div>
+        </EditForm>
+    }
+    @if (_editing && CanManage)
+    {
+        <EditForm Model="_edit" OnSubmit="EditAsync" class="comment-editor" aria-busy="@Saving">
+            <label for="@($"edit-comment-{Comment.Id}")">Edit comment</label>
+            <InputTextArea id="@($"edit-comment-{Comment.Id}")" @bind-Value="_edit.Text" @oninput="EditChanged" rows="3" disabled="@Saving" />
+            <div class="comment-actions">
+                <button type="submit" disabled="@(Saving || string.IsNullOrWhiteSpace(_edit.Text))">Save changes</button>
+                <button type="button" @onclick="CloseEditor" disabled="@Saving">Cancel</button>
+            </div>
+        </EditForm>
+    }
+    @if (_confirmDelete && CanManage)
+    {
+        <div class="comment-delete-confirmation">
+            <p>Delete this comment? Existing replies will be preserved.</p>
+            <div class="comment-actions">
+                <button type="button" @onclick="DeleteAsync" disabled="@Saving">Delete comment</button>
+                <button type="button" @onclick="CloseEditor" disabled="@Saving">Cancel</button>
+            </div>
+        </div>
+    }
+    @if (!string.IsNullOrWhiteSpace(Message))
+    {
+        <p class="comment-message" role="status">@Message</p>
+    }
+    @if (_showReplies)
+    {
+        <div class="comment-replies" aria-label="Replies">
+            <ResourceCommentList @key="Comment.Id" ResourceId="ResourceId" ParentCommentId="Comment.Id"
+                                 IsAuthenticated="IsAuthenticated" CurrentUserId="@CurrentUserId" CanModerate="CanModerate"
+                                 Revision="ReplyRevision" PublishedComment="_publishedReply" Ancestors="@NextAncestors" OnEmpty="RepliesEmpty" />
+        </div>
+    }
+</article>

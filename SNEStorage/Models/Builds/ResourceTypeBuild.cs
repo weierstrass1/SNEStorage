@@ -16,7 +16,14 @@ public partial class ResourceType
             .ValueGeneratedOnAdd();
 
         entity.Property(e => e.Name)
-            .HasColumnType("text")
+            .HasColumnType("nvarchar(max)")
             .HasColumnName("name");
+
+        entity.Property(p => p.CategoryId).HasColumnName("category_id");
+        entity.HasOne(d => d.Category)
+            .WithMany(p => p.Types)
+            .HasForeignKey(d => d.CategoryId)
+            .OnDelete(DeleteBehavior.Cascade)
+            .HasConstraintName("FK_resource_type_category");
     }
 }

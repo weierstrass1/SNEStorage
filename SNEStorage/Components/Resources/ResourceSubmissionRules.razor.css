@@ -1,0 +1,6 @@
+.submission-rules { margin-bottom: 1.25rem; border: 1px solid #7553a8; border-radius: 5px; background: rgba(27, 15, 48, .92); }
+.submission-rules summary { padding: .95rem 1.1rem; color: #ffe14d; font-size: .93rem; font-weight: 700; cursor: pointer; }
+.submission-rules summary span { margin-left: .75rem; color: #baa9d3; font-size: .82rem; font-weight: 400; }
+.submission-rules summary:focus-visible { outline: 2px solid #ffe14d; outline-offset: 3px; }
+.submission-rules ul { display: grid; gap: .6rem; margin: 0; padding: .25rem 1.35rem 1.2rem 2.4rem; color: #d1c4e6; font-size: .9rem; line-height: 1.6; }
+@media (max-width: 575.98px) { .submission-rules summary span { display: block; margin: .25rem 0 0 1rem; } }

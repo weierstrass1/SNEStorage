@@ -1,0 +1,4 @@
+.version-review-status { display: flex; flex-wrap: wrap; gap: .35rem; margin: .4rem 0; }
+.version-status { padding: .25rem .5rem; border: 1px solid #685077; border-radius: 4px; color: #c7b2db; background: #24172f; font-size: .72rem; }
+.version-status-reviewed { border-color: #468774; color: #b4ebd7; background: #142c27; }
+.version-status-quality { display: inline-flex; align-items: center; gap: .35rem; border-color: #a48b3d; color: #ffe483; background: #302619; }

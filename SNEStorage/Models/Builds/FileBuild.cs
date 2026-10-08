@@ -15,7 +15,7 @@ public partial class File
             .ValueGeneratedOnAdd();
 
         entity.Property(e => e.URL)
-            .HasColumnType("text")
+            .HasColumnType("nvarchar(max)")
             .HasColumnName("url");
 
         entity.Property(e => e.FileTypeId)

@@ -1,0 +1,13 @@
+.token-editor { display: grid; gap: .65rem; min-width: 0; }
+.token-list { display: flex; flex-wrap: wrap; gap: .45rem; margin: 0; padding: 0; list-style: none; }
+.token { display: inline-flex; max-width: 100%; align-items: center; gap: .4rem; padding: .15rem .25rem .15rem .6rem; border: 1px solid #9861d1; border-radius: 4px; color: #e9d7ff; background: #301748; font-size: .85rem; }
+.token > span { min-width: 0; overflow-wrap: anywhere; }
+.token > button { display: grid; width: 32px; min-height: 32px; flex-shrink: 0; place-items: center; border: 0; border-radius: 3px; color: #ffe14d; background: transparent; font-size: 1.3rem; }
+.token > button:hover { color: #fff; background: #4b246c; }
+.token-entry { display: flex; gap: .45rem; }
+.token-input { width: 100%; min-width: 0; min-height: 46px; padding: .7rem .75rem; border: 1px solid #59408f; border-radius: 4px; color: #f2edff; background: #0a0718; font: inherit; font-size: .92rem; }
+.token-input::placeholder { color: #9286b1; }
+.token-add { min-height: 46px; padding: .5rem .8rem; border: 1px solid #9861d1; border-radius: 4px; color: #e9d7ff; background: #25133e; font: inherit; font-size: .85rem; font-weight: 700; }
+.token-add:hover:not(:disabled) { color: #ffe14d; background: #351951; }
+.token-add:disabled { opacity: .5; cursor: not-allowed; }
+.token-input:focus-visible, .token button:focus-visible, .token-add:focus-visible { outline: 2px solid #ffe14d; outline-offset: 2px; }

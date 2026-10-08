@@ -1,0 +1,34 @@
+@page "/Login"
+
+<PageTitle>Log in | SNEStorage</PageTitle>
+
+<div class="login-page">
+    <section class="login-card" aria-labelledby="login-title">
+        <div class="login-card-heading">
+            <p class="login-section-kicker">ACCESS YOUR ACCOUNT</p>
+            <h2 id="login-title">Log in</h2>
+            <p>Enter your username and password to continue.</p>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(StatusMessage))
+        {
+            <div class="login-status" role="status"><span aria-hidden="true">◆</span> @StatusMessage</div>
+        }
+
+        <form class="login-form" action="/api/login/submit" method="post" data-enhance="false">
+            <AntiforgeryToken />
+            <input type="hidden" name="returnUrl" value="@LoginReturnUrl" />
+            <div class="login-field">
+                <label for="username">Username</label>
+                <input class="login-input" id="username" name="User" type="text" autocomplete="username" placeholder="Your player name" required />
+            </div>
+            <div class="login-field">
+                <label for="password">Password</label>
+                <input class="login-input" id="password" name="Password" type="password" autocomplete="current-password" placeholder="Your password" required />
+            </div>
+            <button class="login-submit" type="submit">Log in <span aria-hidden="true">→</span></button>
+        </form>
+
+        <p class="login-register">New to SNEStorage? <a href="/Register">Create an account</a></p>
+    </section>
+</div>

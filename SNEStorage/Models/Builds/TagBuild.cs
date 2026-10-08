@@ -16,7 +16,7 @@ public partial class Tag
             .ValueGeneratedOnAdd();
 
         entity.Property(e => e.Name)
-            .HasColumnType("text")
+            .HasColumnType("nvarchar(max)")
             .HasColumnName("name");
     }
 }

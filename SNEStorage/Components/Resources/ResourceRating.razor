@@ -1,0 +1,42 @@
+<div class="resource-rating">
+    <div class="rating-summary">
+        <span class="rating-stars" role="img" aria-label="@RatingLabel">
+            <span aria-hidden="true">☆☆☆☆☆</span>
+            <span class="rating-fill" style="width: @FillWidth" aria-hidden="true">★★★★★</span>
+        </span>
+        <strong>@Average.ToString("0.#", DisplayCulture) / 5</strong>
+        <span class="rating-count">@(Votes.Count == 0 ? "Not rated" : $"{Votes.Count.ToString("N0", DisplayCulture)} {(Votes.Count == 1 ? "vote" : "votes")}")</span>
+    </div>
+    @if (IsAuthenticated && !IsOwnResource && !IsPrivate)
+    {
+        <div class="rating-input" role="group" aria-label="Your rating" aria-busy="@Saving">
+            <span>Your rating</span>
+            <div class="rating-choices" @onmouseleave="ClearHover">
+                @for (var value = 1; value <= 5; value++)
+                {
+                    var star = value;
+                    <button type="button" class="rating-choice @(star <= HighlightedValue ? "is-filled" : null)"
+                            disabled="@(!CanSubmit || Saving)" aria-label="@($"Rate {star} {(star == 1 ? "star" : "stars")}")"
+                            aria-pressed="@(SelectedValue == star)" @onmouseenter="() => Hover(star)" @onclick="() => Select(star)">★</button>
+                }
+            </div>
+            <button type="button" class="rating-save" disabled="@(!CanSubmit || Saving || SelectedValue == 0)" @onclick="SaveAsync">@(Saving ? "Saving…" : "Save rating")</button>
+        </div>
+        @if (!CanSubmit)
+        {
+            <p class="rating-message">Saving ratings is currently unavailable.</p>
+        }
+    }
+    @if (IsPrivate)
+    {
+        <p class="rating-message">Private resources cannot be rated.</p>
+    }
+    else if (IsAuthenticated && IsOwnResource)
+    {
+        <p class="rating-message">Authors and submitters cannot rate their own resource.</p>
+    }
+    @if (!string.IsNullOrWhiteSpace(Message))
+    {
+        <p class="rating-message" role="status">@Message</p>
+    }
+</div>

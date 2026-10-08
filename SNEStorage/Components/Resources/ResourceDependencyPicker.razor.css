@@ -1,0 +1,18 @@
+.dependency-picker { display: grid; gap: .65rem; min-width: 0; }
+.dependency-picker label { color: #e1d8f3; font-weight: 700; }
+.dependency-help { margin: 0; color: #baacce; font-size: .85rem; line-height: 1.65; }
+.dependency-picker > input { width: 100%; min-height: 46px; padding: .7rem .85rem; border: 1px solid #59408f; border-radius: 4px; color: #f2edff; background: #0a0718; font: inherit; }
+.dependency-picker > input::placeholder { color: #9286b1; }
+.dependency-list { display: flex; flex-wrap: wrap; gap: .45rem; padding: 0; margin: .2rem 0; list-style: none; }
+.dependency-list li { display: flex; align-items: center; gap: .4rem; max-width: 100%; padding: .15rem .25rem .15rem .6rem; border: 1px solid #9861d1; border-radius: 4px; color: #e9d7ff; background: #301748; font-size: .85rem; }
+.dependency-list span { min-width: 0; overflow-wrap: anywhere; }
+.dependency-list button { width: 32px; min-height: 32px; flex-shrink: 0; border: 0; color: #ffe14d; background: transparent; font-size: 1.3rem; }
+.dependency-results { max-height: 240px; overflow-y: auto; border: 1px solid #59408f; border-radius: 4px; background: #0d091d; }
+.dependency-results button { display: flex; justify-content: space-between; gap: .75rem; width: 100%; min-height: 44px; padding: .65rem .85rem; border: 0; border-bottom: 1px solid #2e1d4b; color: #ded5ef; background: transparent; font: inherit; font-size: .9rem; text-align: left; }
+.dependency-results span:first-child { min-width: 0; overflow-wrap: anywhere; }
+.dependency-results span:last-child { color: #ffe14d; }
+.dependency-results button:hover, .dependency-list button:hover { background: #2b1748; color: #fff; }
+.dependency-error { margin: 0 0 .5rem; color: #ffb1c4; font-size: .85rem; }
+.dependency-retry { min-height: 40px; padding: .5rem .8rem; border: 1px solid #9861d1; border-radius: 4px; color: #e9d7ff; background: #25133e; font: inherit; font-size: .85rem; }
+.dependency-picker button:focus-visible, .dependency-picker > input:focus-visible { outline: 2px solid #ffe14d; outline-offset: 2px; }
+.dependency-results button:focus-visible { outline-offset: -3px; }

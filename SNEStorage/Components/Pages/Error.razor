@@ -1,0 +1,7 @@
+@page "/Error"
+@page "/Home/Error"
+@page "/Error/{StatusCode:int}"
+
+<PageTitle>@ErrorTitle | SNEStorage</PageTitle>
+
+<ErrorPanel StatusCode="EffectiveStatusCode" ErrorBody="@ErrorCode" Domain="@ErrorSource" />

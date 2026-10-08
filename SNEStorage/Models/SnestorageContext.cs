@@ -25,6 +25,8 @@ public partial class SnestorageContext : IdentityDbContext<ApplicationUser>
     public virtual DbSet<MemoryAddressValues> MemoryAddressesValues { get; set; }
     public virtual DbSet<Reason> Reasons { get; set; }
     public virtual DbSet<Resource> Resources { get; set; }
+    public virtual DbSet<ResourceVersion> ResourceVersions { get; set; }
+    public virtual DbSet<ResourceResourceTypes> ResourcesResourceTypes { get; set; }
     public virtual DbSet<ResourceAuthors> ResourcesAuthors { get; set; }
     public virtual DbSet<ResourceComments> ResourcesComments { get; set; }
     public virtual DbSet<ResourceExternalAuthor> ResourcesExternalAuthors { get; set; }
@@ -41,6 +43,11 @@ public partial class SnestorageContext : IdentityDbContext<ApplicationUser>
     public virtual DbSet<UserInfo> UserInfos { get; set; }
     public virtual DbSet<Videogame> Videogames { get; set; }
     public virtual DbSet<Visibility> Visibilities { get; set; }
+    public virtual DbSet<ResourcePreview> ResourcePreviews { get; set; }
+    public virtual DbSet<ResourceDependency> ResourceDependencies { get; set; }
+    public virtual DbSet<ResourceExternalDependency> ResourceExternalDependencies { get; set; }
+    public virtual DbSet<ResourceCategory> ResourceCategories { get; set; }
+    public virtual DbSet<CommentComment> CommentComments { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -74,6 +81,13 @@ public partial class SnestorageContext : IdentityDbContext<ApplicationUser>
         modelBuilder.Entity<TimeZone>(TimeZone.Build);
         modelBuilder.Entity<Videogame>(Videogame.Build);
         modelBuilder.Entity<Visibility>(Visibility.Build);
+        modelBuilder.Entity<ResourceVersion>(ResourceVersion.Build);
+        modelBuilder.Entity<ResourceResourceTypes>(ResourceResourceTypes.Build);
+        modelBuilder.Entity<ResourcePreview>(ResourcePreview.Build);
+        modelBuilder.Entity<ResourceDependency>(ResourceDependency.Build);
+        modelBuilder.Entity<ResourceExternalDependency>(ResourceExternalDependency.Build);
+        modelBuilder.Entity<ResourceCategory>(ResourceCategory.Build);
+        modelBuilder.Entity<CommentComment>(CommentComment.Build);
 
         OnModelCreatingPartial(modelBuilder);
     }

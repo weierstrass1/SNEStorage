@@ -9,1223 +9,1222 @@ using SNEStorage.Models;
 
 #nullable disable
 
-namespace SNEStorage.Migrations
+namespace SNEStorage.Migrations;
+
+[DbContext(typeof(SnestorageContext))]
+[Migration("20240915015606_update15")]
+partial class update15
 {
-    [DbContext(typeof(SnestorageContext))]
-    [Migration("20240915015606_update15")]
-    partial class update15
+    /// <inheritdoc />
+    protected override void BuildTargetModel(ModelBuilder modelBuilder)
     {
-        /// <inheritdoc />
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
-        {
 #pragma warning disable 612, 618
-            modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.8")
-                .HasAnnotation("Relational:MaxIdentifierLength", 128);
+        modelBuilder
+            .HasAnnotation("ProductVersion", "8.0.8")
+            .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
-            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+        SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
+        modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
+            {
+                b.Property<string>("Id")
+                    .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("ConcurrencyStamp")
-                        .IsConcurrencyToken()
-                        .HasColumnType("nvarchar(max)");
+                b.Property<string>("ConcurrencyStamp")
+                    .IsConcurrencyToken()
+                    .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Name")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
+                b.Property<string>("Name")
+                    .HasMaxLength(256)
+                    .HasColumnType("nvarchar(256)");
 
-                    b.Property<string>("NormalizedName")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
+                b.Property<string>("NormalizedName")
+                    .HasMaxLength(256)
+                    .HasColumnType("nvarchar(256)");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("NormalizedName")
-                        .IsUnique()
-                        .HasDatabaseName("RoleNameIndex")
-                        .HasFilter("[NormalizedName] IS NOT NULL");
+                b.HasIndex("NormalizedName")
+                    .IsUnique()
+                    .HasDatabaseName("RoleNameIndex")
+                    .HasFilter("[NormalizedName] IS NOT NULL");
 
-                    b.ToTable("AspNetRoles", (string)null);
-                });
+                b.ToTable("AspNetRoles", (string)null);
+            });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+        modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("ClaimType")
-                        .HasColumnType("nvarchar(max)");
+                b.Property<string>("ClaimType")
+                    .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("ClaimValue")
-                        .HasColumnType("nvarchar(max)");
+                b.Property<string>("ClaimValue")
+                    .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("RoleId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                b.Property<string>("RoleId")
+                    .IsRequired()
+                    .HasColumnType("nvarchar(450)");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("RoleId");
+                b.HasIndex("RoleId");
 
-                    b.ToTable("AspNetRoleClaims", (string)null);
-                });
+                b.ToTable("AspNetRoleClaims", (string)null);
+            });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUser", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
+        modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUser", b =>
+            {
+                b.Property<string>("Id")
+                    .HasColumnType("nvarchar(450)");
 
-                    b.Property<int>("AccessFailedCount")
-                        .HasColumnType("int");
+                b.Property<int>("AccessFailedCount")
+                    .HasColumnType("int");
 
-                    b.Property<string>("ConcurrencyStamp")
-                        .IsConcurrencyToken()
-                        .HasColumnType("nvarchar(max)");
+                b.Property<string>("ConcurrencyStamp")
+                    .IsConcurrencyToken()
+                    .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Discriminator")
-                        .IsRequired()
-                        .HasMaxLength(21)
-                        .HasColumnType("nvarchar(21)");
+                b.Property<string>("Discriminator")
+                    .IsRequired()
+                    .HasMaxLength(21)
+                    .HasColumnType("nvarchar(21)");
 
-                    b.Property<string>("Email")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
+                b.Property<string>("Email")
+                    .HasMaxLength(256)
+                    .HasColumnType("nvarchar(256)");
 
-                    b.Property<bool>("EmailConfirmed")
-                        .HasColumnType("bit");
+                b.Property<bool>("EmailConfirmed")
+                    .HasColumnType("bit");
 
-                    b.Property<bool>("LockoutEnabled")
-                        .HasColumnType("bit");
+                b.Property<bool>("LockoutEnabled")
+                    .HasColumnType("bit");
 
-                    b.Property<DateTimeOffset?>("LockoutEnd")
-                        .HasColumnType("datetimeoffset");
+                b.Property<DateTimeOffset?>("LockoutEnd")
+                    .HasColumnType("datetimeoffset");
 
-                    b.Property<string>("NormalizedEmail")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
+                b.Property<string>("NormalizedEmail")
+                    .HasMaxLength(256)
+                    .HasColumnType("nvarchar(256)");
 
-                    b.Property<string>("NormalizedUserName")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
+                b.Property<string>("NormalizedUserName")
+                    .HasMaxLength(256)
+                    .HasColumnType("nvarchar(256)");
 
-                    b.Property<string>("PasswordHash")
-                        .HasColumnType("nvarchar(max)");
+                b.Property<string>("PasswordHash")
+                    .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("PhoneNumber")
-                        .HasColumnType("nvarchar(max)");
+                b.Property<string>("PhoneNumber")
+                    .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("PhoneNumberConfirmed")
-                        .HasColumnType("bit");
+                b.Property<bool>("PhoneNumberConfirmed")
+                    .HasColumnType("bit");
 
-                    b.Property<string>("SecurityStamp")
-                        .HasColumnType("nvarchar(max)");
+                b.Property<string>("SecurityStamp")
+                    .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("TwoFactorEnabled")
-                        .HasColumnType("bit");
+                b.Property<bool>("TwoFactorEnabled")
+                    .HasColumnType("bit");
 
-                    b.Property<string>("UserName")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
+                b.Property<string>("UserName")
+                    .HasMaxLength(256)
+                    .HasColumnType("nvarchar(256)");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("NormalizedEmail")
-                        .HasDatabaseName("EmailIndex");
+                b.HasIndex("NormalizedEmail")
+                    .HasDatabaseName("EmailIndex");
 
-                    b.HasIndex("NormalizedUserName")
-                        .IsUnique()
-                        .HasDatabaseName("UserNameIndex")
-                        .HasFilter("[NormalizedUserName] IS NOT NULL");
+                b.HasIndex("NormalizedUserName")
+                    .IsUnique()
+                    .HasDatabaseName("UserNameIndex")
+                    .HasFilter("[NormalizedUserName] IS NOT NULL");
 
-                    b.ToTable("AspNetUsers", (string)null);
+                b.ToTable("AspNetUsers", (string)null);
 
-                    b.HasDiscriminator().HasValue("IdentityUser");
+                b.HasDiscriminator().HasValue("IdentityUser");
 
-                    b.UseTphMappingStrategy();
-                });
+                b.UseTphMappingStrategy();
+            });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+        modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
+            {
+                b.Property<int>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("ClaimType")
-                        .HasColumnType("nvarchar(max)");
+                b.Property<string>("ClaimType")
+                    .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("ClaimValue")
-                        .HasColumnType("nvarchar(max)");
+                b.Property<string>("ClaimValue")
+                    .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                b.Property<string>("UserId")
+                    .IsRequired()
+                    .HasColumnType("nvarchar(450)");
 
-                    b.HasKey("Id");
+                b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                b.HasIndex("UserId");
 
-                    b.ToTable("AspNetUserClaims", (string)null);
-                });
+                b.ToTable("AspNetUserClaims", (string)null);
+            });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
-                {
-                    b.Property<string>("LoginProvider")
-                        .HasColumnType("nvarchar(450)");
+        modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
+            {
+                b.Property<string>("LoginProvider")
+                    .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("ProviderKey")
-                        .HasColumnType("nvarchar(450)");
+                b.Property<string>("ProviderKey")
+                    .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("ProviderDisplayName")
-                        .HasColumnType("nvarchar(max)");
+                b.Property<string>("ProviderDisplayName")
+                    .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                b.Property<string>("UserId")
+                    .IsRequired()
+                    .HasColumnType("nvarchar(450)");
 
-                    b.HasKey("LoginProvider", "ProviderKey");
+                b.HasKey("LoginProvider", "ProviderKey");
 
-                    b.HasIndex("UserId");
+                b.HasIndex("UserId");
 
-                    b.ToTable("AspNetUserLogins", (string)null);
-                });
+                b.ToTable("AspNetUserLogins", (string)null);
+            });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
-                {
-                    b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)");
+        modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
+            {
+                b.Property<string>("UserId")
+                    .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("RoleId")
-                        .HasColumnType("nvarchar(450)");
+                b.Property<string>("RoleId")
+                    .HasColumnType("nvarchar(450)");
 
-                    b.HasKey("UserId", "RoleId");
+                b.HasKey("UserId", "RoleId");
 
-                    b.HasIndex("RoleId");
+                b.HasIndex("RoleId");
 
-                    b.ToTable("AspNetUserRoles", (string)null);
-                });
+                b.ToTable("AspNetUserRoles", (string)null);
+            });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
-                {
-                    b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)");
+        modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
+            {
+                b.Property<string>("UserId")
+                    .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("LoginProvider")
-                        .HasColumnType("nvarchar(450)");
+                b.Property<string>("LoginProvider")
+                    .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("Name")
-                        .HasColumnType("nvarchar(450)");
+                b.Property<string>("Name")
+                    .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("Value")
-                        .HasColumnType("nvarchar(max)");
+                b.Property<string>("Value")
+                    .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("UserId", "LoginProvider", "Name");
+                b.HasKey("UserId", "LoginProvider", "Name");
 
-                    b.ToTable("AspNetUserTokens", (string)null);
-                });
+                b.ToTable("AspNetUserTokens", (string)null);
+            });
 
-            modelBuilder.Entity("SNEStorage.Models.Comment", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasColumnName("id");
+        modelBuilder.Entity("SNEStorage.Models.Comment", b =>
+            {
+                b.Property<long>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("bigint")
+                    .HasColumnName("id");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<DateTime>("PublishDate")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("publish_date");
+                b.Property<DateTime>("PublishDate")
+                    .HasColumnType("datetime2")
+                    .HasColumnName("publish_date");
 
-                    b.Property<long>("ScoreId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("score_id");
+                b.Property<long>("ScoreId")
+                    .HasColumnType("bigint")
+                    .HasColumnName("score_id");
 
-                    b.Property<string>("Text")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("text");
+                b.Property<string>("Text")
+                    .IsRequired()
+                    .HasColumnType("text")
+                    .HasColumnName("text");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)")
-                        .HasColumnName("user_id");
+                b.Property<string>("UserId")
+                    .IsRequired()
+                    .HasColumnType("nvarchar(450)")
+                    .HasColumnName("user_id");
 
-                    b.HasKey("Id")
-                        .HasName("PK_Comment");
+                b.HasKey("Id")
+                    .HasName("PK_Comment");
 
-                    b.HasIndex("ScoreId");
+                b.HasIndex("ScoreId");
 
-                    b.HasIndex("UserId");
+                b.HasIndex("UserId");
 
-                    b.ToTable("comment", (string)null);
-                });
+                b.ToTable("comment", (string)null);
+            });
 
-            modelBuilder.Entity("SNEStorage.Models.File", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasColumnName("id");
+        modelBuilder.Entity("SNEStorage.Models.File", b =>
+            {
+                b.Property<long>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("bigint")
+                    .HasColumnName("id");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<long>("FileTypeId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("file_type_id");
+                b.Property<long>("FileTypeId")
+                    .HasColumnType("bigint")
+                    .HasColumnName("file_type_id");
 
-                    b.Property<string>("URL")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("url");
+                b.Property<string>("URL")
+                    .IsRequired()
+                    .HasColumnType("text")
+                    .HasColumnName("url");
 
-                    b.HasKey("Id")
-                        .HasName("PK_File");
+                b.HasKey("Id")
+                    .HasName("PK_File");
 
-                    b.HasIndex("FileTypeId");
+                b.HasIndex("FileTypeId");
 
-                    b.ToTable("file", (string)null);
-                });
+                b.ToTable("file", (string)null);
+            });
 
-            modelBuilder.Entity("SNEStorage.Models.FileType", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasColumnName("id");
+        modelBuilder.Entity("SNEStorage.Models.FileType", b =>
+            {
+                b.Property<long>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("bigint")
+                    .HasColumnName("id");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("name");
+                b.Property<string>("Name")
+                    .IsRequired()
+                    .HasColumnType("text")
+                    .HasColumnName("name");
 
-                    b.Property<string>("Value")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("value");
+                b.Property<string>("Value")
+                    .IsRequired()
+                    .HasColumnType("text")
+                    .HasColumnName("value");
 
-                    b.HasKey("Id")
-                        .HasName("PK_File_Type");
+                b.HasKey("Id")
+                    .HasName("PK_File_Type");
 
-                    b.ToTable("file_type", (string)null);
-                });
+                b.ToTable("file_type", (string)null);
+            });
 
-            modelBuilder.Entity("SNEStorage.Models.Flag", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasColumnName("id");
+        modelBuilder.Entity("SNEStorage.Models.Flag", b =>
+            {
+                b.Property<long>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("bigint")
+                    .HasColumnName("id");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<long>("ReasonId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("reason_id");
+                b.Property<long>("ReasonId")
+                    .HasColumnType("bigint")
+                    .HasColumnName("reason_id");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)")
-                        .HasColumnName("user_id");
+                b.Property<string>("UserId")
+                    .IsRequired()
+                    .HasColumnType("nvarchar(450)")
+                    .HasColumnName("user_id");
 
-                    b.HasKey("Id")
-                        .HasName("PK_Flag");
+                b.HasKey("Id")
+                    .HasName("PK_Flag");
 
-                    b.HasIndex("ReasonId");
+                b.HasIndex("ReasonId");
 
-                    b.HasIndex("UserId");
+                b.HasIndex("UserId");
 
-                    b.ToTable("flag", (string)null);
-                });
+                b.ToTable("flag", (string)null);
+            });
 
-            modelBuilder.Entity("SNEStorage.Models.LikeUsers", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasColumnName("id");
+        modelBuilder.Entity("SNEStorage.Models.LikeUsers", b =>
+            {
+                b.Property<long>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("bigint")
+                    .HasColumnName("id");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<long>("ScoreId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("score_id");
+                b.Property<long>("ScoreId")
+                    .HasColumnType("bigint")
+                    .HasColumnName("score_id");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)")
-                        .HasColumnName("user_id");
+                b.Property<string>("UserId")
+                    .IsRequired()
+                    .HasColumnType("nvarchar(450)")
+                    .HasColumnName("user_id");
 
-                    b.Property<bool>("Value")
-                        .HasColumnType("bit")
-                        .HasColumnName("value");
+                b.Property<bool>("Value")
+                    .HasColumnType("bit")
+                    .HasColumnName("value");
 
-                    b.HasKey("Id")
-                        .HasName("PK_like_users");
+                b.HasKey("Id")
+                    .HasName("PK_like_users");
 
-                    b.HasIndex("ScoreId");
+                b.HasIndex("ScoreId");
 
-                    b.HasIndex("UserId");
+                b.HasIndex("UserId");
 
-                    b.ToTable("like_users", (string)null);
-                });
+                b.ToTable("like_users", (string)null);
+            });
 
-            modelBuilder.Entity("SNEStorage.Models.Reason", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasColumnName("id");
+        modelBuilder.Entity("SNEStorage.Models.Reason", b =>
+            {
+                b.Property<long>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("bigint")
+                    .HasColumnName("id");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("description");
+                b.Property<string>("Description")
+                    .IsRequired()
+                    .HasColumnType("text")
+                    .HasColumnName("description");
 
-                    b.HasKey("Id")
-                        .HasName("PK_Reason");
+                b.HasKey("Id")
+                    .HasName("PK_Reason");
 
-                    b.ToTable("reason", (string)null);
-                });
+                b.ToTable("reason", (string)null);
+            });
 
-            modelBuilder.Entity("SNEStorage.Models.Resource", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasColumnName("id");
+        modelBuilder.Entity("SNEStorage.Models.Resource", b =>
+            {
+                b.Property<long>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("bigint")
+                    .HasColumnName("id");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<string>("Description")
-                        .HasColumnType("text")
-                        .HasColumnName("description");
+                b.Property<string>("Description")
+                    .HasColumnType("text")
+                    .HasColumnName("description");
 
-                    b.Property<int?>("Downloads")
-                        .HasColumnType("int")
-                        .HasColumnName("downloads");
+                b.Property<int?>("Downloads")
+                    .HasColumnType("int")
+                    .HasColumnName("downloads");
 
-                    b.Property<long>("FileId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("file_id");
+                b.Property<long>("FileId")
+                    .HasColumnType("bigint")
+                    .HasColumnName("file_id");
 
-                    b.Property<bool>("IncludesGore")
-                        .HasColumnType("bit")
-                        .HasColumnName("includes_gore");
+                b.Property<bool>("IncludesGore")
+                    .HasColumnType("bit")
+                    .HasColumnName("includes_gore");
 
-                    b.Property<bool>("IncludesPolitics")
-                        .HasColumnType("bit")
-                        .HasColumnName("includes_politics");
+                b.Property<bool>("IncludesPolitics")
+                    .HasColumnType("bit")
+                    .HasColumnName("includes_politics");
 
-                    b.Property<bool>("IncludesPorn")
-                        .HasColumnType("bit")
-                        .HasColumnName("includes_porn");
+                b.Property<bool>("IncludesPorn")
+                    .HasColumnType("bit")
+                    .HasColumnName("includes_porn");
 
-                    b.Property<bool>("IncludesSensitiveContent")
-                        .HasColumnType("bit")
-                        .HasColumnName("includes_sensitive_content");
+                b.Property<bool>("IncludesSensitiveContent")
+                    .HasColumnType("bit")
+                    .HasColumnName("includes_sensitive_content");
 
-                    b.Property<bool>("IncludesSlurs")
-                        .HasColumnType("bit")
-                        .HasColumnName("includes_slurs");
+                b.Property<bool>("IncludesSlurs")
+                    .HasColumnType("bit")
+                    .HasColumnName("includes_slurs");
 
-                    b.Property<string>("Name")
-                        .HasColumnType("text")
-                        .HasColumnName("name");
+                b.Property<string>("Name")
+                    .HasColumnType("text")
+                    .HasColumnName("name");
 
-                    b.Property<long?>("ResourceTypeId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("resource_type_id");
+                b.Property<long?>("ResourceTypeId")
+                    .HasColumnType("bigint")
+                    .HasColumnName("resource_type_id");
 
-                    b.Property<long>("ScoreId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("score_id");
+                b.Property<long>("ScoreId")
+                    .HasColumnType("bigint")
+                    .HasColumnName("score_id");
 
-                    b.Property<string>("SubmitterUserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)")
-                        .HasColumnName("submitter_user_id");
+                b.Property<string>("SubmitterUserId")
+                    .IsRequired()
+                    .HasColumnType("nvarchar(450)")
+                    .HasColumnName("submitter_user_id");
 
-                    b.Property<string>("Usage")
-                        .HasColumnType("text")
-                        .HasColumnName("usage");
+                b.Property<string>("Usage")
+                    .HasColumnType("text")
+                    .HasColumnName("usage");
 
-                    b.Property<string>("Version")
-                        .HasColumnType("text")
-                        .HasColumnName("version");
+                b.Property<string>("Version")
+                    .HasColumnType("text")
+                    .HasColumnName("version");
 
-                    b.Property<long?>("VideogameId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("videogame_id");
+                b.Property<long?>("VideogameId")
+                    .HasColumnType("bigint")
+                    .HasColumnName("videogame_id");
 
-                    b.Property<long>("VisibilityId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("visibility_id");
+                b.Property<long>("VisibilityId")
+                    .HasColumnType("bigint")
+                    .HasColumnName("visibility_id");
 
-                    b.HasKey("Id")
-                        .HasName("PK_Resource");
+                b.HasKey("Id")
+                    .HasName("PK_Resource");
 
-                    b.HasIndex("FileId");
+                b.HasIndex("FileId");
 
-                    b.HasIndex("ResourceTypeId");
+                b.HasIndex("ResourceTypeId");
 
-                    b.HasIndex("ScoreId");
+                b.HasIndex("ScoreId");
 
-                    b.HasIndex("SubmitterUserId");
+                b.HasIndex("SubmitterUserId");
 
-                    b.HasIndex("VideogameId");
+                b.HasIndex("VideogameId");
 
-                    b.HasIndex("VisibilityId");
+                b.HasIndex("VisibilityId");
 
-                    b.ToTable("resource", (string)null);
-                });
+                b.ToTable("resource", (string)null);
+            });
 
-            modelBuilder.Entity("SNEStorage.Models.ResourceComments", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasColumnName("id");
+        modelBuilder.Entity("SNEStorage.Models.ResourceComments", b =>
+            {
+                b.Property<long>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("bigint")
+                    .HasColumnName("id");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<long>("CommentId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("comment_id");
+                b.Property<long>("CommentId")
+                    .HasColumnType("bigint")
+                    .HasColumnName("comment_id");
 
-                    b.Property<long>("ResourceId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("resource_id");
+                b.Property<long>("ResourceId")
+                    .HasColumnType("bigint")
+                    .HasColumnName("resource_id");
 
-                    b.HasKey("Id")
-                        .HasName("PK_Resource_Comments");
+                b.HasKey("Id")
+                    .HasName("PK_Resource_Comments");
 
-                    b.HasIndex("CommentId");
+                b.HasIndex("CommentId");
 
-                    b.HasIndex("ResourceId");
+                b.HasIndex("ResourceId");
 
-                    b.ToTable("resource_comments", (string)null);
-                });
+                b.ToTable("resource_comments", (string)null);
+            });
 
-            modelBuilder.Entity("SNEStorage.Models.ResourceFlags", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasColumnName("id");
+        modelBuilder.Entity("SNEStorage.Models.ResourceFlags", b =>
+            {
+                b.Property<long>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("bigint")
+                    .HasColumnName("id");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<long>("FlagId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("flag_id");
+                b.Property<long>("FlagId")
+                    .HasColumnType("bigint")
+                    .HasColumnName("flag_id");
 
-                    b.Property<long>("ResourceId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("resource_id");
+                b.Property<long>("ResourceId")
+                    .HasColumnType("bigint")
+                    .HasColumnName("resource_id");
 
-                    b.HasKey("Id")
-                        .HasName("PK_Resource_Flags");
+                b.HasKey("Id")
+                    .HasName("PK_Resource_Flags");
 
-                    b.HasIndex("FlagId")
-                        .IsUnique();
+                b.HasIndex("FlagId")
+                    .IsUnique();
 
-                    b.HasIndex("ResourceId");
+                b.HasIndex("ResourceId");
 
-                    b.ToTable("resource_flags", (string)null);
-                });
+                b.ToTable("resource_flags", (string)null);
+            });
 
-            modelBuilder.Entity("SNEStorage.Models.ResourceType", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasColumnName("id");
+        modelBuilder.Entity("SNEStorage.Models.ResourceType", b =>
+            {
+                b.Property<long>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("bigint")
+                    .HasColumnName("id");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<string>("Name")
-                        .HasColumnType("text")
-                        .HasColumnName("name");
+                b.Property<string>("Name")
+                    .HasColumnType("text")
+                    .HasColumnName("name");
 
-                    b.HasKey("Id")
-                        .HasName("PK_Resource_Type");
+                b.HasKey("Id")
+                    .HasName("PK_Resource_Type");
 
-                    b.ToTable("resource_type", (string)null);
-                });
+                b.ToTable("resource_type", (string)null);
+            });
 
-            modelBuilder.Entity("SNEStorage.Models.Score", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasColumnName("id");
+        modelBuilder.Entity("SNEStorage.Models.Score", b =>
+            {
+                b.Property<long>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("bigint")
+                    .HasColumnName("id");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
-                    b.HasKey("Id")
-                        .HasName("PK_Score");
+                b.HasKey("Id")
+                    .HasName("PK_Score");
 
-                    b.ToTable("score", (string)null);
-                });
+                b.ToTable("score", (string)null);
+            });
 
-            modelBuilder.Entity("SNEStorage.Models.ScoreUsers", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasColumnName("id");
+        modelBuilder.Entity("SNEStorage.Models.ScoreUsers", b =>
+            {
+                b.Property<long>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("bigint")
+                    .HasColumnName("id");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<long>("ScoreId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("score_id");
+                b.Property<long>("ScoreId")
+                    .HasColumnType("bigint")
+                    .HasColumnName("score_id");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)")
-                        .HasColumnName("user_id");
+                b.Property<string>("UserId")
+                    .IsRequired()
+                    .HasColumnType("nvarchar(450)")
+                    .HasColumnName("user_id");
 
-                    b.Property<long>("Value")
-                        .HasColumnType("bigint")
-                        .HasColumnName("value");
+                b.Property<long>("Value")
+                    .HasColumnType("bigint")
+                    .HasColumnName("value");
 
-                    b.HasKey("Id")
-                        .HasName("PK_Score_Users");
+                b.HasKey("Id")
+                    .HasName("PK_Score_Users");
 
-                    b.HasIndex("ScoreId");
+                b.HasIndex("ScoreId");
 
-                    b.HasIndex("UserId");
+                b.HasIndex("UserId");
 
-                    b.ToTable("score_users", (string)null);
-                });
+                b.ToTable("score_users", (string)null);
+            });
 
-            modelBuilder.Entity("SNEStorage.Models.Team", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasColumnName("id");
+        modelBuilder.Entity("SNEStorage.Models.Team", b =>
+            {
+                b.Property<long>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("bigint")
+                    .HasColumnName("id");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("name");
+                b.Property<string>("Name")
+                    .IsRequired()
+                    .HasColumnType("text")
+                    .HasColumnName("name");
 
-                    b.HasKey("Id")
-                        .HasName("PK_Team");
+                b.HasKey("Id")
+                    .HasName("PK_Team");
 
-                    b.ToTable("team", (string)null);
-                });
+                b.ToTable("team", (string)null);
+            });
 
-            modelBuilder.Entity("SNEStorage.Models.TeamUsers", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasColumnName("id");
+        modelBuilder.Entity("SNEStorage.Models.TeamUsers", b =>
+            {
+                b.Property<long>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("bigint")
+                    .HasColumnName("id");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<long>("TeamId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("team_id");
+                b.Property<long>("TeamId")
+                    .HasColumnType("bigint")
+                    .HasColumnName("team_id");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)")
-                        .HasColumnName("user_id");
+                b.Property<string>("UserId")
+                    .IsRequired()
+                    .HasColumnType("nvarchar(450)")
+                    .HasColumnName("user_id");
 
-                    b.HasKey("Id")
-                        .HasName("PK_Team_Users");
+                b.HasKey("Id")
+                    .HasName("PK_Team_Users");
 
-                    b.HasIndex("TeamId");
+                b.HasIndex("TeamId");
 
-                    b.HasIndex("UserId");
+                b.HasIndex("UserId");
 
-                    b.ToTable("team_users", (string)null);
-                });
+                b.ToTable("team_users", (string)null);
+            });
 
-            modelBuilder.Entity("SNEStorage.Models.TimeZone", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasColumnName("id");
+        modelBuilder.Entity("SNEStorage.Models.TimeZone", b =>
+            {
+                b.Property<long>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("bigint")
+                    .HasColumnName("id");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("name");
+                b.Property<string>("Name")
+                    .IsRequired()
+                    .HasColumnType("text")
+                    .HasColumnName("name");
 
-                    b.Property<int>("Value")
-                        .HasColumnType("int")
-                        .HasColumnName("value");
+                b.Property<int>("Value")
+                    .HasColumnType("int")
+                    .HasColumnName("value");
 
-                    b.HasKey("Id")
-                        .HasName("PK_Time_Zone");
+                b.HasKey("Id")
+                    .HasName("PK_Time_Zone");
 
-                    b.ToTable("time_zone", (string)null);
-                });
+                b.ToTable("time_zone", (string)null);
+            });
 
-            modelBuilder.Entity("SNEStorage.Models.UserInfo", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasColumnName("id");
+        modelBuilder.Entity("SNEStorage.Models.UserInfo", b =>
+            {
+                b.Property<long>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("bigint")
+                    .HasColumnName("id");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<long>("AvatarId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("avatar_id");
+                b.Property<long>("AvatarId")
+                    .HasColumnType("bigint")
+                    .HasColumnName("avatar_id");
 
-                    b.Property<string>("Bio")
-                        .HasColumnType("text")
-                        .HasColumnName("bio");
+                b.Property<string>("Bio")
+                    .HasColumnType("text")
+                    .HasColumnName("bio");
 
-                    b.Property<DateOnly>("Birthday")
-                        .HasColumnType("date")
-                        .HasColumnName("birthday");
+                b.Property<DateOnly>("Birthday")
+                    .HasColumnType("date")
+                    .HasColumnName("birthday");
 
-                    b.Property<string>("Discord")
-                        .HasColumnType("text")
-                        .HasColumnName("discord");
+                b.Property<string>("Discord")
+                    .HasColumnType("text")
+                    .HasColumnName("discord");
 
-                    b.Property<long>("EmailVisibilityId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("email_visibility_id");
+                b.Property<long>("EmailVisibilityId")
+                    .HasColumnType("bigint")
+                    .HasColumnName("email_visibility_id");
 
-                    b.Property<string>("Facebook")
-                        .HasColumnType("text")
-                        .HasColumnName("facebook");
+                b.Property<string>("Facebook")
+                    .HasColumnType("text")
+                    .HasColumnName("facebook");
 
-                    b.Property<string>("Github")
-                        .HasColumnType("text")
-                        .HasColumnName("github");
+                b.Property<string>("Github")
+                    .HasColumnType("text")
+                    .HasColumnName("github");
 
-                    b.Property<string>("Instagram")
-                        .HasColumnType("text")
-                        .HasColumnName("instagram");
+                b.Property<string>("Instagram")
+                    .HasColumnType("text")
+                    .HasColumnName("instagram");
 
-                    b.Property<string>("NintendoNetwork")
-                        .HasColumnType("text")
-                        .HasColumnName("nintendo_network");
+                b.Property<string>("NintendoNetwork")
+                    .HasColumnType("text")
+                    .HasColumnName("nintendo_network");
 
-                    b.Property<string>("Steam")
-                        .HasColumnType("text")
-                        .HasColumnName("steam");
+                b.Property<string>("Steam")
+                    .HasColumnType("text")
+                    .HasColumnName("steam");
 
-                    b.Property<long>("TimeZoneId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("time_zone_id");
+                b.Property<long>("TimeZoneId")
+                    .HasColumnType("bigint")
+                    .HasColumnName("time_zone_id");
 
-                    b.Property<string>("Title")
-                        .HasColumnType("text")
-                        .HasColumnName("title");
+                b.Property<string>("Title")
+                    .HasColumnType("text")
+                    .HasColumnName("title");
 
-                    b.Property<string>("Twitch")
-                        .HasColumnType("text")
-                        .HasColumnName("twitch");
+                b.Property<string>("Twitch")
+                    .HasColumnType("text")
+                    .HasColumnName("twitch");
 
-                    b.Property<string>("Twitter")
-                        .HasColumnType("text")
-                        .HasColumnName("twitter");
+                b.Property<string>("Twitter")
+                    .HasColumnType("text")
+                    .HasColumnName("twitter");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)")
-                        .HasColumnName("user_id");
+                b.Property<string>("UserId")
+                    .IsRequired()
+                    .HasColumnType("nvarchar(450)")
+                    .HasColumnName("user_id");
 
-                    b.Property<string>("UsernameColor")
-                        .HasColumnType("text")
-                        .HasColumnName("username_color");
+                b.Property<string>("UsernameColor")
+                    .HasColumnType("text")
+                    .HasColumnName("username_color");
 
-                    b.Property<string>("Youtube")
-                        .HasColumnType("text")
-                        .HasColumnName("youtube");
+                b.Property<string>("Youtube")
+                    .HasColumnType("text")
+                    .HasColumnName("youtube");
 
-                    b.HasKey("Id")
-                        .HasName("PK_User_Info");
+                b.HasKey("Id")
+                    .HasName("PK_User_Info");
 
-                    b.HasIndex("AvatarId")
-                        .IsUnique();
+                b.HasIndex("AvatarId")
+                    .IsUnique();
 
-                    b.HasIndex("EmailVisibilityId");
+                b.HasIndex("EmailVisibilityId");
 
-                    b.HasIndex("TimeZoneId");
+                b.HasIndex("TimeZoneId");
 
-                    b.HasIndex("UserId")
-                        .IsUnique();
+                b.HasIndex("UserId")
+                    .IsUnique();
 
-                    b.ToTable("user_info", (string)null);
-                });
+                b.ToTable("user_info", (string)null);
+            });
 
-            modelBuilder.Entity("SNEStorage.Models.Videogame", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasColumnName("id");
+        modelBuilder.Entity("SNEStorage.Models.Videogame", b =>
+            {
+                b.Property<long>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("bigint")
+                    .HasColumnName("id");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("name");
+                b.Property<string>("Name")
+                    .IsRequired()
+                    .HasColumnType("text")
+                    .HasColumnName("name");
 
-                    b.Property<string>("Publisher")
-                        .HasColumnType("text")
-                        .HasColumnName("publisher");
+                b.Property<string>("Publisher")
+                    .HasColumnType("text")
+                    .HasColumnName("publisher");
 
-                    b.Property<DateOnly?>("ReleaseDate")
-                        .HasColumnType("date")
-                        .HasColumnName("release_date");
+                b.Property<DateOnly?>("ReleaseDate")
+                    .HasColumnType("date")
+                    .HasColumnName("release_date");
 
-                    b.HasKey("Id")
-                        .HasName("PK_Videogame");
+                b.HasKey("Id")
+                    .HasName("PK_Videogame");
 
-                    b.ToTable("videogame", (string)null);
-                });
+                b.ToTable("videogame", (string)null);
+            });
 
-            modelBuilder.Entity("SNEStorage.Models.Visibility", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasColumnName("id");
+        modelBuilder.Entity("SNEStorage.Models.Visibility", b =>
+            {
+                b.Property<long>("Id")
+                    .ValueGeneratedOnAdd()
+                    .HasColumnType("bigint")
+                    .HasColumnName("id");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+                SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<string>("Name")
-                        .HasColumnType("text")
-                        .HasColumnName("name");
+                b.Property<string>("Name")
+                    .HasColumnType("text")
+                    .HasColumnName("name");
 
-                    b.HasKey("Id")
-                        .HasName("PK_Visibility");
+                b.HasKey("Id")
+                    .HasName("PK_Visibility");
 
-                    b.ToTable("visibility", (string)null);
-                });
+                b.ToTable("visibility", (string)null);
+            });
 
-            modelBuilder.Entity("SNEStorage.Models.ApplicationUser", b =>
-                {
-                    b.HasBaseType("Microsoft.AspNetCore.Identity.IdentityUser");
+        modelBuilder.Entity("SNEStorage.Models.ApplicationUser", b =>
+            {
+                b.HasBaseType("Microsoft.AspNetCore.Identity.IdentityUser");
 
-                    b.HasDiscriminator().HasValue("ApplicationUser");
-                });
+                b.HasDiscriminator().HasValue("ApplicationUser");
+            });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
-                {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
-                        .WithMany()
-                        .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
+        modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
+            {
+                b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
+                    .WithMany()
+                    .HasForeignKey("RoleId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
+            });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
-                {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
+        modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
+            {
+                b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
+            });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
-                {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
+        modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
+            {
+                b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
+            });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
-                {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
-                        .WithMany()
-                        .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+        modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
+            {
+                b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
+                    .WithMany()
+                    .HasForeignKey("RoleId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
 
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
+                b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
+            });
 
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
-                {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
+        modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
+            {
+                b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
+                    .WithMany()
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired();
+            });
 
-            modelBuilder.Entity("SNEStorage.Models.Comment", b =>
-                {
-                    b.HasOne("SNEStorage.Models.Score", "Score")
-                        .WithMany("Comments")
-                        .HasForeignKey("ScoreId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_comment_score");
+        modelBuilder.Entity("SNEStorage.Models.Comment", b =>
+            {
+                b.HasOne("SNEStorage.Models.Score", "Score")
+                    .WithMany("Comments")
+                    .HasForeignKey("ScoreId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired()
+                    .HasConstraintName("FK_comment_score");
 
-                    b.HasOne("SNEStorage.Models.ApplicationUser", "User")
-                        .WithMany("Comments")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_comment_user");
+                b.HasOne("SNEStorage.Models.ApplicationUser", "User")
+                    .WithMany("Comments")
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired()
+                    .HasConstraintName("FK_comment_user");
 
-                    b.Navigation("Score");
+                b.Navigation("Score");
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("SNEStorage.Models.File", b =>
-                {
-                    b.HasOne("SNEStorage.Models.FileType", "FileType")
-                        .WithMany("Files")
-                        .HasForeignKey("FileTypeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_file_file_type");
+        modelBuilder.Entity("SNEStorage.Models.File", b =>
+            {
+                b.HasOne("SNEStorage.Models.FileType", "FileType")
+                    .WithMany("Files")
+                    .HasForeignKey("FileTypeId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired()
+                    .HasConstraintName("FK_file_file_type");
 
-                    b.Navigation("FileType");
-                });
+                b.Navigation("FileType");
+            });
 
-            modelBuilder.Entity("SNEStorage.Models.Flag", b =>
-                {
-                    b.HasOne("SNEStorage.Models.Reason", "Reason")
-                        .WithMany("Flags")
-                        .HasForeignKey("ReasonId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_flag_reason");
+        modelBuilder.Entity("SNEStorage.Models.Flag", b =>
+            {
+                b.HasOne("SNEStorage.Models.Reason", "Reason")
+                    .WithMany("Flags")
+                    .HasForeignKey("ReasonId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired()
+                    .HasConstraintName("FK_flag_reason");
 
-                    b.HasOne("SNEStorage.Models.ApplicationUser", "User")
-                        .WithMany("Flags")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_flag_user");
+                b.HasOne("SNEStorage.Models.ApplicationUser", "User")
+                    .WithMany("Flags")
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired()
+                    .HasConstraintName("FK_flag_user");
 
-                    b.Navigation("Reason");
+                b.Navigation("Reason");
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("SNEStorage.Models.LikeUsers", b =>
-                {
-                    b.HasOne("SNEStorage.Models.Score", "Score")
-                        .WithMany("LikesUsers")
-                        .HasForeignKey("ScoreId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_like_users_score");
+        modelBuilder.Entity("SNEStorage.Models.LikeUsers", b =>
+            {
+                b.HasOne("SNEStorage.Models.Score", "Score")
+                    .WithMany("LikesUsers")
+                    .HasForeignKey("ScoreId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired()
+                    .HasConstraintName("FK_like_users_score");
 
-                    b.HasOne("SNEStorage.Models.ApplicationUser", "User")
-                        .WithMany("LikesUsers")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_like_users_user");
+                b.HasOne("SNEStorage.Models.ApplicationUser", "User")
+                    .WithMany("LikesUsers")
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired()
+                    .HasConstraintName("FK_like_users_user");
 
-                    b.Navigation("Score");
+                b.Navigation("Score");
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("SNEStorage.Models.Resource", b =>
-                {
-                    b.HasOne("SNEStorage.Models.File", "File")
-                        .WithMany("Resources")
-                        .HasForeignKey("FileId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_resource_file");
+        modelBuilder.Entity("SNEStorage.Models.Resource", b =>
+            {
+                b.HasOne("SNEStorage.Models.File", "File")
+                    .WithMany("Resources")
+                    .HasForeignKey("FileId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired()
+                    .HasConstraintName("FK_resource_file");
 
-                    b.HasOne("SNEStorage.Models.ResourceType", "ResourceType")
-                        .WithMany("Resources")
-                        .HasForeignKey("ResourceTypeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .HasConstraintName("FK_resource_resource_type");
+                b.HasOne("SNEStorage.Models.ResourceType", "ResourceType")
+                    .WithMany("Resources")
+                    .HasForeignKey("ResourceTypeId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_resource_resource_type");
 
-                    b.HasOne("SNEStorage.Models.Score", "Score")
-                        .WithMany("Resources")
-                        .HasForeignKey("ScoreId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_resource_score");
+                b.HasOne("SNEStorage.Models.Score", "Score")
+                    .WithMany("Resources")
+                    .HasForeignKey("ScoreId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired()
+                    .HasConstraintName("FK_resource_score");
 
-                    b.HasOne("SNEStorage.Models.ApplicationUser", "SubmitterUser")
-                        .WithMany("Resources")
-                        .HasForeignKey("SubmitterUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_resource_submitter_user");
+                b.HasOne("SNEStorage.Models.ApplicationUser", "SubmitterUser")
+                    .WithMany("Resources")
+                    .HasForeignKey("SubmitterUserId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired()
+                    .HasConstraintName("FK_resource_submitter_user");
 
-                    b.HasOne("SNEStorage.Models.Videogame", "Videogame")
-                        .WithMany("Resources")
-                        .HasForeignKey("VideogameId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .HasConstraintName("FK_resource_videogame");
+                b.HasOne("SNEStorage.Models.Videogame", "Videogame")
+                    .WithMany("Resources")
+                    .HasForeignKey("VideogameId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_resource_videogame");
 
-                    b.HasOne("SNEStorage.Models.Visibility", "Visibility")
-                        .WithMany("Resources")
-                        .HasForeignKey("VisibilityId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_resource_visibility");
+                b.HasOne("SNEStorage.Models.Visibility", "Visibility")
+                    .WithMany("Resources")
+                    .HasForeignKey("VisibilityId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired()
+                    .HasConstraintName("FK_resource_visibility");
 
-                    b.Navigation("File");
+                b.Navigation("File");
 
-                    b.Navigation("ResourceType");
+                b.Navigation("ResourceType");
 
-                    b.Navigation("Score");
+                b.Navigation("Score");
 
-                    b.Navigation("SubmitterUser");
+                b.Navigation("SubmitterUser");
 
-                    b.Navigation("Videogame");
+                b.Navigation("Videogame");
 
-                    b.Navigation("Visibility");
-                });
+                b.Navigation("Visibility");
+            });
 
-            modelBuilder.Entity("SNEStorage.Models.ResourceComments", b =>
-                {
-                    b.HasOne("SNEStorage.Models.Comment", "Comment")
-                        .WithMany("ResourceComments")
-                        .HasForeignKey("CommentId")
-                        .OnDelete(DeleteBehavior.ClientCascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_resource_comments_comment");
+        modelBuilder.Entity("SNEStorage.Models.ResourceComments", b =>
+            {
+                b.HasOne("SNEStorage.Models.Comment", "Comment")
+                    .WithMany("ResourceComments")
+                    .HasForeignKey("CommentId")
+                    .OnDelete(DeleteBehavior.ClientCascade)
+                    .IsRequired()
+                    .HasConstraintName("FK_resource_comments_comment");
 
-                    b.HasOne("SNEStorage.Models.Resource", "Resource")
-                        .WithMany("ResourceComments")
-                        .HasForeignKey("ResourceId")
-                        .OnDelete(DeleteBehavior.ClientCascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_resource_comments_resource");
-
-                    b.Navigation("Comment");
+                b.HasOne("SNEStorage.Models.Resource", "Resource")
+                    .WithMany("ResourceComments")
+                    .HasForeignKey("ResourceId")
+                    .OnDelete(DeleteBehavior.ClientCascade)
+                    .IsRequired()
+                    .HasConstraintName("FK_resource_comments_resource");
+
+                b.Navigation("Comment");
 
-                    b.Navigation("Resource");
-                });
+                b.Navigation("Resource");
+            });
 
-            modelBuilder.Entity("SNEStorage.Models.ResourceFlags", b =>
-                {
-                    b.HasOne("SNEStorage.Models.Flag", "Flag")
-                        .WithOne("ResourceFlags")
-                        .HasForeignKey("SNEStorage.Models.ResourceFlags", "FlagId")
-                        .OnDelete(DeleteBehavior.ClientCascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_resource_flags_flag");
+        modelBuilder.Entity("SNEStorage.Models.ResourceFlags", b =>
+            {
+                b.HasOne("SNEStorage.Models.Flag", "Flag")
+                    .WithOne("ResourceFlags")
+                    .HasForeignKey("SNEStorage.Models.ResourceFlags", "FlagId")
+                    .OnDelete(DeleteBehavior.ClientCascade)
+                    .IsRequired()
+                    .HasConstraintName("FK_resource_flags_flag");
 
-                    b.HasOne("SNEStorage.Models.Resource", "Resource")
-                        .WithMany("ResourceFlags")
-                        .HasForeignKey("ResourceId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_resource_flags_resource");
+                b.HasOne("SNEStorage.Models.Resource", "Resource")
+                    .WithMany("ResourceFlags")
+                    .HasForeignKey("ResourceId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired()
+                    .HasConstraintName("FK_resource_flags_resource");
 
-                    b.Navigation("Flag");
+                b.Navigation("Flag");
 
-                    b.Navigation("Resource");
-                });
+                b.Navigation("Resource");
+            });
 
-            modelBuilder.Entity("SNEStorage.Models.ScoreUsers", b =>
-                {
-                    b.HasOne("SNEStorage.Models.Score", "Score")
-                        .WithMany("ScoresUsers")
-                        .HasForeignKey("ScoreId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_score_users_score");
+        modelBuilder.Entity("SNEStorage.Models.ScoreUsers", b =>
+            {
+                b.HasOne("SNEStorage.Models.Score", "Score")
+                    .WithMany("ScoresUsers")
+                    .HasForeignKey("ScoreId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired()
+                    .HasConstraintName("FK_score_users_score");
 
-                    b.HasOne("SNEStorage.Models.ApplicationUser", "User")
-                        .WithMany("ScoresUsers")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_score_users_user");
+                b.HasOne("SNEStorage.Models.ApplicationUser", "User")
+                    .WithMany("ScoresUsers")
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired()
+                    .HasConstraintName("FK_score_users_user");
 
-                    b.Navigation("Score");
+                b.Navigation("Score");
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("SNEStorage.Models.TeamUsers", b =>
-                {
-                    b.HasOne("SNEStorage.Models.Team", "Team")
-                        .WithMany("TeamsUsers")
-                        .HasForeignKey("TeamId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_team_users_team");
+        modelBuilder.Entity("SNEStorage.Models.TeamUsers", b =>
+            {
+                b.HasOne("SNEStorage.Models.Team", "Team")
+                    .WithMany("TeamsUsers")
+                    .HasForeignKey("TeamId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired()
+                    .HasConstraintName("FK_team_users_team");
 
-                    b.HasOne("SNEStorage.Models.ApplicationUser", "User")
-                        .WithMany("TeamsUsers")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_team_users_user");
+                b.HasOne("SNEStorage.Models.ApplicationUser", "User")
+                    .WithMany("TeamsUsers")
+                    .HasForeignKey("UserId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired()
+                    .HasConstraintName("FK_team_users_user");
 
-                    b.Navigation("Team");
+                b.Navigation("Team");
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("SNEStorage.Models.UserInfo", b =>
-                {
-                    b.HasOne("SNEStorage.Models.File", "Avatar")
-                        .WithOne("UserInfo")
-                        .HasForeignKey("SNEStorage.Models.UserInfo", "AvatarId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_user_info_file");
+        modelBuilder.Entity("SNEStorage.Models.UserInfo", b =>
+            {
+                b.HasOne("SNEStorage.Models.File", "Avatar")
+                    .WithOne("UserInfo")
+                    .HasForeignKey("SNEStorage.Models.UserInfo", "AvatarId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired()
+                    .HasConstraintName("FK_user_info_file");
 
-                    b.HasOne("SNEStorage.Models.Visibility", "EmailVisibility")
-                        .WithMany("UserInfos")
-                        .HasForeignKey("EmailVisibilityId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_user_info_visibility");
+                b.HasOne("SNEStorage.Models.Visibility", "EmailVisibility")
+                    .WithMany("UserInfos")
+                    .HasForeignKey("EmailVisibilityId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired()
+                    .HasConstraintName("FK_user_info_visibility");
 
-                    b.HasOne("SNEStorage.Models.TimeZone", "TimeZone")
-                        .WithMany("UserInfos")
-                        .HasForeignKey("TimeZoneId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_user_info_time_zone");
+                b.HasOne("SNEStorage.Models.TimeZone", "TimeZone")
+                    .WithMany("UserInfos")
+                    .HasForeignKey("TimeZoneId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired()
+                    .HasConstraintName("FK_user_info_time_zone");
 
-                    b.HasOne("SNEStorage.Models.ApplicationUser", "User")
-                        .WithOne("UserInfo")
-                        .HasForeignKey("SNEStorage.Models.UserInfo", "UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_user_info_user");
+                b.HasOne("SNEStorage.Models.ApplicationUser", "User")
+                    .WithOne("UserInfo")
+                    .HasForeignKey("SNEStorage.Models.UserInfo", "UserId")
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .IsRequired()
+                    .HasConstraintName("FK_user_info_user");
 
-                    b.Navigation("Avatar");
+                b.Navigation("Avatar");
 
-                    b.Navigation("EmailVisibility");
+                b.Navigation("EmailVisibility");
 
-                    b.Navigation("TimeZone");
+                b.Navigation("TimeZone");
 
-                    b.Navigation("User");
-                });
+                b.Navigation("User");
+            });
 
-            modelBuilder.Entity("SNEStorage.Models.Comment", b =>
-                {
-                    b.Navigation("ResourceComments");
-                });
+        modelBuilder.Entity("SNEStorage.Models.Comment", b =>
+            {
+                b.Navigation("ResourceComments");
+            });
 
-            modelBuilder.Entity("SNEStorage.Models.File", b =>
-                {
-                    b.Navigation("Resources");
+        modelBuilder.Entity("SNEStorage.Models.File", b =>
+            {
+                b.Navigation("Resources");
 
-                    b.Navigation("UserInfo");
-                });
+                b.Navigation("UserInfo");
+            });
 
-            modelBuilder.Entity("SNEStorage.Models.FileType", b =>
-                {
-                    b.Navigation("Files");
-                });
+        modelBuilder.Entity("SNEStorage.Models.FileType", b =>
+            {
+                b.Navigation("Files");
+            });
 
-            modelBuilder.Entity("SNEStorage.Models.Flag", b =>
-                {
-                    b.Navigation("ResourceFlags");
-                });
+        modelBuilder.Entity("SNEStorage.Models.Flag", b =>
+            {
+                b.Navigation("ResourceFlags");
+            });
 
-            modelBuilder.Entity("SNEStorage.Models.Reason", b =>
-                {
-                    b.Navigation("Flags");
-                });
+        modelBuilder.Entity("SNEStorage.Models.Reason", b =>
+            {
+                b.Navigation("Flags");
+            });
 
-            modelBuilder.Entity("SNEStorage.Models.Resource", b =>
-                {
-                    b.Navigation("ResourceComments");
+        modelBuilder.Entity("SNEStorage.Models.Resource", b =>
+            {
+                b.Navigation("ResourceComments");
 
-                    b.Navigation("ResourceFlags");
-                });
+                b.Navigation("ResourceFlags");
+            });
 
-            modelBuilder.Entity("SNEStorage.Models.ResourceType", b =>
-                {
-                    b.Navigation("Resources");
-                });
+        modelBuilder.Entity("SNEStorage.Models.ResourceType", b =>
+            {
+                b.Navigation("Resources");
+            });
 
-            modelBuilder.Entity("SNEStorage.Models.Score", b =>
-                {
-                    b.Navigation("Comments");
+        modelBuilder.Entity("SNEStorage.Models.Score", b =>
+            {
+                b.Navigation("Comments");
 
-                    b.Navigation("LikesUsers");
+                b.Navigation("LikesUsers");
 
-                    b.Navigation("Resources");
+                b.Navigation("Resources");
 
-                    b.Navigation("ScoresUsers");
-                });
+                b.Navigation("ScoresUsers");
+            });
 
-            modelBuilder.Entity("SNEStorage.Models.Team", b =>
-                {
-                    b.Navigation("TeamsUsers");
-                });
+        modelBuilder.Entity("SNEStorage.Models.Team", b =>
+            {
+                b.Navigation("TeamsUsers");
+            });
 
-            modelBuilder.Entity("SNEStorage.Models.TimeZone", b =>
-                {
-                    b.Navigation("UserInfos");
-                });
+        modelBuilder.Entity("SNEStorage.Models.TimeZone", b =>
+            {
+                b.Navigation("UserInfos");
+            });
 
-            modelBuilder.Entity("SNEStorage.Models.Videogame", b =>
-                {
-                    b.Navigation("Resources");
-                });
+        modelBuilder.Entity("SNEStorage.Models.Videogame", b =>
+            {
+                b.Navigation("Resources");
+            });
 
-            modelBuilder.Entity("SNEStorage.Models.Visibility", b =>
-                {
-                    b.Navigation("Resources");
+        modelBuilder.Entity("SNEStorage.Models.Visibility", b =>
+            {
+                b.Navigation("Resources");
 
-                    b.Navigation("UserInfos");
-                });
+                b.Navigation("UserInfos");
+            });
 
-            modelBuilder.Entity("SNEStorage.Models.ApplicationUser", b =>
-                {
-                    b.Navigation("Comments");
+        modelBuilder.Entity("SNEStorage.Models.ApplicationUser", b =>
+            {
+                b.Navigation("Comments");
 
-                    b.Navigation("Flags");
+                b.Navigation("Flags");
 
-                    b.Navigation("LikesUsers");
+                b.Navigation("LikesUsers");
 
-                    b.Navigation("Resources");
+                b.Navigation("Resources");
 
-                    b.Navigation("ScoresUsers");
+                b.Navigation("ScoresUsers");
 
-                    b.Navigation("TeamsUsers");
+                b.Navigation("TeamsUsers");
 
-                    b.Navigation("UserInfo");
-                });
+                b.Navigation("UserInfo");
+            });
 #pragma warning restore 612, 618
-        }
     }
 }

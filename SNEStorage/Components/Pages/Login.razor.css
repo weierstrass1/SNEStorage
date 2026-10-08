@@ -1,0 +1,167 @@
+.login-page {
+    display: grid;
+    width: min(100%, 480px);
+    min-height: min(68vh, 610px);
+    grid-template-columns: minmax(0, 1fr);
+    align-items: center;
+    margin: 0 auto;
+}
+
+.login-card {
+    width: 100%;
+    padding: clamp(1.5rem, 4vw, 2.5rem);
+    border: 2px solid #d9cbff;
+    border-radius: 6px;
+    background: linear-gradient(145deg, rgba(35, 18, 77, .98), rgba(14, 8, 34, .98));
+    box-shadow: 0 0 0 3px #000, 0 0 28px rgba(138, 61, 255, .35), inset 0 0 0 2px #6a2be0;
+}
+
+.login-section-kicker {
+    margin: 0 0 .65rem;
+    color: #c28aff;
+    font-family: "Press Start 2P", "Courier New", monospace;
+    font-size: .42rem;
+    line-height: 1.9;
+    letter-spacing: .04em;
+}
+
+.login-card-heading h2 {
+    margin: 0;
+    color: #fff;
+    font-family: "Exo 2", "Segoe UI", sans-serif;
+    font-size: clamp(2rem, 4vw, 2.6rem);
+    font-weight: 800;
+    letter-spacing: -.035em;
+}
+
+.login-card-heading > p:last-child {
+    margin: .45rem 0 0;
+    color: #a49cd0;
+    font-size: .93rem;
+}
+
+.login-status {
+    display: flex;
+    align-items: flex-start;
+    gap: .6rem;
+    margin-top: 1.2rem;
+    padding: .75rem .85rem;
+    border: 1px solid #8b6ee8;
+    color: #e7deff;
+    background: rgba(47, 29, 102, .62);
+    font-size: .88rem;
+    line-height: 1.55;
+}
+
+.login-status span {
+    padding-top: .1rem;
+    color: #ffe14d;
+    font-size: .65rem;
+}
+
+.login-form {
+    display: grid;
+    gap: 1.15rem;
+    margin-top: 1.6rem;
+}
+
+.login-field {
+    display: flex;
+    flex-direction: column;
+    gap: .4rem;
+}
+
+.login-field label {
+    margin: 0;
+    color: #d9d0ef;
+    font-size: .88rem;
+    font-weight: 700;
+}
+
+.login-input {
+    width: 100%;
+    min-height: 48px;
+    padding: .7rem .8rem;
+    border: 1px solid #59408f;
+    border-radius: 3px;
+    color: #f2edff;
+    background: #0a0718;
+    font: inherit;
+    font-size: .94rem;
+}
+
+.login-input::placeholder {
+    color: #797092;
+    opacity: 1;
+}
+
+.login-input:focus {
+    border-color: #b14cff;
+    outline: 2px solid rgba(177, 76, 255, .25);
+    outline-offset: 1px;
+    box-shadow: 0 0 13px rgba(177, 76, 255, .22);
+}
+
+.login-submit {
+    display: flex;
+    min-height: 50px;
+    align-items: center;
+    justify-content: center;
+    gap: .75rem;
+    margin-top: .2rem;
+    padding: .75rem 1rem;
+    border: 3px solid #000;
+    border-radius: 3px;
+    color: #080611;
+    background: #ffe14d;
+    box-shadow: 3px 3px 0 #6a2be0, 0 0 16px rgba(255, 225, 77, .23);
+    font-family: "Press Start 2P", "Courier New", monospace;
+    font-size: .58rem;
+    line-height: 1.7;
+    cursor: pointer;
+    transition: transform .15s ease, box-shadow .15s ease, background-color .15s ease;
+}
+
+.login-submit:hover {
+    background: #fff18a;
+    box-shadow: 3px 3px 0 #6a2be0, 0 0 22px rgba(255, 225, 77, .43);
+    transform: translateY(-1px);
+}
+
+.login-register {
+    margin: 1.35rem 0 0;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(106, 43, 224, .42);
+    color: #a49cd0;
+    font-size: .86rem;
+    text-align: center;
+}
+
+.login-register a {
+    color: #ffe14d;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.login-register a:hover {
+    color: #fff18a;
+    text-decoration: underline;
+}
+
+@media (max-width: 600px) {
+    .login-page {
+        min-height: min(62vh, 520px);
+    }
+
+    .login-card {
+        padding: 1.25rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .login-page *,
+    .login-page *::before,
+    .login-page *::after {
+        transition-duration: .01ms !important;
+    }
+}

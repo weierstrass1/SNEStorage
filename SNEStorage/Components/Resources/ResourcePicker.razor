@@ -1,0 +1,10 @@
+<div class="picker-field">
+    <span id="@(PickerId + "-label")" class="picker-label">@Label @if (Required) { <span aria-hidden="true">*</span> }</span>
+    <div id="@PickerId" class="picker" data-resource-picker data-open="@(_isOpen ? "true" : "false")" data-hover="@(_openedByHover ? "true" : "false")" @onkeydown="KeyDownAsync">
+        <button type="button" class="picker-trigger" data-picker-trigger @onclick="Toggle" @onmouseenter="OpenFromHover" aria-expanded="@(_isOpen ? "true" : "false")" aria-controls="@(PickerId + "-options")" aria-labelledby="@(PickerId + "-label " + PickerId + "-value")">
+            <span id="@(PickerId + "-value")" class="picker-value">@SummaryContent</span>
+            <span class="picker-arrow" aria-hidden="true">⌄</span>
+        </button>
+        <div id="@(PickerId + "-options")" class="picker-options" hidden="@(!_isOpen)">@ChildContent</div>
+    </div>
+</div>

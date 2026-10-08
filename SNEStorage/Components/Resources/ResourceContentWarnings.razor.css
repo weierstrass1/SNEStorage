@@ -1,0 +1,7 @@
+.content-help { margin: 0 0 .9rem; color: #baacce; font-size: .85rem; line-height: 1.6; }
+.content-list { display: grid; gap: .55rem; }
+.content-check { display: flex; align-items: center; gap: .7rem; min-height: 44px; margin: 0; padding: .65rem .8rem; border: 1px solid #59408f; border-radius: 4px; background: #140b23; color: #e1d8f3; font-size: .9rem; cursor: pointer; }
+.content-check:hover, .content-check:focus-within { border-color: #9861d1; background: #201033; }
+.content-check:has(input:checked) { border-color: #b79043; color: #ffe14d; background: #2b1e32; }
+.content-check ::deep input { flex-shrink: 0; width: 18px; height: 18px; margin: 0; accent-color: #b14cff; cursor: pointer; }
+.content-check ::deep input:focus-visible { outline: 2px solid #ffe14d; outline-offset: 3px; }

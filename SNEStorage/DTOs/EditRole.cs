@@ -5,7 +5,7 @@ namespace SNEStorage.DTOs;
 public class EditRole
 {
     [Required]
-    public string RoleName { get; set; }
+    public required string RoleName { get; set; }
     [Required]
-    public string Username { get; set; }
+    public required string Username { get; set; }
 }

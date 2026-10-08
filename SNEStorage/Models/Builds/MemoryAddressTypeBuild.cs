@@ -16,7 +16,7 @@ public partial class MemoryAddressType
             .ValueGeneratedOnAdd();
 
         entity.Property(e => e.Name)
-            .HasColumnType("text")
+            .HasColumnType("nvarchar(50)")
             .HasColumnName("name");
     }
 }

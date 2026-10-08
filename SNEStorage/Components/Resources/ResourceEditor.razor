@@ -1,0 +1,142 @@
+@if (_loading)
+{
+    <section class="resource-editor editor-loading" role="status"><h1>Loading resource…</h1></section>
+}
+else if (_errorStatus is { } status)
+{
+    <ErrorPanel StatusCode="status" ErrorBody="@_errorBody" Domain="resource" OnRetry="Reload" />
+}
+else if (_saved)
+{
+    <section class="resource-editor editor-saved" role="status" aria-live="polite">
+        <h1>@SavedTitle</h1>
+        <p>You will return to the resource in a moment.</p>
+        <NavLink class="editor-cancel" href="@($"/Resource/{ResourceId}")">View resource →</NavLink>
+    </section>
+}
+else if (_resource is { } resource)
+{
+    <section class="resource-editor">
+        <NavLink class="editor-back" href="@($"/Resource/{ResourceId}")">← Back to resource</NavLink>
+        <header><h1>@Title</h1><p>@resource.Name</p></header>
+        <EditForm Model="_form" OnSubmit="SaveAsync" FormName="resource-editor" id="@FormId" class="editor-form" enctype="multipart/form-data" novalidate data-resource-editor aria-busy="@_saving">
+            <AntiforgeryToken />
+            @if (Mode == ResourceEditorMode.Resource)
+            {
+                <div class="editor-tabs" role="tablist" aria-label="Resource editing sections" inert="@(_saving ? string.Empty : null)">
+                    @for (var index = 0; index < TabTitles.Length; index++)
+                    {
+                        var tab = index;
+                        <button id="@TabId(tab)" class="editor-tab @(_activeTab == tab ? "active" : null)" type="button" role="tab" aria-selected="@(_activeTab == tab)" aria-controls="@PanelId(tab)" tabindex="@(_activeTab == tab ? 0 : -1)" @onclick="() => SelectTab(tab)" @onkeydown="args => TabKeyDown(tab, args)">
+                            <span class="editor-tab-number">@(tab + 1)</span>@TabTitles[tab]
+                        </button>
+                    }
+                </div>
+                <div class="editor-panels" inert="@(_saving ? string.Empty : null)">
+                <section id="@PanelId(0)" role="tabpanel" aria-labelledby="@TabId(0)" hidden="@(_activeTab != 0)" tabindex="0" data-editor-panel="0">
+                <fieldset inert="@(_saving ? string.Empty : null)">
+                    <legend>General information</legend>
+                    <div class="editor-fields">
+                        <div class="editor-field editor-wide"><label for="edit-resource-name">Resource name</label><InputText id="edit-resource-name" name="Name" class="editor-input" @bind-Value="_form.Name" minlength="2" maxlength="50" required /><small>2–50 characters.</small></div>
+                        <div class="editor-field editor-wide"><label for="edit-resource-description">Description</label><InputTextArea id="edit-resource-description" name="Description" class="editor-input" @bind-Value="_form.Description" rows="4" minlength="10" required /><small>At least 10 characters.</small></div>
+                        <div class="editor-field"><SearchableVideogamePicker InitialSelection="InitialGame" @bind-Value="_form.VideogameId" /></div>
+                        @if (_options is { } options)
+                        {
+                            <div class="editor-field"><ResourceTypePicker Options="options.ResourceTypes" @bind-Values="_form.Types" /></div>
+                            <div class="editor-field"><label for="edit-resource-visibility">Visibility</label><InputSelect id="edit-resource-visibility" name="VisibilityId" class="editor-input" @bind-Value="_form.VisibilityId">@foreach (var visibility in options.Visibilities) { <option value="@visibility.Id">@visibility.Name</option> }</InputSelect></div>
+                        }
+                        <div class="editor-field"><label for="edit-resource-tags">Tags</label><ResourceTokenInput InputId="edit-resource-tags" @bind-Values="_form.Tags" /></div>
+                        <div class="editor-field editor-wide"><label for="edit-resource-repository">Repository URL</label><InputText id="edit-resource-repository" name="RepositoryURL" type="url" class="editor-input" @bind-Value="_form.RepositoryURL" maxlength="100" pattern="https?://.+" placeholder="https://github.com/your-account/your-project" /><small>Optional HTTP or HTTPS link, up to 100 characters.</small></div>
+                    </div>
+                </fieldset>
+                </section>
+                <section id="@PanelId(1)" role="tabpanel" aria-labelledby="@TabId(1)" hidden="@(_activeTab != 1)" tabindex="0" data-editor-panel="1">
+                    <fieldset>
+                        <legend>Resource previews</legend>
+                        <p class="editor-muted">Keep up to 20 previews in total. New images, GIFs and videos must be no larger than 5 MB each.</p>
+                        <ResourceExistingPreviews ResourceId="ResourceId" ResourceName="@resource.Name" Previews="_existingPreviews" @bind-Values="_form.PreviewIDs" LoadMedia="@(_activeTab == 1)" />
+                        <div class="editor-divider">
+                            <ResourcePreviewPicker InputId="@PreviewInputId" MaxFiles="@(Math.Max(0, 20 - _form.PreviewIDs.Length))" />
+                        </div>
+                    </fieldset>
+                </section>
+                <section id="@PanelId(2)" role="tabpanel" aria-labelledby="@TabId(2)" hidden="@(_activeTab != 2)" tabindex="0" data-editor-panel="2">
+                    <fieldset>
+                        <legend>Authorship</legend>
+                        <p class="editor-muted">Credit the people who made this resource. Add or remove accounts and external authors below.</p>
+                        <ResourceAuthorPicker InitialNames="_authorNames" @bind-Values="_form.AuthorsIDs" />
+                        <div class="editor-divider"><ResourceAuthorPicker External="true" @bind-Values="_form.ExternalAuthors" /></div>
+                        <p class="editor-muted">Authors and submitters can manage this resource.</p>
+                    </fieldset>
+                </section>
+                <section id="@PanelId(3)" role="tabpanel" aria-labelledby="@TabId(3)" hidden="@(_activeTab != 3)" tabindex="0" data-editor-panel="3">
+                    <fieldset>
+                        <legend>Dependencies</legend>
+                        <ResourceDependencyPicker InitialChoices="_dependencyChoices" ExcludedResourceId="ResourceId" @bind-Values="_form.DependencyIDs" />
+                        <div class="editor-divider"><ResourceExternalDependencyEditor @bind-Values="_form.ExternalDependencies" /></div>
+                    </fieldset>
+                </section>
+                <section id="@PanelId(4)" role="tabpanel" aria-labelledby="@TabId(4)" hidden="@(_activeTab != 4)" tabindex="0" data-editor-panel="4">
+                <fieldset inert="@(_saving ? string.Empty : null)">
+                    <legend>Content warnings</legend>
+                    <ResourceContentWarnings @bind-IncludesPorn="_form.IncludesPorn" @bind-IncludesGore="_form.IncludesGore" @bind-IncludesPolitics="_form.IncludesPolitics" @bind-IncludesSlurs="_form.IncludesSlurs" @bind-IncludesSensitiveContent="_form.IncludesSensitiveContent" />
+                </fieldset>
+                </section>
+                </div>
+            }
+            else
+            {
+                <fieldset inert="@(_saving ? string.Empty : null)">
+                    <legend>Release details</legend>
+                    <div class="editor-fields">
+                        <div class="editor-field editor-wide"><label for="edit-version-name">Version name</label><InputText id="edit-version-name" name="Version" class="editor-input" @bind-Value="_form.Version" maxlength="20" placeholder="e.g. 1.1.0" required="@(Mode == ResourceEditorMode.CreateVersion)" /></div>
+                        <div class="editor-field editor-wide"><label for="edit-release-notes">Release notes</label><InputTextArea id="edit-release-notes" name="ReleaseNotes" class="editor-input" @bind-Value="_form.ChangeLog" rows="7" placeholder="Describe the changes in this version." required="@(Mode == ResourceEditorMode.CreateVersion)" /></div>
+                        @if (Mode == ResourceEditorMode.CreateVersion)
+                        {
+                            <div class="editor-field editor-wide">
+                                <label for="new-version-file">Resource archive</label>
+                                <InputFile id="new-version-file" name="File" class="editor-input" accept=".zip,.rar,.7z,.tar,.gz,.tar.gz" OnChange="FileSelected" required />
+                                <small>ZIP, RAR, 7Z, TAR, GZ or TAR.GZ · maximum 250 MB.</small>
+                                @if (_fileName is not null) { <p class="editor-file-name">@_fileName</p> }
+                                @if (_fileError is not null) { <p class="editor-error" role="alert">@_fileError</p> }
+                            </div>
+                        }
+                        else if (_version is { } version)
+                        {
+                            <p class="editor-muted editor-wide">Editing the name and release notes keeps this version's archive unchanged.</p>
+                            @if (ResourceFileLinks.For(ResourceId, version.FileId, true) is { } download)
+                            {
+                                <a class="editor-download" href="@download" data-enhance-nav="false">Download current archive ↓</a>
+                            }
+                        }
+                    </div>
+                </fieldset>
+                <fieldset inert="@(_saving ? string.Empty : null)">
+                    <legend>Version quality review</legend>
+                    @if (_version is { } currentVersion)
+                    {
+                        <ResourceVersionStatus Version="currentVersion" />
+                    }
+                    <ResourceQualityRequest @bind-Value="_form.SealOfQualityRequested" />
+                </fieldset>
+            }
+            @if (_message is not null)
+            {
+                <div class="editor-error" role="alert"><p>@_message</p>
+                    @if (_validationErrors.Length > 0) { <ul>@foreach (var error in _validationErrors) { <li>@error</li> }</ul> }
+                </div>
+            }
+            @if (_saving) { <p class="editor-muted" role="status" aria-live="polite">@(Mode == ResourceEditorMode.CreateVersion ? "Uploading your archive. Keep this page open until it finishes." : "Saving your changes…")</p> }
+            <footer>
+                <NavLink class="editor-cancel" href="@($"/Resource/{ResourceId}")">Cancel</NavLink>
+                @if (Mode == ResourceEditorMode.Resource)
+                {
+                    <span class="editor-progress">@(_activeTab + 1) / @TabTitles.Length</span>
+                    <button type="button" class="editor-step" disabled="@(_saving || _activeTab == 0)" @onclick="() => SelectTab(_activeTab - 1)">← Previous</button>
+                    <button type="button" class="editor-step" disabled="@(_saving || _activeTab == TabTitles.Length - 1)" @onclick="() => SelectTab(_activeTab + 1)">Next →</button>
+                }
+                <button type="submit" class="editor-save" disabled="@_saving">@SubmitLabel</button>
+            </footer>
+        </EditForm>
+    </section>
+}

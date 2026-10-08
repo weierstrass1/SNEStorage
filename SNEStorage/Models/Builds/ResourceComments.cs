@@ -23,8 +23,9 @@ public partial class ResourceComments
 
         entity.Property(e => e.CommentId)
             .HasColumnName("comment_id");
-        entity.HasOne(d => d.Comment).WithMany(p => p.ResourceComments)
-            .HasForeignKey(d => d.CommentId)
+        entity.HasOne(d => d.Comment)
+            .WithOne(p => p.ResourceComment)
+            .HasForeignKey<ResourceComments>(d => d.CommentId)
             .OnDelete(DeleteBehavior.ClientCascade)
             .HasConstraintName("FK_resource_comments_comment");
     }

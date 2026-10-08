@@ -1,0 +1,54 @@
+<input type="hidden" name="VideogameId" value="@Value" />
+<ResourcePicker @ref="_picker" PickerId="resource-game-picker" Label="Video game" Required="true" FocusSearch="true">
+    <SummaryContent><span title="@SelectedName">@SelectedName</span></SummaryContent>
+    <ChildContent>
+    <label class="game-search-label" for="resource-game-search">Search games</label>
+    <input class="game-search" id="resource-game-search" type="search" value="@_search" @oninput="SearchChangedAsync" placeholder="Type at least 2 characters…" autocomplete="off" disabled="@(!_ready)" aria-describedby="resource-game-status" data-videogame-search />
+    <div id="resource-game-status" role="status" aria-live="polite">
+        @if (_loading)
+        {
+            <p class="game-result-count">@(_ready ? "Searching games…" : "Loading game choices…")</p>
+        }
+        else if (_error is not null)
+        {
+            <p class="game-error">@_error</p>
+            @if (_ready)
+            {
+                <button class="game-retry" type="button" @onclick="RetryAsync">Try again</button>
+            }
+        }
+        else if (_search.Trim().Length == 1)
+        {
+            <p class="game-result-count">Type at least 2 characters to search.</p>
+        }
+        else if (_matches.Count == 0)
+        {
+            <p class="game-empty">No games match your search. Try another name.</p>
+        }
+        else
+        {
+            <p class="game-result-count">@_matches.Count @(_matches.Count == 1 ? "game" : "games")</p>
+        }
+    </div>
+
+    @if (!_loading && _error is null && _matches.Count > 0)
+    {
+        <div @key="_search" class="game-results" role="group" aria-label="Video game choices">
+            @foreach (var game in _matches)
+            {
+                <button @key="game.Id" class="game-choice @(game.Id == Value ? "selected" : null)" type="button" aria-pressed="@(game.Id == Value)" title="@game.Name" @onclick="() => SelectAsync(game)">
+                    <span>@game.Name</span>
+                    @if (game.Id == Value)
+                    {
+                        <span class="game-selected-icon" aria-hidden="true">✓</span>
+                    }
+                </button>
+            }
+        </div>
+        @if (_search.Trim().Length >= 2 && _matches.Count == MaxResults)
+        {
+            <p class="game-result-count">Up to @MaxResults matches are shown. Refine your search if needed.</p>
+        }
+    }
+    </ChildContent>
+</ResourcePicker>

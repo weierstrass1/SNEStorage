@@ -1,0 +1,15 @@
+.external-dependencies { display: grid; gap: .85rem; margin-top: 2rem; }
+.external-dependencies h3 { margin: 0; color: #f1eaff; font-size: 1.05rem; font-weight: 800; }
+.dependency-help { margin: 0; color: #baacce; font-size: .85rem; line-height: 1.65; }
+.dependency-entry { display: grid; gap: .5rem; min-width: 0; margin: .5rem 0 0; padding: 1rem 0 1.5rem; border: 0; border-bottom: 1px solid #3c2857; }
+.dependency-entry legend { float: none; width: auto; margin: 0; padding: 0; color: #dac4f7; font-size: .95rem; font-weight: 700; }
+.dependency-entry label { margin-top: .25rem; color: #e1d8f3; font-size: .85rem; font-weight: 700; }
+.dependency-entry label span { color: #ffe14d; }
+.dependency-entry ::deep input { width: 100%; min-height: 44px; padding: .7rem .85rem; border: 1px solid #59408f; border-radius: 4px; color: #f2edff; background: #0a0718; font: inherit; font-size: .9rem; }
+.dependency-entry ::deep input::placeholder { color: #9286b1; }
+.dependency-mirrors { margin: .5rem 0; }
+.dependency-mirrors summary { margin-bottom: .65rem; color: #dac4f7; font-size: .85rem; cursor: pointer; }
+.dependency-mirrors label { display: block; margin: .75rem 0 .4rem; }
+.dependency-button { justify-self: start; min-height: 40px; padding: .5rem .85rem; margin-top: .4rem; border: 1px solid #9861d1; border-radius: 4px; color: #e9d7ff; background: #25133e; font: inherit; font-size: .85rem; }
+.dependency-button:hover { color: #ffe14d; background: #351951; }
+.dependency-button:focus-visible, .dependency-mirrors summary:focus-visible, .dependency-entry ::deep input:focus-visible { outline: 2px solid #ffe14d; outline-offset: 2px; }

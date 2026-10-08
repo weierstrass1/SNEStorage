@@ -1,6 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using SNEStorage.Models;
 using System.ComponentModel.DataAnnotations;
 
 namespace SNEStorage.DTOs;
@@ -9,24 +7,25 @@ public class RegisterInfo
 {
     [Required]
     [Display(Name = "Username")]
-    public string User { get; set; }
+    public required string User { get; set; }
     [Required]
     [EmailAddress]
-    public string Email { get; set; }
+    public required string Email { get; set; }
     [Required]
-    public string Password { get; set; }
+    public required string Password { get; set; }
     [Required]
+    [Compare(nameof(Password), ErrorMessage = "Passwords do not match.")]
     [Display(Name = "Repeat Password")]
-    public string PasswordRepeat { get; set; }
+    public required string PasswordRepeat { get; set; }
     [Display(Name = "Username Color")]
-    public string? UsernameColor { get; set; }
-    public DateOnly Birthday { get; set; }
+    public required string UsernameColor { get; set; }
+    public required DateOnly Birthday { get; set; }
     [Display(Name = "Email Visibility")]
-    public long EmailVisibilityId { get; set; }
+    public required long EmailVisibilityId { get; set; }
     [Display(Name = "Time Zone")]
-    public long TimeZoneId { get; set; }
+    public required long TimeZoneId { get; set; }
     [Required]
     [Display(Name = "Avatar")]
     [BindProperty]
-    public IFormFile Avatar { get; set; }
+    public required IFormFile Avatar { get; set; }
 }

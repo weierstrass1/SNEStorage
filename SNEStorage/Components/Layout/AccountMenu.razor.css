@@ -1,0 +1,71 @@
+.account-menu { position: relative; min-width: 0; }
+
+.account-toggle {
+    display: inline-flex;
+    max-width: 260px;
+    align-items: center;
+    gap: .65rem;
+    padding: .35rem .6rem .35rem .35rem;
+    border: 1px solid #6a429b;
+    border-radius: 5px;
+    color: #e7e2ff;
+    background: #170c30;
+    font-family: "Exo 2", "Segoe UI", sans-serif;
+    font-size: .95rem;
+    font-weight: 700;
+    text-align: left;
+    cursor: pointer;
+}
+
+.account-toggle:hover,
+.account-toggle[aria-expanded="true"] { border-color: #b14cff; color: #fff; background: #241344; box-shadow: 0 0 12px rgba(177, 76, 255, .25); }
+.account-avatar { flex: 0 0 36px; width: 36px; height: 36px; border: 1px solid #8b63be; border-radius: 4px; background: #0a0718; object-fit: cover; }
+.account-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.account-chevron { flex: 0 0 14px; width: 14px; height: 14px; margin-left: .2rem; color: #c7a5ff; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.account-toggle[aria-expanded="true"] .account-chevron { transform: rotate(180deg); }
+
+.account-dropdown {
+    min-width: 210px;
+    padding: .4rem;
+    border: 1px solid #a969f5;
+    border-radius: 5px;
+    color: #e7e2ff;
+    background: #160c2d;
+    box-shadow: 3px 3px 0 #080611, 0 8px 24px rgba(0, 0, 0, .4);
+}
+
+.account-menu-item {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    gap: .75rem;
+    padding: .7rem .75rem;
+    border: 0;
+    border-radius: 3px;
+    color: #e7deff;
+    background: transparent;
+    font-family: "Segoe UI", sans-serif;
+    font-size: .9rem;
+    font-weight: 600;
+    text-align: left;
+    text-decoration: none;
+}
+
+.account-menu-item svg { flex: 0 0 18px; width: 18px; height: 18px; color: #c28aff; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.account-menu-item:hover,
+.account-menu-item:focus { color: #fff; background: #352052; text-decoration: none; }
+.account-menu-divider { margin: .35rem .5rem; border-top-color: #6a429b; opacity: .65; }
+.account-logout { color: #ffc0cc; }
+.account-logout svg { color: #ff91a5; }
+.account-logout:hover,
+.account-logout:focus { color: #ffe1e7; background: #3d1b36; }
+.account-toggle:focus-visible,
+.account-menu-item:focus-visible { outline: 2px solid #ffe14d; outline-offset: 3px; }
+.account-dropdown form { margin: 0; }
+
+@media (max-width: 991.98px) {
+    .account-menu { width: min(100%, 340px); }
+    .account-toggle { width: 100%; max-width: none; }
+    .account-chevron { margin-left: auto; }
+    .account-dropdown { width: 100%; }
+}

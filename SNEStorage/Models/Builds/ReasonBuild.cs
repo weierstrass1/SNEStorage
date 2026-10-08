@@ -16,7 +16,7 @@ public partial class Reason
             .ValueGeneratedOnAdd();
 
         entity.Property(e => e.Description)
-            .HasColumnType("text")
+            .HasColumnType("nvarchar(max)")
             .HasColumnName("description");
     }
 }

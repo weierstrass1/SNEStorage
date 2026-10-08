@@ -1,0 +1,65 @@
+@page "/Resource"
+@page "/Resources"
+@page "/Resource/Index"
+
+<PageTitle>Resources | SNEStorage</PageTitle>
+
+<section class="page-heading">
+    <div>
+        <p class="eyebrow">COMMUNITY LIBRARY</p>
+        <h1>Resources</h1>
+        <p>Browse shared resources for Super Nintendo projects.</p>
+    </div>
+    <a class="btn btn-primary" href="/Resource/Create" data-enhance-nav="false">Submit a resource</a>
+</section>
+
+@if (_isLoading)
+{
+    <p class="text-secondary" role="status">Loading resources…</p>
+}
+else if (!string.IsNullOrWhiteSpace(_error))
+{
+    <div class="alert alert-danger" role="alert">@_error</div>
+}
+else if (_resources.Count == 0)
+{
+    <div class="empty-state">
+        <h2>No resources yet</h2>
+        <p>Be the first to share a resource with the community.</p>
+    </div>
+}
+else
+{
+    <div class="table-responsive resource-table-wrap">
+        <table class="table align-middle resource-table">
+            <thead>
+                <tr>
+                    <th scope="col">Resource</th>
+                    <th scope="col">Type</th>
+                    <th scope="col">Usage</th>
+                    <th class="text-center" scope="col">Downloads</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var resource in _resources)
+                {
+                    <tr>
+                        <td>
+                            <strong>@resource.Name @resource.Version</strong>
+                            <span class="resource-subtitle">@resource.Videogame</span>
+                            <span class="resource-subtitle">Added @resource.CreatedAt.ToString("dd MMM yyyy")</span>
+                        </td>
+                        <td>@resource.Type</td>
+                        <td>@resource.Usage</td>
+                        <td class="text-center">
+                            <a class="download-link" href="/Resource/Download/@resource.Id" aria-label="Download @resource.Name">
+                                <img src="Content/Images/download.png" alt="" />
+                                <span>@resource.Downloads</span>
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

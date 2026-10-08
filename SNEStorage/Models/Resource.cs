@@ -1,34 +1,40 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using SNEStorage.DTOs;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace SNEStorage.Models;
 
 public partial class Resource
 {
-    public long Id { get; set; }
-    public string? Name { get; set; }
-    public long? VideogameId { get; set; }
-    public long? ResourceTypeId { get; set; }
-    public string? Usage { get; set; }
-    public string? Description { get; set; }
-    public string? Version { get; set; }
-    public int? Downloads { get; set; }
+    public required long Id { get; set; }
+    public required string Name { get; set; }
+    public required long VideogameId { get; set; }
+    public required string Description { get; set; }
     public DateTime CreatedAt { get; set; }
-    public DateTime LastUpdate { get; set; }
-    public bool IncludesPorn { get; set; }
-    public bool IncludesGore { get; set; }
-    public bool IncludesPolitics { get; set; }
-    public bool IncludesSlurs { get; set; }
-    public bool IncludesSensitiveContent { get; set; }
-    public long FileId { get; set; }
-    public required string SubmitterUserId { get; set; }
-    public long ScoreId { get; set; }
-    public long VisibilityId { get; set; }
-    public virtual ResourceType? ResourceType { get; set; }
+    public DateTime? UpdatedAt { get; set; }
+    public bool IncludesPorn { get; set; } = false;
+    public bool IncludesGore { get; set; } = false;
+    public bool IncludesPolitics { get; set; } = false;
+    public bool IncludesSlurs { get; set; } = false;
+    public bool IncludesSensitiveContent { get; set; } = false;
+    public required long ScoreId { get; set; }
+    public required long VisibilityId { get; set; }
+    public string? RepositoryURL { get; set; }
+    public bool AlreadyModerated { get; set; } = false;
+    public required string SubmitterId { get; set; }
+    [JsonIgnore]
+    public virtual ApplicationUser? Submitter { get; set; }
+    [NotMapped]
+    public UserNameDTO? UserSummary { get; set; }
     public virtual Videogame? Videogame { get; set; }
-    public virtual File? File { get; set; }
-    public virtual ApplicationUser? SubmitterUser { get; set; }
     public virtual Score? Score { get; set; }
     public virtual Visibility? Visibility { get; set; }
+    public virtual ICollection<ResourcePreview> ResourcePreviews { get; set; } = [];
+    public virtual ICollection<ResourceDependency> ResourceDependencies { get; set; } = [];
+    public virtual ICollection<ResourceDependency> Dependents { get; set; } = [];
+    public virtual ICollection<ResourceExternalDependency> ResourceExternalDependencies { get; set; } = [];
+    public virtual ICollection<ResourceVersion> ResourceVersions { get; set; } = [];
+    public virtual ICollection<ResourceResourceTypes> ResourceResourceTypes { get; set; } = [];
     public virtual ICollection<ResourceComments> ResourceComments { get; set; } = [];
     public virtual ICollection<ResourceFlags> ResourceFlags { get; set; } = [];
     public virtual ICollection<ResourceAuthors> ResourcesAuthors { get; set; } = [];

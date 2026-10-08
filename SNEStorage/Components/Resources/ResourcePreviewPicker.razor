@@ -1,0 +1,42 @@
+<div class="preview-picker">
+    <label class="preview-label" for="@InputId">New preview files</label>
+    <p class="preview-help">Add images, GIFs, or videos to show your resource in action. Up to 20 files, 5 MB each.</p>
+    <InputFile id="@InputId" name="Previews" class="preview-input" multiple accept=".png,.jpg,.jpeg,.gif,.webp,.avif,.mp4,.webm,.ogv" OnChange="FilesSelectedAsync" disabled="@(!_ready || _items.Count >= MaxFiles)" />
+    <p class="preview-help" role="status" aria-live="polite">@_items.Count / @MaxFiles available new preview slots · PNG, JPG, GIF, WEBP, AVIF, MP4, WEBM, OGV</p>
+    @if (_items.Count > MaxFiles)
+    {
+        <p class="preview-errors" role="alert">Too many previews. Remove a new or existing preview before saving.</p>
+    }
+    @if (_errors.Count > 0)
+    {
+        <ul class="preview-errors" role="alert">
+            @foreach (var error in _errors) { <li>@error</li> }
+        </ul>
+    }
+    @if (_items.Count == 0)
+    {
+        <p class="preview-empty">No previews added yet. You can select files in several batches.</p>
+    }
+    else
+    {
+        <ul class="preview-grid">
+            @foreach (var item in _items)
+            {
+                <li @key="item.Id" class="preview-item">
+                    <div class="preview-media">
+                        @if (item.Video)
+                        {
+                            <video src="@item.Url" controls preload="none" playsinline aria-label="Preview @item.Name">Your browser cannot play this video.</video>
+                        }
+                        else
+                        {
+                            <img src="@item.Url" alt="Preview @item.Name" loading="lazy" />
+                        }
+                    </div>
+                    <div class="preview-caption"><strong>@item.Name</strong><span>@FormatSize(item.Size)</span></div>
+                    <button type="button" class="preview-remove" aria-label="Remove preview @item.Name" @onclick="() => RemoveAsync(item.Id)">Remove</button>
+                </li>
+            }
+        </ul>
+    }
+</div>

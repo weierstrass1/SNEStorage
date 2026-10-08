@@ -1,0 +1,40 @@
+<section class="release-list" aria-labelledby="releases-heading">
+    <header class="release-heading">
+        <h2 id="releases-heading">Version history</h2>
+        <span>@Versions.Count @(Versions.Count == 1 ? "release" : "releases")</span>
+    </header>
+    @if (Versions.Count == 0)
+    {
+        <p class="release-empty">No releases are available.</p>
+    }
+    @foreach (var version in OrderedVersions)
+    {
+        <details class="release-item" open="@(version == OrderedVersions.First())">
+            <summary>
+                <span class="release-label">@VersionName(version)</span>
+                <span class="release-date">@version.CreatedAt.ToString("MMM d, yyyy", DisplayCulture)</span>
+            </summary>
+            <div class="release-body">
+                <ResourceVersionStatus Version="version" />
+                @if (version.UpdatedAt is { } updatedAt)
+                {
+                    <p class="release-updated">Updated <time datetime="@updatedAt.ToString("O")">@updatedAt.ToString("MMM d, yyyy", DisplayCulture)</time></p>
+                }
+                <p class="release-notes">@(string.IsNullOrWhiteSpace(version.ChangeLog) ? "No release notes were provided." : version.ChangeLog)</p>
+                <div class="release-footer">
+                    <span>@version.Downloads.ToString("N0", DisplayCulture) downloads</span>
+                    <div class="release-actions">
+                    @if (CanManage)
+                    {
+                        <NavLink class="release-edit" href="@($"/Resource/{ResourceId}/Versions/{version.Id}/Edit")">Edit version</NavLink>
+                    }
+                    @if (DownloadUrl(version) is { } downloadUrl)
+                    {
+                        <a class="release-download" href="@downloadUrl" data-enhance-nav="false">Download @VersionName(version) <span aria-hidden="true">↓</span></a>
+                    }
+                    </div>
+                </div>
+            </div>
+        </details>
+    }
+</section>

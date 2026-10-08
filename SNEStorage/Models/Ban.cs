@@ -1,4 +1,8 @@
-﻿namespace SNEStorage.Models;
+﻿using SNEStorage.DTOs;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
+
+namespace SNEStorage.Models;
 
 public partial class Ban
 {
@@ -8,5 +12,8 @@ public partial class Ban
     public DateTime ExpireDate { get; set; }
     public bool IsPermanent { get; set; }
     public required string Reasons {  get; set; }
+    [JsonIgnore]
     public virtual ApplicationUser? User { get; set; }
+    [NotMapped]
+    public UserNameDTO? UserSummary { get; set; }
 }

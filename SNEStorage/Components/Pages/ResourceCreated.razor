@@ -1,0 +1,22 @@
+@page "/Resource/Created/{ResourceId:long}"
+
+<PageTitle>Resource created | SNEStorage</PageTitle>
+
+<section class="resource-created-card" role="status" aria-live="polite">
+    @if (ResourceId > 0)
+    {
+        <div class="resource-created-icon" aria-hidden="true">✓</div>
+        <p class="resource-created-kicker">UPLOAD COMPLETE</p>
+        <h1>Resource created successfully</h1>
+        <p>Your resource has been saved. You will be taken to its page in a moment.</p>
+        <p class="resource-created-redirect">Opening your resource in 3 seconds…</p>
+        <a class="resource-created-action" href="@ResourceUrl">View resource <span aria-hidden="true">→</span></a>
+    }
+    else
+    {
+        <p class="resource-created-kicker">INVALID RESOURCE</p>
+        <h1>This resource link is incomplete</h1>
+        <p>Return to the resource library to continue browsing.</p>
+        <a class="resource-created-action" href="/Resources">Resource library</a>
+    }
+</section>

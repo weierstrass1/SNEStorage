@@ -1,0 +1,37 @@
+<section class="resource-comments" aria-labelledby="resource-comments-heading">
+    <div class="comments-heading">
+        <h2 id="resource-comments-heading">Comments</h2>
+        @if (CanPost && !_composing)
+        {
+            <button type="button" class="comment-compose-toggle" @onclick="BeginComment" disabled="@Saving"
+                    aria-expanded="false" aria-controls="resource-comment-composer">Reply</button>
+        }
+    </div>
+    @if (IsAuthenticated && _composing)
+    {
+        <EditForm id="resource-comment-composer" Model="_draft" OnSubmit="PostAsync" class="comment-composer" aria-busy="@Saving">
+            <label for="resource-comment-text">Leave a comment</label>
+            <InputTextArea id="resource-comment-text" @bind-Value="_draft.Text" @oninput="DraftChanged" rows="3"
+                           disabled="@Saving" placeholder="Share your feedback about this resource…" />
+            <div class="composer-actions">
+                <button type="button" @onclick="CancelComment" disabled="@Saving">Cancel</button>
+                <button type="submit" disabled="@(!CanPost || Saving || string.IsNullOrWhiteSpace(_draft.Text))">@(Saving ? "Posting…" : "Post comment")</button>
+            </div>
+        </EditForm>
+        @if (!CanPost)
+        {
+            <p class="comments-muted">Posting comments is currently unavailable.</p>
+        }
+    }
+    else if (!IsAuthenticated)
+    {
+        <p class="comments-muted"><NavLink href="@LoginUrl">Log in</NavLink> to leave a comment.</p>
+    }
+    @if (!string.IsNullOrWhiteSpace(Message))
+    {
+        <p class="comment-message" role="status">@Message</p>
+    }
+    <ResourceCommentList @key="ResourceId" ResourceId="ResourceId" IsAuthenticated="IsAuthenticated"
+                         CurrentUserId="@CurrentUserId" CanModerate="CanModerate" Revision="SubmissionRevision"
+                         PublishedComment="PublishedComment" />
+</section>

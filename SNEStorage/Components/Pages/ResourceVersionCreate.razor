@@ -1,0 +1,5 @@
+@page "/Resource/{ResourceId:long}/Versions/Create"
+@using SNEStorage.Components.Resources
+
+<PageTitle>Add version | SNEStorage</PageTitle>
+<ResourceEditor @key="ResourceId" ResourceId="ResourceId" Mode="ResourceEditorMode.CreateVersion" />

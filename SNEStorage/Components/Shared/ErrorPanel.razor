@@ -1,0 +1,22 @@
+<section class="error-panel" role="alert" aria-labelledby="@_headingId">
+    <div class="error-symbol" aria-hidden="true">!</div>
+    <p class="error-kicker">@(StatusCode > 0 ? $"ERROR {StatusCode}" : "CONNECTION ERROR")</p>
+    <h1 id="@_headingId">@_copy.Title</h1>
+    <p class="error-description">@_copy.Message</p>
+    @if (_copy.Code is not null)
+    {
+        <p class="error-code">Reference: @_copy.Code</p>
+    }
+    <div class="error-actions">
+        @if (OnRetry.HasDelegate)
+        {
+            <button class="error-primary" type="button" @onclick="OnRetry">Try again</button>
+        }
+        @if (_copy.SignIn)
+        {
+            <NavLink class="error-primary" href="@LoginUrl">Log in</NavLink>
+        }
+        <NavLink class="error-secondary" href="/">Return home</NavLink>
+        <NavLink class="error-secondary" href="/Resources">Browse resources</NavLink>
+    </div>
+</section>

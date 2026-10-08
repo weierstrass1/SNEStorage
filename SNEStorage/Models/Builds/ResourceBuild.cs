@@ -16,24 +16,16 @@ public partial class Resource
             .ValueGeneratedOnAdd();
 
         entity.Property(e => e.Name)
-            .HasColumnType("text")
+            .HasColumnType("nvarchar(50)")
             .HasColumnName("name");
         entity.Property(e => e.Description)
-            .HasColumnType("text")
+            .HasColumnType("nvarchar(max)")
             .HasColumnName("description");
-        entity.Property(e => e.Usage)
-            .HasColumnType("text")
-            .HasColumnName("usage");
-        entity.Property(e => e.Version)
-            .HasColumnType("text")
-            .HasColumnName("version");
 
-        entity.Property(e => e.Downloads)
-            .HasColumnName("downloads");
         entity.Property(e => e.CreatedAt)
             .HasColumnName("created_at");
-        entity.Property(e => e.LastUpdate)
-            .HasColumnName("last_update");
+        entity.Property(e => e.UpdatedAt)
+            .HasColumnName("updated_at");
 
         entity.Property(e => e.IncludesPorn)
             .HasColumnName("includes_porn");
@@ -53,32 +45,10 @@ public partial class Resource
             .OnDelete(DeleteBehavior.Cascade)
             .HasConstraintName("FK_resource_videogame");
 
-        entity.Property(e => e.ResourceTypeId)
-            .HasColumnName("resource_type_id");
-        entity.HasOne(d => d.ResourceType).WithMany(p => p.Resources)
-            .HasForeignKey(d => d.ResourceTypeId)
-            .OnDelete(DeleteBehavior.Cascade)
-            .HasConstraintName("FK_resource_resource_type");
-
-        entity.Property(e => e.FileId)
-            .HasColumnName("file_id");
-        entity.HasOne(d => d.File).WithMany(p => p.Resources)
-            .HasForeignKey(d => d.FileId)
-            .OnDelete(DeleteBehavior.Cascade)
-            .HasConstraintName("FK_resource_file");
-
-        entity.Property(e => e.SubmitterUserId)
-            .HasColumnType("nvarchar(450)")
-            .HasColumnName("submitter_user_id");
-        entity.HasOne(d => d.SubmitterUser).WithMany(p => p.Resources)
-            .HasForeignKey(d => d.SubmitterUserId)
-            .OnDelete(DeleteBehavior.Cascade)
-            .HasConstraintName("FK_resource_submitter_user");
-
         entity.Property(e => e.ScoreId)
             .HasColumnName("score_id");
-        entity.HasOne(d => d.Score).WithMany(p => p.Resources)
-            .HasForeignKey(d => d.ScoreId)
+        entity.HasOne(d => d.Score).WithOne(p => p.Resource)
+            .HasForeignKey<Resource>(d => d.ScoreId)
             .OnDelete(DeleteBehavior.Cascade)
             .HasConstraintName("FK_resource_score");
 
@@ -88,5 +58,20 @@ public partial class Resource
             .HasForeignKey(d => d.VisibilityId)
             .OnDelete(DeleteBehavior.Cascade)
             .HasConstraintName("FK_resource_visibility");
+
+        entity.Property(e => e.RepositoryURL)
+            .HasColumnType("nvarchar(100)")
+            .HasColumnName("repository_url");
+
+        entity.Property(e => e.AlreadyModerated)
+            .HasColumnName("already_moderated");
+
+        entity.Property(e => e.SubmitterId)
+            .HasColumnType("nvarchar(450)")
+            .HasColumnName("submitter_id");
+        entity.HasOne(d => d.Submitter).WithMany(p => p.Resources)
+            .HasForeignKey(d => d.SubmitterId)
+            .OnDelete(DeleteBehavior.NoAction)
+            .HasConstraintName("FK_resource_submitter");
     }
 }

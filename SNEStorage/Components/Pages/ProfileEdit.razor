@@ -1,0 +1,269 @@
+@page "/Profile/Edit"
+
+<PageTitle>Edit profile | SNEStorage</PageTitle>
+
+<div class="profile-edit-page">
+    <header class="profile-edit-heading">
+        <div>
+            <p class="profile-edit-kicker"><span aria-hidden="true">◆</span> PLAYER SETTINGS</p>
+            <h1>Edit profile</h1>
+            <p>Update your creator profile and save your changes together.</p>
+        </div>
+        <NavLink class="profile-edit-back" href="/Profile">← Back to profile</NavLink>
+    </header>
+
+    @if (_isLoading)
+    {
+        <section class="profile-edit-message" role="status">
+            <span aria-hidden="true">◌</span>
+            <h2>Loading your profile</h2>
+            <p>Retrieving your current account details...</p>
+        </section>
+    }
+    else if (!_isAuthenticated)
+    {
+        <section class="profile-edit-message" role="status">
+            <span aria-hidden="true">🔒</span>
+            <h2>Log in to edit your profile</h2>
+            <p>Your profile settings are only available to you.</p>
+            <NavLink class="profile-edit-action" href="@LoginUrl">Log in</NavLink>
+        </section>
+    }
+    else if (_profileNotFound)
+    {
+        <section class="profile-edit-message" role="status">
+            <span aria-hidden="true">◇</span>
+            <h2>No profile information yet</h2>
+            <p>There is no profile information available to edit for this account.</p>
+            <NavLink class="profile-edit-action" href="/Profile">Return to profile</NavLink>
+        </section>
+    }
+    else if (!string.IsNullOrWhiteSpace(_error))
+    {
+        <section class="profile-edit-message profile-edit-message-error" role="alert">
+            <span aria-hidden="true">!</span>
+            <h2>Profile editor unavailable</h2>
+            <p>@_error</p>
+            <button type="button" class="profile-edit-action" @onclick="ReloadProfile">Try again</button>
+            <NavLink class="profile-edit-action" href="/Profile">Return to profile</NavLink>
+        </section>
+    }
+    else if (_profile is not null && _form is not null)
+    {
+        <EditForm Model="_form" OnValidSubmit="SaveChangesAsync" class="profile-edit-form">
+            <DataAnnotationsValidator />
+
+            @if (!string.IsNullOrWhiteSpace(_optionsError))
+            {
+                <div class="profile-edit-notice profile-edit-notice-warning" role="status">
+                    <span aria-hidden="true">!</span>
+                    <p>@_optionsError Time zone and email visibility cannot be changed until those options load.</p>
+                </div>
+            }
+            @if (!string.IsNullOrWhiteSpace(_feedback))
+            {
+                <div class="profile-edit-notice @(_saveSucceeded ? "profile-edit-notice-success" : "profile-edit-notice-error")" role="@(_saveSucceeded ? "status" : "alert")">
+                    <span aria-hidden="true">@(_saveSucceeded ? "✓" : "!")</span>
+                    <p>@_feedback</p>
+                </div>
+            }
+
+            <section class="profile-edit-card" aria-labelledby="profile-avatar-heading">
+                <div class="profile-edit-section-heading">
+                    <span class="profile-edit-index">01</span>
+                    <div>
+                        <h2 id="profile-avatar-heading">Avatar and name color</h2>
+                        <p>Your color appears beside your name across SNEStorage.</p>
+                    </div>
+                </div>
+
+                <div class="profile-edit-avatar-row">
+                    <div class="profile-edit-avatar" style="--profile-accent: @_form.UsernameColor">
+                        <img src="@AvatarPreviewUrl" alt="Avatar preview" />
+                    </div>
+                    <div class="profile-edit-avatar-fields">
+                        <label class="profile-edit-label" for="profile-avatar-file">Profile avatar</label>
+                        <InputFile id="profile-avatar-file"
+                                   OnChange="AvatarSelectedAsync"
+                                   accept=".png,.jpg,.jpeg,image/png,image/jpeg"
+                                   class="profile-edit-file" />
+                        <p class="profile-edit-help">PNG or JPG, up to 5 MB. Leave empty to keep your current avatar.</p>
+                        @if (!string.IsNullOrWhiteSpace(_avatarName))
+                        {
+                            <p class="profile-edit-file-name">Selected: @_avatarName</p>
+                            <button class="profile-edit-text-button" type="button" @onclick="RemoveSelectedAvatarAsync">Remove selected image</button>
+                        }
+                        <div class="profile-edit-color-row">
+                            <label class="profile-edit-label" for="profile-username-color">Username color</label>
+                            <InputText id="profile-username-color" type="color" @bind-Value="_form.UsernameColor" class="profile-edit-color" />
+                            <span class="profile-edit-color-value">@_form.UsernameColor</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="profile-edit-card" aria-labelledby="profile-about-heading">
+                <div class="profile-edit-section-heading">
+                    <span class="profile-edit-index">02</span>
+                    <div>
+                        <h2 id="profile-about-heading">About you</h2>
+                        <p>Tell other members a little about yourself.</p>
+                    </div>
+                </div>
+                <div class="profile-edit-field">
+                    <label class="profile-edit-label" for="profile-bio">Bio</label>
+                    <InputTextArea id="profile-bio" @bind-Value="_form.Bio" rows="5" maxlength="2000" class="profile-edit-control" placeholder="Write a short introduction..." />
+                    <p class="profile-edit-help">Up to 2,000 characters.</p>
+                </div>
+            </section>
+
+            <section class="profile-edit-card" aria-labelledby="profile-account-heading">
+                <div class="profile-edit-section-heading">
+                    <span class="profile-edit-index">03</span>
+                    <div>
+                        <h2 id="profile-account-heading">Account settings</h2>
+                        <p>Choose how your profile is displayed.</p>
+                    </div>
+                </div>
+                <div class="profile-edit-grid">
+                    <div class="profile-edit-field">
+                        <label class="profile-edit-label" for="profile-time-zone">Time zone</label>
+                        <InputSelect id="profile-time-zone" @bind-Value="_form.TimeZoneId" class="profile-edit-control" disabled="@(_timeZones.Count == 0)">
+                            @if (_profile.TimeZoneId > 0 && !_timeZones.Any(option => option.Id.ToString() == _form.TimeZoneId))
+                            {
+                                <option value="@_form.TimeZoneId">@(_profile.TimeZone?.Name ?? "Current time zone")</option>
+                            }
+                            @foreach (var timeZone in _timeZones)
+                            {
+                                <option value="@timeZone.Id">@timeZone.Name</option>
+                            }
+                        </InputSelect>
+                    </div>
+                    <div class="profile-edit-field">
+                        <label class="profile-edit-label" for="profile-email-visibility">Email visibility</label>
+                        <InputSelect id="profile-email-visibility" @bind-Value="_form.EmailVisibilityId" class="profile-edit-control" disabled="@(_emailVisibilities.Count == 0)">
+                            @if (_profile.EmailVisibilityId > 0 && !_emailVisibilities.Any(option => option.Id.ToString() == _form.EmailVisibilityId))
+                            {
+                                <option value="@_form.EmailVisibilityId">@(_profile.EmailVisibility?.Name ?? "Current visibility")</option>
+                            }
+                            @foreach (var visibility in _emailVisibilities)
+                            {
+                                <option value="@visibility.Id">@visibility.Name</option>
+                            }
+                        </InputSelect>
+                    </div>
+                </div>
+            </section>
+
+            <section class="profile-edit-card" aria-labelledby="profile-links-heading">
+                <div class="profile-edit-section-heading">
+                    <span class="profile-edit-index">04</span>
+                    <div>
+                        <h2 id="profile-links-heading">Social links</h2>
+                        <p>Enter a username or profile link. Discord accepts an invite link or user profile link; Nintendo Network accepts an ID.</p>
+                    </div>
+                </div>
+                <div class="profile-edit-grid">
+                    <div class="profile-edit-field">
+                        <label class="profile-edit-label" for="profile-patreon">Patreon</label>
+                        <InputText id="profile-patreon" @bind-Value="_form.Patreon" class="profile-edit-control" placeholder="username or patreon.com/c/username" />
+                        @if (SocialLinkError(nameof(EditProfileDTO.Patreon)) is { } patreonError) { <p class="profile-edit-validation">@patreonError</p> }
+                    </div>
+                    <div class="profile-edit-field">
+                        <label class="profile-edit-label" for="profile-paypal">PayPal</label>
+                        <InputText id="profile-paypal" @bind-Value="_form.Paypal" class="profile-edit-control" placeholder="username or paypal.me/username" />
+                        @if (SocialLinkError(nameof(EditProfileDTO.Paypal)) is { } paypalError) { <p class="profile-edit-validation">@paypalError</p> }
+                    </div>
+                    <div class="profile-edit-field">
+                        <label class="profile-edit-label" for="profile-buymeacoffee">Buy Me a Coffee</label>
+                        <InputText id="profile-buymeacoffee" @bind-Value="_form.BuyMeACoffee" class="profile-edit-control" placeholder="username or buymeacoffee.com/username" />
+                        @if (SocialLinkError(nameof(EditProfileDTO.BuyMeACoffee)) is { } coffeeError) { <p class="profile-edit-validation">@coffeeError</p> }
+                    </div>
+                    <div class="profile-edit-field">
+                        <label class="profile-edit-label" for="profile-discord">Discord</label>
+                        <InputText id="profile-discord" @bind-Value="_form.Discord" class="profile-edit-control" placeholder="discord.gg/code or discord.com/users/ID" />
+                        @if (SocialLinkError(nameof(EditProfileDTO.Discord)) is { } discordError) { <p class="profile-edit-validation">@discordError</p> }
+                    </div>
+                    <div class="profile-edit-field">
+                        <label class="profile-edit-label" for="profile-twitter">Twitter / X</label>
+                        <InputText id="profile-twitter" @bind-Value="_form.Twitter" class="profile-edit-control" placeholder="username or x.com/username" />
+                        @if (SocialLinkError(nameof(EditProfileDTO.Twitter)) is { } twitterError) { <p class="profile-edit-validation">@twitterError</p> }
+                    </div>
+                    <div class="profile-edit-field">
+                        <label class="profile-edit-label" for="profile-facebook">Facebook</label>
+                        <InputText id="profile-facebook" @bind-Value="_form.Facebook" class="profile-edit-control" placeholder="username or facebook.com/username" />
+                        @if (SocialLinkError(nameof(EditProfileDTO.Facebook)) is { } facebookError) { <p class="profile-edit-validation">@facebookError</p> }
+                    </div>
+                    <div class="profile-edit-field">
+                        <label class="profile-edit-label" for="profile-youtube">YouTube</label>
+                        <InputText id="profile-youtube" @bind-Value="_form.Youtube" class="profile-edit-control" placeholder="&#64;handle or youtube.com/&#64;handle" />
+                        @if (SocialLinkError(nameof(EditProfileDTO.Youtube)) is { } youtubeError) { <p class="profile-edit-validation">@youtubeError</p> }
+                    </div>
+                    <div class="profile-edit-field">
+                        <label class="profile-edit-label" for="profile-instagram">Instagram</label>
+                        <InputText id="profile-instagram" @bind-Value="_form.Instagram" class="profile-edit-control" placeholder="username or instagram.com/username" />
+                        @if (SocialLinkError(nameof(EditProfileDTO.Instagram)) is { } instagramError) { <p class="profile-edit-validation">@instagramError</p> }
+                    </div>
+                    <div class="profile-edit-field">
+                        <label class="profile-edit-label" for="profile-steam">Steam</label>
+                        <InputText id="profile-steam" @bind-Value="_form.Steam" class="profile-edit-control" placeholder="username or steamcommunity.com/id/username" />
+                        @if (SocialLinkError(nameof(EditProfileDTO.Steam)) is { } steamError) { <p class="profile-edit-validation">@steamError</p> }
+                    </div>
+                    <div class="profile-edit-field">
+                        <label class="profile-edit-label" for="profile-twitch">Twitch</label>
+                        <InputText id="profile-twitch" @bind-Value="_form.Twitch" class="profile-edit-control" placeholder="username or twitch.tv/username" />
+                        @if (SocialLinkError(nameof(EditProfileDTO.Twitch)) is { } twitchError) { <p class="profile-edit-validation">@twitchError</p> }
+                    </div>
+                    <div class="profile-edit-field">
+                        <label class="profile-edit-label" for="profile-github">GitHub</label>
+                        <InputText id="profile-github" @bind-Value="_form.Github" class="profile-edit-control" placeholder="username or github.com/username" />
+                        @if (SocialLinkError(nameof(EditProfileDTO.Github)) is { } githubError) { <p class="profile-edit-validation">@githubError</p> }
+                    </div>
+                    <div class="profile-edit-field">
+                        <label class="profile-edit-label" for="profile-nintendo-network">Nintendo Network</label>
+                        <InputText id="profile-nintendo-network" @bind-Value="_form.NintendoNetwork" class="profile-edit-control" placeholder="6–16 character Nintendo Network ID" />
+                        @if (SocialLinkError(nameof(EditProfileDTO.NintendoNetwork)) is { } nintendoError) { <p class="profile-edit-validation">@nintendoError</p> }
+                    </div>
+                </div>
+            </section>
+
+            <section class="profile-edit-card profile-edit-locked-card" aria-labelledby="profile-locked-heading">
+                <div class="profile-edit-section-heading">
+                    <span class="profile-edit-index">05</span>
+                    <div>
+                        <h2 id="profile-locked-heading">Managed account details</h2>
+                        <p>These details cannot be changed here. Contact a moderator or administrator for updates.</p>
+                    </div>
+                </div>
+                <div class="profile-edit-grid">
+                    <div class="profile-edit-field">
+                        <label class="profile-edit-label" for="profile-username-locked">Username</label>
+                        <input id="profile-username-locked" class="profile-edit-control" value="@ProfileName" readonly />
+                    </div>
+                    <div class="profile-edit-field">
+                        <label class="profile-edit-label" for="profile-email-locked">Account email</label>
+                        <input id="profile-email-locked" class="profile-edit-control" value="@(_profile.UserSummary?.Email ?? "")" placeholder="Not available" readonly />
+                    </div>
+                    <div class="profile-edit-field">
+                        <label class="profile-edit-label" for="profile-birthday-locked">Birthday</label>
+                        <input id="profile-birthday-locked" class="profile-edit-control" value="@_profile.Birthday.ToString("MMMM d, yyyy", EditCulture)" readonly />
+                    </div>
+                </div>
+            </section>
+
+            <footer class="profile-edit-actions">
+                <NavLink class="profile-edit-cancel" href="/Profile">Cancel</NavLink>
+                <button class="profile-edit-save" type="submit" disabled="@(_isSaving || !HasChanges || HasInvalidSocialLinks)">
+                    @if (_isSaving)
+                    {
+                        <span>Saving changes...</span>
+                    }
+                    else
+                    {
+                        <span>Save Changes <span aria-hidden="true">→</span></span>
+                    }
+                </button>
+            </footer>
+        </EditForm>
+    }
+</div>

@@ -1,0 +1,5 @@
+.access-loading { max-width: 660px; margin: 2rem auto; padding: 1.5rem; border: 1px solid #5d3977; border-radius: 8px; background: #1b1129; color: #c5b2d7; }
+.access-loading h1 { margin-bottom: .65rem; color: #f5edff; font: 700 1.65rem "Exo 2", sans-serif; }
+.access-loading p { margin: 0; }
+.access-sign-in { margin-top: -1rem; text-align: center; }
+.access-sign-in ::deep a { color: #dfb5ff; }

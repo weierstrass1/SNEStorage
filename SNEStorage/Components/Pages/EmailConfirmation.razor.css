@@ -1,0 +1,148 @@
+.confirmation-page {
+    display: grid;
+    width: min(100%, 510px);
+    min-height: min(68vh, 610px);
+    align-items: center;
+    margin: 0 auto;
+}
+
+.confirmation-card {
+    padding: clamp(1.5rem, 4vw, 2.5rem);
+    border: 2px solid #d9cbff;
+    border-radius: 6px;
+    background: linear-gradient(145deg, rgba(35, 18, 77, .98), rgba(14, 8, 34, .98));
+    box-shadow: 0 0 0 3px #000, 0 0 28px rgba(138, 61, 255, .35), inset 0 0 0 2px #6a2be0;
+    text-align: center;
+}
+
+.confirmation-brand {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .65rem;
+    color: #aebcff;
+    font-family: "Exo 2", "Segoe UI", sans-serif;
+    font-size: 1.65rem;
+    font-style: italic;
+    font-weight: 900;
+}
+
+.confirmation-brand img { object-fit: contain; }
+
+.confirmation-kicker {
+    margin: .7rem 0 1.8rem;
+    color: #c28aff;
+    font-family: "Press Start 2P", "Courier New", monospace;
+    font-size: .42rem;
+    line-height: 1.9;
+    letter-spacing: .04em;
+}
+
+.confirmation-status-icon {
+    display: grid;
+    width: 76px;
+    height: 76px;
+    place-items: center;
+    margin: 0 auto 1.1rem;
+    border: 2px solid #a969f5;
+    border-radius: 10px;
+    color: #ffe14d;
+    background: #170d31;
+    box-shadow: 4px 4px 0 #6a2be0, 0 0 22px rgba(177, 76, 255, .18);
+}
+
+.confirmation-status-icon svg {
+    width: 40px;
+    height: 40px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.confirmation-card--success .confirmation-status-icon {
+    border-color: #75e1b1;
+    color: #a5f5d1;
+    background: #102b26;
+    box-shadow: 4px 4px 0 #236450, 0 0 24px rgba(117, 225, 177, .18);
+}
+
+.confirmation-card--error .confirmation-status-icon {
+    border-color: #ff91a5;
+    color: #ffc0cc;
+    background: #32142d;
+    box-shadow: 4px 4px 0 #793450;
+}
+
+.confirmation-copy h1 {
+    margin: 0;
+    color: #fff;
+    font-family: "Exo 2", "Segoe UI", sans-serif;
+    font-size: clamp(1.8rem, 4vw, 2.4rem);
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -.035em;
+}
+
+.confirmation-copy p {
+    margin: .8rem 0 0;
+    color: #b8afd6;
+    font-size: .95rem;
+    line-height: 1.65;
+}
+
+.confirmation-copy .confirmation-redirect {
+    color: #a5f5d1;
+    font-size: .85rem;
+}
+
+.confirmation-progress {
+    height: 5px;
+    overflow: hidden;
+    margin: .85rem auto 0;
+    background: #211733;
+}
+
+.confirmation-progress span {
+    display: block;
+    height: 100%;
+    background: #75e1b1;
+    transform-origin: left;
+    animation: confirmation-countdown 3s linear forwards;
+}
+
+.confirmation-actions { display: grid; gap: .9rem; margin-top: 1.6rem; }
+
+.confirmation-primary {
+    display: flex;
+    min-height: 50px;
+    align-items: center;
+    justify-content: center;
+    gap: .7rem;
+    padding: .8rem 1rem;
+    border: 3px solid #000;
+    border-radius: 3px;
+    color: #080611;
+    background: #ffe14d;
+    box-shadow: 3px 3px 0 #6a2be0;
+    font-family: "Press Start 2P", "Courier New", monospace;
+    font-size: .5rem;
+    line-height: 1.7;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.confirmation-primary:hover { color: #080611; background: #fff18a; text-decoration: none; }
+.confirmation-primary:focus-visible,
+.confirmation-secondary:focus-visible,
+.confirmation-footer a:focus-visible { outline: 2px solid #ffe14d; outline-offset: 4px; }
+
+.confirmation-secondary { color: #d9cbff; font-size: .9rem; text-decoration: none; }
+.confirmation-secondary:hover { color: #ffe14d; text-decoration: underline; }
+.confirmation-footer { margin: 1.65rem 0 0; padding-top: 1rem; border-top: 1px solid rgba(106, 43, 224, .42); }
+.confirmation-footer a { color: #a49cd0; font-size: .85rem; text-decoration: none; }
+.confirmation-footer a:hover { color: #ffe14d; text-decoration: underline; }
+
+@keyframes confirmation-countdown { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@media (prefers-reduced-motion: reduce) { .confirmation-progress span { animation: none; } }

@@ -15,10 +15,10 @@ public partial class Videogame
             .ValueGeneratedOnAdd();
 
         entity.Property(e => e.Name)
-            .HasColumnType("text")
+            .HasColumnType("nvarchar(max)")
             .HasColumnName("name");
         entity.Property(e => e.Publisher)
-            .HasColumnType("text")
+            .HasColumnType("nvarchar(max)")
             .HasColumnName("publisher");
 
         entity.Property(e => e.ReleaseDate)

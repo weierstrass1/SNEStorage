@@ -15,11 +15,11 @@ public partial class FileType
             .ValueGeneratedOnAdd();
 
         entity.Property(e => e.Name)
-            .HasColumnType("text")
+            .HasColumnType("varchar(10)")
             .HasColumnName("name");
 
         entity.Property(e => e.Value)
-            .HasColumnType("text")
+            .HasColumnType("varchar(50)")
             .HasColumnName("value");
     }
 }

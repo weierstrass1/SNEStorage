@@ -1,0 +1,73 @@
+<div class="author-picker">
+    <label class="author-label" for="@InputId">@(External ? "External authors" : "SNEStorage authors")</label>
+    <p class="author-help">@(External ? "Add a name, or choose a suggestion from previous submissions." : "Search for a username and select an account to credit.")</p>
+
+    @if (Values.Length > 0)
+    {
+        <ul class="author-list" aria-label="@(External ? "Selected external authors" : "Selected SNEStorage authors")">
+            @foreach (var value in Values)
+            {
+                <li @key="value" class="author-chip">
+                    <input type="hidden" name="@FieldName" value="@value" />
+                    <span>@DisplayName(value)</span>
+                    <button type="button" aria-label="Remove author @DisplayName(value)" @onclick="() => RemoveAsync(value)">×</button>
+                </li>
+            }
+        </ul>
+    }
+
+    <div class="author-entry">
+        <input class="author-search" id="@InputId" type="text" name="@(External ? FieldName : null)" value="@_search" @oninput="SearchChangedAsync" @onkeydown="KeyDownAsync" autocomplete="off" disabled="@(!_ready)" placeholder="@(External ? "Enter an author's name…" : "Type at least 2 characters…")" aria-describedby="@(InputId + "-status")" data-resource-author-input />
+        @if (External)
+        {
+            <button class="author-add" type="button" disabled="@(!_ready || !CanAddName)" @onclick="AddPendingAsync">Add</button>
+        }
+    </div>
+
+    <div id="@(InputId + "-status")" class="author-status" role="status" aria-live="polite">
+        @if (_error is not null)
+        {
+            <p class="author-error">@_error</p>
+            @if (_ready)
+            {
+                <button class="author-retry" type="button" @onclick="RetryAsync">Try again</button>
+            }
+        }
+        else if (_loading)
+        {
+            <p>Searching authors…</p>
+        }
+        else if (External && !string.IsNullOrWhiteSpace(_search) && !CanAddName)
+        {
+            <p>This author is already selected.</p>
+        }
+        else if (_search.Trim().Length < 2)
+        {
+            <p>@(External ? "Press Enter or Add to add a name. Suggestions appear after 2 characters." : "Type at least 2 characters to search.")</p>
+        }
+        else if (!Suggestions.Any())
+        {
+            <p>@(External ? "No other suggestions. You can still add this name." : "No other matching users. Try another username.")</p>
+        }
+        else
+        {
+            <p>@(External ? "Suggested authors" : "Matching users")</p>
+        }
+    </div>
+
+    @if (!_loading && _error is null && Suggestions.Any())
+    {
+        <div class="author-results" role="group" aria-label="@(External ? "External author suggestions" : "SNEStorage author choices")">
+            @foreach (var choice in Suggestions)
+            {
+                <button @key="choice.Value" class="author-choice" type="button" @onclick="() => AddAsync(choice)">
+                    <span>@choice.Name</span><span class="author-choice-add" aria-hidden="true">+</span>
+                </button>
+            }
+        </div>
+        @if (_matches.Count == MaxResults)
+        {
+            <p class="author-help">Up to @MaxResults matches are shown. Refine your search if needed.</p>
+        }
+    }
+</div>

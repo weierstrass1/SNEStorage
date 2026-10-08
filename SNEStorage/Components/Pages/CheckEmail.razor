@@ -1,0 +1,45 @@
+@page "/Register/CheckEmail"
+
+<PageTitle>Check your email | SNEStorage</PageTitle>
+
+<div class="check-email-page">
+    @if (_checkingSession || _isAuthenticated)
+    {
+        <p class="check-email-loading" role="status">
+            @(_checkingSession ? "Checking your session..." : "Taking you back to SNEStorage...")
+        </p>
+    }
+    else
+    {
+        <section class="check-email-card" aria-labelledby="check-email-title">
+            <div class="check-email-brand">
+                <img src="/images/caja.png" alt="" width="48" height="48" />
+                <span>SNEStorage</span>
+            </div>
+            <p class="check-email-kicker">ACCOUNT VERIFICATION</p>
+
+            <div class="check-email-icon" aria-hidden="true">
+                <svg viewBox="0 0 32 32">
+                    <rect x="4" y="7" width="24" height="18" rx="2" />
+                    <path d="m5 8 11 9L27 8" />
+                </svg>
+            </div>
+
+            <h1 id="check-email-title">Check your inbox</h1>
+            <p class="check-email-intro">Confirm your email address to complete your registration.</p>
+
+            <ol class="check-email-steps">
+                <li><span>01</span><p>Open the confirmation email from <strong>SNEStorage</strong>.</p></li>
+                <li><span>02</span><p>Select <strong>Confirm my email</strong> to verify your address.</p></li>
+                <li><span>03</span><p>Once your email is confirmed, <strong>log in</strong> to your account.</p></li>
+            </ol>
+
+            <p class="check-email-hint">Can't find it? Check your spam or junk folder. It may take a few minutes to arrive.</p>
+
+            <div class="check-email-actions">
+                <NavLink class="check-email-primary" href="/Login">Continue to log in <span aria-hidden="true">→</span></NavLink>
+                <NavLink class="check-email-secondary" href="/">← Return to SNEStorage</NavLink>
+            </div>
+        </section>
+    }
+</div>

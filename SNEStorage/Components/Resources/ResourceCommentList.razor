@@ -1,0 +1,58 @@
+@using SNEStorage.Services
+
+<div class="comment-list" @ref="_feedElement" aria-busy="@(_loading ? "true" : "false")">
+    <div class="comment-list-toolbar">
+        @if (ParentCommentId is null)
+        {
+            <label>Sort by
+                <select value="@_sort" @onchange="ChangeSortAsync" disabled="@(_loading || _busy)">
+                    <option value="RecentFirst">Newest first</option>
+                    <option value="RecentLast">Oldest first</option>
+                    <option value="MostVoted">Most votes</option>
+                    <option value="LessVoted">Fewest votes</option>
+                    <option value="MostLiked">Most liked</option>
+                    <option value="MostDisliked">Most disliked</option>
+                    <option value="BestScore">Highest positive rating</option>
+                    <option value="WorstScore">Lowest positive rating</option>
+                </select>
+            </label>
+        }
+        <button type="button" @onclick="RefreshAsync" disabled="@(_loading || _busy)">@(ParentCommentId is null ? "Refresh comments" : "Refresh replies")</button>
+    </div>
+    @if (_loading && !_loaded)
+    {
+        <p class="comment-list-status" role="status">@(ParentCommentId is null ? "Loading comments…" : "Loading replies…")</p>
+    }
+    @if (!string.IsNullOrWhiteSpace(_error))
+    {
+        <p class="comment-list-error" role="alert">@_error</p>
+        <button type="button" @onclick="RetryAsync" disabled="@(_loading || _busy)">Try again</button>
+    }
+    @if (!string.IsNullOrWhiteSpace(_actionMessage))
+    {
+        <p class="comment-list-status" role="status">@_actionMessage</p>
+    }
+    @if (_loaded && !_loading && !_hasNext && _error is null && VisibleComments.Count == 0)
+    {
+        <p class="comment-list-status">@(ParentCommentId is null ? "No comments yet." : "No replies yet.")</p>
+    }
+    @foreach (var comment in VisibleComments)
+    {
+        <ResourceCommentCard @key="comment.Id" Comment="comment" ResourceId="ResourceId" Ancestors="Ancestors"
+            IsAuthenticated="IsAuthenticated" CurrentUserId="@CurrentUserId" CanModerate="CanModerate"
+            Saving="@(_busy || _loading)" Message="@ActionMessage(comment.Id)" ActionRevision="@ActionRevision(comment.Id)"
+            ReplyRevision="@ReplyRevision(comment.Id)" PublishedReply="@PublishedReply(comment.Id)"
+            JustPosted="@IsRecentlyPosted(comment.Id)" OnAction="HandleActionAsync" OnVote="HandleVoteAsync"
+            OnRepliesEmpty="HandleRepliesEmptyAsync" />
+    }
+    <div class="comment-feed-sentinel" @ref="_sentinelElement">
+        @if (_loaded && _loading)
+        {
+            <span class="comment-list-status" role="status"><span class="comment-loading-dot" aria-hidden="true"></span>Loading more @(ParentCommentId is null ? "comments" : "replies")…</span>
+        }
+        else if (_loaded && _hasNext && _error is null)
+        {
+            <button type="button" @onclick="LoadMoreAsync" disabled="@_busy">Load more @(ParentCommentId is null ? "comments" : "replies")</button>
+        }
+    </div>
+</div>

@@ -1,0 +1,17 @@
+@if (_isAuthenticated is null)
+{
+    <div class="account-placeholder" role="status">
+        <span class="visually-hidden">@(_lastUnavailableStatus.HasValue ? "Account status is temporarily unavailable." : "Checking account…")</span>
+        <span class="account-placeholder-button" aria-hidden="true"></span>
+        <span class="account-placeholder-button" aria-hidden="true"></span>
+    </div>
+}
+else if (_isAuthenticated == true)
+{
+    <AccountMenu Username="@_username" UsernameColor="@_usernameColor" AvatarUrl="@_avatarUrl" />
+}
+else
+{
+    <NavLink class="navigation-button" href="@LoginUrl">Log in</NavLink>
+    <NavLink class="navigation-button navigation-button-primary" href="/Register">Sign up</NavLink>
+}

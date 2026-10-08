@@ -1,0 +1,5 @@
+@page "/Resource/{ResourceId:long}/Versions/{VersionId:long}/Edit"
+@using SNEStorage.Components.Resources
+
+<PageTitle>Edit version | SNEStorage</PageTitle>
+<ResourceEditor @key="(ResourceId, VersionId)" ResourceId="ResourceId" VersionId="VersionId" Mode="ResourceEditorMode.EditVersion" />

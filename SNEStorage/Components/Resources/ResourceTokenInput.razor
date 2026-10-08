@@ -1,0 +1,19 @@
+<div class="token-editor">
+    @if (Values.Length > 0)
+    {
+        <ul class="token-list" aria-label="Selected tags">
+            @foreach (var value in Values)
+            {
+                <li @key="value" class="token">
+                    <input type="hidden" name="@FieldName" value="@value" />
+                    <span>@value</span>
+                    <button type="button" aria-label="Remove tag @value" @onclick="() => RemoveAsync(value)">×</button>
+                </li>
+            }
+        </ul>
+    }
+    <div class="token-entry">
+        <input class="token-input" id="@InputId" name="@FieldName" type="text" value="@_pending" @oninput="TextChangedAsync" @onkeydown="KeyDownAsync" data-resource-token-input autocomplete="off" placeholder="Type a tag…" />
+        <button class="token-add" type="button" @onclick="AddPendingAsync" disabled="@string.IsNullOrWhiteSpace(_pending)">Add</button>
+    </div>
+</div>

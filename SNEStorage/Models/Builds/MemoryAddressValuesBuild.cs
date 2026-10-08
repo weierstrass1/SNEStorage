@@ -16,11 +16,11 @@ public partial class MemoryAddressValues
             .ValueGeneratedOnAdd();
 
         entity.Property(e => e.Value)
-            .HasColumnType("text")
+            .HasColumnType("nvarchar(max)")
             .HasColumnName("value");
 
         entity.Property(e => e.Description)
-            .HasColumnType("text")
+            .HasColumnType("nvarchar(max)")
             .HasColumnName("description");
 
         entity.Property(e => e.MemoryAddressId)

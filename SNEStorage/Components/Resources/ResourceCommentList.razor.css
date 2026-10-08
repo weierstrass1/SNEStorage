@@ -1,0 +1,13 @@
+.comment-list-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .6rem; margin: .65rem 0; }
+.comment-list-toolbar label { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; color: #bfa7d7; font-size: .8rem; }
+.comment-list-toolbar select, .comment-list button { min-height: 34px; padding: .35rem .6rem; border: 1px solid #7952a1; border-radius: 4px; color: #eee0fc; background: #29153e; font: inherit; font-size: .8rem; }
+.comment-list button:not(:disabled):hover { background: #43245f; }
+.comment-list button:disabled { opacity: .45; }
+.comment-list select:focus-visible, .comment-list button:focus-visible { outline: 3px solid #ffe14d; outline-offset: 3px; }
+.comment-list-status { color: #baa4d0; font-size: .8rem; line-height: 1.6; }
+.comment-feed-sentinel { display: flex; justify-content: center; align-items: center; min-height: 2px; }
+.comment-feed-sentinel:has(button), .comment-feed-sentinel:has(.comment-list-status) { min-height: 3rem; padding: .6rem 0; }
+.comment-loading-dot { display: inline-block; width: .55rem; height: .55rem; margin-right: .5rem; background: #b68ae8; border-radius: 50%; animation: comment-loading 1s ease-in-out infinite alternate; }
+@keyframes comment-loading { from { opacity: .35; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .comment-loading-dot { animation: none; } }
+.comment-list-error { padding: .5rem .65rem; border-left: 3px solid #ff9cae; color: #ffd3dc; background: #37172a; font-size: .85rem; }

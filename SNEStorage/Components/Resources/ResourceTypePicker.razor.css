@@ -1,0 +1,19 @@
+.resource-type-picker { min-width: 0; width: 100%; }
+/* Options are rendered inside ResourcePicker's ChildContent. */
+.resource-type-picker ::deep .type-help { margin: 0 0 .65rem; color: #baacce; font-size: .8rem; }
+.resource-type-picker ::deep .type-options { display: grid; gap: .55rem; }
+.resource-type-picker ::deep .type-category { border: 1px solid #674388; border-radius: 5px; overflow: hidden; }
+.resource-type-picker ::deep .type-category > summary { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: .75rem; min-height: 50px; padding: .75rem .8rem; color: #e1d8f3; background: linear-gradient(110deg, #2c1741, #1d102e); cursor: pointer; list-style: none; }
+.resource-type-picker ::deep .type-category > summary::-webkit-details-marker { display: none; }
+.resource-type-picker ::deep .type-category > summary::before { content: "▸"; color: #c28aff; font-size: 1rem; }
+.resource-type-picker ::deep .type-category[open] > summary::before { content: "▾"; }
+.resource-type-picker ::deep .type-category-title { min-width: 0; color: #eadaff; font: 700 1.08rem/1.3 "Exo 2", sans-serif; overflow-wrap: anywhere; }
+.resource-type-picker ::deep .type-category-count { justify-self: end; padding: .2rem .45rem; border: 1px solid #634478; border-radius: 4px; background: #160c24; color: #bea7d3; font-size: .68rem; font-weight: 400; white-space: nowrap; }
+.resource-type-picker ::deep .type-category > summary:hover { background: #321b49; }
+.resource-type-picker ::deep .type-category > summary:focus-visible { outline: 2px solid #ffe14d; outline-offset: -2px; }
+.resource-type-picker ::deep .type-category-options { padding: .3rem; }
+.resource-type-picker ::deep .type-option { display: flex; align-items: center; gap: .65rem; min-height: 40px; margin: 0; padding: .5rem .6rem; border-radius: 3px; color: #e1d8f3; font-size: .9rem; cursor: pointer; }
+.resource-type-picker ::deep .type-option:hover, .resource-type-picker ::deep .type-option:focus-within { background: #301748; }
+.resource-type-picker ::deep .type-option:has(input:checked) { color: #ffe14d; background: #25133e; }
+.resource-type-picker ::deep .type-option input { flex-shrink: 0; width: 18px; height: 18px; margin: 0; accent-color: #b14cff; cursor: pointer; }
+.resource-type-picker ::deep .type-option input:focus-visible { outline: 2px solid #ffe14d; outline-offset: 3px; }

@@ -1,0 +1,68 @@
+@page "/"
+@page "/Home/Index"
+
+<PageTitle>SNEStorage | SNES Resource Archive</PageTitle>
+
+<div class="home-page">
+    <section class="home-hero" aria-labelledby="home-title">
+        <span class="hero-spark hero-spark-one" aria-hidden="true">✦</span>
+        <span class="hero-spark hero-spark-two" aria-hidden="true">✦</span>
+        <span class="hero-spark hero-spark-three" aria-hidden="true">✦</span>
+
+        <div class="hero-content">
+            <p class="hero-kicker"><span aria-hidden="true">◆</span> THE SNES CREATOR ARCHIVE <span aria-hidden="true">◆</span></p>
+
+            <div class="hero-stage">
+                <span class="hero-orbit hero-orbit-wide" aria-hidden="true"></span>
+                <span class="hero-orbit hero-orbit-flat" aria-hidden="true"></span>
+                <img class="hero-mascot" src="images/snestorageLogo.png" alt="The SNEStorage mascot carrying a box of resources" />
+            </div>
+
+            <h1 id="home-title">SNEStorage</h1>
+            <p class="hero-tagline">The vault for SNES hacks, homebrew, and creative resources.</p>
+            <p class="hero-description">
+                Discover the tools, art, music, and ideas that keep the Super Nintendo community creating.
+            </p>
+
+            <nav class="hero-actions" aria-label="Explore SNEStorage">
+                <NavLink class="pixel-action pixel-action-primary" href="/Resources">
+                    Browse resources <span aria-hidden="true">↗</span>
+                </NavLink>
+                <NavLink class="pixel-action" href="/Register">Create an account</NavLink>
+            </nav>
+
+            <p class="hero-prompt"><span aria-hidden="true">▶</span> YOUR NEXT PROJECT STARTS HERE</p>
+        </div>
+    </section>
+
+    <section class="archive-strip" aria-label="Resource categories">
+        <span class="archive-strip-label">INSIDE THE VAULT</span>
+        <div class="archive-categories">
+            <span>Graphics</span>
+            <span>Music</span>
+            <span>Sound FX</span>
+            <span>Patches</span>
+            <span>Tools</span>
+            <span>Homebrew</span>
+        </div>
+    </section>
+
+    <section class="latest-section" aria-labelledby="latest-title">
+        <div class="latest-heading">
+            <div>
+                <p class="section-kicker">FRESH FROM THE COMMUNITY</p>
+                <h2 id="latest-title">Latest resources</h2>
+            </div>
+            <NavLink class="library-link" href="/Resources">Open the resource library <span aria-hidden="true">→</span></NavLink>
+        </div>
+
+        <div class="latest-empty">
+            <img src="images/caja.png" alt="" />
+            <div>
+                <h3>New discoveries are on the way</h3>
+                <p>Recently shared public resources will be featured here.</p>
+            </div>
+            <NavLink class="pixel-action pixel-action-small" href="/Resources">Explore the library</NavLink>
+        </div>
+    </section>
+</div>

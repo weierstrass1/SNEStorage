@@ -1,0 +1,66 @@
+<section class="media-carousel @(Kind == PreviewKind.Video && _playRequested && !_failed ? "is-video-playing" : null)" aria-label="Resource previews" aria-roledescription="carousel" @onkeydown="HandleKeyDown" tabindex="0">
+    @if (Previews.Count == 0)
+    {
+        <div class="media-empty">
+            <img src="/images/caja.png" alt="" />
+            <p>No previews have been provided.</p>
+        </div>
+    }
+    else
+    {
+        <div class="media-stage" @key="ActiveFileId" role="group" aria-roledescription="slide" aria-label="@($"Preview {_activeIndex + 1} of {Previews.Count}")">
+            @if (_failed)
+            {
+                <div class="media-empty" role="status">
+                    <span aria-hidden="true">◇</span>
+                    <p>@(_errorMessage ?? "This preview could not be loaded.")</p>
+                    <button class="media-button" type="button" @onclick="RetryMedia">Try again</button>
+                </div>
+            }
+            else if (_loading)
+            {
+                <div class="media-empty" role="status" aria-live="polite"><p>Loading preview…</p></div>
+            }
+            else if (Kind == PreviewKind.Image && ActiveUrl is not null)
+            {
+                <img class="media-image" src="@ActiveUrl" alt="@($"{ResourceName}, preview {_activeIndex + 1}")" loading="lazy" decoding="async" @onerror="MediaFailed" />
+            }
+            else if (Kind == PreviewKind.Video && !_playRequested)
+            {
+                <button type="button" class="media-play" @onclick="Play" aria-label="Play video preview">
+                    <span class="media-play-icon" aria-hidden="true">▶</span>
+                    <span>Play video preview</span>
+                    <small>The video loads when you press play.</small>
+                </button>
+            }
+            else if (Kind == PreviewKind.Video && ActiveUrl is not null)
+            {
+                <video class="media-video" src="@ActiveUrl" controls autoplay="@LoadMedia" playsinline preload="none" @onerror="MediaFailed">
+                    Your browser does not support this video format.
+                </video>
+            }
+            else
+            {
+                <div class="media-empty">
+                    <p>This preview format cannot be displayed here.</p>
+                    <a class="media-button" href="@ResourceFileLinks.For(ResourceId, ActiveFileId, true)" data-enhance-nav="false">Download preview</a>
+                </div>
+            }
+        </div>
+        <div class="media-controls">
+            <button class="media-button" type="button" @onclick="Previous" disabled="@(Previews.Count < 2)" aria-label="Previous preview">←</button>
+            <p aria-live="polite" aria-atomic="true">Preview @(_activeIndex + 1) / @Previews.Count</p>
+            <button class="media-button" type="button" @onclick="Next" disabled="@(Previews.Count < 2)" aria-label="Next preview">→</button>
+        </div>
+        @if (Previews.Count > 1)
+        {
+            <div class="media-indicators" aria-label="Choose a preview">
+                @for (var index = 0; index < Previews.Count; index++)
+                {
+                    var previewIndex = index;
+                    <button type="button" class="media-indicator @(_activeIndex == index ? "is-active" : null)" @onclick="() => Select(previewIndex)" aria-label="@($"Show preview {index + 1}")" aria-current="@(_activeIndex == index ? "true" : null)">@(index + 1)</button>
+                }
+            </div>
+        }
+    }
+</section>

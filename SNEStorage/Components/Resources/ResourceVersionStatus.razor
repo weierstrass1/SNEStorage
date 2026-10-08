@@ -1,0 +1,17 @@
+@if (Version.AlreadyModerated || Version.SealOfQuality || Version.SealOfQualityRequested)
+{
+<div class="version-review-status" aria-label="Version moderation and quality status">
+    @if (Version.AlreadyModerated)
+    {
+        <span class="version-status version-status-reviewed">This version complies with SNEStorage's site rules.</span>
+    }
+    @if (Version.SealOfQuality)
+    {
+        <span class="version-status version-status-quality"><ResourceQualitySeal Size="24" Title="This version meets SNEStorage's quality standards." /> Seal of Quality</span>
+    }
+    @if (Version.SealOfQualityRequested && !Version.SealOfQuality)
+    {
+        <span class="version-status">Quality review requested</span>
+    }
+</div>
+}

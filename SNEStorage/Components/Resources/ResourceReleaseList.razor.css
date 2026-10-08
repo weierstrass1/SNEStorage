@@ -1,0 +1,19 @@
+.release-list { padding: clamp(1rem, 3vw, 1.5rem); border: 1px solid #694394; border-radius: 6px; background: #140b23; }
+.release-heading { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: .7rem; margin-bottom: 1.2rem; }
+.release-heading h2 { margin: 0; color: #ede0ff; font: 700 1.25rem "Exo 2", sans-serif; }
+.release-heading > span, .release-empty { color: #bba4d5; font-size: .85rem; }
+.release-item { border-top: 1px solid #4e2f6f; }
+.release-item summary { display: list-item; padding: 1rem .3rem; color: #dfcbfa; cursor: pointer; }
+.release-label { font-weight: 700; }
+.release-date { margin-left: .8rem; color: #b8a0d3; font-size: .8rem; }
+.release-body { padding: 0 .3rem 1rem; }
+.release-updated { margin: .5rem 0 .8rem; color: #b8a0d3; font-size: .8rem; }
+.release-notes { margin: 0 0 1rem; color: #cfbddf; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.8; }
+.release-footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .8rem; color: #ae95ca; font-size: .8rem; }
+.release-download { display: inline-flex; gap: .7rem; align-items: center; min-height: 42px; padding: .6rem .8rem; border: 1px solid #9769c8; border-radius: 4px; background: #291440; color: #e9dafa; text-decoration: none; }
+.release-download:hover { background: #402060; color: #fff; }
+.release-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; }
+.release-actions ::deep .release-edit { display: inline-flex; align-items: center; min-height: 42px; padding: .6rem .8rem; border: 1px solid #8053ab; border-radius: 4px; color: #ddc8f7; background: #211132; font-size: .8rem; text-decoration: none; }
+.release-actions ::deep .release-edit:hover { background: #402060; color: #fff; }
+.release-actions ::deep .release-edit:focus-visible { outline: 3px solid #ffe14d; outline-offset: 3px; }
+.release-item summary:focus-visible, .release-download:focus-visible { outline: 3px solid #ffe14d; outline-offset: 3px; }

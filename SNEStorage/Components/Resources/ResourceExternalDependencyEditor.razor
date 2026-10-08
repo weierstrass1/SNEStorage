@@ -1,0 +1,30 @@
+<div class="external-dependencies">
+    <h3>External dependencies</h3>
+    <p class="dependency-help">Add required resources hosted outside SNEStorage. Mirror links are optional.</p>
+    @for (var index = 0; index < Values.Length; index++)
+    {
+        var item = Values[index];
+        var prefix = $"ExternalDependencies[{index}]";
+        var inputId = $"external-dependency-{index}";
+        <fieldset @key="item" class="dependency-entry">
+            <legend>External dependency @(index + 1)</legend>
+            <label for="@(inputId + "-name")">Name <span aria-hidden="true">*</span></label>
+            <InputText id="@(inputId + "-name")" name="@(prefix + ".DependencyName")" @bind-Value="item.DependencyName" maxlength="100" required placeholder="Dependency name" />
+            <label for="@(inputId + "-url")">Resource URL <span aria-hidden="true">*</span></label>
+            <InputText id="@(inputId + "-url")" type="url" name="@(prefix + ".DependencyURL")" @bind-Value="item.DependencyURL" maxlength="255" required placeholder="https://…" pattern="https?://.+" />
+            <details class="dependency-mirrors">
+                <summary>Mirror links (optional)</summary>
+                <label for="@(inputId + "-mirror1")">Mirror 1</label>
+                <InputText id="@(inputId + "-mirror1")" type="url" name="@(prefix + ".Mirror1")" @bind-Value="item.Mirror1" maxlength="255" pattern="https?://.+" placeholder="https://…" />
+                <label for="@(inputId + "-mirror2")">Mirror 2</label>
+                <InputText id="@(inputId + "-mirror2")" type="url" name="@(prefix + ".Mirror2")" @bind-Value="item.Mirror2" maxlength="255" pattern="https?://.+" placeholder="https://…" />
+                <label for="@(inputId + "-mirror3")">Mirror 3</label>
+                <InputText id="@(inputId + "-mirror3")" type="url" name="@(prefix + ".Mirror3")" @bind-Value="item.Mirror3" maxlength="255" pattern="https?://.+" placeholder="https://…" />
+                <label for="@(inputId + "-mirror4")">Mirror 4</label>
+                <InputText id="@(inputId + "-mirror4")" type="url" name="@(prefix + ".Mirror4")" @bind-Value="item.Mirror4" maxlength="255" pattern="https?://.+" placeholder="https://…" />
+            </details>
+            <button type="button" class="dependency-button" @onclick="() => RemoveAsync(item)">Remove dependency</button>
+        </fieldset>
+    }
+    <button type="button" class="dependency-button" @onclick="AddAsync">+ Add external dependency</button>
+</div>

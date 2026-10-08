@@ -1,0 +1,48 @@
+.quality-seal {
+    --seal-shine-duration: 2.2s;
+    position: relative;
+    display: inline-flex;
+    flex: 0 0 auto;
+    width: var(--seal-size);
+    height: var(--seal-size);
+    vertical-align: middle;
+    filter: drop-shadow(0 2px 3px #24150480) drop-shadow(0 0 5px #ffd56a45);
+}
+.quality-seal img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.quality-seal-shine {
+    position: absolute;
+    z-index: 1;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    -webkit-mask: url("/images/sello-calidad-snestorage-clasico.png") center / contain no-repeat;
+    mask: url("/images/sello-calidad-snestorage-clasico.png") center / contain no-repeat;
+    mask-mode: alpha;
+}
+.quality-seal-shine::before {
+    content: "";
+    position: absolute;
+    inset: -100%;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    animation: seal-gold-sweep var(--seal-shine-duration) ease-in-out -.15s infinite;
+    /* Directly overlay the masked logo: the highlight must remain visible on its pale centre. */
+    background: linear-gradient(135deg,
+        transparent 42%,
+        #dca52b30 45%,
+        #ffd66d80 47%,
+        #fff0bdd1 48.5%,
+        #fffffff5 49.5%,
+        #fffffff5 50.5%,
+        #fff0bdd1 51.5%,
+        #ffd66d80 53%,
+        #dca52b30 55%,
+        transparent 58%);
+}
+
+@keyframes seal-gold-sweep {
+    0% { transform: translate(-50%, -50%); opacity: 0; }
+    5% { opacity: 1; }
+    55% { transform: translate(50%, 50%); opacity: 1; }
+    60%, 100% { transform: translate(50%, 50%); opacity: 0; }
+}

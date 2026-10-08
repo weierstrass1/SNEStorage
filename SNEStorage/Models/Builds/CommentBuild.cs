@@ -15,7 +15,7 @@ public partial class Comment
             .ValueGeneratedOnAdd();
 
         entity.Property(e => e.Text)
-            .HasColumnType("text")
+            .HasColumnType("nvarchar(max)")
             .HasColumnName("text");
 
         entity.Property(e => e.PublishDate)
@@ -31,8 +31,8 @@ public partial class Comment
 
         entity.Property(e => e.ScoreId)
             .HasColumnName("score_id");
-        entity.HasOne(d => d.Score).WithMany(p => p.Comments)
-            .HasForeignKey(d => d.ScoreId)
+        entity.HasOne(d => d.Score).WithOne(p => p.Comment)
+            .HasForeignKey<Comment>(d => d.ScoreId)
             .OnDelete(DeleteBehavior.Cascade)
             .HasConstraintName("FK_comment_score");
     }

@@ -1,23 +1,35 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using SNEStorage.Components;
 using SNEStorage.Models;
 using SNEStorage.Services;
 using System.Text;
+using System.Text.Json.Serialization;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 IServiceCollection services = builder.Services;
 // Add services to the container.
-services.AddControllersWithViews();
+services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler =
+            ReferenceHandler.IgnoreCycles;
+    })
+    .AddControllersAsServices();
+services.AddRazorComponents()
+    .AddInteractiveServerComponents();
+services.AddCascadingAuthenticationState();
+services.AddScoped(sp => new HttpClient
+{
+    BaseAddress = new Uri(new Uri(sp.GetRequiredService<NavigationManager>().BaseUri), "api/")
+});
 services.AddDbContext<SnestorageContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("SNEStorageContext"));
-});
-services.AddRazorPages(opts =>
-{
-    opts.Conventions.AddPageRoute("/Home/Index", "");
 });
 services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options => options.TokenValidationParameters = new TokenValidationParameters
@@ -30,11 +42,9 @@ services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .GetBytes(builder.Configuration["JWTKey"]!)),
         ClockSkew = TimeSpan.Zero
     });
-services.AddAuthorization(options =>
-{
-    options.AddPolicy("Admin", pol => pol.RequireClaim("Admin"));
-    options.AddPolicy("Moderator", pol => pol.RequireClaim("Moderator"));
-});
+services.AddAuthorizationBuilder()
+    .AddPolicy("Admin", pol => pol.RequireClaim("Admin"))
+    .AddPolicy("Moderator", pol => pol.RequireClaim("Moderator"));
 services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo
@@ -65,13 +75,25 @@ services.AddSwaggerGen(c =>
         }
     });
 });
-services.AddIdentity<ApplicationUser, IdentityRole>()
+services
+    .AddIdentity<ApplicationUser, IdentityRole>(options =>
+        {
+            options.SignIn.RequireConfirmedEmail = true;
+        })
     .AddEntityFrameworkStores<SnestorageContext>()
     .AddDefaultTokenProviders();
 services.AddHttpContextAccessor();
 services.AddTransient<APIConfig>();
 services.AddTransient<FileService>();
 services.AddTransient<AccountService>();
+services.AddTransient<ResourceService>();
+services.AddTransient<UserService>();
+services.AddTransient<VideogameService>();
+services.AddTransient<ExternalAuthorService>();
+services.AddTransient<CommentService>();
+services.AddScoped<EmailService>();
+services.AddScoped<DateTimeService>();
+services.AddScoped<DBHelperService>();
 services.AddCors(options =>
 {
     options.AddDefaultPolicy(b =>
@@ -79,13 +101,29 @@ services.AddCors(options =>
         b.WithOrigins("*").AllowAnyMethod().AllowAnyHeader();
     });
 });
+services.AddDistributedMemoryCache();
 services.AddSession();
+services.AddControllersWithViews()
+    .AddControllersAsServices();
 
 var app = builder.Build();
 
+// Configure the HTTP request pipeline.
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/Error");
+    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+    app.UseHsts();
+}
+
+app.UseHttpsRedirection();
+app.UseStaticFiles();
+
+app.UseRouting();
+app.UseCors();
 app.UseSession();
 
-//add token to request header.
+// Add the session JWT to requests before authentication runs.
 app.Use(async (context, next) =>
 {
     var token = context.Session.GetString("Token");
@@ -96,21 +134,9 @@ app.Use(async (context, next) =>
     await next();
 });
 
-// Configure the HTTP request pipeline.
-if (!app.Environment.IsDevelopment())
-{
-    app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-    app.UseHsts();
-}
-
-app.UseHttpsRedirection();
-app.UseStaticFiles();
-
-app.UseRouting();
-
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseAntiforgery();
 
 app.UseSwagger();
 
@@ -119,11 +145,8 @@ app.UseSwaggerUI(c =>
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "Api SNEStorage REST");
 });
 
-app.UseCors();
-
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
-app.MapRazorPages();
+app.MapControllers();
+app.MapRazorComponents<App>()
+    .AddInteractiveServerRenderMode();
 
 app.Run();

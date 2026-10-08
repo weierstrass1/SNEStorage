@@ -17,7 +17,7 @@ namespace SNEStorage.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.8")
+                .HasAnnotation("ProductVersion", "10.0.12")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -72,80 +72,6 @@ namespace SNEStorage.Migrations
                     b.HasIndex("RoleId");
 
                     b.ToTable("AspNetRoleClaims", (string)null);
-                });
-
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUser", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<int>("AccessFailedCount")
-                        .HasColumnType("int");
-
-                    b.Property<string>("ConcurrencyStamp")
-                        .IsConcurrencyToken()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Discriminator")
-                        .IsRequired()
-                        .HasMaxLength(21)
-                        .HasColumnType("nvarchar(21)");
-
-                    b.Property<string>("Email")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
-
-                    b.Property<bool>("EmailConfirmed")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("LockoutEnabled")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTimeOffset?>("LockoutEnd")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("NormalizedEmail")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
-
-                    b.Property<string>("NormalizedUserName")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
-
-                    b.Property<string>("PasswordHash")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PhoneNumber")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("PhoneNumberConfirmed")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("SecurityStamp")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("TwoFactorEnabled")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("UserName")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("NormalizedEmail")
-                        .HasDatabaseName("EmailIndex");
-
-                    b.HasIndex("NormalizedUserName")
-                        .IsUnique()
-                        .HasDatabaseName("UserNameIndex")
-                        .HasFilter("[NormalizedUserName] IS NOT NULL");
-
-                    b.ToTable("AspNetUsers", (string)null);
-
-                    b.HasDiscriminator().HasValue("IdentityUser");
-
-                    b.UseTphMappingStrategy();
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
@@ -229,6 +155,71 @@ namespace SNEStorage.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("SNEStorage.Models.ApplicationUser", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("AccessFailedCount")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<bool>("EmailConfirmed")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("LockoutEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTimeOffset?>("LockoutEnd")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("NormalizedEmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("NormalizedUserName")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("PasswordHash")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("PhoneNumberConfirmed")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("SecurityStamp")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("TwoFactorEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("UserName")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedEmail")
+                        .HasDatabaseName("EmailIndex");
+
+                    b.HasIndex("NormalizedUserName")
+                        .IsUnique()
+                        .HasDatabaseName("UserNameIndex")
+                        .HasFilter("[NormalizedUserName] IS NOT NULL");
+
+                    b.ToTable("AspNetUsers", (string)null);
+                });
+
             modelBuilder.Entity("SNEStorage.Models.Ban", b =>
                 {
                     b.Property<long>("Id")
@@ -252,7 +243,7 @@ namespace SNEStorage.Migrations
 
                     b.Property<string>("Reasons")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasColumnType("nvarchar(255)")
                         .HasColumnName("reasons");
 
                     b.Property<string>("UserId")
@@ -277,6 +268,9 @@ namespace SNEStorage.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
+                    b.Property<bool>("Deleted")
+                        .HasColumnType("bit");
+
                     b.Property<DateTime>("PublishDate")
                         .HasColumnType("datetime2")
                         .HasColumnName("publish_date");
@@ -287,8 +281,11 @@ namespace SNEStorage.Migrations
 
                     b.Property<string>("Text")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasColumnType("nvarchar(max)")
                         .HasColumnName("text");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("UserId")
                         .IsRequired()
@@ -303,6 +300,33 @@ namespace SNEStorage.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("comment", (string)null);
+                });
+
+            modelBuilder.Entity("SNEStorage.Models.CommentComment", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<long>("ChildCommentId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("child_comment_id");
+
+                    b.Property<long>("ParentCommentId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("child_parent_id");
+
+                    b.HasKey("Id")
+                        .HasName("id");
+
+                    b.HasIndex("ChildCommentId")
+                        .IsUnique();
+
+                    b.HasIndex("ParentCommentId");
+
+                    b.ToTable("comment_comments", (string)null);
                 });
 
             modelBuilder.Entity("SNEStorage.Models.File", b =>
@@ -320,7 +344,7 @@ namespace SNEStorage.Migrations
 
                     b.Property<string>("URL")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasColumnType("nvarchar(max)")
                         .HasColumnName("url");
 
                     b.HasKey("Id")
@@ -342,12 +366,12 @@ namespace SNEStorage.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasColumnType("varchar(10)")
                         .HasColumnName("name");
 
                     b.Property<string>("Value")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasColumnType("varchar(50)")
                         .HasColumnName("value");
 
                     b.HasKey("Id")
@@ -431,7 +455,7 @@ namespace SNEStorage.Migrations
 
                     b.Property<string>("Address")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasColumnType("nvarchar(15)")
                         .HasColumnName("address");
 
                     b.Property<DateTime>("CreatedAt")
@@ -449,7 +473,7 @@ namespace SNEStorage.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasColumnType("nvarchar(50)")
                         .HasColumnName("name");
 
                     b.Property<long>("Size")
@@ -540,7 +564,7 @@ namespace SNEStorage.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasColumnType("nvarchar(50)")
                         .HasColumnName("name");
 
                     b.HasKey("Id")
@@ -560,7 +584,7 @@ namespace SNEStorage.Migrations
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasColumnType("nvarchar(max)")
                         .HasColumnName("description");
 
                     b.Property<long>("MemoryAddressId")
@@ -569,7 +593,7 @@ namespace SNEStorage.Migrations
 
                     b.Property<string>("Value")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasColumnType("nvarchar(max)")
                         .HasColumnName("value");
 
                     b.HasKey("Id")
@@ -591,7 +615,7 @@ namespace SNEStorage.Migrations
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasColumnType("nvarchar(max)")
                         .HasColumnName("description");
 
                     b.HasKey("Id")
@@ -609,21 +633,21 @@ namespace SNEStorage.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
+                    b.Property<bool>("AlreadyModerated")
+                        .HasColumnType("bit")
+                        .HasColumnName("already_moderated");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2")
                         .HasColumnName("created_at");
 
                     b.Property<string>("Description")
-                        .HasColumnType("text")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
                         .HasColumnName("description");
 
-                    b.Property<int?>("Downloads")
-                        .HasColumnType("int")
-                        .HasColumnName("downloads");
-
-                    b.Property<long>("FileId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("file_id");
+                    b.Property<long?>("FileId")
+                        .HasColumnType("bigint");
 
                     b.Property<bool>("IncludesGore")
                         .HasColumnType("bit")
@@ -645,36 +669,29 @@ namespace SNEStorage.Migrations
                         .HasColumnType("bit")
                         .HasColumnName("includes_slurs");
 
-                    b.Property<DateTime>("LastUpdate")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("last_update");
-
                     b.Property<string>("Name")
-                        .HasColumnType("text")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(50)")
                         .HasColumnName("name");
 
-                    b.Property<long?>("ResourceTypeId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("resource_type_id");
+                    b.Property<string>("RepositoryURL")
+                        .HasColumnType("nvarchar(100)")
+                        .HasColumnName("repository_url");
 
                     b.Property<long>("ScoreId")
                         .HasColumnType("bigint")
                         .HasColumnName("score_id");
 
-                    b.Property<string>("SubmitterUserId")
+                    b.Property<string>("SubmitterId")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)")
-                        .HasColumnName("submitter_user_id");
+                        .HasColumnName("submitter_id");
 
-                    b.Property<string>("Usage")
-                        .HasColumnType("text")
-                        .HasColumnName("usage");
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("updated_at");
 
-                    b.Property<string>("Version")
-                        .HasColumnType("text")
-                        .HasColumnName("version");
-
-                    b.Property<long?>("VideogameId")
+                    b.Property<long>("VideogameId")
                         .HasColumnType("bigint")
                         .HasColumnName("videogame_id");
 
@@ -687,11 +704,9 @@ namespace SNEStorage.Migrations
 
                     b.HasIndex("FileId");
 
-                    b.HasIndex("ResourceTypeId");
-
                     b.HasIndex("ScoreId");
 
-                    b.HasIndex("SubmitterUserId");
+                    b.HasIndex("SubmitterId");
 
                     b.HasIndex("VideogameId");
 
@@ -714,6 +729,7 @@ namespace SNEStorage.Migrations
                         .HasColumnName("resource_id");
 
                     b.Property<string>("UserId")
+                        .IsRequired()
                         .HasColumnType("nvarchar(450)")
                         .HasColumnName("user_id");
 
@@ -725,6 +741,25 @@ namespace SNEStorage.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("resource_authors", (string)null);
+                });
+
+            modelBuilder.Entity("SNEStorage.Models.ResourceCategory", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("varchar(20)")
+                        .HasColumnName("name");
+
+                    b.HasKey("Id")
+                        .HasName("id");
+
+                    b.ToTable("resource_category", (string)null);
                 });
 
             modelBuilder.Entity("SNEStorage.Models.ResourceComments", b =>
@@ -747,11 +782,38 @@ namespace SNEStorage.Migrations
                     b.HasKey("Id")
                         .HasName("PK_Resource_Comments");
 
-                    b.HasIndex("CommentId");
+                    b.HasIndex("CommentId")
+                        .IsUnique();
 
                     b.HasIndex("ResourceId");
 
                     b.ToTable("resource_comments", (string)null);
+                });
+
+            modelBuilder.Entity("SNEStorage.Models.ResourceDependency", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<long>("DependencyResourceId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("dependency_resource_id");
+
+                    b.Property<long>("ResourceId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("resource_id");
+
+                    b.HasKey("Id")
+                        .HasName("PK_resource_dependency");
+
+                    b.HasIndex("DependencyResourceId");
+
+                    b.HasIndex("ResourceId");
+
+                    b.ToTable("resource_dependency", (string)null);
                 });
 
             modelBuilder.Entity("SNEStorage.Models.ResourceExternalAuthor", b =>
@@ -765,7 +827,7 @@ namespace SNEStorage.Migrations
 
                     b.Property<string>("Author")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasColumnType("nvarchar(200)")
                         .HasColumnName("author");
 
                     b.Property<long>("ResourceId")
@@ -778,6 +840,52 @@ namespace SNEStorage.Migrations
                     b.HasIndex("ResourceId");
 
                     b.ToTable("resource_external_author", (string)null);
+                });
+
+            modelBuilder.Entity("SNEStorage.Models.ResourceExternalDependency", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("DependencyName")
+                        .IsRequired()
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("dependency_name");
+
+                    b.Property<string>("DependencyURL")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)")
+                        .HasColumnName("dependency_url");
+
+                    b.Property<string>("Mirror1")
+                        .HasColumnType("varchar(255)")
+                        .HasColumnName("mirror_1");
+
+                    b.Property<string>("Mirror2")
+                        .HasColumnType("varchar(255)")
+                        .HasColumnName("mirror_2");
+
+                    b.Property<string>("Mirror3")
+                        .HasColumnType("varchar(255)")
+                        .HasColumnName("mirror_3");
+
+                    b.Property<string>("Mirror4")
+                        .HasColumnType("varchar(255)")
+                        .HasColumnName("mirror_4");
+
+                    b.Property<long>("ResourceId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("resource_id");
+
+                    b.HasKey("Id")
+                        .HasName("PK_resource_external_dependency");
+
+                    b.HasIndex("ResourceId");
+
+                    b.ToTable("resource_external_dependency", (string)null);
                 });
 
             modelBuilder.Entity("SNEStorage.Models.ResourceFlags", b =>
@@ -806,6 +914,58 @@ namespace SNEStorage.Migrations
                     b.HasIndex("ResourceId");
 
                     b.ToTable("resource_flags", (string)null);
+                });
+
+            modelBuilder.Entity("SNEStorage.Models.ResourcePreview", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<long>("FileId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("file_id");
+
+                    b.Property<long>("ResourceId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("resource_id");
+
+                    b.HasKey("Id")
+                        .HasName("PK_resource_previews");
+
+                    b.HasIndex("FileId");
+
+                    b.HasIndex("ResourceId");
+
+                    b.ToTable("resource_previews", (string)null);
+                });
+
+            modelBuilder.Entity("SNEStorage.Models.ResourceResourceTypes", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<long>("ResourceId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("resource_id");
+
+                    b.Property<long>("ResourceTypeId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("resource_type_id");
+
+                    b.HasKey("Id")
+                        .HasName("PK_resource_resource_types");
+
+                    b.HasIndex("ResourceId");
+
+                    b.HasIndex("ResourceTypeId");
+
+                    b.ToTable("resource_resource_types", (string)null);
                 });
 
             modelBuilder.Entity("SNEStorage.Models.ResourceTags", b =>
@@ -871,14 +1031,87 @@ namespace SNEStorage.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
+                    b.Property<long>("CategoryId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("category_id");
+
                     b.Property<string>("Name")
-                        .HasColumnType("text")
+                        .HasColumnType("nvarchar(max)")
                         .HasColumnName("name");
 
                     b.HasKey("Id")
                         .HasName("PK_Resource_Type");
 
+                    b.HasIndex("CategoryId");
+
                     b.ToTable("resource_type", (string)null);
+                });
+
+            modelBuilder.Entity("SNEStorage.Models.ResourceVersion", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<bool>("AlreadyModerated")
+                        .HasColumnType("bit")
+                        .HasColumnName("already_moderated");
+
+                    b.Property<string>("ChangeLog")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("change_log");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<int>("Downloads")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0)
+                        .HasColumnName("downloads");
+
+                    b.Property<long>("FileId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("ResourceId")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("SealOfQuality")
+                        .HasColumnType("bit")
+                        .HasColumnName("seal_of_quality");
+
+                    b.Property<bool>("SealOfQualityRequested")
+                        .HasColumnType("bit")
+                        .HasColumnName("seal_of_quality_requested");
+
+                    b.Property<string>("SubmitterUserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("updated_at");
+
+                    b.Property<string>("Version")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasColumnName("version");
+
+                    b.HasKey("Id")
+                        .HasName("PK_resource_version");
+
+                    b.HasIndex("FileId");
+
+                    b.HasIndex("ResourceId");
+
+                    b.HasIndex("SubmitterUserId");
+
+                    b.ToTable("resource_version", (string)null);
                 });
 
             modelBuilder.Entity("SNEStorage.Models.Score", b =>
@@ -939,7 +1172,7 @@ namespace SNEStorage.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasColumnType("nvarchar(max)")
                         .HasColumnName("name");
 
                     b.HasKey("Id")
@@ -963,7 +1196,7 @@ namespace SNEStorage.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasColumnType("nvarchar(max)")
                         .HasColumnName("name");
 
                     b.HasKey("Id")
@@ -1011,7 +1244,7 @@ namespace SNEStorage.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasColumnType("nvarchar(10)")
                         .HasColumnName("name");
 
                     b.Property<int>("Value")
@@ -1038,7 +1271,7 @@ namespace SNEStorage.Migrations
                         .HasColumnName("avatar_id");
 
                     b.Property<string>("Bio")
-                        .HasColumnType("text")
+                        .HasColumnType("nvarchar(max)")
                         .HasColumnName("bio");
 
                     b.Property<DateOnly>("Birthday")
@@ -1046,11 +1279,11 @@ namespace SNEStorage.Migrations
                         .HasColumnName("birthday");
 
                     b.Property<string>("BuyMeACoffee")
-                        .HasColumnType("text")
+                        .HasColumnType("nvarchar(100)")
                         .HasColumnName("buy_me_a_coffee");
 
                     b.Property<string>("Discord")
-                        .HasColumnType("text")
+                        .HasColumnType("nvarchar(100)")
                         .HasColumnName("discord");
 
                     b.Property<long>("EmailVisibilityId")
@@ -1058,31 +1291,31 @@ namespace SNEStorage.Migrations
                         .HasColumnName("email_visibility_id");
 
                     b.Property<string>("Facebook")
-                        .HasColumnType("text")
+                        .HasColumnType("nvarchar(100)")
                         .HasColumnName("facebook");
 
                     b.Property<string>("Github")
-                        .HasColumnType("text")
+                        .HasColumnType("nvarchar(100)")
                         .HasColumnName("github");
 
                     b.Property<string>("Instagram")
-                        .HasColumnType("text")
+                        .HasColumnType("nvarchar(100)")
                         .HasColumnName("instagram");
 
                     b.Property<string>("NintendoNetwork")
-                        .HasColumnType("text")
+                        .HasColumnType("nvarchar(100)")
                         .HasColumnName("nintendo_network");
 
                     b.Property<string>("Patreon")
-                        .HasColumnType("text")
+                        .HasColumnType("nvarchar(100)")
                         .HasColumnName("patreon");
 
                     b.Property<string>("Paypal")
-                        .HasColumnType("text")
+                        .HasColumnType("nvarchar(100)")
                         .HasColumnName("paypal");
 
                     b.Property<string>("Steam")
-                        .HasColumnType("text")
+                        .HasColumnType("nvarchar(100)")
                         .HasColumnName("steam");
 
                     b.Property<long>("TimeZoneId")
@@ -1090,15 +1323,15 @@ namespace SNEStorage.Migrations
                         .HasColumnName("time_zone_id");
 
                     b.Property<string>("Title")
-                        .HasColumnType("text")
+                        .HasColumnType("nvarchar(100)")
                         .HasColumnName("title");
 
                     b.Property<string>("Twitch")
-                        .HasColumnType("text")
+                        .HasColumnType("nvarchar(100)")
                         .HasColumnName("twitch");
 
                     b.Property<string>("Twitter")
-                        .HasColumnType("text")
+                        .HasColumnType("nvarchar(100)")
                         .HasColumnName("twitter");
 
                     b.Property<string>("UserId")
@@ -1107,11 +1340,11 @@ namespace SNEStorage.Migrations
                         .HasColumnName("user_id");
 
                     b.Property<string>("UsernameColor")
-                        .HasColumnType("text")
+                        .HasColumnType("nvarchar(7)")
                         .HasColumnName("username_color");
 
                     b.Property<string>("Youtube")
-                        .HasColumnType("text")
+                        .HasColumnType("nvarchar(100)")
                         .HasColumnName("youtube");
 
                     b.HasKey("Id")
@@ -1141,11 +1374,11 @@ namespace SNEStorage.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text")
+                        .HasColumnType("nvarchar(max)")
                         .HasColumnName("name");
 
                     b.Property<string>("Publisher")
-                        .HasColumnType("text")
+                        .HasColumnType("nvarchar(max)")
                         .HasColumnName("publisher");
 
                     b.Property<DateOnly?>("ReleaseDate")
@@ -1168,7 +1401,7 @@ namespace SNEStorage.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
                     b.Property<string>("Name")
-                        .HasColumnType("text")
+                        .HasColumnType("nvarchar(100)")
                         .HasColumnName("name");
 
                     b.Property<bool>("ResourceOnly")
@@ -1179,13 +1412,6 @@ namespace SNEStorage.Migrations
                         .HasName("PK_Visibility");
 
                     b.ToTable("visibility", (string)null);
-                });
-
-            modelBuilder.Entity("SNEStorage.Models.ApplicationUser", b =>
-                {
-                    b.HasBaseType("Microsoft.AspNetCore.Identity.IdentityUser");
-
-                    b.HasDiscriminator().HasValue("ApplicationUser");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -1199,7 +1425,7 @@ namespace SNEStorage.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
                 {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
+                    b.HasOne("SNEStorage.Models.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1208,7 +1434,7 @@ namespace SNEStorage.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
                 {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
+                    b.HasOne("SNEStorage.Models.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1223,7 +1449,7 @@ namespace SNEStorage.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
+                    b.HasOne("SNEStorage.Models.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1232,7 +1458,7 @@ namespace SNEStorage.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
                 {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", null)
+                    b.HasOne("SNEStorage.Models.ApplicationUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1270,6 +1496,27 @@ namespace SNEStorage.Migrations
                     b.Navigation("Score");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("SNEStorage.Models.CommentComment", b =>
+                {
+                    b.HasOne("SNEStorage.Models.Comment", "ChildComment")
+                        .WithOne("Parent")
+                        .HasForeignKey("SNEStorage.Models.CommentComment", "ChildCommentId")
+                        .OnDelete(DeleteBehavior.ClientCascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_child_comment_comment");
+
+                    b.HasOne("SNEStorage.Models.Comment", "ParentComment")
+                        .WithMany("Childrens")
+                        .HasForeignKey("ParentCommentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_parent_comment_comment");
+
+                    b.Navigation("ChildComment");
+
+                    b.Navigation("ParentComment");
                 });
 
             modelBuilder.Entity("SNEStorage.Models.File", b =>
@@ -1403,18 +1650,9 @@ namespace SNEStorage.Migrations
 
             modelBuilder.Entity("SNEStorage.Models.Resource", b =>
                 {
-                    b.HasOne("SNEStorage.Models.File", "File")
+                    b.HasOne("SNEStorage.Models.File", null)
                         .WithMany("Resources")
-                        .HasForeignKey("FileId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("FK_resource_file");
-
-                    b.HasOne("SNEStorage.Models.ResourceType", "ResourceType")
-                        .WithMany("Resources")
-                        .HasForeignKey("ResourceTypeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .HasConstraintName("FK_resource_resource_type");
+                        .HasForeignKey("FileId");
 
                     b.HasOne("SNEStorage.Models.Score", "Score")
                         .WithMany("Resources")
@@ -1423,17 +1661,18 @@ namespace SNEStorage.Migrations
                         .IsRequired()
                         .HasConstraintName("FK_resource_score");
 
-                    b.HasOne("SNEStorage.Models.ApplicationUser", "SubmitterUser")
+                    b.HasOne("SNEStorage.Models.ApplicationUser", "Submitter")
                         .WithMany("Resources")
-                        .HasForeignKey("SubmitterUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasForeignKey("SubmitterId")
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired()
-                        .HasConstraintName("FK_resource_submitter_user");
+                        .HasConstraintName("FK_resource_submitter");
 
                     b.HasOne("SNEStorage.Models.Videogame", "Videogame")
                         .WithMany("Resources")
                         .HasForeignKey("VideogameId")
                         .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
                         .HasConstraintName("FK_resource_videogame");
 
                     b.HasOne("SNEStorage.Models.Visibility", "Visibility")
@@ -1443,13 +1682,9 @@ namespace SNEStorage.Migrations
                         .IsRequired()
                         .HasConstraintName("FK_resource_visibility");
 
-                    b.Navigation("File");
-
-                    b.Navigation("ResourceType");
-
                     b.Navigation("Score");
 
-                    b.Navigation("SubmitterUser");
+                    b.Navigation("Submitter");
 
                     b.Navigation("Videogame");
 
@@ -1469,6 +1704,7 @@ namespace SNEStorage.Migrations
                         .WithMany("ResourcesAuthors")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.ClientCascade)
+                        .IsRequired()
                         .HasConstraintName("FK_resource_authors_user");
 
                     b.Navigation("Resource");
@@ -1479,8 +1715,8 @@ namespace SNEStorage.Migrations
             modelBuilder.Entity("SNEStorage.Models.ResourceComments", b =>
                 {
                     b.HasOne("SNEStorage.Models.Comment", "Comment")
-                        .WithMany("ResourceComments")
-                        .HasForeignKey("CommentId")
+                        .WithOne("ResourceComment")
+                        .HasForeignKey("SNEStorage.Models.ResourceComments", "CommentId")
                         .OnDelete(DeleteBehavior.ClientCascade)
                         .IsRequired()
                         .HasConstraintName("FK_resource_comments_comment");
@@ -1497,6 +1733,27 @@ namespace SNEStorage.Migrations
                     b.Navigation("Resource");
                 });
 
+            modelBuilder.Entity("SNEStorage.Models.ResourceDependency", b =>
+                {
+                    b.HasOne("SNEStorage.Models.Resource", "DependencyResource")
+                        .WithMany("Dependents")
+                        .HasForeignKey("DependencyResourceId")
+                        .OnDelete(DeleteBehavior.ClientCascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_resource_dependency_dependency_resource_id");
+
+                    b.HasOne("SNEStorage.Models.Resource", "Resource")
+                        .WithMany("ResourceDependencies")
+                        .HasForeignKey("ResourceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_resource_dependency_resource_id");
+
+                    b.Navigation("DependencyResource");
+
+                    b.Navigation("Resource");
+                });
+
             modelBuilder.Entity("SNEStorage.Models.ResourceExternalAuthor", b =>
                 {
                     b.HasOne("SNEStorage.Models.Resource", "Resource")
@@ -1505,6 +1762,18 @@ namespace SNEStorage.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("FK_resource_external_author_resource");
+
+                    b.Navigation("Resource");
+                });
+
+            modelBuilder.Entity("SNEStorage.Models.ResourceExternalDependency", b =>
+                {
+                    b.HasOne("SNEStorage.Models.Resource", "Resource")
+                        .WithMany("ResourceExternalDependencies")
+                        .HasForeignKey("ResourceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_resource_external_dependency_resource_id");
 
                     b.Navigation("Resource");
                 });
@@ -1528,6 +1797,46 @@ namespace SNEStorage.Migrations
                     b.Navigation("Flag");
 
                     b.Navigation("Resource");
+                });
+
+            modelBuilder.Entity("SNEStorage.Models.ResourcePreview", b =>
+                {
+                    b.HasOne("SNEStorage.Models.File", "File")
+                        .WithMany()
+                        .HasForeignKey("FileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_resource_previews_file_id");
+
+                    b.HasOne("SNEStorage.Models.Resource", "Resource")
+                        .WithMany("ResourcePreviews")
+                        .HasForeignKey("ResourceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_resource_previews_resource_id");
+
+                    b.Navigation("File");
+
+                    b.Navigation("Resource");
+                });
+
+            modelBuilder.Entity("SNEStorage.Models.ResourceResourceTypes", b =>
+                {
+                    b.HasOne("SNEStorage.Models.Resource", "Resource")
+                        .WithMany("ResourceResourceTypes")
+                        .HasForeignKey("ResourceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SNEStorage.Models.ResourceType", "ResourceType")
+                        .WithMany("ResourceResourceTypes")
+                        .HasForeignKey("ResourceTypeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Resource");
+
+                    b.Navigation("ResourceType");
                 });
 
             modelBuilder.Entity("SNEStorage.Models.ResourceTags", b =>
@@ -1570,6 +1879,45 @@ namespace SNEStorage.Migrations
                     b.Navigation("Resource");
 
                     b.Navigation("Team");
+                });
+
+            modelBuilder.Entity("SNEStorage.Models.ResourceType", b =>
+                {
+                    b.HasOne("SNEStorage.Models.ResourceCategory", "Category")
+                        .WithMany("Types")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_resource_type_category");
+
+                    b.Navigation("Category");
+                });
+
+            modelBuilder.Entity("SNEStorage.Models.ResourceVersion", b =>
+                {
+                    b.HasOne("SNEStorage.Models.File", "File")
+                        .WithMany()
+                        .HasForeignKey("FileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SNEStorage.Models.Resource", "Resource")
+                        .WithMany("ResourceVersions")
+                        .HasForeignKey("ResourceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SNEStorage.Models.ApplicationUser", "SubmitterUser")
+                        .WithMany("ResourceVersions")
+                        .HasForeignKey("SubmitterUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("File");
+
+                    b.Navigation("Resource");
+
+                    b.Navigation("SubmitterUser");
                 });
 
             modelBuilder.Entity("SNEStorage.Models.ScoreUsers", b =>
@@ -1653,9 +2001,36 @@ namespace SNEStorage.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("SNEStorage.Models.ApplicationUser", b =>
+                {
+                    b.Navigation("Bans");
+
+                    b.Navigation("Comments");
+
+                    b.Navigation("Flags");
+
+                    b.Navigation("LikesUsers");
+
+                    b.Navigation("ResourceVersions");
+
+                    b.Navigation("Resources");
+
+                    b.Navigation("ResourcesAuthors");
+
+                    b.Navigation("ScoresUsers");
+
+                    b.Navigation("TeamsUsers");
+
+                    b.Navigation("UserInfo");
+                });
+
             modelBuilder.Entity("SNEStorage.Models.Comment", b =>
                 {
-                    b.Navigation("ResourceComments");
+                    b.Navigation("Childrens");
+
+                    b.Navigation("Parent");
+
+                    b.Navigation("ResourceComment");
                 });
 
             modelBuilder.Entity("SNEStorage.Models.File", b =>
@@ -1698,22 +2073,39 @@ namespace SNEStorage.Migrations
 
             modelBuilder.Entity("SNEStorage.Models.Resource", b =>
                 {
+                    b.Navigation("Dependents");
+
                     b.Navigation("ResourceComments");
+
+                    b.Navigation("ResourceDependencies");
 
                     b.Navigation("ResourceExternalAuthors");
 
+                    b.Navigation("ResourceExternalDependencies");
+
                     b.Navigation("ResourceFlags");
 
+                    b.Navigation("ResourcePreviews");
+
+                    b.Navigation("ResourceResourceTypes");
+
                     b.Navigation("ResourceTags");
+
+                    b.Navigation("ResourceVersions");
 
                     b.Navigation("ResourcesAuthors");
 
                     b.Navigation("ResourcesTeams");
                 });
 
+            modelBuilder.Entity("SNEStorage.Models.ResourceCategory", b =>
+                {
+                    b.Navigation("Types");
+                });
+
             modelBuilder.Entity("SNEStorage.Models.ResourceType", b =>
                 {
-                    b.Navigation("Resources");
+                    b.Navigation("ResourceResourceTypes");
                 });
 
             modelBuilder.Entity("SNEStorage.Models.Score", b =>
@@ -1758,27 +2150,6 @@ namespace SNEStorage.Migrations
                     b.Navigation("Resources");
 
                     b.Navigation("UserInfos");
-                });
-
-            modelBuilder.Entity("SNEStorage.Models.ApplicationUser", b =>
-                {
-                    b.Navigation("Bans");
-
-                    b.Navigation("Comments");
-
-                    b.Navigation("Flags");
-
-                    b.Navigation("LikesUsers");
-
-                    b.Navigation("Resources");
-
-                    b.Navigation("ResourcesAuthors");
-
-                    b.Navigation("ScoresUsers");
-
-                    b.Navigation("TeamsUsers");
-
-                    b.Navigation("UserInfo");
                 });
 #pragma warning restore 612, 618
         }

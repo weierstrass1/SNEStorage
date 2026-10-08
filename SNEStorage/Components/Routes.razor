@@ -1,0 +1,7 @@
+<Router AppAssembly="typeof(Program).Assembly" NotFoundPage="typeof(SNEStorage.Components.Pages.NotFound)">
+    <Found Context="routeData">
+        <CascadingValue Name="CurrentPageRoute" Value="routeData">
+            <RouteView RouteData="routeData" DefaultLayout="typeof(MainLayout)" />
+        </CascadingValue>
+    </Found>
+</Router>

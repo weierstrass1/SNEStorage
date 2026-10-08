@@ -1,4 +1,8 @@
-﻿namespace SNEStorage.Models;
+﻿using SNEStorage.DTOs;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
+
+namespace SNEStorage.Models;
 
 public partial class UserInfo
 {
@@ -23,7 +27,10 @@ public partial class UserInfo
     public long EmailVisibilityId { get; set; }
     public long TimeZoneId { get; set; }
     public required string UserId {  get; set; }
+    [JsonIgnore]
     public virtual ApplicationUser? User { get; set; }
+    [NotMapped]
+    public UserNameDTO? UserSummary { get; set; }
     public virtual File? Avatar {  get; set; }
     public virtual Visibility? EmailVisibility { get; set; }
     public virtual TimeZone? TimeZone { get; set; }

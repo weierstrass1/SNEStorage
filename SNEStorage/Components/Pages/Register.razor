@@ -1,0 +1,129 @@
+@page "/Register"
+
+<PageTitle>Create an account | SNEStorage</PageTitle>
+
+<div class="register-page">
+    <section class="register-intro" aria-labelledby="register-intro-title">
+        <p class="register-kicker"><span aria-hidden="true">◆</span> PLAYER REGISTRATION</p>
+        <h1 id="register-intro-title">Join the <span>SNES creator archive</span></h1>
+        <p class="register-intro-copy">
+            Create your account to share your work, keep track of your favorite projects, and join the SNEStorage community.
+        </p>
+
+        <div class="register-mascot-scene" aria-hidden="true">
+            <span class="mascot-orbit mascot-orbit-one"></span>
+            <span class="mascot-orbit mascot-orbit-two"></span>
+            <img class="register-mascot" src="images/snestorageLogo.png" alt="" />
+            <span class="mascot-spark mascot-spark-one">✦</span>
+            <span class="mascot-spark mascot-spark-two">✦</span>
+        </div>
+
+        <div class="register-feature-list" aria-label="SNEStorage features">
+            <span><b aria-hidden="true">✓</b> Your own creator profile</span>
+            <span><b aria-hidden="true">✓</b> A home for your SNES projects</span>
+            <span><b aria-hidden="true">✓</b> Community-made tools and inspiration</span>
+        </div>
+    </section>
+
+    <section class="register-card" aria-labelledby="register-title">
+        <div class="register-card-header">
+            <div>
+                <p class="register-section-kicker">START YOUR ADVENTURE</p>
+                <h2 id="register-title">Create your account</h2>
+            </div>
+            <p class="register-signin">Already registered? <a href="@LoginUrl">Log in</a></p>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(StatusMessage))
+        {
+            <div class="register-alert" role="alert"><span aria-hidden="true">!</span> @StatusMessage</div>
+        }
+        @if (!string.IsNullOrWhiteSpace(_optionsError))
+        {
+            <div class="register-alert" role="alert"><span aria-hidden="true">!</span> @_optionsError</div>
+        }
+
+        <form class="register-form" action="/api/register/submit" method="post" enctype="multipart/form-data">
+            <AntiforgeryToken />
+
+            <fieldset class="register-fieldset">
+                <legend><span>01</span> Account details</legend>
+                <div class="register-grid">
+                    <div class="register-field username-field">
+                        <label for="username">Username <span aria-hidden="true">*</span></label>
+                        <input class="register-input" id="username" name="User" type="text" autocomplete="username" placeholder="Your player name" required />
+                    </div>
+
+                    <div class="register-field color-field">
+                        <label for="username-color">Name color</label>
+                        <div class="color-input-wrap">
+                            <input id="username-color" name="UsernameColor" type="color" value="#ffffff" title="Choose a username color" />
+                            <span>Pick your profile color</span>
+                        </div>
+                    </div>
+
+                    <div class="register-field field-full">
+                        <label for="email">Email address <span aria-hidden="true">*</span></label>
+                        <input class="register-input" id="email" name="Email" type="email" autocomplete="email" placeholder="you@example.com" required />
+                    </div>
+                </div>
+            </fieldset>
+
+            <fieldset class="register-fieldset">
+                <legend><span>02</span> Secure your account</legend>
+                <div class="register-grid">
+                    <div class="register-field">
+                        <label for="password">Password <span aria-hidden="true">*</span></label>
+                        <input class="register-input" id="password" name="Password" type="password" autocomplete="new-password" placeholder="Create a password" required />
+                    </div>
+                    <div class="register-field">
+                        <label for="password-repeat">Confirm password <span aria-hidden="true">*</span></label>
+                        <input class="register-input" id="password-repeat" name="PasswordRepeat" type="password" autocomplete="new-password" placeholder="Enter it again" required />
+                    </div>
+                </div>
+            </fieldset>
+
+            <fieldset class="register-fieldset">
+                <legend><span>03</span> Profile preferences</legend>
+                <div class="register-grid">
+                    <div class="register-field">
+                        <label for="birthday">Date of birth <span aria-hidden="true">*</span></label>
+                        <input class="register-input" id="birthday" name="Birthday" type="date" value="@InitialBirthday" required />
+                    </div>
+
+                    <div class="register-field">
+                        <label for="avatar">Profile avatar <span aria-hidden="true">*</span></label>
+                        <input class="register-input register-file" id="avatar" name="Avatar" type="file" accept=".png,.jpg,.jpeg,image/png,image/jpeg" required />
+                        <span class="field-hint">PNG or JPG image</span>
+                    </div>
+
+                    <div class="register-field">
+                        <label for="time-zone">Time zone <span aria-hidden="true">*</span></label>
+                        <select class="register-input" id="time-zone" name="TimeZoneId" required>
+                            @foreach (var timeZone in _timeZones)
+                            {
+                                <option value="@timeZone.Id" selected="@(timeZone.Id == DefaultTimeZoneId)">@timeZone.Name</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="register-field">
+                        <label for="email-visibility">Email visibility <span aria-hidden="true">*</span></label>
+                        <select class="register-input" id="email-visibility" name="EmailVisibilityId" required>
+                            @foreach (var visibility in _emailVisibilities)
+                            {
+                                <option value="@visibility.Id" selected="@(visibility.Id == DefaultEmailVisibilityId)">@visibility.Name</option>
+                            }
+                        </select>
+                        <span class="field-hint">Choose who can see your email address.</span>
+                    </div>
+                </div>
+            </fieldset>
+
+            <button class="register-submit" type="submit" disabled="@(_timeZones.Count == 0 || _emailVisibilities.Count == 0)">
+                Create account <span aria-hidden="true">→</span>
+            </button>
+            <p class="required-note"><span aria-hidden="true">*</span> Required fields</p>
+        </form>
+    </section>
+</div>

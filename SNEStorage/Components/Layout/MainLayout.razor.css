@@ -1,0 +1,371 @@
+.app-shell {
+    display: flex;
+    min-height: 100vh;
+    flex-direction: column;
+}
+
+.site-header {
+    position: relative;
+    z-index: 5;
+    border-bottom: 2px solid #3a2472;
+    background: linear-gradient(180deg, rgba(24, 12, 54, .98), rgba(7, 6, 15, .98));
+    box-shadow: 0 4px 22px rgba(4, 2, 13, .45);
+}
+
+.header-inner {
+    display: flex;
+    min-height: 76px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+}
+
+.brand-lockup {
+    display: flex;
+    min-width: max-content;
+    align-items: center;
+    gap: .65rem;
+    color: #f1eaff;
+    text-decoration: none;
+}
+
+.brand-lockup:hover {
+    color: #fff;
+    text-decoration: none;
+}
+
+.brand-lockup > img {
+    width: 46px;
+    height: 46px;
+    object-fit: contain;
+    filter: drop-shadow(0 0 8px rgba(177, 76, 255, .42));
+}
+
+.brand-copy {
+    display: flex;
+    align-items: baseline;
+    gap: .6rem;
+    white-space: nowrap;
+}
+
+.brand-name,
+.footer-brand-name span {
+    font-family: "Exo 2", "Segoe UI", sans-serif;
+    font-size: 1.42rem;
+    font-style: italic;
+    font-weight: 900;
+    letter-spacing: -.035em;
+    line-height: 1;
+}
+
+.brand-subtitle {
+    color: #ffe14d;
+    font-family: "Press Start 2P", "Courier New", monospace;
+    font-size: .38rem;
+    letter-spacing: .03em;
+}
+
+.site-navigation {
+    align-items: center;
+    justify-content: flex-end;
+    gap: 1.25rem;
+}
+
+.navigation-links,
+.account-links {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+}
+
+/* NavLink renders its own element, so isolated styles must cross its component boundary. */
+.site-navigation ::deep .navigation-button {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+    padding: .65rem .85rem;
+    border: 2px solid #6a429b;
+    border-radius: 5px;
+    color: #e7dcff;
+    background: linear-gradient(180deg, #24133f, #170c30);
+    box-shadow: 0 3px 0 #090513;
+    font-family: "Press Start 2P", "Courier New", monospace;
+    font-size: .55rem;
+    line-height: 1.8;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: border-color .15s ease, background .15s ease, color .15s ease, box-shadow .15s ease;
+}
+
+.site-navigation ::deep .navigation-button:hover {
+    border-color: #b14cff;
+    color: #fff;
+    background: #321957;
+    box-shadow: 0 3px 0 #090513, 0 0 15px rgba(177, 76, 255, .3);
+    text-decoration: none;
+}
+
+.site-navigation ::deep .navigation-button.active {
+    border-color: #b14cff;
+    color: #ffe14d;
+    background: #351a5b;
+    box-shadow: inset 0 -3px 0 #b14cff, 0 3px 0 #090513;
+}
+
+.site-navigation ::deep .navigation-button:focus-visible {
+    outline: 3px solid #ffe14d;
+    outline-offset: 4px;
+}
+
+.site-navigation ::deep .navigation-button:active {
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, .4);
+}
+
+.site-navigation ::deep .navigation-button-primary {
+    border-color: #ffe14d;
+    color: #211136;
+    background: #ffe14d;
+    box-shadow: 0 3px 0 #927125;
+}
+
+.site-navigation ::deep .navigation-button-primary:hover,
+.site-navigation ::deep .navigation-button-primary.active {
+    border-color: #fff09a;
+    color: #211136;
+    background: #fff09a;
+    box-shadow: 0 3px 0 #927125, 0 0 15px rgba(255, 225, 77, .25);
+}
+
+.navigation-toggle {
+    display: none;
+    width: 46px;
+    height: 42px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    border: 2px solid #6a2be0;
+    border-radius: 4px;
+    background: #100a23;
+    box-shadow: 0 0 12px rgba(177, 76, 255, .23);
+}
+
+.navigation-toggle span {
+    display: block;
+    width: 20px;
+    height: 2px;
+    background: #e7e2ff;
+    box-shadow: 0 0 5px rgba(177, 76, 255, .7);
+}
+
+.navigation-toggle:focus-visible {
+    outline: 3px solid #ffe14d;
+    outline-offset: 3px;
+}
+
+.app-content {
+    flex: 1;
+    padding-top: 2.5rem;
+    padding-bottom: 4rem;
+}
+
+.site-footer {
+    position: relative;
+    padding: 2rem 0 1.25rem;
+    border-top: 2px solid #3a2472;
+    color: #a49cd0;
+    background: radial-gradient(ellipse at 50% 0, #1b0e3a 0, #0a0715 58%, #07060f 100%);
+}
+
+.footer-main {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 2rem;
+    padding-bottom: 1.5rem;
+}
+
+.footer-brand {
+    max-width: 390px;
+}
+
+.footer-brand-name {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    color: #f1eaff;
+}
+
+.footer-brand-name img {
+    width: 38px;
+    height: 38px;
+    object-fit: contain;
+}
+
+.footer-brand-name span {
+    font-size: 1.2rem;
+}
+
+.footer-brand p {
+    margin: .55rem 0 0 2.9rem;
+    color: #a49cd0;
+    font-size: .92rem;
+}
+
+.footer-links {
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: .65rem;
+}
+
+.footer-links a {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    padding: .45rem .55rem;
+    border: 1px solid rgba(106, 43, 224, .65);
+    color: #d2c6f3;
+    background: rgba(20, 10, 52, .55);
+    font-family: "Press Start 2P", "Courier New", monospace;
+    font-size: .4rem;
+    line-height: 1.7;
+    text-decoration: none;
+    transition: border-color .15s ease, color .15s ease, box-shadow .15s ease;
+}
+
+.footer-links a:hover {
+    border-color: #b14cff;
+    color: #ffe14d;
+    box-shadow: 0 0 12px rgba(177, 76, 255, .32);
+    text-decoration: none;
+}
+
+.footer-bottom {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding-top: 1.1rem;
+    border-top: 1px solid rgba(106, 43, 224, .42);
+}
+
+.footer-disclaimer {
+    max-width: 760px;
+    margin: 0;
+    color: #9086b8;
+    font-size: .78rem;
+    line-height: 1.7;
+}
+
+.footer-disclaimer span,
+.footer-credit {
+    color: #c7a5ff;
+    font-family: "Press Start 2P", "Courier New", monospace;
+    font-size: .38rem;
+    line-height: 1.8;
+}
+
+.footer-disclaimer span {
+    display: block;
+    margin-bottom: .3rem;
+    color: #ffe14d;
+}
+
+.footer-credit {
+    flex: 0 0 auto;
+    margin: 0;
+    text-align: right;
+}
+
+@media (min-width: 992px) {
+    .site-navigation {
+        display: flex !important;
+    }
+}
+
+@media (max-width: 991.98px) {
+    .header-inner {
+        min-height: 70px;
+        flex-wrap: wrap;
+        gap: .65rem;
+        padding-top: .4rem;
+        padding-bottom: .4rem;
+    }
+
+    .navigation-toggle {
+        display: inline-flex;
+    }
+
+    .site-navigation {
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0;
+        padding: .8rem 0 .45rem;
+        border-top: 1px solid rgba(106, 43, 224, .45);
+    }
+
+    .navigation-links,
+    .account-links {
+        align-items: stretch;
+        flex-direction: column;
+        gap: .6rem;
+    }
+
+    .site-navigation ::deep .navigation-button {
+        width: 100%;
+        justify-content: flex-start;
+        padding: .8rem 1rem;
+    }
+
+    .account-links {
+        margin-top: .85rem;
+        padding-top: .85rem;
+        border-top: 1px solid rgba(106, 43, 224, .28);
+    }
+
+}
+
+@media (max-width: 380px) {
+    .brand-subtitle {
+        display: none;
+    }
+
+    .brand-name {
+        font-size: 1.25rem;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .footer-main,
+    .footer-bottom {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .footer-main {
+        gap: 1.2rem;
+    }
+
+    .footer-links {
+        justify-content: flex-start;
+    }
+
+    .footer-bottom {
+        gap: .75rem;
+    }
+
+    .footer-credit {
+        text-align: left;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .site-navigation ::deep .navigation-button,
+    .site-header *,
+    .site-footer * {
+        transition-duration: .01ms !important;
+    }
+}

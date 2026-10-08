@@ -1,0 +1,228 @@
+@page "/Resource/Create"
+@page "/Resources/Create"
+@using SNEStorage.Components.Resources
+
+<PageTitle>Submit a resource | SNEStorage</PageTitle>
+
+<div class="resource-create-page">
+    @if (_forbidden)
+    {
+        <section class="resource-message resource-forbidden" role="alert">
+            <p class="resource-kicker">403 · ACCESS DENIED</p>
+            <h1>Log in to submit a resource</h1>
+            <p>Only logged-in users can upload resources to SNEStorage.</p>
+            <div class="resource-actions">
+                <a class="resource-primary" href="@LoginUrl">Log in</a>
+                <a class="resource-secondary" href="/Resources">Browse resources</a>
+            </div>
+        </section>
+    }
+    else
+    {
+        <header class="resource-create-heading">
+            <div>
+                <p class="resource-kicker">COMMUNITY LIBRARY <span aria-hidden="true">/</span> NEW RESOURCE</p>
+                <h1>Submit a resource</h1>
+                <p>Add your files, describe your work, and choose how to share it.</p>
+            </div>
+            <a class="resource-secondary" href="/Resources">← Resource library</a>
+        </header>
+
+        <ResourceSubmissionRules />
+
+        @if (_loading)
+        {
+            <section class="resource-message" role="status" aria-live="polite">
+                <h2>Loading resource options…</h2>
+                <p>Preparing the game library and submission settings.</p>
+            </section>
+        }
+        else if (_options is null)
+        {
+            <section class="resource-message resource-message-error" role="alert">
+                <h2>The submission form is unavailable</h2>
+                <p>@_error</p>
+                <button class="resource-secondary" type="button" @onclick="LoadOptionsAsync">Try again</button>
+            </section>
+        }
+        else
+        {
+            <EditForm Model="_form" OnSubmit="SubmitAsync" id="resource-create-form" class="resource-create-form" action="/api/resource/create/submit" method="post" enctype="multipart/form-data" novalidate aria-busy="@_saving">
+                <AntiforgeryToken />
+                <input type="hidden" name="Id" value="0" />
+                @if (!string.IsNullOrWhiteSpace(_error))
+                {
+                    <div class="resource-notice resource-notice-error" role="alert">
+                        <p>@_error</p>
+                        @if (_validationErrors.Count > 0)
+                        {
+                            <ul>
+                                @foreach (var error in _validationErrors)
+                                {
+                                    <li>@error</li>
+                                }
+                            </ul>
+                        }
+                    </div>
+                }
+
+                <div class="resource-tabs" role="tablist" aria-label="Resource submission sections" inert="@(_saving ? string.Empty : null)">
+                    @for (var index = 0; index < TabTitles.Length; index++)
+                    {
+                        var tab = index;
+                        <button id="@($"resource-tab-{tab}")" class="resource-tab @(_activeTab == tab ? "active" : null)" type="button" role="tab" aria-selected="@(_activeTab == tab)" aria-controls="@($"resource-panel-{tab}")" tabindex="@(_activeTab == tab ? 0 : -1)" data-resource-tab @onclick="() => SelectTab(tab)" @onkeydown="args => TabKeyDownAsync(tab, args)">
+                            <span class="resource-tab-number">@(tab + 1)</span><span>@TabTitles[tab]</span>
+                        </button>
+                    }
+                </div>
+
+                <div class="resource-form-sections" inert="@(_saving ? string.Empty : null)">
+                    <section id="resource-panel-0" class="resource-tab-panel" role="tabpanel" aria-labelledby="resource-tab-0" hidden="@(_activeTab != 0)" tabindex="0" data-resource-tab-panel="0">
+                        <fieldset class="resource-section">
+                            <legend>General information</legend>
+                            <div class="resource-grid resource-general-grid">
+                                <div class="resource-field resource-field-full">
+                                    <label for="resource-name">Resource name <span aria-hidden="true">*</span></label>
+                                    <InputText class="resource-input" id="resource-name" name="Name" @bind-Value="_form.Name" placeholder="Give your resource a clear name" minlength="2" maxlength="50" required />
+                                    <p class="resource-help">2–50 characters.</p>
+                                </div>
+                                <div class="resource-field resource-field-full">
+                                    <label for="resource-description">Description <span aria-hidden="true">*</span></label>
+                                    <InputTextArea class="resource-input" id="resource-description" name="Description" @bind-Value="_form.Description" rows="4" placeholder="Describe what the resource does, how to use it, and any requirements." minlength="10" required />
+                                    <p class="resource-help">At least 10 characters. Include installation or usage instructions where needed.</p>
+                                </div>
+                                <div class="resource-field">
+                                    <SearchableVideogamePicker @bind-Value="_form.VideogameId" />
+                                </div>
+                                <div class="resource-field">
+                                    <ResourceTypePicker Options="_options.ResourceTypes" @bind-Values="_form.Types" />
+                                </div>
+                                <div class="resource-field">
+                                    <label for="resource-visibility">Visibility <span aria-hidden="true">*</span></label>
+                                    <InputSelect class="resource-input" id="resource-visibility" name="VisibilityId" @bind-Value="_form.VisibilityId" required>
+                                        <option value="0" disabled>Select visibility</option>
+                                        @foreach (var visibility in _options.Visibilities)
+                                        {
+                                            <option value="@visibility.Id">@visibility.Name</option>
+                                        }
+                                    </InputSelect>
+                                    <details class="resource-visibility-guide">
+                                        <summary>Who can see this resource?</summary>
+                                        <dl class="resource-visibility-help">
+                                            <dt>Public</dt><dd>Appears in the resource library.</dd>
+                                            <dt>Unlisted</dt><dd>Accessible through its direct link.</dd>
+                                            <dt>Private</dt><dd>Accessible to its submitter, authors, moderators, and admins.</dd>
+                                        </dl>
+                                    </details>
+                                </div>
+                                <div class="resource-field">
+                                    <label for="resource-tags">Tags</label>
+                                    <ResourceTokenInput InputId="resource-tags" FieldName="Tags" @bind-Values="_form.Tags" />
+                                    <p class="resource-help">Add tags with comma or Enter.</p>
+                                </div>
+                                <div class="resource-field resource-field-full">
+                                    <label for="resource-repository">Repository URL</label>
+                                    <InputText type="url" class="resource-input" id="resource-repository" name="RepositoryURL" @bind-Value="_form.RepositoryURL" maxlength="100" pattern="https?://.+" placeholder="https://github.com/your-account/your-project" />
+                                    <p class="resource-help">Optional link to the source repository. HTTP or HTTPS, up to 100 characters.</p>
+                                </div>
+                            </div>
+                        </fieldset>
+                    </section>
+                    <section id="resource-panel-1" class="resource-tab-panel" role="tabpanel" aria-labelledby="resource-tab-1" hidden="@(_activeTab != 1)" tabindex="0" data-resource-tab-panel="1">
+                        <fieldset class="resource-section">
+                            <legend>File and release</legend>
+                            <div class="resource-upload">
+                                <span class="resource-upload-icon" aria-hidden="true">↑</span>
+                                <div class="resource-field">
+                                    <label for="resource-file">Resource archive <span aria-hidden="true">*</span></label>
+                                    <InputFile class="resource-input resource-file" id="resource-file" name="File" accept=".zip,.rar,.7z,.tar,.gz,.tar.gz" OnChange="FileSelected" required />
+                                    <p class="resource-help">ZIP, RAR, 7Z, TAR, GZ, or TAR.GZ. Maximum 250 MB.</p>
+                                    @if (_fileName is not null)
+                                    {
+                                        <p class="resource-file-summary"><strong>@_fileName</strong><span>@_fileSize</span></p>
+                                    }
+                                    @if (_fileError is not null)
+                                    {
+                                        <p class="resource-field-error" role="alert">@_fileError</p>
+                                    }
+                                </div>
+                            </div>
+                            <div class="resource-grid">
+                                <div class="resource-field">
+                                    <label for="resource-version">Version label <span aria-hidden="true">*</span></label>
+                                    <InputText class="resource-input" id="resource-version" name="Version" @bind-Value="_form.Version" maxlength="20" placeholder="e.g. 1.0 or 1.0-beta" required />
+                                    <p class="resource-help">Up to 20 characters.</p>
+                                </div>
+                                <div class="resource-field resource-field-full">
+                                    <label for="resource-changelog">Release notes <span aria-hidden="true">*</span></label>
+                                    <InputTextArea class="resource-input" id="resource-changelog" name="ChangeLog" @bind-Value="_form.ChangeLog" rows="4" placeholder="Add notes about this first release." required />
+                                </div>
+                            </div>
+                            <ResourceQualityRequest @bind-Value="_form.SealOfQualityRequested" />
+                        </fieldset>
+                    </section>
+                    <section id="resource-panel-2" class="resource-tab-panel" role="tabpanel" aria-labelledby="resource-tab-2" hidden="@(_activeTab != 2)" tabindex="0" data-resource-tab-panel="2">
+                        <fieldset class="resource-section">
+                            <legend>Previews</legend>
+                            <ResourcePreviewPicker />
+                        </fieldset>
+                    </section>
+                    <section id="resource-panel-3" class="resource-tab-panel" role="tabpanel" aria-labelledby="resource-tab-3" hidden="@(_activeTab != 3)" tabindex="0" data-resource-tab-panel="3">
+                        <fieldset class="resource-section">
+                            <legend>Authorship</legend>
+                            <label class="resource-check resource-author-check">
+                                <InputCheckbox name="IAmAuthor" @bind-Value="_form.IAmAuthor" />
+                                <span><strong>I am the author</strong><small>Credit your SNEStorage account as an author of this resource.</small></span>
+                            </label>
+                            <p class="resource-help">Leave this unchecked if you are submitting work created by someone else.</p>
+                            <ResourceAuthorPicker @bind-Values="_form.AuthorsIDs" ExcludedUserId="@(_form.IAmAuthor ? _currentUserId : null)" />
+                            <ResourceAuthorPicker External="true" @bind-Values="_form.ExternalAuthors" />
+                        </fieldset>
+                    </section>
+                    <section id="resource-panel-4" class="resource-tab-panel" role="tabpanel" aria-labelledby="resource-tab-4" hidden="@(_activeTab != 4)" tabindex="0" data-resource-tab-panel="4">
+                        <fieldset class="resource-section">
+                            <legend>Dependencies</legend>
+                            <p class="resource-help resource-panel-intro">List the resources needed to use this submission. Leave this tab empty if none are required.</p>
+                            <ResourceDependencyPicker @bind-Values="_form.DependencyIDs" />
+                            <ResourceExternalDependencyEditor @bind-Values="_form.ExternalDependencies" />
+                        </fieldset>
+                    </section>
+                    <section id="resource-panel-5" class="resource-tab-panel" role="tabpanel" aria-labelledby="resource-tab-5" hidden="@(_activeTab != 5)" tabindex="0" data-resource-tab-panel="5">
+                        <fieldset class="resource-section">
+                            <legend>Content warnings</legend>
+                            <ResourceContentWarnings @bind-IncludesPorn="_form.IncludesPorn" @bind-IncludesGore="_form.IncludesGore" @bind-IncludesPolitics="_form.IncludesPolitics" @bind-IncludesSlurs="_form.IncludesSlurs" @bind-IncludesSensitiveContent="_form.IncludesSensitiveContent" />
+                        </fieldset>
+                    </section>
+                </div>
+
+                <div class="resource-submit-bar">
+                    <div>
+                        <p class="resource-tab-progress">Section @(_activeTab + 1) of @TabTitles.Length</p>
+                        <p class="resource-required-note"><span aria-hidden="true">*</span> Required fields</p>
+                        @if (_saving)
+                        {
+                            <p class="resource-upload-status" role="status" aria-live="polite">Uploading your archive. Keep this page open until it finishes.</p>
+                        }
+                    </div>
+                    <div class="resource-actions">
+                        <a class="resource-secondary" href="/Resources">Cancel</a>
+                        @if (_activeTab > 0)
+                        {
+                            <button class="resource-secondary" type="button" disabled="@_saving" @onclick="() => SelectTab(_activeTab - 1)">← Previous</button>
+                        }
+                        @if (_activeTab < TabTitles.Length - 1)
+                        {
+                            <button class="resource-primary" type="button" disabled="@_saving" @onclick="() => SelectTab(_activeTab + 1)">Next →</button>
+                        }
+                        else
+                        {
+                            <button class="resource-primary" type="submit" disabled="@_saving">
+                                @(_saving ? "Uploading…" : "Submit resource") <span aria-hidden="true">↑</span>
+                            </button>
+                        }
+                    </div>
+                </div>
+            </EditForm>
+        }
+    }
+</div>

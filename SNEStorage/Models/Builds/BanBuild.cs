@@ -22,7 +22,7 @@ public partial class Ban
         entity.Property(e => e.IsPermanent)
             .HasColumnName("is_permanent");
         entity.Property(e => e.Reasons)
-            .HasColumnType("text")
+            .HasColumnType("nvarchar(255)")
             .HasColumnName("reasons");
 
         entity.Property(e => e.UserId)

@@ -16,7 +16,7 @@ public partial class TimeZone
             .ValueGeneratedOnAdd();
 
         entity.Property(e => e.Name)
-            .HasColumnType("text")
+            .HasColumnType("nvarchar(10)")
             .HasColumnName("name");
 
         entity.Property(e => e.Value)

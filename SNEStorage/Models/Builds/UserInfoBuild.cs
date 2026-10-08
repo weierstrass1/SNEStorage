@@ -16,70 +16,66 @@ public partial class UserInfo
             .ValueGeneratedOnAdd();
 
         entity.Property(e => e.UsernameColor)
-            .HasColumnType("text")
+            .HasColumnType("nvarchar(7)")
             .HasColumnName("username_color");
 
         entity.Property(e => e.Title)
-            .HasColumnType("text")
-            .HasColumnName("title");
-
-        entity.Property(e => e.Title)
-            .HasColumnType("text")
+            .HasColumnType("nvarchar(100)")
             .HasColumnName("title");
 
         entity.Property(e => e.Birthday)
             .HasColumnName("birthday");
 
         entity.Property(e => e.Bio)
-            .HasColumnType("text")
+            .HasColumnType("nvarchar(max)")
             .HasColumnName("bio");
 
         entity.Property(e => e.Patreon)
-            .HasColumnType("text")
+            .HasColumnType("nvarchar(100)")
             .HasColumnName("patreon");
 
         entity.Property(e => e.Paypal)
-            .HasColumnType("text")
+            .HasColumnType("nvarchar(100)")
             .HasColumnName("paypal");
 
         entity.Property(e => e.BuyMeACoffee)
-            .HasColumnType("text")
+            .HasColumnType("nvarchar(100)")
             .HasColumnName("buy_me_a_coffee");
 
         entity.Property(e => e.Discord)
-            .HasColumnType("text")
+            .HasColumnType("nvarchar(100)")
             .HasColumnName("discord");
 
         entity.Property(e => e.Twitter)
-            .HasColumnType("text")
+            .HasColumnType("nvarchar(100)")
             .HasColumnName("twitter");
 
         entity.Property(e => e.Facebook)
-            .HasColumnType("text")
+            .HasColumnType("nvarchar(100)")
             .HasColumnName("facebook");
 
         entity.Property(e => e.Youtube)
-            .HasColumnType("text")
+            .HasColumnType("nvarchar(100)")
             .HasColumnName("youtube");
 
         entity.Property(e => e.Instagram)
-            .HasColumnType("text")
+            .HasColumnType("nvarchar(100)")
             .HasColumnName("instagram");
 
         entity.Property(e => e.Steam)
-            .HasColumnType("text")
+            .HasColumnType("nvarchar(100)")
             .HasColumnName("steam");
 
         entity.Property(e => e.Twitch)
-            .HasColumnType("text")
+            .HasColumnType("nvarchar(100)")
             .HasColumnName("twitch");
 
         entity.Property(e => e.Github)
-            .HasColumnType("text")
+            .HasColumnType("nvarchar(100)")
             .HasColumnName("github");
 
         entity.Property(e => e.NintendoNetwork)
-            .HasColumnType("text")
+            .HasColumnType("nvarchar(100)")
             .HasColumnName("nintendo_network");
 
         entity.Property(e => e.AvatarId)

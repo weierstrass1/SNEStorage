@@ -1,0 +1,30 @@
+<div class="resource-type-picker">
+<ResourcePicker PickerId="resource-type-picker" Label="Resource types" Required="true" OpenOnHover="true">
+    <SummaryContent>
+        <span title="@SelectedNames">@SelectedNames</span>
+    </SummaryContent>
+    <ChildContent>
+        <p class="type-help">Select every type that applies.</p>
+        <div class="type-options" role="group" aria-label="Resource types">
+            @foreach (var category in Categories)
+            {
+                <details class="type-category" @key="category.Id">
+                    <summary>
+                        <strong class="type-category-title">@category.Name</strong>
+                        <small class="type-category-count">@SelectedCount(category)/@category.Options.Count selected</small>
+                    </summary>
+                    <div class="type-category-options" role="group" aria-label="@category.Name">
+                        @foreach (var type in category.Options)
+                        {
+                            <label class="type-option" for="@($"resource-type-{type.Id}")" @key="type.Id">
+                                <input id="@($"resource-type-{type.Id}")" type="checkbox" name="Types" value="@type.Id" checked="@Values.Contains(type.Id)" @onchange="args => SelectionChangedAsync(type.Id, args)" />
+                                <span>@type.Name</span>
+                            </label>
+                        }
+                    </div>
+                </details>
+            }
+        </div>
+    </ChildContent>
+</ResourcePicker>
+</div>

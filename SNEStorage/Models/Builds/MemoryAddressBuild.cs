@@ -22,10 +22,10 @@ public partial class MemoryAddress
         entity.Property(e => e.Size)
             .HasColumnName("size");
         entity.Property(e => e.Address)
-            .HasColumnType("text")
+            .HasColumnType("nvarchar(15)")
             .HasColumnName("address");
         entity.Property(e => e.Name)
-            .HasColumnType("text")
+            .HasColumnType("nvarchar(50)")
             .HasColumnName("name");
         entity.Property(e => e.Description)
             .HasColumnType("text")

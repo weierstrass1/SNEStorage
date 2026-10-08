@@ -1,10 +1,9 @@
-﻿namespace SNEStorage.Models
+﻿namespace SNEStorage.Models;
+
+public partial class TimeZone
 {
-    public partial class TimeZone
-    {
-        public long Id { get; set; }
-        public string Name { get; set; }
-        public int Value { get; set; }
-        public virtual ICollection<UserInfo> UserInfos { get; set; } = [];
-    }
+    public required long Id { get; set; }
+    public required string Name { get; set; }
+    public required int Value { get; set; }
+    public virtual ICollection<UserInfo> UserInfos { get; set; } = [];
 }

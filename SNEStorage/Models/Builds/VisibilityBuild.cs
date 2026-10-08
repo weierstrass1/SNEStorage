@@ -16,7 +16,7 @@ public partial class Visibility
             .ValueGeneratedOnAdd();
 
         entity.Property(e => e.Name)
-            .HasColumnType("text")
+            .HasColumnType("nvarchar(100)")
             .HasColumnName("name");
 
         entity.Property(e => e.ResourceOnly)

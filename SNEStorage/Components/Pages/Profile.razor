@@ -1,0 +1,125 @@
+@page "/Profile"
+
+<PageTitle>My profile | SNEStorage</PageTitle>
+
+<div class="profile-page">
+    <header class="profile-page-heading">
+        <div>
+            <p class="profile-kicker"><span aria-hidden="true">◆</span> PLAYER PROFILE</p>
+            <h1>My profile</h1>
+            <p class="profile-intro">Your account details and creator profile.</p>
+        </div>
+        @if (_isAuthenticated)
+        {
+            <NavLink class="profile-edit-button" href="/Profile/Edit">Edit profile <span aria-hidden="true">→</span></NavLink>
+        }
+    </header>
+
+    @if (_profile is not null)
+    {
+        <section class="profile-hero" style="--profile-accent: @ProfileAccent" aria-label="Profile summary">
+            <div class="profile-avatar-frame">
+                <img src="@AvatarUrl" alt="@($"{ProfileName}'s avatar")" />
+            </div>
+            <div class="profile-identity">
+                <p class="profile-hero-label">SNEStorage player</p>
+                <h2>@ProfileName</h2>
+                @if (!string.IsNullOrWhiteSpace(_profile.Title))
+                {
+                    <p class="profile-title">@_profile.Title</p>
+                }
+                @if (!string.IsNullOrWhiteSpace(_profile.UserSummary?.Email))
+                {
+                    <p class="profile-email">@_profile.UserSummary.Email</p>
+                }
+            </div>
+            <span class="profile-level-badge"><span aria-hidden="true">★</span> PLAYER 1</span>
+        </section>
+
+        <div class="profile-content-grid">
+            <section class="profile-panel profile-about-panel" aria-labelledby="profile-about-title">
+                <div class="profile-panel-heading">
+                    <span class="panel-index">01</span>
+                    <h2 id="profile-about-title">About</h2>
+                </div>
+                @if (!string.IsNullOrWhiteSpace(_profile.Bio))
+                {
+                    <p class="profile-bio">@_profile.Bio</p>
+                }
+                else
+                {
+                    <p class="profile-empty-copy">No bio has been added yet.</p>
+                }
+            </section>
+
+            <section class="profile-panel" aria-labelledby="profile-details-title">
+                <div class="profile-panel-heading">
+                    <span class="panel-index">02</span>
+                    <h2 id="profile-details-title">Account details</h2>
+                </div>
+                <dl class="profile-details-list">
+                    <div>
+                        <dt>Birthday</dt>
+                        <dd>@_profile.Birthday.ToString("MMMM d, yyyy", ProfileCulture)</dd>
+                    </div>
+                    <div>
+                        <dt>Time zone</dt>
+                        <dd>@(_profile.TimeZone?.Name ?? "Not available")</dd>
+                    </div>
+                    <div>
+                        <dt>Email visibility</dt>
+                        <dd>@(_profile.EmailVisibility?.Name ?? "Not available")</dd>
+                    </div>
+                    <div>
+                        <dt>Username color</dt>
+                        <dd class="profile-color-value"><span aria-hidden="true" style="background-color: @ProfileAccent"></span> @(ProfileUsernameColor ?? "Default")</dd>
+                    </div>
+                </dl>
+            </section>
+
+            @if (SocialFields.Count > 0)
+            {
+                <section class="profile-panel profile-social-panel" aria-labelledby="profile-social-title">
+                    <div class="profile-panel-heading">
+                        <span class="panel-index">03</span>
+                        <h2 id="profile-social-title">Around the web</h2>
+                    </div>
+                    <div class="profile-social-grid">
+                        @foreach (var social in SocialFields)
+                        {
+                            @if (social.Href is not null)
+                            {
+                                <a class="profile-social-card" href="@social.Href" target="_blank" rel="noopener noreferrer" aria-label="Open @social.Name profile">
+                                    <span class="social-brand-icon social-brand-icon--@social.IconClass" aria-hidden="true">
+                                        <svg viewBox="0 0 24 24" focusable="false"><use href="@($"/images/social-icons.svg#{social.IconClass}")" /></svg>
+                                    </span>
+                                    <span class="profile-social-card-copy">
+                                        <span class="profile-social-name">@social.Name</span>
+                                        <span class="profile-social-handle">@social.DisplayText</span>
+                                    </span>
+                                    <span class="profile-social-open" aria-hidden="true">↗</span>
+                                </a>
+                            }
+                            else
+                            {
+                                <div class="profile-social-card profile-social-card-static" aria-label="@social.Name: @social.DisplayText">
+                                    <span class="social-brand-icon social-brand-icon--@social.IconClass" aria-hidden="true">
+                                        <svg viewBox="0 0 24 24" focusable="false"><use href="@($"/images/social-icons.svg#{social.IconClass}")" /></svg>
+                                    </span>
+                                    <span class="profile-social-card-copy">
+                                        <span class="profile-social-name">@social.Name</span>
+                                        <span class="profile-social-handle">@social.DisplayText</span>
+                                    </span>
+                                </div>
+                            }
+                        }
+                    </div>
+                </section>
+            }
+        </div>
+    }
+
+    <div class="profile-back-link-wrap">
+        <NavLink href="/Resources">← Browse resources</NavLink>
+    </div>
+</div>

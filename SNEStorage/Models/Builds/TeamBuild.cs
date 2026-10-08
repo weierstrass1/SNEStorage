@@ -19,7 +19,7 @@ public partial class Team
             .HasColumnName("created_at");
 
         entity.Property(e => e.Name)
-            .HasColumnType("text")
+            .HasColumnType("nvarchar(max)")
             .HasColumnName("name");
     }
 }
