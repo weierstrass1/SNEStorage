@@ -1,11 +1,12 @@
-﻿using Microsoft.AspNetCore.RateLimiting;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using OneOf;
 using SNEStorage.DTOs;
 using SNEStorage.Filters.Attributes;
 using SNEStorage.Services;
+using System.ComponentModel.DataAnnotations;
 
 namespace SNEStorage.Controllers;
 
@@ -90,7 +91,16 @@ public class AccountController(AccountService accountService,
             NoContent() :
             BadRequest();
     }
-
+    [AllowAnonymous]
+    [EnableRateLimiting("password-email")]
+    [RequireCaptcha("email_confirmation_resend")]
+    [HttpPost("confirmation/resend")]
+    public async Task<ActionResult> RequestEmailConfirmation(
+    [FromBody, Required, EmailAddress] string email, CancellationToken ct)
+    {
+        var res = await _accountService.RequestEmailConfirmation(email, ct);
+        return GetActionResult(res);
+    }
     internal async Task<IActionResult> ConfirmUser(string userId, string token)
     {
         return await _accountService.ConfirmUser(userId, token) switch

@@ -136,7 +136,8 @@ export async function submitRegistration(formId) {
                 const registration = JSON.parse(body);
                 if (typeof registration?.userId === "string" && registration.userId.trim() &&
                     registration.requiresEmailConfirmation === true)
-                    return { status: response.status, body, redirectUrl: "/Register/CheckEmail" };
+                    return { status: response.status, body, redirectUrl: registration.confirmationEmailSent === false
+                        ? "/Register/CheckEmail?delivery=failed" : "/Register/CheckEmail" };
             } catch (error) {
                 if (!(error instanceof SyntaxError)) throw error;
             }

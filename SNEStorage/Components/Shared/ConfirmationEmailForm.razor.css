@@ -1,0 +1,22 @@
+.confirmation-resend { text-align: left; }
+.confirmation-resend h2 { margin: 0 0 .45rem; color: #f4eaff; font-size: 1.05rem; }
+.confirmation-resend p { margin: 0 0 1rem; color: #c2b6d7; font-size: .86rem; line-height: 1.6; }
+.confirmation-resend-field { display: grid; gap: .5rem; margin: 1rem 0; }
+.confirmation-resend-field label { color: #ece0ff; font-size: .86rem; font-weight: 600; }
+.confirmation-resend-field ::deep input { width: 100%; min-height: 44px; padding: .65rem .8rem; }
+.confirmation-resend-field ::deep .validation-message { color: #ffb1bd; font-size: .8rem; }
+.confirmation-resend-submit {
+    width: 100%; min-height: 44px; padding: .65rem .8rem;
+    border: 1px solid #c499ff; border-radius: 5px;
+    color: #f4eaff; background: rgba(106, 43, 224, .28);
+    font: inherit; font-size: .85rem; font-weight: 700; cursor: pointer;
+}
+.confirmation-resend-submit:hover:not(:disabled) { background: rgba(106, 43, 224, .48); }
+.confirmation-resend-submit:focus-visible { outline: 2px solid #ffe14d; outline-offset: 3px; }
+.confirmation-resend-submit:disabled { opacity: .6; cursor: wait; }
+.confirmation-resend .confirmation-resend-note { margin: .8rem 0 0; font-size: .78rem; color: #b8aaca; }
+.confirmation-resend-success { padding: .85rem; border: 1px solid #79c9b0; border-radius: 5px; background: rgba(29, 87, 67, .3); }
+.confirmation-resend .confirmation-resend-success { color: #c4f1df; }
+.confirmation-resend-error { padding: .85rem; border: 1px solid #e7a3b7; border-radius: 5px; background: rgba(99, 33, 57, .3); }
+.confirmation-resend-error strong { color: #ffd0dd; font-size: .9rem; }
+.confirmation-resend-error p { margin: .4rem 0 0; color: #f3cad7; }

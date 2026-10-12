@@ -1,0 +1,254 @@
+/* Shared control palette. Loaded after component styles so native/Blazor inputs
+   receive the same colors without changing their page-specific dimensions. */
+:root {
+    color-scheme: dark;
+}
+
+.app-shell {
+    --ui-control-bg: rgba(19, 13, 34, var(--ui-control-alpha));
+    --ui-control-hover: rgba(30, 18, 49, var(--ui-control-alpha));
+    --ui-control-menu-bg: #130d22;
+    --ui-control-text: #f4eaff;
+    --ui-control-placeholder: #bbacd0;
+    --ui-control-border: #9673bb;
+    --ui-control-accent: #c499ff;
+    --ui-control-ink: #170d23;
+    --ui-control-focus: #ddb9ff;
+    --ui-control-disabled-bg: rgba(32, 26, 44, var(--ui-control-alpha));
+    --ui-control-disabled-text: #b4a7c5;
+    --ui-control-error: #ff9cab;
+    color-scheme: dark;
+}
+
+:root .app-shell :is(
+    input:not([type]), input[type="text"], input[type="email"],
+    input[type="password"], input[type="url"], input[type="search"],
+    input[type="number"], input[type="tel"], input[type="date"],
+    input[type="datetime-local"], input[type="time"], input[type="month"],
+    input[type="week"], input[type="file"], input[type="color"], textarea, select
+) {
+    color: var(--ui-control-text);
+    background-color: var(--ui-control-bg);
+    border: 1px solid var(--ui-control-border);
+    border-radius: 5px;
+    caret-color: var(--ui-control-accent);
+    color-scheme: dark;
+}
+
+:root .app-shell :is(input, textarea)::placeholder {
+    color: var(--ui-control-placeholder);
+    opacity: 1;
+}
+
+:root .app-shell :is(input, textarea, select):hover:not(:disabled):not([readonly]) {
+    border-color: var(--ui-control-accent);
+}
+
+:root .app-shell :is(input, textarea, select):focus {
+    border-color: var(--ui-control-focus);
+}
+
+:root .app-shell :is(input, textarea, select):focus-visible {
+    outline: 2px solid var(--ui-control-focus);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 3px #c499ff26;
+}
+
+:root .app-shell :is(input, textarea, select):disabled,
+:root .app-shell :is(input, textarea)[readonly] {
+    color: var(--ui-control-disabled-text);
+    background-color: var(--ui-control-disabled-bg);
+    border-color: #78658f;
+    opacity: 1;
+}
+
+:root .app-shell :is(input, textarea, select):disabled {
+    cursor: not-allowed;
+}
+
+:root .app-shell :is(input, textarea, select):is(.invalid, [aria-invalid="true"], :user-invalid) {
+    border-color: var(--ui-control-error);
+    background-color: rgba(39, 17, 31, var(--ui-control-alpha));
+}
+
+/* Native menus, calendars and number spinners inherit the dark color scheme. */
+:root .app-shell select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='m1 1 5 5 5-5' fill='none' stroke='%23d9bcff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right .7rem center;
+    background-size: 12px 8px;
+    padding-right: 2rem;
+}
+
+:root .app-shell select:is([multiple], [size]:not([size="1"])) {
+    background-image: none;
+    padding-right: .75rem;
+}
+
+:root .app-shell :is(option, optgroup) {
+    color: var(--ui-control-text);
+    background-color: var(--ui-control-menu-bg);
+}
+
+/* Searchable/categorized pickers use a button in place of a native select. */
+:root .app-shell .picker-trigger {
+    color: var(--ui-control-text);
+    background-color: var(--ui-control-bg);
+    border-color: var(--ui-control-border);
+}
+
+:root .app-shell .picker-trigger:hover,
+:root .app-shell .picker-trigger[aria-expanded="true"] {
+    background-color: var(--ui-control-hover);
+    border-color: var(--ui-control-accent);
+}
+
+:root .app-shell .picker-trigger:focus-visible {
+    outline: 2px solid var(--ui-control-focus);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 3px #c499ff26;
+}
+
+/* Keep the native inputs and their existing bindings/keyboard interactions. */
+:root .app-shell :is(input[type="checkbox"], input[type="radio"]) {
+    appearance: none;
+    -webkit-appearance: none;
+    display: inline-grid;
+    place-content: center;
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    min-width: 18px;
+    min-height: 18px;
+    padding: 0;
+    border: 2px solid var(--ui-control-border);
+    border-radius: 4px;
+    color: var(--ui-control-ink);
+    background-color: var(--ui-control-bg);
+    background-image: none;
+    vertical-align: middle;
+    cursor: pointer;
+}
+
+:root .app-shell :is(input[type="checkbox"], input[type="radio"])::before {
+    content: "";
+    width: 10px;
+    height: 10px;
+    background-color: currentColor;
+    transform: scale(0);
+}
+
+:root .app-shell input[type="checkbox"]::before {
+    clip-path: polygon(14% 44%, 0 60%, 40% 100%, 100% 16%, 82% 0, 37% 65%);
+}
+
+:root .app-shell :is(input[type="checkbox"], input[type="radio"]):checked,
+:root .app-shell input[type="checkbox"]:indeterminate {
+    color: var(--ui-control-ink);
+    border-color: var(--ui-control-accent);
+    background-color: var(--ui-control-accent);
+    background-image: none;
+}
+
+:root .app-shell :is(input[type="checkbox"], input[type="radio"]):checked::before,
+:root .app-shell input[type="checkbox"]:indeterminate::before {
+    transform: scale(1);
+}
+
+:root .app-shell input[type="checkbox"]:indeterminate::before {
+    clip-path: inset(35% 0);
+}
+
+:root .app-shell input[type="radio"],
+:root .app-shell input[type="radio"]::before {
+    border-radius: 50%;
+}
+
+:root .app-shell :is(input[type="checkbox"], input[type="radio"]):disabled {
+    cursor: not-allowed;
+    border-color: #78658f;
+    background-color: var(--ui-control-disabled-bg);
+}
+
+:root .app-shell :is(input[type="checkbox"], input[type="radio"]):disabled:checked {
+    background-color: #a089ba;
+}
+
+/* The quality request retains its gold accent. */
+.app-shell .quality-request {
+    --ui-control-accent: #ffe14d;
+    --ui-control-focus: #ffe483;
+}
+
+:root .app-shell input[type="file"]::file-selector-button {
+    margin-right: .65rem;
+    padding: .45rem .65rem;
+    border: 1px solid var(--ui-control-border);
+    border-radius: 4px;
+    color: var(--ui-control-text);
+    background: #38204f;
+    font: inherit;
+    cursor: pointer;
+}
+
+:root .app-shell input[type="file"]:hover:not(:disabled)::file-selector-button {
+    border-color: var(--ui-control-accent);
+    background: #482b67;
+}
+
+:root .app-shell input[type="file"]:disabled::file-selector-button {
+    color: var(--ui-control-disabled-text);
+    background: var(--ui-control-disabled-bg);
+    cursor: not-allowed;
+}
+
+:root .app-shell input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+:root .app-shell input[type="color"]::-webkit-color-swatch {
+    border: 0;
+    border-radius: 3px;
+}
+
+:root .app-shell input[type="color"]::-moz-color-swatch {
+    border: 0;
+    border-radius: 3px;
+}
+
+/* Chromium/Opera autofill otherwise paints fields with a light background. */
+:root .app-shell input:-webkit-autofill {
+    -webkit-text-fill-color: var(--ui-control-text);
+    -webkit-box-shadow: 0 0 0 1000px var(--ui-control-menu-bg) inset;
+    caret-color: var(--ui-control-accent);
+}
+
+:root .app-shell input:autofill {
+    color: var(--ui-control-text);
+    background-color: var(--ui-control-bg);
+}
+
+/* Honor the OS high-contrast palette rather than replacing it with our icons. */
+@media (forced-colors: active) {
+    :root .app-shell :is(input[type="checkbox"], input[type="radio"]) {
+        appearance: auto;
+        -webkit-appearance: auto;
+        background-image: none;
+    }
+    :root .app-shell :is(input[type="checkbox"], input[type="radio"])::before {
+        content: none;
+    }
+    :root .app-shell select {
+        appearance: auto;
+        background-image: none;
+    }
+    :root .app-shell :is(input, textarea, select):focus-visible {
+        outline-color: Highlight;
+        box-shadow: none;
+    }
+    :root .app-shell input:-webkit-autofill {
+        -webkit-text-fill-color: CanvasText;
+        -webkit-box-shadow: none;
+    }
+}

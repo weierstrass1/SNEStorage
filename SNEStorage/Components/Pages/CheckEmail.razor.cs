@@ -14,6 +14,11 @@ public partial class CheckEmail : IAsyncDisposable
     private IJSObjectReference? _sessionModule;
     private IJSObjectReference? _sessionMonitor;
 
+    [Parameter, SupplyParameterFromQuery(Name = "delivery")]
+    public string? Delivery { get; set; }
+
+    protected bool EmailDeliveryFailed => Delivery == "failed";
+
     [CascadingParameter]
     private Task<AuthenticationState> AuthenticationStateTask { get; set; } = default!;
 

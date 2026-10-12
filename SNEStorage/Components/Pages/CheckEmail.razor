@@ -28,6 +28,13 @@
             <h1 id="check-email-title">Check your inbox</h1>
             <p class="check-email-intro">Confirm your email address to complete your registration.</p>
 
+            @if (EmailDeliveryFailed)
+            {
+                <p class="check-email-warning" role="status">
+                    Your account was created, but we couldn't send the confirmation email. Please try resending it.
+                </p>
+            }
+
             <ol class="check-email-steps">
                 <li><span>01</span><p>Open the confirmation email from <strong>SNEStorage</strong>.</p></li>
                 <li><span>02</span><p>Select <strong>Confirm my email</strong> to verify your address.</p></li>
@@ -35,6 +42,11 @@
             </ol>
 
             <p class="check-email-hint">Can't find it? Check your spam or junk folder. It may take a few minutes to arrive.</p>
+
+            <details class="check-email-resend" open="@EmailDeliveryFailed">
+                <summary>Didn't receive the email?</summary>
+                <div class="check-email-resend-content"><ConfirmationEmailForm /></div>
+            </details>
 
             <div class="check-email-actions">
                 <NavLink class="check-email-primary" href="/Login">Continue to log in <span aria-hidden="true">→</span></NavLink>

@@ -48,6 +48,10 @@
                 {
                     <NavLink class="confirmation-primary" href="/Login">Continue to log in <span aria-hidden="true">→</span></NavLink>
                 }
+                @if (_state is ConfirmationState.Invalid or ConfirmationState.Incomplete)
+                {
+                    <NavLink class="confirmation-secondary" href="/Register/CheckEmail">Request a new confirmation email</NavLink>
+                }
             </div>
         }
 

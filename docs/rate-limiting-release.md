@@ -1,8 +1,10 @@
 # Punto 3: límites para el release
 
-Propuesta del 2026-10-11. Revisión posterior: `Program.cs` ya contiene `AddRateLimiter`, `GlobalLimiter`, `OnRejected` y `UseRateLimiter` en el orden propuesto. Solo falta su import de `Microsoft.AspNetCore.RateLimiting`, además de los atributos en las acciones y las validaciones de longitud. Los bloques de configuración de este documento quedan como referencia; no debes duplicarlos.
+Propuesta del 2026-10-11. Revisión posterior: los cambios están aplicados. `Program.cs` contiene el import, `AddRateLimiter`, `GlobalLimiter`, `OnRejected` y `UseRateLimiter` en el orden propuesto. Los 42 atributos de las acciones coinciden con la propuesta; los tres parámetros de comentarios tienen `StringLength(5000)` y `EditProfileDTO.Bio` tiene `StringLength(2000)`. Los bloques de configuración de este documento quedan como referencia; no debes duplicarlos. Esta comprobación es una revisión de código, no una prueba de los cupos con tráfico real.
 
-Las versiones completas de los archivos con únicamente los ajustes pendientes están en [rate-limiting-archivos-pendientes.md](rate-limiting-archivos-pendientes.md). No se modificaron servicios ni controladores.
+Las versiones completas propuestas se conservan como referencia en [rate-limiting-archivos-pendientes.md](rate-limiting-archivos-pendientes.md). Ya no representan tareas pendientes. En esta revisión solo se actualizaron los documentos.
+
+Compilación Release comprobada: 0 errores y 7 advertencias existentes. No se ejecutaron pruebas de carga ni peticiones para agotar los cupos. Al publicar, queda comprobar que `RemoteIpAddress` corresponda a la IP del visitante en la configuración del hosting/proxy.
 
 ## 1. Límites iniciales
 

@@ -1,14 +1,16 @@
-# Punto 3: archivos con los ajustes pendientes
+# Punto 3: archivos de referencia — ajustes aplicados
+
+**Estado tras la revisión del 2026-10-11:** ya están aplicados el import de `Program.cs`, los 42 atributos de rate limiting, las tres validaciones de comentarios y la validación de `Bio`. No quedan cambios pendientes de esta propuesta. El código siguiente se conserva como referencia de la propuesta original; no hace falta reemplazar tus archivos ni duplicar la configuración.
 
 Basado en la copia actual del proyecto, revisada el 2026-10-11. Las versiones de código de este documento son propuestas para que las copies tú: los archivos de backend originales no se editaron.
 
-Solo se añaden los atributos de rate limiting y las validaciones de longitud que faltan. Los cuerpos de los métodos, rutas, contratos, CAPTCHA y permisos se conservan tal como están en tu código actual. Si haces cambios adicionales después de esta revisión, compara antes de reemplazar un archivo completo.
+La propuesta original añadía los atributos de rate limiting y las validaciones de longitud. Los cuerpos de los métodos, rutas, contratos, CAPTCHA y permisos corresponden a la copia revisada al preparar la propuesta. Si haces cambios adicionales, compara antes de reemplazar un archivo completo.
 
-## Program.cs: únicamente el import pendiente
+## Program.cs: import aplicado
 
 Tu registro de políticas, el límite de dos subidas simultáneas, OnRejected, UseRateLimiter y la restauración de IgnoreCycles ya están aplicados. No se reproducen esos bloques como tareas pendientes.
 
-Añade junto a los demás imports:
+Este import ya está junto a los demás imports:
 
 ```csharp
 using Microsoft.AspNetCore.RateLimiting;

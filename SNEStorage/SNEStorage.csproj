@@ -37,5 +37,9 @@
   <ItemGroup>
     <None Update="EmailTemplates\*.html;EmailTemplates\*.txt;EmailTemplates\assets\*.png" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Update="appsettings.Development.json"
+             CopyToPublishDirectory="Never" />
+  </ItemGroup>
 
 </Project>

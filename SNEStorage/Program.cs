@@ -51,15 +51,36 @@ services.AddDbContext<SnestorageContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("SNEStorageContext"));
 });
 services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options => options.TokenValidationParameters = new TokenValidationParameters
+    .AddJwtBearer(options =>
     {
-        ValidateIssuer = false,
-        ValidateAudience = false,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8
-            .GetBytes(builder.Configuration["JWTKey"]!)),
-        ClockSkew = TimeSpan.Zero
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8
+                .GetBytes(builder.Configuration["JWTKey"]!)),
+            ClockSkew = TimeSpan.Zero
+        };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = async context =>
+            {
+                var accountService = context.HttpContext.RequestServices
+                    .GetRequiredService<AccountService>();
+
+                var userId = context.Principal?
+                    .FindFirstValue(ClaimTypes.NameIdentifier);
+                var stamp = context.Principal?
+                    .FindFirstValue("security_stamp");
+
+                if (!await accountService.ValidateJwt(userId, stamp,
+                    context.HttpContext.RequestAborted))
+                    context.Fail("Invalid or revoked token.");
+            }
+        };
     });
 services.AddAuthorizationBuilder()
     .AddPolicy("Admin", pol => pol.RequireClaim("Admin"))
@@ -158,7 +179,7 @@ services.AddRateLimiter(options =>
     ];
 
     foreach (var limit in limits)
-        options.AddPolicy<string>(limit.Name, context =>
+        options.AddPolicy(limit.Name, context =>
         {
             string? userId = limit.Name is "login" or "register" or "password-email" or "reads" ?
                 null : context.User.FindFirstValue(ClaimTypes.NameIdentifier);

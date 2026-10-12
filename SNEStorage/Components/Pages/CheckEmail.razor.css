@@ -121,3 +121,10 @@
 .check-email-primary:focus-visible,
 .check-email-secondary:focus-visible { outline: 2px solid #ffe14d; outline-offset: 4px; }
 .check-email-loading { margin: 0; color: #b8afd6; text-align: center; }
+
+.check-email-warning { margin: 1rem 0 0; padding: .9rem; border: 1px solid #e9c96b; border-radius: 5px; color: #fff0be; background: rgba(116, 78, 15, .25); font-size: .86rem; line-height: 1.6; }
+.check-email-resend { margin-top: 1.3rem; border: 1px solid #80619f; border-radius: 5px; background: rgba(25, 14, 46, var(--ui-surface-alpha)); text-align: left; }
+.check-email-resend summary { padding: .85rem 1rem; color: #e3caff; font-size: .9rem; font-weight: 600; cursor: pointer; }
+.check-email-resend summary:hover { color: #ffe14d; }
+.check-email-resend summary:focus-visible { outline: 2px solid #ffe14d; outline-offset: 3px; }
+.check-email-resend-content { padding: .3rem 1rem 1rem; }

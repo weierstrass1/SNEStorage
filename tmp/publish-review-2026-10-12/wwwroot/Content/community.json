@@ -1,0 +1,28 @@
+{
+  "title": "Community",
+  "kicker": "SNESTORAGE · LET'S CREATE TOGETHER",
+  "introduction": "SNES projects are better with a community. Join us on Discord to meet other creators, share what you are working on, and talk about the Super Nintendo.",
+  "discordTitle": "SNEStorage on Discord",
+  "discordDescription": "Our Discord is a place to connect with people who enjoy SNES hacking, homebrew, graphics, music, and tools. Come say hello and be part of the conversation.",
+  "discordUrl": "https://discord.gg/NpUXn7H",
+  "joinLabel": "Join our Discord",
+  "linkNote": "Opens Discord in a new tab.",
+  "unavailableText": "The Discord invite is not available right now. Please check back later.",
+  "sectionsTitle": "A place for SNES creators",
+  "sections": [
+    {
+      "title": "Share your projects",
+      "text": "Show what you are making, exchange ideas, and discover what other creators are working on."
+    },
+    {
+      "title": "Learn together",
+      "text": "Ask questions, discuss resources, and share what you have learned about SNES development and hacking."
+    },
+    {
+      "title": "Meet the community",
+      "text": "Connect with fellow SNES fans and creators, from your first project to your next release."
+    }
+  ],
+  "guidelinesText": "Keep conversations welcoming, respect other creators, and follow the SNEStorage rules.",
+  "guidelinesLinkLabel": "Read the site rules"
+}

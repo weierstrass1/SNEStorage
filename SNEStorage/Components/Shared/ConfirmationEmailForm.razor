@@ -1,0 +1,37 @@
+<section class="confirmation-resend" aria-labelledby="@(_requestKey + "-title")" aria-busy="@_saving">
+    <h2 id="@(_requestKey + "-title")">Resend confirmation email</h2>
+    <p>Enter the email you used to create your account.</p>
+
+    @if (_succeeded)
+    {
+        <p class="confirmation-resend-success" role="status">
+            If an account with this email still needs confirmation, we'll send a new link.
+            Please check your inbox and spam folder. It may take a few minutes to arrive.
+        </p>
+    }
+    @if (_error is not null)
+    {
+        <div class="confirmation-resend-error" role="alert">
+            <strong>@_error.Title</strong>
+            <p>@_error.Message</p>
+        </div>
+    }
+
+    <EditForm Model="_form" OnValidSubmit="SubmitAsync" FormName="@_requestKey">
+        <DataAnnotationsValidator />
+        <div class="confirmation-resend-field">
+            <label for="@(_requestKey + "-email")">Account email</label>
+            <InputText id="@(_requestKey + "-email")" type="email" @bind-Value="_form.Email"
+                       autocomplete="email" placeholder="you@example.com" required disabled="@_saving" />
+            <ValidationMessage For="@(() => _form.Email)" />
+        </div>
+        <button type="submit" class="confirmation-resend-submit" disabled="@_saving">
+            @(_saving ? "Please wait…" : "Resend confirmation email")
+        </button>
+        @if (_saving)
+        {
+            <p class="confirmation-resend-note" role="status">Completing verification and requesting your email…</p>
+        }
+        <p class="confirmation-resend-note">Already requested a link? Give it a few minutes before requesting another.</p>
+    </EditForm>
+</section>

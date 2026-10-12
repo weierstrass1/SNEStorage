@@ -119,13 +119,41 @@ public class AccountService(UserManager<ApplicationUser> userManager,
 
         return AccountServiceResult.Success;
     }
+    public async Task<OneOf<AccountServiceResult, EmailServiceResult>> RequestEmailConfirmation(
+    string email, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return AccountServiceResult.InvalidEmail;
+
+        var userRes = await _dbHelperService.TryFunction(
+            async _ => await _userManager.FindByEmailAsync(email.Trim()),
+            AccountServiceResult.DBError, ct: ct);
+        if (!userRes.TryPickT0(out var user, out var error))
+            return error;
+        if (user == null || user.EmailConfirmed)
+            return AccountServiceResult.Success;
+
+        var tokenRes = await _dbHelperService.TryFunction(
+            async _ => await _userManager.GenerateEmailConfirmationTokenAsync(user),
+            AccountServiceResult.TokenCreationError, ct: ct);
+        if (!tokenRes.TryPickT0(out var token, out error))
+            return error;
+
+        var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+        var emailResult = await _emailService.Confirmation(
+            user.UserName!, user.Id, user.Email!, encodedToken, ct);
+        if (emailResult != EmailServiceResult.Success)
+            return emailResult;
+
+        return AccountServiceResult.Success;
+    }
     public async Task<OneOf<RegisterResponseDTO, AccountServiceResult, FileServiceResult>> Register(RegisterInfo registerInfo, CancellationToken ct = default)
     {
         var user = new ApplicationUser { UserName = registerInfo.User, Email = registerInfo.Email };
 
         var avatar = registerInfo.Avatar;
 
-        var path = GetAvatarUrl(avatar.FileName, user.Id, user.UserName);
+        var path = GetAvatarUrl(avatar.ContentType, user.Id, user.UserName);
         string? batchPath = await _fileService.BeginBatch(ct);
         if (batchPath == null)
             return AccountServiceResult.AvatarLoadError;
@@ -167,13 +195,23 @@ public class AccountService(UserManager<ApplicationUser> userManager,
             return AccountServiceResult.DBError;
         }
 
-        var confirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-        var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(confirmationToken));
-        await _emailService.Confirmation(user.UserName, user.Id, user.Email, encodedToken, ct);
+        bool confirmationEmailSent = false;
+        var confirmationToken = await _dbHelperService.TryFunction(
+            async _ => await _userManager.GenerateEmailConfirmationTokenAsync(user), ct: ct);
+
+        if (!string.IsNullOrWhiteSpace(confirmationToken))
+        {
+            var encodedToken = WebEncoders.Base64UrlEncode(
+                Encoding.UTF8.GetBytes(confirmationToken));
+            var emailResult = await _emailService.Confirmation(
+                user.UserName!, user.Id, user.Email!, encodedToken, ct);
+            confirmationEmailSent = emailResult == EmailServiceResult.Success;
+        }
 
         return new RegisterResponseDTO
         {
-            UserId = user.Id
+            UserId = user.Id,
+            ConfirmationEmailSent = confirmationEmailSent
         };
     }
     public async Task<AuthenticationResponse?> Login(LoginCredentials credentials)
@@ -246,11 +284,14 @@ public class AccountService(UserManager<ApplicationUser> userManager,
 
         if (u is null || !await _userManager.IsEmailConfirmedAsync(u))
             return null;
+        if (string.IsNullOrWhiteSpace(u.SecurityStamp))
+            return null;
 
         var claims = new List<Claim> {
             new("user", user),
             new(ClaimTypes.NameIdentifier, u.Id),
-            new(ClaimTypes.Name, u.UserName!)
+            new(ClaimTypes.Name, u.UserName!),
+            new("security_stamp", u.SecurityStamp)
         };
         claims.AddRange(await _userManager.GetClaimsAsync(u));
 
@@ -315,7 +356,7 @@ public class AccountService(UserManager<ApplicationUser> userManager,
 
         if (dto.File != null && !string.IsNullOrWhiteSpace(dto.File.FileName))
         {
-            var path = GetAvatarUrl(dto.File.FileName, userId, user);
+            var path = GetAvatarUrl(dto.File.ContentType, userId, user);
             batchPath = await _fileService.BeginBatch(ct);
             if (batchPath == null)
                 return false;
@@ -415,6 +456,23 @@ public class AccountService(UserManager<ApplicationUser> userManager,
 
         return await _dbHelperService.TryFunction(
             async cancel => await _context.Users.FindAsync([userId], cancel));
+    }
+    public async Task<bool> ValidateJwt(string? userId, string? stamp,
+        CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(userId) ||
+            string.IsNullOrWhiteSpace(stamp))
+            return false;
+
+        var currentStamp = await _dbHelperService.TryFunction(
+            async cancel => await _context.Users
+                .AsNoTracking()
+                .Where(u => u.Id == userId)
+                .Select(u => u.SecurityStamp)
+                .FirstOrDefaultAsync(cancel), ct: ct);
+
+        return currentStamp != null &&
+            string.Equals(currentStamp, stamp, StringComparison.Ordinal);
     }
     private static string? GetSocialNetwork(string? dtoValue, string? defValue)
     {

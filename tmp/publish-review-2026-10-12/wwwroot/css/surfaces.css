@@ -1,0 +1,19 @@
+/* Adjust background coverage here; text, icons and images stay fully opaque.
+   No backdrop blur is used, keeping scrolling and large resource lists lightweight. */
+:root {
+    --ui-surface-alpha: .64;
+    --ui-inset-alpha: .26;
+    --ui-control-alpha: .68;
+    --ui-chrome-alpha: .84;
+    --ui-popup-alpha: .94;
+}
+
+@media (forced-colors: active) {
+    :root {
+        --ui-surface-alpha: 1;
+        --ui-inset-alpha: 1;
+        --ui-control-alpha: 1;
+        --ui-chrome-alpha: 1;
+        --ui-popup-alpha: 1;
+    }
+}
