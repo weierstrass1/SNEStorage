@@ -15,8 +15,7 @@
 
 .register-kicker,
 .register-section-kicker,
-.register-fieldset legend,
-.required-note {
+.register-fieldset legend {
     font-family: "Press Start 2P", "Courier New", monospace;
     font-size: .49rem;
     line-height: 1.9;
@@ -351,42 +350,14 @@
 }
 
 .register-submit {
-    display: flex;
-    min-height: 50px;
-    align-items: center;
-    justify-content: center;
-    gap: .75rem;
-    padding: .75rem 1rem;
-    border: 3px solid #000;
-    border-radius: 3px;
-    color: #080611;
-    background: #ffe14d;
-    box-shadow: 3px 3px 0 #6a2be0, 0 0 16px rgba(255, 225, 77, .22);
-    font-family: "Press Start 2P", "Courier New", monospace;
-    font-size: .58rem;
-    line-height: 1.7;
-    cursor: pointer;
-    transition: transform .15s ease, box-shadow .15s ease, background-color .15s ease;
-}
-
-.register-submit:not(:disabled):hover {
-    background: #fff18a;
-    box-shadow: 3px 3px 0 #6a2be0, 0 0 22px rgba(255, 225, 77, .43);
-    transform: translateY(-1px);
-}
-
-.register-submit:disabled {
-    color: #cbbada;
-    background: #342644;
-    box-shadow: 3px 3px 0 #40336a;
-    cursor: not-allowed;
+    width: 100%;
 }
 
 .required-note {
-    margin: -.6rem 0 0;
-    color: #9086b8;
-    font-size: .38rem;
-    text-align: center;
+    margin: -.2rem 0 0;
+    color: #b8a7d0;
+    font: .8rem/1.5 "Segoe UI", sans-serif;
+    text-align: left;
 }
 
 @keyframes register-sparkle {

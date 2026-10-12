@@ -146,8 +146,8 @@
                 </div>
             </fieldset>
 
-            <button class="register-submit" type="submit" disabled="@(_saving || _timeZones.Count == 0 || _emailVisibilities.Count == 0)">
-                @(_saving ? "Creating account…" : "Create account") <span aria-hidden="true">→</span>
+            <button class="register-submit action-button action-button-primary" type="submit" disabled="@(_saving || _timeZones.Count == 0 || _emailVisibilities.Count == 0)">
+                <span>@(_saving ? "Creating account…" : "Create account")</span><ActionArrow />
             </button>
             <p class="required-note"><span aria-hidden="true">*</span> Required fields</p>
         </form>

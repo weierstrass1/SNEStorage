@@ -25,7 +25,7 @@
                        autocomplete="email" placeholder="you@example.com" required disabled="@_saving" />
             <ValidationMessage For="@(() => _form.Email)" />
         </div>
-        <button type="submit" class="confirmation-resend-submit" disabled="@_saving">
+        <button type="submit" class="confirmation-resend-submit action-button action-button-primary" disabled="@_saving">
             @(_saving ? "Please wait…" : "Resend confirmation email")
         </button>
         @if (_saving)

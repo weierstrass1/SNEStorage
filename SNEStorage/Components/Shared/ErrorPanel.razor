@@ -10,13 +10,13 @@
     <div class="error-actions">
         @if (OnRetry.HasDelegate)
         {
-            <button class="error-primary" type="button" @onclick="OnRetry">Try again</button>
+            <button class="error-primary action-button action-button-primary" type="button" @onclick="OnRetry">Try again</button>
         }
         @if (_copy.SignIn)
         {
-            <NavLink class="error-primary" href="@LoginUrl">Log in</NavLink>
+            <NavLink class="error-primary action-button action-button-primary" href="@LoginUrl">Log in <ActionArrow /></NavLink>
         }
-        <NavLink class="error-secondary" href="/">Return home</NavLink>
-        <NavLink class="error-secondary" href="/Resources">Browse resources</NavLink>
+        <NavLink class="error-secondary action-button" href="/">Return home</NavLink>
+        <NavLink class="error-secondary action-button" href="/Resources">Browse resources</NavLink>
     </div>
 </section>

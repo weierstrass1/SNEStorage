@@ -28,7 +28,10 @@
             {
                 <PageAccessGuard RouteData="routeData">
                     @Body
-                    <FocusOnNavigate RouteData="routeData" Selector="h1" />
+                    @if (ShouldFocusPageTitle)
+                    {
+                        <FocusOnNavigate RouteData="routeData" Selector="h1" />
+                    }
                 </PageAccessGuard>
             }
             else

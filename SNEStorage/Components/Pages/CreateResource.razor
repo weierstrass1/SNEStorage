@@ -12,8 +12,8 @@
             <h1>Log in to submit a resource</h1>
             <p>Only logged-in users can upload resources to SNEStorage.</p>
             <div class="resource-actions">
-                <a class="resource-primary" href="@LoginUrl">Log in</a>
-                <a class="resource-secondary" href="/Resources">Browse resources</a>
+                <a class="resource-primary action-button action-button-primary" href="@LoginUrl">Log in <ActionArrow /></a>
+                <a class="resource-secondary action-button" href="/Resources">Browse resources</a>
             </div>
         </section>
     }
@@ -25,7 +25,7 @@
                 <h1>Submit a resource</h1>
                 <p>Add your files, describe your work, and choose how to share it.</p>
             </div>
-            <a class="resource-secondary" href="/Resources">← Resource library</a>
+            <a class="resource-secondary action-button" href="/Resources"><ActionArrow Left="true" />Resource library</a>
         </header>
 
         <ResourceSubmissionRules />
@@ -42,7 +42,7 @@
             <section class="resource-message resource-message-error" role="alert">
                 <h2>The submission form is unavailable</h2>
                 <p>@_error</p>
-                <button class="resource-secondary" type="button" @onclick="LoadOptionsAsync">Try again</button>
+                <button class="resource-secondary action-button" type="button" @onclick="LoadOptionsAsync">Try again</button>
             </section>
         }
         else
@@ -204,18 +204,18 @@
                         }
                     </div>
                     <div class="resource-actions">
-                        <a class="resource-secondary" href="/Resources">Cancel</a>
+                        <a class="resource-secondary action-button" href="/Resources">Cancel</a>
                         @if (_activeTab > 0)
                         {
-                            <button class="resource-secondary" type="button" disabled="@_saving" @onclick="() => SelectTab(_activeTab - 1)">← Previous</button>
+                            <button class="resource-secondary action-button" type="button" disabled="@_saving" @onclick="() => SelectTab(_activeTab - 1)"><ActionArrow Left="true" />Previous</button>
                         }
                         @if (_activeTab < TabTitles.Length - 1)
                         {
-                            <button class="resource-primary" type="button" disabled="@_saving" @onclick="() => SelectTab(_activeTab + 1)">Next →</button>
+                            <button class="resource-primary action-button action-button-primary" type="button" disabled="@_saving" @onclick="() => SelectTab(_activeTab + 1)">Next <ActionArrow /></button>
                         }
                         else
                         {
-                            <button class="resource-primary" type="submit" disabled="@_saving">
+                            <button class="resource-primary action-button action-button-primary" type="submit" disabled="@_saving">
                                 @(_saving ? "Uploading…" : "Submit resource") <span aria-hidden="true">↑</span>
                             </button>
                         }

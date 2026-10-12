@@ -1,0 +1,90 @@
+/* Shared action buttons: keep the retro palette with readable text and icons. */
+:root .app-shell .action-button {
+    display: inline-flex;
+    min-height: 46px;
+    max-width: 100%;
+    align-items: center;
+    justify-content: center;
+    gap: .65rem;
+    padding: .7rem 1.15rem;
+    border: 1px solid #8f6ab8;
+    border-radius: 9px;
+    color: #f2e8ff;
+    background: linear-gradient(135deg, rgba(55, 30, 81, .88), rgba(32, 18, 52, .88));
+    box-shadow: 0 3px 10px #08041133, inset 0 1px #ffffff0c;
+    font: 700 .95rem/1.35 "Exo 2", "Segoe UI", sans-serif;
+    letter-spacing: .01em;
+    text-align: center;
+    text-decoration: none;
+    white-space: normal;
+    cursor: pointer;
+    transition: background .16s ease, border-color .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+
+:root .app-shell .action-button:not(:disabled):hover {
+    border-color: #c59bf1;
+    color: #fff;
+    background: linear-gradient(135deg, rgba(73, 39, 104, .92), rgba(46, 24, 69, .92));
+    box-shadow: 0 5px 16px #08041144, 0 0 16px #b77eff20;
+    text-decoration: none;
+    transform: translateY(-1px);
+}
+
+:root .app-shell .action-button.action-button-primary {
+    border-color: #ffe18b;
+    color: #24172e;
+    background: linear-gradient(135deg, #ffe99b, #ffd352);
+    box-shadow: 0 4px 12px #08041144, 0 0 16px #ffd35216, inset 0 1px #ffffff70;
+}
+
+:root .app-shell .action-button.action-button-primary:not(:disabled):hover {
+    border-color: #fff2bb;
+    color: #24172e;
+    background: linear-gradient(135deg, #fff1ba, #ffdf76);
+    box-shadow: 0 5px 18px #08041144, 0 0 20px #ffd35230, inset 0 1px #ffffff80;
+}
+
+:root .app-shell .action-button:focus-visible {
+    outline: 3px solid #d4b1ff;
+    outline-offset: 3px;
+}
+
+:root .app-shell .action-button.action-button-compact {
+    min-height: 40px;
+    padding: .5rem .85rem;
+    font-size: .88rem;
+}
+
+:root .app-shell .action-button:not(:disabled):active {
+    transform: translateY(0);
+    box-shadow: inset 0 2px 5px #08041126;
+}
+
+:root .app-shell .action-button:disabled,
+:root .app-shell fieldset:disabled .action-button {
+    border-color: #70587d;
+    color: #c3b2cf;
+    background: #302337;
+    box-shadow: none;
+    opacity: .7;
+    cursor: not-allowed;
+    transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    :root .app-shell .action-button { transition: none; }
+}
+
+@media (forced-colors: active) {
+    :root .app-shell .action-button,
+    :root .app-shell .action-button.action-button-primary,
+    :root .app-shell .action-button:not(:disabled):hover,
+    :root .app-shell .action-button.action-button-primary:not(:disabled):hover {
+        border-color: ButtonText;
+        color: ButtonText;
+        background: ButtonFace;
+        box-shadow: none;
+    }
+    :root .app-shell .action-button:focus-visible { outline-color: Highlight; }
+    :root .app-shell .action-button:disabled { color: GrayText; border-color: GrayText; }
+}

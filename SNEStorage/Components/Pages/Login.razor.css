@@ -107,29 +107,8 @@
 }
 
 .login-submit {
-    display: flex;
-    min-height: 50px;
-    align-items: center;
-    justify-content: center;
-    gap: .75rem;
+    width: 100%;
     margin-top: .2rem;
-    padding: .75rem 1rem;
-    border: 3px solid #000;
-    border-radius: 3px;
-    color: #080611;
-    background: #ffe14d;
-    box-shadow: 3px 3px 0 #6a2be0, 0 0 16px rgba(255, 225, 77, .23);
-    font-family: "Press Start 2P", "Courier New", monospace;
-    font-size: .58rem;
-    line-height: 1.7;
-    cursor: pointer;
-    transition: transform .15s ease, box-shadow .15s ease, background-color .15s ease;
-}
-
-.login-submit:hover {
-    background: #fff18a;
-    box-shadow: 3px 3px 0 #6a2be0, 0 0 22px rgba(255, 225, 77, .43);
-    transform: translateY(-1px);
 }
 
 .login-register {

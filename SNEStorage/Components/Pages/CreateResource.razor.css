@@ -12,8 +12,7 @@
 }
 
 .resource-kicker,
-.resource-step,
-.resource-required-note {
+.resource-step {
     color: #ffe14d;
     font-family: "Press Start 2P", "Courier New", monospace;
     font-size: .46rem;
@@ -131,7 +130,7 @@
     padding: 1.5rem 0 0;
     border-top: 1px solid #59408f;
 }
-.resource-required-note { margin: 0; color: #b8a7d0; font-size: .4rem; }
+.resource-required-note { margin: 0; color: #b8a7d0; font: .8rem/1.5 "Segoe UI", sans-serif; text-align: left; }
 .resource-required-note > span { color: #ffe14d; }
 .resource-upload-status { margin: .4rem 0 0; color: #d6c2ed; font-size: .85rem; line-height: 1.55; }
 .resource-actions { display: flex; align-items: center; flex-wrap: wrap; gap: .7rem; }

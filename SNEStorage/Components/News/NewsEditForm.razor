@@ -30,8 +30,8 @@
                 <small>Use plain text. Line breaks are preserved.</small>
             </div>
             <div class="news-actions">
-                <button class="news-save" type="submit">@(_saving ? "Saving…" : "Save changes")</button>
-                <button class="news-cancel" type="button" @onclick="OnCancel">Cancel</button>
+                <button class="news-save action-button action-button-primary" type="submit">@(_saving ? "Saving…" : "Save changes")</button>
+                <button class="news-cancel action-button" type="button" @onclick="OnCancel">Cancel</button>
             </div>
         </fieldset>
         @if (_saving) { <p class="news-saving" role="status">Saving your changes…</p> }

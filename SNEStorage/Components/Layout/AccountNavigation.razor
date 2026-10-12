@@ -5,7 +5,7 @@
         <div class="account-unavailable" role="status">
             <span>@(_lastUnavailableStatus == 404 ? "Account profile unavailable" : "Account unavailable")</span>
             <button type="button" class="account-retry" @onclick="RefreshAsync">Retry</button>
-            <NavLink class="navigation-button" href="@LoginUrl">Log in</NavLink>
+            <NavLink class="navigation-button action-button action-button-compact" href="@LoginUrl">Log in</NavLink>
         </div>
     }
     else
@@ -21,6 +21,6 @@ else if (_isAuthenticated == true)
 }
 else
 {
-    <NavLink class="navigation-button" href="@LoginUrl">Log in</NavLink>
-    <NavLink class="navigation-button navigation-button-primary" href="/Register">Sign up</NavLink>
+    <NavLink class="navigation-button action-button action-button-compact" href="@LoginUrl">Log in</NavLink>
+    <NavLink class="navigation-button navigation-button-primary action-button action-button-primary action-button-compact" href="/Register">Sign up</NavLink>
 }

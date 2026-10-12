@@ -26,7 +26,7 @@
             <span aria-hidden="true">🔒</span>
             <h2>Log in to edit your profile</h2>
             <p>Your profile settings are only available to you.</p>
-            <NavLink class="profile-edit-action" href="@LoginUrl">Log in</NavLink>
+            <NavLink class="profile-edit-action action-button" href="@LoginUrl">Log in <ActionArrow /></NavLink>
         </section>
     }
     else if (_profileNotFound)
@@ -35,7 +35,7 @@
             <span aria-hidden="true">◇</span>
             <h2>No profile information yet</h2>
             <p>There is no profile information available to edit for this account.</p>
-            <NavLink class="profile-edit-action" href="/Profile/me">Return to profile</NavLink>
+            <NavLink class="profile-edit-action action-button" href="/Profile/me">Return to profile</NavLink>
         </section>
     }
     else if (!string.IsNullOrWhiteSpace(_error))
@@ -44,8 +44,8 @@
             <span aria-hidden="true">!</span>
             <h2>Profile editor unavailable</h2>
             <p>@_error</p>
-            <button type="button" class="profile-edit-action" @onclick="ReloadProfile">Try again</button>
-            <NavLink class="profile-edit-action" href="/Profile/me">Return to profile</NavLink>
+            <button type="button" class="profile-edit-action action-button" @onclick="ReloadProfile">Try again</button>
+            <NavLink class="profile-edit-action action-button" href="/Profile/me">Return to profile</NavLink>
         </section>
     }
     else if (_profile is not null && _form is not null)
@@ -252,15 +252,15 @@
             </section>
 
             <footer class="profile-edit-actions">
-                <NavLink class="profile-edit-cancel" href="/Profile/me">Cancel</NavLink>
-                <button class="profile-edit-save" type="submit" disabled="@(_isSaving || !HasChanges || HasInvalidSocialLinks)">
+                <NavLink class="profile-edit-cancel action-button" href="/Profile/me">Cancel</NavLink>
+                <button class="profile-edit-save action-button action-button-primary" type="submit" disabled="@(_isSaving || !HasChanges || HasInvalidSocialLinks)">
                     @if (_isSaving)
                     {
                         <span>Saving changes...</span>
                     }
                     else
                     {
-                        <span>Save Changes <span aria-hidden="true">→</span></span>
+                        <span>Save changes</span><ActionArrow />
                     }
                 </button>
             </footer>

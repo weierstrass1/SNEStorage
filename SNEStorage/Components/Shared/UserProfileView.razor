@@ -9,7 +9,7 @@
         </div>
         @if (IsOwnProfile)
         {
-            <NavLink class="profile-edit-button" href="/Profile/Edit">Edit profile <span aria-hidden="true">→</span></NavLink>
+            <NavLink class="profile-edit-button action-button" href="/Profile/Edit">Edit profile <ActionArrow /></NavLink>
         }
     </header>
 
@@ -74,7 +74,7 @@
                 </dl>
                 @if (IsOwnProfile)
                 {
-                    <NavLink class="profile-action-link" href="/Account/ForgotPassword">Change password <span aria-hidden="true">→</span></NavLink>
+                    <NavLink class="profile-action-link action-button" href="/Account/ForgotPassword">Change password <ActionArrow /></NavLink>
                 }
             </section>
 

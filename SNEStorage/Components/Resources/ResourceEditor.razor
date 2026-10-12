@@ -11,7 +11,7 @@ else if (_saved)
     <section class="resource-editor editor-saved" role="status" aria-live="polite">
         <h1>@SavedTitle</h1>
         <p>You will return to the resource in a moment.</p>
-        <NavLink class="editor-cancel" href="@($"/Resource/{ResourceId}")">View resource →</NavLink>
+        <NavLink class="editor-cancel action-button" href="@($"/Resource/{ResourceId}")">View resource <ActionArrow /></NavLink>
     </section>
 }
 else if (_resource is { } resource)
@@ -132,14 +132,14 @@ else if (_resource is { } resource)
             }
             @if (_saving) { <p class="editor-muted" role="status" aria-live="polite">@(Mode == ResourceEditorMode.CreateVersion ? "Uploading your archive. Keep this page open until it finishes." : "Saving your changes…")</p> }
             <footer>
-                <NavLink class="editor-cancel" href="@($"/Resource/{ResourceId}")">Cancel</NavLink>
+                <NavLink class="editor-cancel action-button" href="@($"/Resource/{ResourceId}")">Cancel</NavLink>
                 @if (Mode == ResourceEditorMode.Resource)
                 {
                     <span class="editor-progress">@(_activeTab + 1) / @TabTitles.Length</span>
-                    <button type="button" class="editor-step" disabled="@(_saving || _activeTab == 0)" @onclick="() => SelectTab(_activeTab - 1)">← Previous</button>
-                    <button type="button" class="editor-step" disabled="@(_saving || _activeTab == TabTitles.Length - 1)" @onclick="() => SelectTab(_activeTab + 1)">Next →</button>
+                    <button type="button" class="editor-step action-button" disabled="@(_saving || _activeTab == 0)" @onclick="() => SelectTab(_activeTab - 1)"><ActionArrow Left="true" />Previous</button>
+                    <button type="button" class="editor-step action-button" disabled="@(_saving || _activeTab == TabTitles.Length - 1)" @onclick="() => SelectTab(_activeTab + 1)">Next <ActionArrow /></button>
                 }
-                <button type="submit" class="editor-save" disabled="@_saving">@SubmitLabel</button>
+                <button type="submit" class="editor-save action-button action-button-primary" disabled="@_saving">@SubmitLabel</button>
             </footer>
         </EditForm>
     </section>

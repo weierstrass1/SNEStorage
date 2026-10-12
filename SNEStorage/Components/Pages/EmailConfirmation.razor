@@ -41,12 +41,12 @@
             <div class="confirmation-actions">
                 @if (_state == ConfirmationState.Unavailable)
                 {
-                    <button class="confirmation-primary" type="button" @onclick="RetryAsync">Try again <span aria-hidden="true">↻</span></button>
+                    <button class="confirmation-primary action-button action-button-primary" type="button" @onclick="RetryAsync">Try again</button>
                     <NavLink class="confirmation-secondary" href="/Login">Back to log in</NavLink>
                 }
                 else
                 {
-                    <NavLink class="confirmation-primary" href="/Login">Continue to log in <span aria-hidden="true">→</span></NavLink>
+                    <NavLink class="confirmation-primary action-button action-button-primary" href="/Login">Continue to log in <ActionArrow /></NavLink>
                 }
                 @if (_state is ConfirmationState.Invalid or ConfirmationState.Incomplete)
                 {
