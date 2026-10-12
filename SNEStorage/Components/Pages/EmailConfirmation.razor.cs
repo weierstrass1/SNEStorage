@@ -1,13 +1,14 @@
-using System.Net;
-using System.Net.Http.Headers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 
 namespace SNEStorage.Components.Pages;
 
 [AllowAnonymous]
-public partial class EmailConfirmation : IDisposable
+public partial class EmailConfirmation : IAsyncDisposable
 {
+    private readonly string _requestKey = $"email-confirmation-{Guid.NewGuid():N}";
+    private IJSObjectReference? _module;
     private CancellationTokenSource? _attempt;
     private string? _activeUserId;
     private string? _activeToken;
@@ -21,7 +22,7 @@ public partial class EmailConfirmation : IDisposable
     public string? Token { get; set; }
 
     [Inject]
-    private HttpClient Http { get; set; } = default!;
+    private IJSRuntime JavaScript { get; set; } = default!;
 
     [Inject]
     private NavigationManager Navigation { get; set; } = default!;
@@ -94,30 +95,26 @@ public partial class EmailConfirmation : IDisposable
 
         try
         {
-            using var request = new HttpRequestMessage(HttpMethod.Post, endpoint);
-            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            using var response = await Http.SendAsync(request, cancellationToken);
+            // Send from the browser so the antiforgery cookie and request token travel together.
+            _module ??= await JavaScript.InvokeAsync<IJSObjectReference>("import", cancellationToken, "./js/email-confirmation.js?v=1");
+            var status = await _module.InvokeAsync<int>("confirmEmail", cancellationToken, _requestKey, endpoint.AbsoluteUri);
             if (cancellationToken.IsCancellationRequested)
             {
                 return;
             }
 
-            var isHtmlPage = response.Content.Headers.ContentType?.MediaType == "text/html";
-            var wasRedirected = response.RequestMessage?.RequestUri is { } finalUri && finalUri.AbsolutePath != endpoint.AbsolutePath;
-            _state = isHtmlPage || wasRedirected
-                ? ConfirmationState.Unavailable
-                : response.StatusCode switch
-                {
-                    HttpStatusCode.OK or HttpStatusCode.NoContent => ConfirmationState.Confirmed,
-                    HttpStatusCode.BadRequest or HttpStatusCode.NotFound or HttpStatusCode.Gone or HttpStatusCode.UnprocessableEntity => ConfirmationState.Invalid,
-                    _ => ConfirmationState.Unavailable
-                };
+            _state = status switch
+            {
+                200 or 204 => ConfirmationState.Confirmed,
+                400 or 404 or 410 or 422 => ConfirmationState.Invalid,
+                _ => ConfirmationState.Unavailable
+            };
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
             return;
         }
-        catch (Exception exception) when (exception is HttpRequestException or OperationCanceledException)
+        catch (Exception exception) when (exception is JSException or OperationCanceledException)
         {
             _state = ConfirmationState.Unavailable;
         }
@@ -142,11 +139,19 @@ public partial class EmailConfirmation : IDisposable
         }
     }
 
-    public void Dispose()
+    public async ValueTask DisposeAsync()
     {
         _attempt?.Cancel();
         _attempt?.Dispose();
         _attempt = null;
+        if (_module is null) return;
+        try
+        {
+            using var cleanup = new CancellationTokenSource(TimeSpan.FromSeconds(1));
+            await _module.InvokeVoidAsync("cancelConfirmation", cleanup.Token, _requestKey);
+            await _module.DisposeAsync();
+        }
+        catch (Exception exception) when (exception is JSException or OperationCanceledException) { }
     }
 
     private enum ConfirmationState { Checking, Confirmed, Incomplete, Invalid, Unavailable }

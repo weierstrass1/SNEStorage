@@ -64,8 +64,6 @@
 .account-dropdown form { margin: 0; }
 
 @media (max-width: 991.98px) {
-    .account-menu { width: min(100%, 340px); }
-    .account-toggle { width: 100%; max-width: none; }
-    .account-chevron { margin-left: auto; }
-    .account-dropdown { width: 100%; }
+    .account-toggle { max-width: min(260px, calc(100vw - 2rem)); }
+    .account-dropdown { max-width: calc(100vw - 2rem); }
 }

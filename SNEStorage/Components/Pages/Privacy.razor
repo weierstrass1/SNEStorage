@@ -1,10 +1,80 @@
 @page "/Home/Privacy"
 @page "/Privacy"
+@using SNEStorage.Components.Privacy
+@using SNEStorage.Components.Rules
+@inherits StaticDocumentPage<PrivacyDocument>
 
-<PageTitle>Privacy | SNEStorage</PageTitle>
+<PageTitle>Privacy policy | SNEStorage</PageTitle>
 
-<section class="page-panel">
-    <p class="eyebrow">SNEStorage</p>
-    <h1>Privacy</h1>
-    <p>Privacy information for SNEStorage will be published here.</p>
-</section>
+<div class="privacy-page">
+    <header class="privacy-heading">
+        <span class="privacy-emblem" aria-hidden="true">
+            <svg viewBox="0 0 48 48" fill="none" focusable="false"><path d="M24 4 7 11v12c0 10 7 17 17 21 10-4 17-11 17-21V11L24 4Z" stroke="currentColor" stroke-width="2" /><path d="m16 24 5 5 11-12" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" /></svg>
+        </span>
+        <div>
+            <p class="privacy-kicker">@(_document?.Kicker ?? "SNESTORAGE PRIVACY")</p>
+            <h1>@(_document?.Title ?? "Privacy policy")</h1>
+            @if (_document is { } document)
+            {
+                <p class="privacy-introduction">@document.Introduction</p>
+                <p class="privacy-updated">@document.UpdatedLabel <time datetime="@document.UpdatedOn">@document.UpdatedOn</time></p>
+            }
+        </div>
+    </header>
+
+    @if (_loading)
+    {
+        <div class="privacy-status" role="status" aria-live="polite">Loading privacy policy…</div>
+    }
+    else if (_error is not null)
+    {
+        <div class="privacy-status privacy-error" role="alert"><p>@_error</p><button type="button" @onclick="LoadAsync">Try again</button></div>
+    }
+    else if (_document is { } policy)
+    {
+        <div class="privacy-layout">
+            <nav class="privacy-contents" aria-label="@policy.NavigationTitle">
+                <h2>@policy.NavigationTitle</h2>
+                @foreach (var section in policy.Sections)
+                {
+                    <a href="@($"/Privacy#{section.Id}")" data-enhance-nav="false"><span class="section-letter">@section.Letter.</span><span>@section.Title</span></a>
+                }
+                <a class="privacy-contact-shortcut" href="/Privacy#privacy-contact" data-enhance-nav="false">@policy.ContactTitle <span aria-hidden="true">↗</span></a>
+            </nav>
+
+            <div class="privacy-sections">
+                <aside class="privacy-summary" aria-labelledby="privacy-summary-title"><h2 id="privacy-summary-title">@policy.SummaryTitle</h2><p>@policy.SummaryText</p></aside>
+                @foreach (var section in policy.Sections)
+                {
+                    <section class="privacy-section" id="@section.Id" aria-labelledby="@($"{section.Id}-title")">
+                        <header><h2 id="@($"{section.Id}-title")"><span class="section-letter">@section.Letter.</span>@section.Title</h2><p>@section.Description</p></header>
+                        <SiteRulesList Letter="@section.Letter" Entries="section.Rules" />
+                    </section>
+                }
+                <section class="privacy-contact" id="privacy-contact" aria-labelledby="privacy-contact-title">
+                    <div><h2 id="privacy-contact-title">@policy.ContactTitle</h2><p>@policy.Contact.Description</p></div>
+                    @if (policy.Contact.SafeUrl is { } contactUrl)
+                    {
+                        <a class="privacy-contact-button" href="@contactUrl" target="_blank" rel="noopener noreferrer">@policy.Contact.Label <span aria-hidden="true">↗</span></a>
+                    }
+                    else { <span>@policy.Contact.Label</span> }
+                </section>
+                @if (policy.ProviderLinks.Count > 0)
+                {
+                    <section class="privacy-providers" aria-labelledby="privacy-providers-title">
+                        <h2 id="privacy-providers-title">@policy.ProviderLinksTitle</h2>
+                        <div class="privacy-provider-links">
+                            @foreach (var provider in policy.ProviderLinks)
+                            {
+                                @if (provider.SafeUrl is { } providerUrl)
+                                {
+                                    <a href="@providerUrl" target="_blank" rel="noopener noreferrer"><strong>@provider.Label <span aria-hidden="true">↗</span></strong><span>@provider.Description</span></a>
+                                }
+                            }
+                        </div>
+                    </section>
+                }
+            </div>
+        </div>
+    }
+</div>

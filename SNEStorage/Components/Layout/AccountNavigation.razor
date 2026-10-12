@@ -1,10 +1,19 @@
 @if (_isAuthenticated is null)
 {
-    <div class="account-placeholder" role="status">
-        <span class="visually-hidden">@(_lastUnavailableStatus.HasValue ? "Account status is temporarily unavailable." : "Checking account…")</span>
-        <span class="account-placeholder-button" aria-hidden="true"></span>
-        <span class="account-placeholder-button" aria-hidden="true"></span>
-    </div>
+    @if (_lastUnavailableStatus.HasValue)
+    {
+        <div class="account-unavailable" role="status">
+            <span>@(_lastUnavailableStatus == 404 ? "Account profile unavailable" : "Account unavailable")</span>
+            <button type="button" class="account-retry" @onclick="RefreshAsync">Retry</button>
+            <NavLink class="navigation-button" href="@LoginUrl">Log in</NavLink>
+        </div>
+    }
+    else
+    {
+        <div class="account-placeholder" role="status">
+            <span>Checking account…</span>
+        </div>
+    }
 }
 else if (_isAuthenticated == true)
 {

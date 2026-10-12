@@ -13,6 +13,9 @@ namespace SNEStorage.Services;
 public enum AccountServiceResult
 {
     UserNotFound,
+    PasswordChangeError,
+    InvalidEmail,
+    InvalidPassword,
     InvalidToken,
     UserAlreadyExists,
     CancelledToken,
@@ -42,7 +45,81 @@ public class AccountService(UserManager<ApplicationUser> userManager,
     private readonly IHttpContextAccessor _httpContextAccessor = httpContextAccessor;
     private readonly EmailService _emailService = emailService;
     private readonly DBHelperService _dbHelperService = dbHelperService;
-    public async Task<OneOf<RegisterResponseDTO, AccountServiceResult>> Register(RegisterInfo registerInfo, CancellationToken ct = default)
+    public async Task<AccountServiceResult> ChangePassword(ChangePasswordDTO dto, 
+        CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(dto.UserId) ||
+            string.IsNullOrWhiteSpace(dto.Token) ||
+            string.IsNullOrWhiteSpace(dto.NewPassword) ||
+            dto.NewPassword != dto.ConfirmPassword)
+            return AccountServiceResult.InvalidPassword;
+
+        var token = _dbHelperService.TryFunction(() => Encoding.UTF8
+            .GetString(WebEncoders.Base64UrlDecode(dto.Token)));
+
+        if (string.IsNullOrEmpty(token))
+            return AccountServiceResult.InvalidToken;
+
+        var userRes = await _dbHelperService.TryFunction(
+            async _ => await _userManager.FindByIdAsync(dto.UserId),
+            AccountServiceResult.DBError, ct: ct);
+
+        if (!userRes.TryPickT0(out var user, out var error))
+            return error;
+
+        if (user == null)
+            return AccountServiceResult.UserNotFound;
+
+        var resetRes = await _dbHelperService.TryFunction(
+            async _ => await _userManager.ResetPasswordAsync(user, token, dto.NewPassword),
+            AccountServiceResult.DBError, ct: ct);
+
+        if (!resetRes.TryPickT0(out var result, out error))
+            return error;
+
+        if (result.Succeeded)
+            return AccountServiceResult.Success;
+
+        return result.Errors.Any(e =>
+            e.Code == nameof(IdentityErrorDescriber.InvalidToken)) ?
+                AccountServiceResult.InvalidToken :
+                AccountServiceResult.PasswordChangeError;
+    }
+    public async Task<OneOf<AccountServiceResult, EmailServiceResult>> RequestPasswordReset(string email, 
+        CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return AccountServiceResult.InvalidEmail;
+
+        var userRes = await _dbHelperService.TryFunction(
+            async _ => await _userManager.FindByEmailAsync(email.Trim()),
+            AccountServiceResult.DBError, ct: ct);
+
+        if (!userRes.TryPickT0(out var user, out var error))
+            return error;
+
+        if (user == null)
+            return AccountServiceResult.Success;
+
+        var tokenRes = await _dbHelperService.TryFunction(
+            async _ => await _userManager.GeneratePasswordResetTokenAsync(user),
+            AccountServiceResult.TokenCreationError, ct: ct);
+
+        if (!tokenRes.TryPickT0(out var token, out error))
+            return error;
+
+        var encodedToken = WebEncoders.Base64UrlEncode(
+            Encoding.UTF8.GetBytes(token));
+
+        var emailResult = await _emailService.PasswordReset(user.UserName!, user.Id, 
+            user.Email!, encodedToken, ct);
+
+        if (emailResult != EmailServiceResult.Success)
+            return emailResult;
+
+        return AccountServiceResult.Success;
+    }
+    public async Task<OneOf<RegisterResponseDTO, AccountServiceResult, FileServiceResult>> Register(RegisterInfo registerInfo, CancellationToken ct = default)
     {
         var user = new ApplicationUser { UserName = registerInfo.User, Email = registerInfo.Email };
 
@@ -52,9 +129,9 @@ public class AccountService(UserManager<ApplicationUser> userManager,
         string? batchPath = await _fileService.BeginBatch(ct);
         if (batchPath == null)
             return AccountServiceResult.AvatarLoadError;
-        Models.File? res2 = await _fileService.PrepareFile(avatar, path, batchPath, ct);
-        if (res2 == null)
-            return AccountServiceResult.AvatarLoadError;
+        var res2Res = await _fileService.PrepareFile(FileContext.Avatar, avatar, path, batchPath, ct);
+        if (!res2Res.TryPickT0(out var res2, out var ferror))
+            return ferror;
 
         await using var transaction = await _context.Database.BeginTransactionAsync(ct);
 
@@ -101,7 +178,11 @@ public class AccountService(UserManager<ApplicationUser> userManager,
     }
     public async Task<AuthenticationResponse?> Login(LoginCredentials credentials)
     {
-        var result = await _signInManager.PasswordSignInAsync(credentials.User!, credentials.Password!, false, false);
+        var result = await _signInManager.PasswordSignInAsync(
+            credentials.User!,
+            credentials.Password!,
+            isPersistent: false,
+            lockoutOnFailure: true);
         if (!result.Succeeded) return null;
         return await BuildToken(credentials.User!);
     }
@@ -220,9 +301,13 @@ public class AccountService(UserManager<ApplicationUser> userManager,
             return false;
 
         var info = await _context.UserInfos
+            .Include(ui => ui.Avatar)
             .FirstOrDefaultAsync(ui => ui.UserId == userId, ct);
+
         if (info == null)
             return false;
+
+        var previousAvatar = info.Avatar;
 
         Models.File? file = null;
 
@@ -234,8 +319,8 @@ public class AccountService(UserManager<ApplicationUser> userManager,
             batchPath = await _fileService.BeginBatch(ct);
             if (batchPath == null)
                 return false;
-            file = await _fileService.PrepareFile(dto.File, path, batchPath, ct);
-            if (file == null)
+            var fileRes = await _fileService.PrepareFile(FileContext.Avatar, dto.File, path, batchPath, ct);
+            if (!fileRes.TryPickT0(out file, out _))
                 return false;
             info.Avatar = file;
         }
@@ -262,7 +347,6 @@ public class AccountService(UserManager<ApplicationUser> userManager,
             await _context.SaveChangesAsync(ct);
             if (batchPath != null)
                 _fileService.BatchComplete(batchPath);
-            return true;
         }
         catch
         {
@@ -272,6 +356,23 @@ public class AccountService(UserManager<ApplicationUser> userManager,
                 _context.ChangeTracker.Clear();
             return false;
         }
+        if (file == null || previousAvatar == null)
+            return true;
+
+        bool cleaned = await _dbHelperService.TryFunction(async cancel =>
+        {
+            await _context.Files
+                .Where(f => f.Id == previousAvatar.Id)
+                .ExecuteDeleteAsync(cancel);
+
+            var physicalPath = Path.Combine(
+                _environment.ContentRootPath,
+                previousAvatar.URL);
+
+            System.IO.File.Delete(physicalPath);
+        }, ct: ct);
+
+        return true;
     }
     public string? GetUserID()
     {
@@ -323,16 +424,31 @@ public class AccountService(UserManager<ApplicationUser> userManager,
             return null;
         return dtoValue;
     }
-    private string GetAvatarUrl(string avatarUrl, string userId, string username)
+    private string? GetAvatarUrl(string contentType, string userId, string username)
     {
-        string path;
+        string? extension = contentType.Trim().ToLowerInvariant() switch
+        {
+            "image/png" => ".png",
+            "image/jpeg" => ".jpg",
+            "image/gif" => ".gif",
+            "image/webp" => ".webp",
+            "image/avif" => ".avif",
+            _ => null
+        };
+
+        if (extension is null)
+            return null;
+
+        string physicalPath;
         do
         {
-            path = Path.GetRelativePath(_environment.ContentRootPath,
-            Path.Combine(_environment.WebRootPath, "Content", "Avatars",
-                $"{Guid.NewGuid():N}_{userId}_{username}{Path.GetExtension(avatarUrl)}"));
+            physicalPath = Path.Combine(
+                _environment.WebRootPath, "Content", "Avatars",
+                $"{Guid.NewGuid():N}_{userId}_{username}{extension}");
         }
-        while (System.IO.File.Exists(path));
-        return path;
+        while (System.IO.File.Exists(physicalPath));
+
+        return Path.GetRelativePath(
+            _environment.ContentRootPath, physicalPath);
     }
 }

@@ -16,7 +16,7 @@ public partial class Resource
             .ValueGeneratedOnAdd();
 
         entity.Property(e => e.Name)
-            .HasColumnType("nvarchar(50)")
+            .HasColumnType("nvarchar(100)")
             .HasColumnName("name");
         entity.Property(e => e.Description)
             .HasColumnType("nvarchar(max)")
@@ -60,7 +60,7 @@ public partial class Resource
             .HasConstraintName("FK_resource_visibility");
 
         entity.Property(e => e.RepositoryURL)
-            .HasColumnType("nvarchar(100)")
+            .HasColumnType("nvarchar(2048)")
             .HasColumnName("repository_url");
 
         entity.Property(e => e.AlreadyModerated)

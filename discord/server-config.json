@@ -1,0 +1,977 @@
+{
+  "schemaVersion": 1,
+  "reconciliation": {
+    "deleteUnknownChannels": true,
+    "deleteUnknownCategories": true
+  },
+  "server": {
+    "name": "SNEStorage",
+    "description": "A community for SNES hacking, homebrew, documentation, tools, graphics, music, and creator resources.",
+    "preferredLocale": "en-US",
+    "iconPath": "../Logo/icono.png",
+    "communityEnabled": true,
+    "discoveryEnabled": false,
+    "defaultMessageNotifications": "ONLY_MENTIONS",
+    "explicitContentFilter": "ALL_MEMBERS",
+    "verificationLevel": "HIGH",
+    "afkTimeoutSeconds": 300
+  },
+  "accessGate": {
+    "mode": "SNESTORAGE_ACCOUNT_ONLY",
+    "publicInvitesEnabled": false,
+    "joinPath": "/Community/Discord/Join",
+    "oauthCallbackPath": "/api/discord/oauth/callback",
+    "discordOauthScopes": [
+      "identify",
+      "guilds.join"
+    ],
+    "requirements": {
+      "authenticatedSNEStorageAccount": true,
+      "confirmedEmail": true,
+      "activeAccount": true,
+      "notBanned": true,
+      "turnstileProtectedRegistration": true
+    },
+    "accountLinking": {
+      "oneDiscordAccountPerSNEStorageAccount": true,
+      "oneSNEStorageAccountPerDiscordAccount": true,
+      "storeDiscordUserId": true,
+      "storeOauthAccessToken": false,
+      "assignRole": "member"
+    },
+    "onSNEStorageBan": "REMOVE_FROM_SERVER",
+    "onAccountUnlink": "REMOVE_MEMBER_ROLE"
+  },
+  "bot": {
+    "roleManagedByDiscord": true,
+    "roleName": "SNEStorage Bot",
+    "administrator": false,
+    "requiredPermissions": [
+      "ViewChannel",
+      "SendMessages",
+      "EmbedLinks",
+      "AttachFiles",
+      "ReadMessageHistory",
+      "ManageChannels",
+      "ManageRoles",
+      "ManageWebhooks",
+      "ManageGuild",
+      "CreateInstantInvite",
+      "KickMembers"
+    ]
+  },
+  "roles": [
+    {
+      "key": "admin",
+      "name": "SNEStorage Admin",
+      "color": "DEFAULT",
+      "hoist": true,
+      "mentionable": false,
+      "assignToGuildOwner": true,
+      "permissions": [
+        "Administrator"
+      ]
+    },
+    {
+      "key": "moderator",
+      "name": "Moderator",
+      "color": "DEFAULT",
+      "hoist": true,
+      "mentionable": false,
+      "permissions": [
+        "ViewChannel",
+        "SendMessages",
+        "SendMessagesInThreads",
+        "CreatePublicThreads",
+        "CreatePrivateThreads",
+        "ManageThreads",
+        "ManageMessages",
+        "ModerateMembers",
+        "KickMembers",
+        "BanMembers",
+        "ViewAuditLog",
+        "AddReactions",
+        "EmbedLinks",
+        "AttachFiles",
+        "ReadMessageHistory",
+        "UseApplicationCommands",
+        "Connect",
+        "Speak",
+        "Stream",
+        "UseVoiceActivity"
+      ]
+    },
+    {
+      "key": "member",
+      "name": "SNEStorage Member",
+      "color": "DEFAULT",
+      "hoist": false,
+      "mentionable": false,
+      "permissions": [
+        "ViewChannel",
+        "SendMessages",
+        "SendMessagesInThreads",
+        "CreatePublicThreads",
+        "AddReactions",
+        "EmbedLinks",
+        "AttachFiles",
+        "ReadMessageHistory",
+        "UseApplicationCommands",
+        "Connect",
+        "Speak",
+        "Stream",
+        "UseVoiceActivity"
+      ]
+    },
+    {
+      "key": "supporter",
+      "name": "Supporter",
+      "color": "DEFAULT",
+      "hoist": false,
+      "mentionable": false,
+      "permissions": [
+        "UseExternalEmojis",
+        "UseExternalStickers"
+      ]
+    }
+  ],
+  "permissionProfiles": {
+    "infoReadOnly": [
+      {
+        "target": "everyone",
+        "allow": [
+          "ViewChannel",
+          "ReadMessageHistory"
+        ],
+        "deny": [
+          "SendMessages",
+          "SendMessagesInThreads",
+          "CreatePublicThreads",
+          "CreatePrivateThreads",
+          "CreateInstantInvite",
+          "MentionEveryone"
+        ]
+      },
+      {
+        "target": "member",
+        "allow": [
+          "ViewChannel",
+          "ReadMessageHistory"
+        ],
+        "deny": [
+          "SendMessages",
+          "SendMessagesInThreads",
+          "CreatePublicThreads",
+          "CreatePrivateThreads",
+          "CreateInstantInvite",
+          "MentionEveryone"
+        ]
+      },
+      {
+        "target": "moderator",
+        "allow": [
+          "ViewChannel",
+          "SendMessages",
+          "EmbedLinks",
+          "AttachFiles",
+          "ReadMessageHistory"
+        ]
+      },
+      {
+        "target": "bot",
+        "allow": [
+          "ViewChannel",
+          "SendMessages",
+          "EmbedLinks",
+          "AttachFiles",
+          "ReadMessageHistory",
+          "ManageMessages"
+        ]
+      }
+    ],
+    "memberCommunity": [
+      {
+        "target": "everyone",
+        "deny": [
+          "ViewChannel",
+          "SendMessages",
+          "CreateInstantInvite",
+          "MentionEveryone"
+        ]
+      },
+      {
+        "target": "member",
+        "allow": [
+          "ViewChannel",
+          "SendMessages",
+          "SendMessagesInThreads",
+          "CreatePublicThreads",
+          "AddReactions",
+          "EmbedLinks",
+          "AttachFiles",
+          "ReadMessageHistory",
+          "UseApplicationCommands",
+          "Connect",
+          "Speak",
+          "Stream",
+          "UseVoiceActivity"
+        ],
+        "deny": [
+          "CreateInstantInvite",
+          "MentionEveryone",
+          "UseExternalEmojis",
+          "UseExternalStickers"
+        ]
+      },
+      {
+        "target": "supporter",
+        "allow": [
+          "UseExternalEmojis",
+          "UseExternalStickers"
+        ]
+      },
+      {
+        "target": "moderator",
+        "allow": [
+          "ViewChannel",
+          "SendMessages",
+          "SendMessagesInThreads",
+          "CreatePublicThreads",
+          "CreatePrivateThreads",
+          "ManageThreads",
+          "ManageMessages",
+          "AddReactions",
+          "EmbedLinks",
+          "AttachFiles",
+          "ReadMessageHistory",
+          "Connect",
+          "Speak",
+          "Stream",
+          "UseVoiceActivity"
+        ]
+      },
+      {
+        "target": "bot",
+        "allow": [
+          "ViewChannel",
+          "SendMessages",
+          "SendMessagesInThreads",
+          "CreatePublicThreads",
+          "ManageThreads",
+          "ManageMessages",
+          "EmbedLinks",
+          "AttachFiles",
+          "ReadMessageHistory"
+        ]
+      }
+    ],
+    "supporterOnly": [
+      {
+        "target": "everyone",
+        "deny": [
+          "ViewChannel",
+          "SendMessages"
+        ]
+      },
+      {
+        "target": "member",
+        "deny": [
+          "ViewChannel"
+        ]
+      },
+      {
+        "target": "supporter",
+        "allow": [
+          "ViewChannel",
+          "SendMessages",
+          "SendMessagesInThreads",
+          "CreatePublicThreads",
+          "AddReactions",
+          "EmbedLinks",
+          "AttachFiles",
+          "ReadMessageHistory",
+          "UseApplicationCommands",
+          "UseExternalEmojis",
+          "UseExternalStickers"
+        ],
+        "deny": [
+          "CreateInstantInvite",
+          "MentionEveryone"
+        ]
+      },
+      {
+        "target": "moderator",
+        "allow": [
+          "ViewChannel",
+          "SendMessages",
+          "SendMessagesInThreads",
+          "CreatePublicThreads",
+          "CreatePrivateThreads",
+          "ManageThreads",
+          "ManageMessages",
+          "AddReactions",
+          "EmbedLinks",
+          "AttachFiles",
+          "ReadMessageHistory"
+        ]
+      },
+      {
+        "target": "bot",
+        "allow": [
+          "ViewChannel",
+          "SendMessages",
+          "SendMessagesInThreads",
+          "CreatePublicThreads",
+          "ManageThreads",
+          "ManageMessages",
+          "EmbedLinks",
+          "AttachFiles",
+          "ReadMessageHistory"
+        ]
+      }
+    ],
+    "staffOnly": [
+      {
+        "target": "everyone",
+        "deny": [
+          "ViewChannel"
+        ]
+      },
+      {
+        "target": "member",
+        "deny": [
+          "ViewChannel"
+        ]
+      },
+      {
+        "target": "moderator",
+        "allow": [
+          "ViewChannel",
+          "SendMessages",
+          "SendMessagesInThreads",
+          "CreatePublicThreads",
+          "CreatePrivateThreads",
+          "ManageThreads",
+          "ManageMessages",
+          "EmbedLinks",
+          "AttachFiles",
+          "ReadMessageHistory"
+        ]
+      },
+      {
+        "target": "bot",
+        "allow": [
+          "ViewChannel",
+          "SendMessages",
+          "EmbedLinks",
+          "AttachFiles",
+          "ReadMessageHistory",
+          "ManageMessages"
+        ]
+      }
+    ]
+  },
+  "categories": [
+    {
+      "key": "info",
+      "name": "Info",
+      "permissionProfile": "infoReadOnly",
+      "channels": [
+        {
+          "key": "welcome",
+          "name": "welcome",
+          "type": "TEXT",
+          "topic": "Welcome to SNEStorage. Learn what the community is about and how to get access.",
+          "initialMessages": [
+            {
+              "pin": true,
+              "content": "# Welcome to SNEStorage\nSNEStorage is a community for SNES hacking, homebrew, documentation, tools, graphics, music, and creator resources.\n\nAccess to the community is reserved for members with a confirmed SNEStorage account. Connect your Discord account at https://snestorage.dev/Community to join.\n\nPlease read #rules before participating."
+            }
+          ]
+        },
+        {
+          "key": "rules",
+          "name": "rules",
+          "type": "TEXT",
+          "topic": "The community rules. Full policy: https://snestorage.dev/Rules",
+          "initialMessages": [
+            {
+              "pin": true,
+              "content": "# SNEStorage Community Rules\n\nRead these rules before participating. Access to community channels is reserved for members with a confirmed SNEStorage account. Connect your Discord account at https://snestorage.dev/Community.\n\n**1 — Respect others.** Harassment, bullying, threats, discrimination, or deliberately provoking other members will not be tolerated.\n\n**2 — Context matters.** No specific words are automatically banned, but language used to harass, threaten, insult, or target others is prohibited.\n\n**3 — No NSFW or disturbing content.** Do not post pornography, gore, shock content, or similar material.\n\n**4 — Use the appropriate channels.** Keep discussions, support requests, projects, and resources in their corresponding channels whenever possible.\n\n**5 — No spam.** Do not spam messages, images, emojis, mentions, links, advertisements, or repeated content.\n\n**6 — No political or religious debates.** This community is focused on SNES development, homebrew, hacking, tools, and preservation.\n\n**7 — Do not distribute commercial ROMs.** Share modifications as BPS or IPS patches. Original homebrew ROMs may be shared by their creators or with permission.\n\n**8 — Credit creators.** Do not claim someone else's work as your own. Obtain permission before redistributing or modifying their work when required.\n\n**9 — No malicious or deceptive content.** Malware, phishing, scams, misleading downloads, and unsafe links are prohibited.\n\n**10 — No impersonation or ban evasion.** Do not use alternate accounts to bypass moderation or help someone evade a restriction.\n\n**11 — Follow staff instructions.** If you disagree with a decision, discuss it privately and respectfully with staff.\n\n**12 — Follow Discord's rules.** All members must comply with Discord's Terms of Service and Community Guidelines.\n\nFull policy: https://snestorage.dev/Rules"
+            }
+          ]
+        },
+        {
+          "key": "announcements",
+          "name": "announcements",
+          "type": "ANNOUNCEMENT",
+          "topic": "Official SNEStorage news, releases, and community updates."
+        },
+        {
+          "key": "resource-log",
+          "name": "resource-log",
+          "type": "TEXT",
+          "topic": "Automatic feed of new and updated resources published on SNEStorage.",
+          "initialMessages": [
+            {
+              "pin": true,
+              "content": "# SNEStorage resource feed\nNew resources and new resource versions published on SNEStorage will appear here automatically."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "general",
+      "name": "General",
+      "permissionProfile": "memberCommunity",
+      "channels": [
+        {
+          "key": "general-chat",
+          "name": "general",
+          "type": "TEXT",
+          "topic": "General discussion.",
+          "slowmodeSeconds": 5
+        },
+        {
+          "key": "introductions",
+          "name": "introductions",
+          "type": "TEXT",
+          "topic": "Introduce yourself and tell the community what you enjoy creating.",
+          "slowmodeSeconds": 30
+        },
+        {
+          "key": "off-topic",
+          "name": "off-topic",
+          "type": "TEXT",
+          "topic": "Friendly conversation that does not fit the technical channels.",
+          "slowmodeSeconds": 10
+        },
+        {
+          "key": "general-voice",
+          "name": "General",
+          "type": "VOICE",
+          "userLimit": 0,
+          "bitrate": 64000
+        }
+      ]
+    },
+    {
+      "key": "website",
+      "name": "Website",
+      "permissionProfile": "memberCommunity",
+      "channels": [
+        {
+          "key": "website-chat",
+          "name": "website-chat",
+          "type": "TEXT",
+          "topic": "General discussion about the SNEStorage website and its features.",
+          "slowmodeSeconds": 5
+        },
+        {
+          "key": "feedback",
+          "name": "feedback",
+          "type": "FORUM",
+          "topic": "Share ideas and feedback to improve the SNEStorage website.",
+          "defaultReactionEmoji": "💡",
+          "availableTags": [
+            "Idea",
+            "Improvement",
+            "UX",
+            "Content"
+          ],
+          "defaultSortOrder": "LATEST_ACTIVITY",
+          "defaultForumLayout": "LIST",
+          "defaultThreadSlowmodeSeconds": 15
+        },
+        {
+          "key": "bug-reports",
+          "name": "bug-reports",
+          "type": "FORUM",
+          "topic": "Report bugs affecting the SNEStorage website.",
+          "defaultReactionEmoji": "🐛",
+          "availableTags": [
+            "New",
+            "Confirmed",
+            "In Progress",
+            "Fixed"
+          ],
+          "defaultSortOrder": "LATEST_ACTIVITY",
+          "defaultForumLayout": "LIST",
+          "defaultThreadSlowmodeSeconds": 15
+        },
+        {
+          "key": "website-support",
+          "name": "website-support",
+          "previousNames": [
+            "snestorage-support"
+          ],
+          "type": "FORUM",
+          "topic": "Get help with SNEStorage accounts, resources, uploads, and website features.",
+          "defaultReactionEmoji": "❓",
+          "availableTags": [
+            "Account",
+            "Resources",
+            "Uploads",
+            "Other"
+          ],
+          "defaultSortOrder": "LATEST_ACTIVITY",
+          "defaultForumLayout": "LIST",
+          "defaultThreadSlowmodeSeconds": 15
+        }
+      ]
+    },
+    {
+      "key": "supporters",
+      "name": "Supporters",
+      "permissionProfile": "supporterOnly",
+      "channels": [
+        {
+          "key": "supporter-chat",
+          "name": "supporter-chat",
+          "type": "TEXT",
+          "topic": "Private lounge for members who support SNEStorage.",
+          "slowmodeSeconds": 5
+        },
+        {
+          "key": "supporter-feedback",
+          "name": "supporter-feedback",
+          "type": "FORUM",
+          "topic": "Share supporter feedback, ideas, and suggestions for SNEStorage.",
+          "defaultReactionEmoji": "💡",
+          "availableTags": [
+            "Feedback",
+            "Idea",
+            "Website",
+            "Community"
+          ],
+          "defaultSortOrder": "LATEST_ACTIVITY",
+          "defaultForumLayout": "LIST",
+          "defaultThreadSlowmodeSeconds": 15
+        },
+        {
+          "key": "future-projects",
+          "name": "future-projects",
+          "type": "FORUM",
+          "topic": "Preview and discuss possible future SNEStorage projects and features.",
+          "defaultReactionEmoji": "🔭",
+          "availableTags": [
+            "Concept",
+            "Discussion",
+            "Planned",
+            "Research"
+          ],
+          "defaultSortOrder": "LATEST_ACTIVITY",
+          "defaultForumLayout": "LIST",
+          "defaultThreadSlowmodeSeconds": 15
+        }
+      ]
+    },
+    {
+      "key": "tooling",
+      "name": "Tools",
+      "previousNames": [
+        "Tooling"
+      ],
+      "permissionProfile": "memberCommunity",
+      "channels": [
+        {
+          "key": "tooling-chat",
+          "name": "tools-chat",
+          "previousNames": [
+            "tooling-chat"
+          ],
+          "type": "TEXT",
+          "topic": "Discuss SNES development and hacking tools.",
+          "slowmodeSeconds": 5
+        },
+        {
+          "key": "tools-and-releases",
+          "name": "tools-and-releases",
+          "type": "FORUM",
+          "topic": "Share a tool, announce a release, or keep a development thread updated.",
+          "defaultReactionEmoji": "🛠️",
+          "availableTags": [
+            "WIP",
+            "Released",
+            "Update",
+            "Open Source"
+          ],
+          "defaultSortOrder": "LATEST_ACTIVITY",
+          "defaultForumLayout": "LIST",
+          "defaultThreadSlowmodeSeconds": 10
+        },
+        {
+          "key": "tooling-projects",
+          "name": "tools-projects",
+          "previousNames": [
+            "tooling-projects"
+          ],
+          "type": "FORUM",
+          "topic": "Create one post per tool project and keep its development progress together.",
+          "defaultReactionEmoji": "⚙️",
+          "availableTags": [
+            "Idea",
+            "WIP",
+            "Testing",
+            "Released",
+            "Looking for Help"
+          ],
+          "defaultSortOrder": "LATEST_ACTIVITY",
+          "defaultForumLayout": "LIST",
+          "defaultThreadSlowmodeSeconds": 10
+        },
+        {
+          "key": "tool-help",
+          "name": "tools-help",
+          "previousNames": [
+            "tool-help"
+          ],
+          "type": "FORUM",
+          "topic": "Ask for help with editors, emulators, assemblers, converters, and other tools.",
+          "defaultReactionEmoji": "❓",
+          "availableTags": [
+            "Editor",
+            "Emulator",
+            "Assembler",
+            "Converter",
+            "Other"
+          ],
+          "defaultSortOrder": "LATEST_ACTIVITY",
+          "defaultForumLayout": "LIST",
+          "defaultThreadSlowmodeSeconds": 10
+        }
+      ]
+    },
+    {
+      "key": "resources",
+      "name": "Resources",
+      "permissionProfile": "memberCommunity",
+      "channels": [
+        {
+          "key": "resource-chat",
+          "name": "resource-chat",
+          "type": "TEXT",
+          "topic": "Discuss SNES graphics, music, documentation, code, and other reusable resources.",
+          "slowmodeSeconds": 5
+        },
+        {
+          "key": "resources-and-releases",
+          "name": "resources-and-releases",
+          "type": "FORUM",
+          "topic": "Share and maintain reusable SNES resources and announce new resource releases.",
+          "defaultReactionEmoji": "📦",
+          "availableTags": [
+            "Graphics",
+            "Music",
+            "Documentation",
+            "Code",
+            "Other"
+          ],
+          "defaultSortOrder": "LATEST_ACTIVITY",
+          "defaultForumLayout": "GALLERY",
+          "defaultThreadSlowmodeSeconds": 10
+        },
+        {
+          "key": "resource-projects",
+          "name": "resource-projects",
+          "type": "FORUM",
+          "topic": "Create one post per resource project, collection, or preservation effort.",
+          "defaultReactionEmoji": "🗂️",
+          "availableTags": [
+            "WIP",
+            "Collaboration",
+            "Collection",
+            "Research",
+            "Released"
+          ],
+          "defaultSortOrder": "LATEST_ACTIVITY",
+          "defaultForumLayout": "GALLERY",
+          "defaultThreadSlowmodeSeconds": 10
+        },
+        {
+          "key": "resource-help",
+          "name": "resource-help",
+          "type": "FORUM",
+          "topic": "Ask how to create, convert, credit, find, or use SNES resources.",
+          "defaultReactionEmoji": "❓",
+          "availableTags": [
+            "Graphics",
+            "Audio",
+            "Documentation",
+            "Conversion",
+            "Licensing"
+          ],
+          "defaultSortOrder": "LATEST_ACTIVITY",
+          "defaultForumLayout": "LIST",
+          "defaultThreadSlowmodeSeconds": 10
+        }
+      ]
+    },
+    {
+      "key": "homebrews",
+      "name": "Homebrews",
+      "permissionProfile": "memberCommunity",
+      "channels": [
+        {
+          "key": "homebrew-chat",
+          "name": "homebrew-chat",
+          "type": "TEXT",
+          "topic": "General discussion about creating original software and games for the SNES.",
+          "slowmodeSeconds": 5
+        },
+        {
+          "key": "homebrew-projects",
+          "name": "homebrew-projects",
+          "type": "FORUM",
+          "topic": "Create one post per homebrew project and keep its progress together.",
+          "defaultReactionEmoji": "🎮",
+          "availableTags": [
+            "Idea",
+            "WIP",
+            "Demo",
+            "Released",
+            "Looking for Help"
+          ],
+          "defaultSortOrder": "LATEST_ACTIVITY",
+          "defaultForumLayout": "GALLERY",
+          "defaultThreadSlowmodeSeconds": 10
+        },
+        {
+          "key": "homebrew-help",
+          "name": "homebrew-help",
+          "type": "FORUM",
+          "topic": "Ask about homebrew programming, hardware, graphics, audio, and development workflows.",
+          "defaultReactionEmoji": "💡",
+          "availableTags": [
+            "C",
+            "Assembly",
+            "Hardware",
+            "Graphics",
+            "Audio",
+            "Other"
+          ],
+          "defaultSortOrder": "LATEST_ACTIVITY",
+          "defaultForumLayout": "LIST",
+          "defaultThreadSlowmodeSeconds": 10
+        },
+        {
+          "key": "homebrew-playtesting",
+          "name": "homebrew-playtesting",
+          "type": "FORUM",
+          "topic": "Recruit testers and collect structured feedback for homebrew projects.",
+          "defaultReactionEmoji": "🧪",
+          "availableTags": [
+            "Looking for Testers",
+            "Feedback Wanted",
+            "Bug Report",
+            "Testing Complete"
+          ],
+          "defaultSortOrder": "LATEST_ACTIVITY",
+          "defaultForumLayout": "LIST",
+          "defaultThreadSlowmodeSeconds": 10
+        }
+      ]
+    },
+    {
+      "key": "hacking",
+      "name": "Hacks",
+      "previousNames": [
+        "Hacking"
+      ],
+      "permissionProfile": "memberCommunity",
+      "channels": [
+        {
+          "key": "hacking-chat",
+          "name": "hacks-chat",
+          "previousNames": [
+            "hacking-chat"
+          ],
+          "type": "TEXT",
+          "topic": "General discussion about SNES ROM hacking and modification.",
+          "slowmodeSeconds": 5
+        },
+        {
+          "key": "hacking-projects",
+          "name": "hacks-projects",
+          "previousNames": [
+            "hacking-projects",
+            "hack-projects"
+          ],
+          "type": "FORUM",
+          "topic": "Create one post per ROM hack and keep its progress and releases together.",
+          "defaultReactionEmoji": "🕹️",
+          "availableTags": [
+            "WIP",
+            "Released",
+            "Translation",
+            "Improvement",
+            "Total Conversion"
+          ],
+          "defaultSortOrder": "LATEST_ACTIVITY",
+          "defaultForumLayout": "GALLERY",
+          "defaultThreadSlowmodeSeconds": 10
+        },
+        {
+          "key": "hacking-help",
+          "name": "hacks-help",
+          "previousNames": [
+            "hacking-help"
+          ],
+          "type": "FORUM",
+          "topic": "Ask about assembly, level design, graphics, music, text editing, and patch creation.",
+          "defaultReactionEmoji": "🔧",
+          "availableTags": [
+            "Assembly",
+            "Level Design",
+            "Graphics",
+            "Music",
+            "Text",
+            "Patching"
+          ],
+          "defaultSortOrder": "LATEST_ACTIVITY",
+          "defaultForumLayout": "LIST",
+          "defaultThreadSlowmodeSeconds": 10
+        },
+        {
+          "key": "hack-playtesting",
+          "name": "hacks-playtesting",
+          "previousNames": [
+            "hack-playtesting"
+          ],
+          "type": "FORUM",
+          "topic": "Recruit testers and collect compatibility, balance, and bug feedback for ROM hacks.",
+          "defaultReactionEmoji": "🧪",
+          "availableTags": [
+            "Looking for Testers",
+            "Feedback Wanted",
+            "Bug Report",
+            "Compatibility",
+            "Testing Complete"
+          ],
+          "defaultSortOrder": "LATEST_ACTIVITY",
+          "defaultForumLayout": "LIST",
+          "defaultThreadSlowmodeSeconds": 10
+        }
+      ]
+    },
+    {
+      "key": "staff",
+      "name": "Staff",
+      "permissionProfile": "staffOnly",
+      "channels": [
+        {
+          "key": "staff-chat",
+          "name": "staff-chat",
+          "type": "TEXT",
+          "topic": "Private coordination for SNEStorage moderators."
+        },
+        {
+          "key": "mod-queue",
+          "name": "mod-queue",
+          "type": "FORUM",
+          "topic": "Review moderation cases, reports, and Seal of Quality requests.",
+          "availableTags": [
+            "Discord",
+            "Resource",
+            "User",
+            "Seal of Quality",
+            "Resolved"
+          ],
+          "defaultSortOrder": "LATEST_ACTIVITY",
+          "defaultForumLayout": "LIST"
+        },
+        {
+          "key": "automod-alerts",
+          "name": "automod-alerts",
+          "type": "TEXT",
+          "topic": "Private alerts from Discord AutoMod and raid protection."
+        },
+        {
+          "key": "join-log",
+          "name": "join-log",
+          "type": "TEXT",
+          "topic": "Audit log for SNEStorage account links, joins, role changes, and removals."
+        }
+      ]
+    }
+  ],
+  "nativeSafety": {
+    "rulesScreening": {
+      "enabled": true,
+      "rulesChannel": "info.rules"
+    },
+    "raidProtection": {
+      "enabled": true,
+      "alertsChannel": "staff.automod-alerts"
+    },
+    "memberDirectMessageProtection": true,
+    "disableEveryoneAndHereMentionsForMembers": true,
+    "disableInviteCreationForMembers": true,
+    "disableAppInstallationForMembers": true
+  },
+  "automod": {
+    "alertChannel": "staff.automod-alerts",
+    "exemptRoles": [
+      "moderator",
+      "bot"
+    ],
+    "rules": [
+      {
+        "key": "mention-spam",
+        "name": "Block mention spam",
+        "enabled": true,
+        "triggerType": "MENTION_SPAM",
+        "maxUniqueMentions": 5,
+        "actions": [
+          "BLOCK_MESSAGE",
+          "SEND_ALERT"
+        ]
+      },
+      {
+        "key": "spam-content",
+        "name": "Block spam content",
+        "enabled": true,
+        "triggerType": "SPAM",
+        "actions": [
+          "BLOCK_MESSAGE",
+          "SEND_ALERT"
+        ]
+      }
+    ],
+    "commonFlaggedWordListsEnabled": false,
+    "commonFlaggedWordListsReason": "SNEStorage evaluates language by context and does not prohibit a word solely for being a particular word."
+  },
+  "integrations": {
+    "resourceLog": {
+      "enabled": true,
+      "channel": "info.resource-log",
+      "delivery": "BOT",
+      "events": [
+        "resource.created",
+        "resource.version.created"
+      ],
+      "include": [
+        "resourceName",
+        "resourceUrl",
+        "videogame",
+        "types",
+        "authors",
+        "description",
+        "preview",
+        "contentWarnings"
+      ]
+    },
+    "membershipAudit": {
+      "enabled": true,
+      "channel": "staff.join-log",
+      "events": [
+        "discord.linked",
+        "discord.joined",
+        "discord.role_assigned",
+        "discord.unlinked",
+        "discord.removed"
+      ]
+    }
+  }
+}

@@ -3,7 +3,7 @@
 .resource-type-picker ::deep .type-help { margin: 0 0 .65rem; color: #baacce; font-size: .8rem; }
 .resource-type-picker ::deep .type-options { display: grid; gap: .55rem; }
 .resource-type-picker ::deep .type-category { border: 1px solid #674388; border-radius: 5px; overflow: hidden; }
-.resource-type-picker ::deep .type-category > summary { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: .75rem; min-height: 50px; padding: .75rem .8rem; color: #e1d8f3; background: linear-gradient(110deg, #2c1741, #1d102e); cursor: pointer; list-style: none; }
+.resource-type-picker ::deep .type-category > summary { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: .75rem; min-height: 50px; padding: .75rem .8rem; color: #e1d8f3; background: linear-gradient(110deg, rgba(44, 23, 65, var(--ui-surface-alpha)), rgba(29, 16, 46, var(--ui-surface-alpha))); cursor: pointer; list-style: none; }
 .resource-type-picker ::deep .type-category > summary::-webkit-details-marker { display: none; }
 .resource-type-picker ::deep .type-category > summary::before { content: "▸"; color: #c28aff; font-size: 1rem; }
 .resource-type-picker ::deep .type-category[open] > summary::before { content: "▾"; }

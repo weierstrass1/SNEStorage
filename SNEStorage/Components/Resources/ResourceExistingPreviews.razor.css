@@ -3,7 +3,7 @@
 .existing-carousel { display: flex; justify-content: center; margin: 1rem 0; }
 .existing-carousel ::deep .media-carousel { max-width: 100%; }
 .existing-preview-list { list-style: none; padding: 0; display: grid; gap: .6rem; }
-.existing-preview-list li { display: flex; align-items: center; justify-content: space-between; gap: 1rem; border: 1px solid #694394; border-radius: 4px; padding: .65rem .8rem; background: #11091c; }
+.existing-preview-list li { display: flex; align-items: center; justify-content: space-between; gap: 1rem; border: 1px solid #694394; border-radius: 4px; padding: .65rem .8rem; background: rgba(17, 9, 28, var(--ui-inset-alpha)); }
 .existing-preview-list span { min-width: 0; overflow-wrap: anywhere; font-size: .85rem; }
 .existing-preview-list small { display: block; margin-top: .3rem; color: #ffb49c; }
 .existing-preview-list button { flex-shrink: 0; padding: .5rem .75rem; border: 1px solid #8053ab; border-radius: 4px; color: #ddc8f7; background: #28163b; cursor: pointer; }

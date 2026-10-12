@@ -9,7 +9,7 @@ html {
 }
 
 .btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+  box-shadow: 0 0 0 0.1rem #150d26, 0 0 0 0.25rem #c499ff;
 }
 
 html {
@@ -74,7 +74,7 @@ a:hover {
     padding: clamp(1.5rem, 4vw, 3rem);
     border: 1px solid rgba(148, 168, 230, .2);
     border-radius: 1rem;
-    background: rgba(21, 31, 70, .78);
+    background: rgba(21, 31, 70, var(--ui-surface-alpha));
 }
 
 .page-message {
@@ -101,7 +101,7 @@ a:hover {
     padding: clamp(1.5rem, 4vw, 2.5rem);
     border: 1px solid rgba(148, 168, 230, .24);
     border-radius: 1rem;
-    background: rgba(17, 25, 58, .92);
+    background: rgba(17, 25, 58, var(--ui-surface-alpha));
     box-shadow: 0 1.5rem 4rem rgba(0, 0, 0, .2);
 }
 
@@ -161,7 +161,7 @@ a:hover {
     margin: 0;
     color: #eef1ff;
     border-collapse: collapse;
-    background: rgba(12, 20, 49, .9);
+    background: rgba(12, 20, 49, var(--ui-surface-alpha));
 }
 
 .resource-table > :not(caption) > * > * {
@@ -222,7 +222,7 @@ a:hover {
 
 Table {
     border: 0px solid #000000;
-    background-color: #141E3F;
+    background-color: rgba(20, 30, 63, var(--ui-inset-alpha));
     color: white;
     background-image: none;
     border-collapse: separate;

@@ -14,7 +14,7 @@
 .author-add:disabled { opacity: .5; cursor: not-allowed; }
 .author-add:hover:not(:disabled), .author-retry:hover { color: #ffe14d; background: #351951; }
 .author-status .author-error { color: #ffb1c4; margin-bottom: .5rem; }
-.author-results { max-height: 240px; overflow-y: auto; border: 1px solid #59408f; border-radius: 4px; background: #0d091d; scrollbar-color: #7a4aa5 #0d091d; overscroll-behavior: contain; }
+.author-results { max-height: 240px; overflow-y: auto; border: 1px solid #59408f; border-radius: 4px; background: rgba(13, 9, 29, var(--ui-popup-alpha)); scrollbar-color: #7a4aa5 #0d091d; overscroll-behavior: contain; }
 .author-choice { display: flex; width: 100%; min-height: 44px; align-items: center; justify-content: space-between; gap: .75rem; padding: .6rem .85rem; border: 0; border-bottom: 1px solid #2e1d4b; color: #ded5ef; background: transparent; font: inherit; font-size: .92rem; text-align: left; }
 .author-choice > span:first-child { overflow-wrap: anywhere; min-width: 0; }
 .author-choice-add { color: #ffe14d; flex-shrink: 0; font-size: 1.15rem; }

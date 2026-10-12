@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.JSInterop;
 using SNEStorage.Components.Resources;
 using SNEStorage.Models;
+using SNEStorage.DTOs;
 using RouteData = Microsoft.AspNetCore.Components.RouteData;
 
 namespace SNEStorage.Components.Shared;
@@ -54,7 +55,9 @@ public partial class PageAccessGuard : IAsyncDisposable
         if (_requirement is not null && HttpContext is { Response.HasStarted: false } && AuthenticationStateTask is not null)
         {
             var state = await AuthenticationStateTask;
-            if (state.User.Identity?.IsAuthenticated != true) HttpContext.Response.StatusCode = StatusCodes.Status403Forbidden;
+            if (state.User.Identity?.IsAuthenticated != true ||
+                _requirement.StaffOnly && !StaffAccess.IsAllowed(state.User))
+                HttpContext.Response.StatusCode = StatusCodes.Status403Forbidden;
         }
     }
 
@@ -66,10 +69,11 @@ public partial class PageAccessGuard : IAsyncDisposable
         var generation = _generation;
         _errorDomain = "profile";
         var management = _requirement.ResourceManagement;
+        var staffOnly = _requirement.StaffOnly;
         var resourceId = RouteData.RouteValues.GetValueOrDefault("ResourceId") as long?;
         try
         {
-            _module ??= await JavaScript.InvokeAsync<IJSObjectReference>("import", _lifetime.Token, "./js/page-access.js?v=1");
+            _module ??= await JavaScript.InvokeAsync<IJSObjectReference>("import", _lifetime.Token, "./js/page-access.js?v=5");
             if (_disposed) return;
             if (_watcher is null)
             {
@@ -82,13 +86,19 @@ public partial class PageAccessGuard : IAsyncDisposable
             if (!AcceptResponse(accountResponse)) return;
             var profile = JsonSerializer.Deserialize<UserInfo>(accountResponse.Body, JsonOptions);
             if (string.IsNullOrWhiteSpace(profile?.UserId)) { Deny(502); return; }
+            if (staffOnly)
+            {
+                var state = AuthenticationStateTask is null ? null : await AuthenticationStateTask;
+                if (_disposed || generation != _generation) return;
+                if (state is null || !StaffAccess.IsAllowed(state.User, profile.UserId)) { Deny(403); return; }
+            }
             if (_access is not null && _access.Profile.UserId != profile.UserId)
             {
                 _access = null;
                 StateHasChanged();
             }
 
-            Resource? resource = null;
+            ResourceReadDTO? resource = null;
             if (management)
             {
                 _errorDomain = "resource";
@@ -97,7 +107,7 @@ public partial class PageAccessGuard : IAsyncDisposable
                 if (_disposed || generation != _generation) return;
                 if (resourceResponse.Status is 401 or 403) { Deny(403); return; }
                 if (!AcceptResponse(resourceResponse)) return;
-                resource = JsonSerializer.Deserialize<Resource>(resourceResponse.Body, JsonOptions);
+                resource = JsonSerializer.Deserialize<ResourceReadDTO>(resourceResponse.Body, JsonOptions);
                 if (resource is null || resource.Id != resourceId) { Deny(502); return; }
                 if (!ResourceManagementAccess.CanDisplay(resource, profile.UserId)) { Deny(403); return; }
             }

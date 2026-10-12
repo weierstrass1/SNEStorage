@@ -39,10 +39,10 @@ public partial class AccountNavigation : IAsyncDisposable
         _initializing = true;
         try
         {
-            _module ??= await JavaScript.InvokeAsync<IJSObjectReference>("import", "./js/account-navigation.js?v=4");
+            _module ??= await JavaScript.InvokeAsync<IJSObjectReference>("import", "./js/account-navigation.js?v=9");
             if (_disposed) { await _module.DisposeAsync(); return; }
             _reference ??= DotNetObjectReference.Create(this);
-            _monitor = await _module.InvokeAsync<IJSObjectReference>("watchAccount", "/api/profile/me", _reference);
+            _monitor = await _module.InvokeAsync<IJSObjectReference>("watchAccount", _reference);
             if (_disposed) await StopMonitorAsync();
         }
         catch (JSDisconnectedException) { }
@@ -50,6 +50,8 @@ public partial class AccountNavigation : IAsyncDisposable
         {
             if (_disposed) return;
             Logger.LogWarning(exception, "Account navigation could not be initialized.");
+            _lastUnavailableStatus = 0;
+            StateHasChanged();
         }
         finally { _initializing = false; }
     }

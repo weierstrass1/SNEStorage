@@ -1,5 +1,42 @@
 # Resource submission frontend
 
+## Comment read contract
+
+CommentApiClient reads CommentReadDto from GET /api/comment/resource/{resourceId}
+and GET /api/comment/{commentId}/replies. Cards render Likes, Dislikes, MyVote and
+HasReplies directly; lists do not reconstruct Score.LikesUsers or Childrens.
+MyVote=Remove means no vote. Anonymous, own and deleted comments have no vote controls.
+Reply forms, expansion, automatic page loading and scrolling to a new comment remain.
+
+Mutation responses keep their existing controller contracts: new resource comments
+return ResourceComments, replies return CommentComment, and votes return LikeUsers.
+CommentPresentation adapts a newly created comment to the read DTO and replaces
+immutable DTOs after confirmed actions. It has no database or business service access.
+Votes update only after the controller confirms success; the GET remains the source
+for aggregate counts after refresh. Deleted comments are shown only while HasReplies
+is true. Edit/delete refresh the loaded pages without repeating the mutation.
+
+## Resource text validation
+
+Creation and editing share browser validation in resource-form-validation.js:
+names use 2–100 letters/digits/internal spaces, repository URLs use HTTP/HTTPS and
+at most 2,048 characters, and descriptions and changed release notes use 10–10,000
+characters. Empty repository links are permitted by the frontend to clear an existing
+link; ResourceService.Edit must also accept that empty-string contract. Unchanged
+repository links and unchanged version labels/release notes are omitted when applicable.
+Resource errors are presented using the controller-prefixed enum names.
+
+## Version input
+
+`ResourceVersionInput` is shared by resource creation, version uploads and version
+editing. Its markup, C# presentation code and styles are separate files. The controls
+combine a base number (`1`, `1.2` or `1.2.3`), a Stable/Alpha/Beta/RC selector and an
+optional suffix number into the existing single multipart `Version` field. Examples:
+`1-alpha.10` and `2.50-beta`. The complete label is limited to 25 characters and each numeric
+component contains 1–4 digits, including leading zeros. Browser validation reads the visible controls
+before submission. An unchanged legacy label is omitted when editing, allowing release
+notes to be updated without renaming that version. Backend validation remains authoritative.
+
 ## Routes and controller contract
 
 - Form: `/Resource/Create`. The previous `/Resources/Create` URL is kept as an alias.
@@ -74,11 +111,10 @@ screen without loading the form. The controller must separately protect the POST
 the UI restriction is not a replacement for that check.
 
 The individual `/Resource/{id}` view calls `GET /api/resource/{id}` using browser
-credentials, so the controller handles public/unlisted/private access. It shows
-the data returned by that action and does not query the database. Author editing
-links use the account verified by GET /api/profile/me and the resource's authors,
-resource submitter and version submitters returned by the controller;
-the eventual mutation endpoints must enforce their own permissions.
+credentials and reads ResourceReadDTO. The controller handles public/unlisted/private
+access and supplies CanEdit. Editing links use that flag and the account verified
+by GET /api/profile/me. The component does not reconstruct contributor permissions
+from authors or versions; mutation endpoints enforce their own permissions.
 
 Public account data comes from each relation's UserSummary (UserNameDTO), not its
 ignored ApplicationUser navigation. ResourceDetails uses that summary for author
@@ -122,12 +158,12 @@ ResourceReleaseList displays release history and individual download links.
 ResourceCreated already redirects to `/Resource/{id}` after three seconds and cancels
 that redirect when disposed; its implementation was kept.
 
-Get must include the relationships it wants to expose: ResourceResourceTypes and
-ResourceType, ResourceDependencies and the dependency's public name, ResourcesAuthors
-and public author names, and ResourceComments with Comment/public user data if comments
-are desired. Score.ScoresUsers supplies ratings. With the current response, comments
-are read-only: no comment/reply/vote actions exist. Missing information is displayed
-as unavailable; the frontend does not invent API actions for it.
+Get supplies general information, Videogame, Visibility, Types (including category
+fields) and Tags through ResourceReadDTO. Authors, dependencies, rating, latest version
+and previews load through their separate actions with section loading/error states.
+Version history loads when its tab opens. Comments, replies and votes use their
+existing controller actions. The previous Used by block had no populated response
+or dedicated endpoint; it is not rendered with this DTO.
 
 Community credits display UserSummary.Username and link to the agreed public profile route
 `/Profile/{username}` with URL-encoded usernames. That public profile page is still
@@ -220,7 +256,8 @@ Resource submission uses a frontend form-state class while fields are incomplete
 the browser sends the ResourceCreateDTO contract as multipart data without constructing
 IFormFile objects. Name and Description have minimum lengths of 2 and 10, respectively;
 Version and ChangeLog are now required. RepositoryURL accepts an optional HTTP/HTTPS
-link up to 100 characters. ResourceCreateDTO supplies SealOfQualityRequested for
+link up to 2,048 characters. Names allow 2–100 letters, digits and internal spaces;
+descriptions and changed release notes allow 10–10,000 characters. ResourceCreateDTO supplies SealOfQualityRequested for
 the first release; the browser explicitly sends true or false. ResourceEditDTO
 does not supply this field because it edits resource information, not versions.
 ResourceDetails shows Resource.UpdatedAt and an approved-rules message only when
@@ -315,10 +352,131 @@ everything correctly:
 - Edit's preview FileId and new external-author/dependency Id deduplication have the
   same zero-ID issue: several additions can collapse into one before SaveChanges.
   The owner needs to change those keys for multi-item editing to persist correctly.
-- Edit currently calls GetAuthors with IAmAuthor=true. This re-adds the editing user
-  even when RemoveAuthorsIDs includes their existing association; ordinary duplicate
-  suppression does not enable removing oneself. Keep it only if that is the intended
-  backend policy, otherwise use false for the edit additions.
+- Edit uses ResourceEditDTO.IAmAuthor. The self-author checkbox starts checked when the current account is an author. Unchanged self-credit omits IAmAuthor; changed self-credit sends true/false. Unchecking also sends the original author association in RemoveAuthorsIDs. The picker selects other accounts.
 
 Compilation checks the code and Razor integration, not persistence against SQL Server.
 No controller was invoked to mutate live resource data during this work.
+
+## Resource details: independent section requests (2026-10-08)
+
+- `ResourceDetails` renders the main `GET /api/resource/{id}` response immediately.
+  The initial view no longer waits for profile verification or the section responses.
+- `ResourceDetails.Sections.cs` orchestrates browser requests to the controller and
+  keeps separate loading, data, and error states. It does not call services or EF.
+- Overview requests run concurrently: `authors`, `external-authors`, `dependencies`,
+  `external-dependencies`, `versions/latest`, `rating`, and `previews` under
+  `/api/resource/{id}`. Each section displays `Loading…` and has its own retry action.
+- Internal authors use `ResourceAuthorDTO`: its Id identifies the resource-author
+  association, and UserSummary contains `UserNameDTO` with the user's Id/name/color.
+  Internal dependency
+  names and links use `ResourceDependencyViewDTO`. Ratings use `RatingReadDto`'s
+  aggregate and current user's vote, without receiving the full vote collection.
+- Saving a rating refreshes only `/rating`. A failed summary refresh does not imply
+  that the successful rating submission failed.
+- `/versions` loads on opening Version history. It also loads for authenticated
+  visitors whose contributor status is not yet confirmed, because the current API
+  does not provide a lightweight permission result for previous version submitters.
+  Rating controls wait for those permissions; the public content remains usable.
+- The download remains next to the description and the preview carousel remains
+  centered. Until the history is available, downloads are explicitly labeled as
+  downloads of the latest version rather than an incomplete total.
+- Section requests have separate cancellation keys and a 30-second loading limit.
+  Responses from a previous resource/page load cannot overwrite the current view.
+- `GET /api/resource/{id}/previews` now returns `List<ResourcePreview>` with
+  association IDs, FileIds, and File metadata. The existing carousel uses that data
+  and requests video bytes only after Play.
+
+## Editors and access after the read API split
+
+- `PageAccessGuard` reads ResourceReadDTO and checks CanEdit after verifying the
+  account. It does not fetch authors or version history to determine access.
+- `AccountPageContext` passes the initial ResourceReadDTO to the editor, avoiding
+  a repeated general-information request. This is the current page's view state.
+- `ResourceEditor.Loading.cs` loads authors, external authors, dependencies,
+  external dependencies, previews and editor options concurrently for resource
+  editing. Add version needs no section requests; edit version reads history to
+  locate the selected version using the available API contract. An explicit reload
+  requests fresh responses; same-account access rechecks preserve the draft.
+- The form is shown only after its required responses succeed. A failed read is
+  presented with retry instead of rendering empty original selections.
+- `ResourceEditorSelectionSnapshot` retains association IDs for removals and user/
+  resource IDs for additions. In particular RemoveAuthorsIDs uses ResourceAuthorDTO.Id
+  and AuthorsIDs uses ResourceAuthorDTO.UserSummary.Id. ResourceReadDTO.Tags.Id and
+  Types.Id are association IDs; TagId and ResourceTypeId identify their catalog entries.
+- `ResourceApiClient.cs` and `resource-read.js` are shared frontend HTTP transport
+  helpers. They deserialize controller responses and coordinate cancellation/timeouts;
+  they contain no queries, business operations, or calls to backend services.
+
+## CAPTCHA (2026-10-09)
+
+- `CaptchaPrompt` is a shared Blazor view with a separate code-behind for browser
+  initialization/disposal. Its dialog uses English copy and preserves the form behind it.
+- `captcha.js` lazily loads the official Turnstile script only when needed. It renders
+  the widget explicitly, uses the public SiteKey from App's metadata, and handles
+  cancellation, errors, expiry, retry and widget cleanup. The SecretKey never reaches JS.
+- Register, resource creation/editing and version creation/editing request a fresh token
+  at submission. Tokens travel in `X-Captcha-Token`, including the Register form's
+  existing antiforgery field and multipart data. DTOs are unchanged.
+- Resource comments, replies, comment edits, likes/dislikes and resource ratings make
+  the ordinary request first. Only a `CaptchaRequired`/`CaptchaInvalid` rejection
+  causes a challenge and one retry. The API owns the frequency policy and counters.
+- HTTP writes are never repeated after network errors, unknown responses or 5xx.
+  The server must only return CAPTCHA rejections before running the action.
+- Registration still submits to RegisterController and follows its CheckEmail redirect.
+  A failed registration redirect or CAPTCHA error preserves the current inputs/files.
+- Removing/navigating away from the originating component aborts its pending challenge
+  and request. No CAPTCHA token is persisted or shared with another operation.
+- `docs/captcha-backend-integracion.md` contains the backend contract and proposed
+  frequency implementation for the owner to apply, including deployment limitations.
+
+## Resource library (2026-10-09)
+
+- `/Resources` (also `/Resource` and `/Resource/Index`) reads
+  `GET /api/resource/find` with query parameters matching ResourceFinderDTO,
+  `Sorting.SortType`, `Sorting.SortOrderDescending`, `maxAmount` and `page`.
+  Success is a plain ResourceFinderViewDTO array; errors use ResourceServiceResult.
+- Resources.razor contains presentation; its code-behind coordinates UI state.
+  ResourceListApiClient and resource-list.js provide browser HTTP with session
+  cookies, cancellation and a 30-second timeout. They never call services directly.
+- The default page is 20 resources, newest first. Pages of 100/200 request 50 at
+  a time, with backend page = UI page * (UI page size / 50) + block index.
+  All requests consecutive blocks of 50 without a page boundary. An observer
+  prefetches near the bottom; Load more remains available for keyboard users.
+  A failed block preserves existing rows and retries only that block.
+- The API has no total count. Previous/Next navigation stops on a short block;
+  if an exact full final page is followed by an empty page, the previous rows
+  remain displayed and Next is disabled. No total or page count is invented.
+- Filter edits are drafts until Apply filters. Types reuse the categorized picker;
+  games reuse the searchable picker without automatically selecting Any (id 1).
+  These options preserve the pickers' default behavior in creation/editing forms.
+- Fixed single-game/type/category filters hide their corresponding columns.
+  Names/colors, dates, latest archive, ratings, content flags and the quality seal
+  come from the list response; no additional request is made for each row.
+- Authors/types/categories expand inline. The first five alphabetical tags are
+  always visible; additional tags use a native popover opened with a button and
+  closed with Escape or outside click. Compact dates align left beside the tags
+  or below them when space is limited; the download count follows the download button.
+  Download links use `/api/resource/{id}/file/{MainVersion.Id}/download`.
+- Name is the primary filter, always visible. Authors/tags, classification,
+  rating, dates and content preferences are separate collapsed groups. Dates
+  contain paired From/Through ranges for Created At and Last Version Created At.
+- The author text field sends `AuthorLike`; the backend owner must expose it in
+  ResourceFinderDTO and implement matching internal and external author names.
+
+## Home latest resources
+
+Home contains a logo cover and LatestResources only. Edit its introductory sentence
+in Components/Pages/Home.razor. LatestResources reuses ResourceListRow and the
+ResourceListApiClient; its code-behind only manages loading, errors and disposal.
+
+The browser calls GET /api/resource/find with maxAmount=5, page=0,
+Sorting.SortType=CreatedAt, Sorting.SortOrderDescending=true, and all five
+CanIncludes* flags false. Filtering, sorting and pagination stay in ResourceController
+and ResourceService. The request uses credentials: omit so it is anonymous: even
+staff and contributors see only the public feed, rather than their private resources.
+It does not change the user's session or the credentials of downloads/account requests.
+
+The cover renders before the list arrives. There is one resource query, no options,
+profile checks, previews or per-resource queries in this component. Failed loads
+have a retry button; leaving the page aborts only this feed's request. No backend
+files or DTOs were changed for the Home implementation.

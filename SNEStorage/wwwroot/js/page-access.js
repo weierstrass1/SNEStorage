@@ -1,46 +1,33 @@
-import { getProfile, cancelProfileRequest } from "./profile.js?v=7";
+import { getProfile, cancelProfileRequest } from "./profile.js?v=10";
+import { watchAccountSession } from "./account-session.js?v=2";
+import { getResource, cancelResourceReads } from "./resource-read.js?v=2";
+export { getResourceSection } from "./resource-read.js?v=2";
 
 export function getPageAccount(key) {
     return getProfile("/api/profile/me", `${key}-account`, false);
 }
 
 export function getPageResource(resourceId, key) {
-    return getProfile(`/api/resource/${encodeURIComponent(resourceId)}`, `${key}-resource`, false);
+    return getResource(resourceId, `${key}-resource`);
 }
 
 export function cancelPageAccess(key) {
     cancelProfileRequest(`${key}-account`);
-    cancelProfileRequest(`${key}-resource`);
+    cancelResourceReads(`${key}-resource`);
 }
 
 export function watchPageAccess(receiver) {
     let stopped = false;
-    let timer;
-    let channel;
     function check() {
-        if (stopped || document.hidden) return;
-        window.clearTimeout(timer);
-        timer = window.setTimeout(() => {
-            if (!stopped) receiver.invokeMethodAsync("RecheckPageAccess").catch(() => stop());
-        }, 150);
+        if (!stopped) receiver.invokeMethodAsync("RecheckPageAccess").catch(() => stop());
     }
-    function visible() { if (!document.hidden) check(); }
+    const monitor = watchAccountSession(check);
     function stop() {
         stopped = true;
-        window.clearTimeout(timer);
-        window.removeEventListener("focus", check);
-        window.removeEventListener("snestorage-session-rejected", check);
-        window.removeEventListener("pagehide", stop);
-        document.removeEventListener("visibilitychange", visible);
-        channel?.close();
+        monitor.stop();
+        window.removeEventListener("pagehide", pageHidden);
     }
-    window.addEventListener("focus", check);
-    window.addEventListener("snestorage-session-rejected", check);
-    window.addEventListener("pagehide", stop);
-    document.addEventListener("visibilitychange", visible);
-    try {
-        channel = new BroadcastChannel("snestorage-account");
-        channel.onmessage = check;
-    } catch { /* Focus checks still work when cross-tab messaging is unavailable. */ }
+    function pageHidden(event) { if (!event.persisted) stop(); }
+    window.addEventListener("pagehide", pageHidden);
     return { stop };
 }

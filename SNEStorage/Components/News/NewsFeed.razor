@@ -1,0 +1,33 @@
+<div class="news-feed" aria-busy="@(_initializing || _loading)">
+    @foreach (var item in _items)
+    {
+        <NewsCard @key="item.Id" Item="item" Compact="Compact" CanEdit="CanEdit" />
+    }
+    @if (_initializing || _loading)
+    {
+        <div class="news-status" role="status">@(_items.Count == 0 ? "Loading news…" : "Loading more news…")</div>
+    }
+    else if (_error is not null)
+    {
+        <div class="news-status" role="alert">
+            <p>@_error</p>
+            <button type="button" @onclick="RetryAsync">Try again</button>
+        </div>
+    }
+    else if (_items.Count == 0)
+    {
+        <div class="news-status">No news yet. Check back soon for updates!</div>
+    }
+    else if (Infinite)
+    {
+        @if (_endReached)
+        {
+            <p class="news-end">You're all caught up.</p>
+        }
+        else
+        {
+            <button class="load-more" type="button" @onclick="LoadMoreAsync">Load more news</button>
+        }
+    }
+    <div class="news-sentinel" @ref="_sentinel" aria-hidden="true"></div>
+</div>

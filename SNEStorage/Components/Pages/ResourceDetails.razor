@@ -7,7 +7,7 @@
 {
     <section class="detail-loading" role="status" aria-live="polite">
         <h1>Loading resource…</h1>
-        <p>Retrieving the resource and its releases.</p>
+        <p>Retrieving the resource details.</p>
     </section>
 }
 else if (_errorStatus is { } status)
@@ -26,13 +26,24 @@ else if (_resource is { } resource)
         <header class="detail-header">
             <div class="detail-title-row">
                 <div class="detail-title-and-rating">
-                    <h1><span class="detail-resource-name @(HasQualitySeal ? "has-quality-seal" : "")">@ResourceName</span>
+                    <h1><span class="detail-resource-name @(HasQualitySeal ? "has-quality-seal" : "")">
+                            @if (HasQualitySeal) { <QualityText Text="@ResourceName" /> }
+                            else { @ResourceName }
+                        </span>
                         @if (HasQualitySeal)
                         {
                             <ResourceQualitySeal Size="72" Title="The latest release meets SNEStorage's quality standards." />
                         }
                     </h1>
-                    <ResourceRating @key="resource.Id" ResourceId="resource.Id" Score="resource.Score" IsAuthenticated="_isAuthenticated" CurrentUserId="@_currentUserId" IsOwnResource="CanManage" IsPrivate="@(resource.VisibilityId == 3)" Saving="_savingRating" Message="@_ratingMessage" OnRate="RateAsync" />
+                    <ResourceSectionStatus Loading="_rating.Loading" ErrorStatus="_rating.ErrorStatus" ErrorBody="@_rating.ErrorBody" Label="rating" OnRetry="LoadRatingAsync" />
+                    @if (_rating.Ready && _rating.Data is { } rating)
+                    {
+                        <ResourceRating @key="resource.Id" ResourceId="resource.Id" Rating="rating" IsAuthenticated="_isAuthenticated" CurrentUserId="@_currentUserId" IsOwnResource="CanManage" PermissionsReady="RatingPermissionsReady" IsPrivate="@(resource.Visibility.Id == 3)" Saving="_savingRating" Message="@_ratingMessage" OnRate="RateAsync" />
+                    }
+                    @if (_rating.ErrorStatus is not null && !string.IsNullOrWhiteSpace(_ratingMessage))
+                    {
+                        <p class="detail-muted" role="status">@_ratingMessage</p>
+                    }
                 </div>
                 @if (CanManage)
                 {
@@ -47,12 +58,14 @@ else if (_resource is { } resource)
 
         <section class="detail-authors" aria-labelledby="authors-heading">
             <h2 id="authors-heading">Authors</h2>
-            @if (resource.ResourcesAuthors.Count == 0 && resource.ResourceExternalAuthors.Count == 0)
+            <ResourceSectionStatus Loading="_authors.Loading" ErrorStatus="_authors.ErrorStatus" ErrorBody="@_authors.ErrorBody" Label="authors" OnRetry="LoadAuthorsAsync" />
+            <ResourceSectionStatus Loading="_externalAuthors.Loading" ErrorStatus="_externalAuthors.ErrorStatus" ErrorBody="@_externalAuthors.ErrorBody" Label="external authors" OnRetry="LoadExternalAuthorsAsync" />
+            @if (_authors.Ready && _externalAuthors.Ready && (_authors.Data?.Count ?? 0) == 0 && (_externalAuthors.Data?.Count ?? 0) == 0)
             {
                 <p class="detail-muted">Author information is not available.</p>
             }
             <ul class="detail-credits">
-                @foreach (var author in resource.ResourcesAuthors)
+                @foreach (var author in _authors.Data ?? [])
                 {
                     <li>
                         @if (AuthorProfileUrl(author) is { } profileUrl)
@@ -65,7 +78,7 @@ else if (_resource is { } resource)
                         }
                     </li>
                 }
-                @foreach (var author in resource.ResourceExternalAuthors)
+                @foreach (var author in _externalAuthors.Data ?? [])
                 {
                     <li><span>@author.Author</span><small>External author</small></li>
                 }
@@ -74,7 +87,7 @@ else if (_resource is { } resource)
 
         <div class="detail-tabs" role="tablist" aria-label="Resource sections">
             <button type="button" id="resource-overview-tab" role="tab" aria-selected="@(!_showVersions)" aria-controls="resource-overview-panel" tabindex="@(_showVersions ? -1 : 0)" @onclick="ShowOverview" @onkeydown="HandleTabKeyDown">Overview</button>
-            <button type="button" id="resource-versions-tab" role="tab" aria-selected="@_showVersions" aria-controls="resource-versions-panel" tabindex="@(_showVersions ? 0 : -1)" @onclick="ShowVersions" @onkeydown="HandleTabKeyDown">Version history <span>@Versions.Count</span></button>
+            <button type="button" id="resource-versions-tab" role="tab" aria-selected="@_showVersions" aria-controls="resource-versions-panel" tabindex="@(_showVersions ? 0 : -1)" @onclick="ShowVersions" @onkeydown="HandleTabKeyDown">Version history @if (_versions.Ready) { <span>@Versions.Count</span> }</button>
         </div>
 
         <div id="resource-overview-panel" role="tabpanel" aria-labelledby="resource-overview-tab" hidden="@_showVersions" tabindex="0" class="detail-tab-panel">
@@ -98,28 +111,28 @@ else if (_resource is { } resource)
                     <div>
                         <dt>Resource types</dt>
                         <dd class="detail-badges">
-                            @if (resource.ResourceResourceTypes.Count == 0)
+                            @if (resource.Types.Count == 0)
                             {
                                 <span class="detail-muted">Not specified</span>
                             }
-                            @foreach (var type in resource.ResourceResourceTypes)
+                            @foreach (var type in resource.Types)
                             {
-                                <span class="detail-badge">@(type.ResourceType?.Name ?? "Resource type")</span>
+                                <span class="detail-badge">@type.Name</span>
                             }
                         </dd>
                     </div>
                     <div>
                         <dt>Tags</dt>
                         <dd class="detail-tags">
-                            @if (resource.ResourceTags.Count == 0)
+                            @if (resource.Tags.Count == 0)
                             {
                                 <span class="detail-muted">No tags</span>
                             }
-                            @foreach (var tag in resource.ResourceTags)
+                            @foreach (var tag in resource.Tags)
                             {
-                                @if (!string.IsNullOrWhiteSpace(tag.Tag?.Name))
+                                @if (!string.IsNullOrWhiteSpace(tag.Name))
                                 {
-                                    <span>#@tag.Tag.Name</span>
+                                    <span>#@tag.Name</span>
                                 }
                             }
                         </dd>
@@ -134,18 +147,26 @@ else if (_resource is { } resource)
                 <section class="detail-download-section" aria-label="Download latest version">
                     <div>
                         <h2>Latest version</h2>
-                        @if (LatestVersion is { } latest)
+                        <ResourceSectionStatus Loading="_latest.Loading" ErrorStatus="_latest.ErrorStatus" ErrorBody="@_latest.ErrorBody" Label="latest version" OnRetry="LoadLatestAsync" />
+                        @if (_latest.Ready && LatestVersion is { } latest)
                         {
                             <p><strong>@VersionLabel(latest)</strong> · @FormatDate(latest.CreatedAt)</p>
                             <ResourceVersionStatus Version="latest" />
                         }
-                        <span>@Downloads.ToString("N0", DisplayCulture) total downloads</span>
+                        @if (_versions.Ready)
+                        {
+                            <span>@Downloads.ToString("N0", DisplayCulture) total downloads</span>
+                        }
+                        else if (_latest.Ready && LatestVersion is { } downloadVersion)
+                        {
+                            <span>@downloadVersion.Downloads.ToString("N0", DisplayCulture) downloads of this version</span>
+                        }
                     </div>
-                    @if (LatestDownload is { } download)
+                    @if (_latest.Ready && LatestDownload is { } download)
                     {
                         <a class="detail-download" href="@download" data-enhance-nav="false">Download <span aria-hidden="true">↓</span></a>
                     }
-                    else
+                    else if (_latest.Ready)
                     {
                         <span class="detail-muted">No download available</span>
                     }
@@ -168,18 +189,20 @@ else if (_resource is { } resource)
 
             <section class="detail-panel" aria-labelledby="dependencies-heading">
                 <h2 id="dependencies-heading">Dependencies</h2>
-                @if (resource.ResourceDependencies.Count == 0 && resource.ResourceExternalDependencies.Count == 0)
+                <ResourceSectionStatus Loading="_dependencies.Loading" ErrorStatus="_dependencies.ErrorStatus" ErrorBody="@_dependencies.ErrorBody" Label="dependencies" OnRetry="LoadDependenciesAsync" />
+                <ResourceSectionStatus Loading="_externalDependencies.Loading" ErrorStatus="_externalDependencies.ErrorStatus" ErrorBody="@_externalDependencies.ErrorBody" Label="external dependencies" OnRetry="LoadExternalDependenciesAsync" />
+                @if (_dependencies.Ready && _externalDependencies.Ready && (_dependencies.Data?.Count ?? 0) == 0 && (_externalDependencies.Data?.Count ?? 0) == 0)
                 {
                     <p class="detail-muted">No dependencies have been listed.</p>
                 }
                 else
                 {
                     <ul class="detail-dependencies">
-                        @foreach (var dependency in resource.ResourceDependencies)
+                        @foreach (var dependency in _dependencies.Data ?? [])
                         {
-                            <li><span class="detail-list-label">SNEStorage</span><NavLink href="@($"/Resource/{dependency.DependencyResourceId}")">@(dependency.DependencyResource?.Name ?? "View dependency") <span aria-hidden="true">→</span></NavLink></li>
+                            <li><span class="detail-list-label">SNEStorage</span><NavLink href="@($"/Resource/{dependency.DependencyResourceId}")">@(dependency.Name ?? "View dependency") <span aria-hidden="true">→</span></NavLink></li>
                         }
-                        @foreach (var dependency in resource.ResourceExternalDependencies)
+                        @foreach (var dependency in _externalDependencies.Data ?? [])
                         {
                             <li>
                                 <span class="detail-list-label">External</span>
@@ -205,21 +228,12 @@ else if (_resource is { } resource)
 
             <section class="detail-previews" aria-labelledby="previews-heading">
                 <h2 id="previews-heading">Previews</h2>
-                <ResourceMediaCarousel @key="resource.Id" ResourceId="resource.Id" ResourceName="@ResourceName" Previews="@Previews" />
+                <ResourceSectionStatus Loading="_previews.Loading" ErrorStatus="_previews.ErrorStatus" ErrorBody="@_previews.ErrorBody" Label="previews" OnRetry="LoadPreviewsAsync" />
+                @if (_previews.Ready)
+                {
+                    <ResourceMediaCarousel @key="resource.Id" ResourceId="resource.Id" ResourceName="@ResourceName" Previews="@Previews" />
+                }
             </section>
-
-            @if (resource.Dependents.Count > 0)
-            {
-                <section class="detail-panel" aria-labelledby="dependents-heading">
-                    <h2 id="dependents-heading">Used by</h2>
-                    <ul class="detail-dependencies">
-                        @foreach (var dependent in resource.Dependents)
-                        {
-                            <li><NavLink href="@($"/Resource/{dependent.ResourceId}")">@(dependent.Resource?.Name ?? "View resource") →</NavLink></li>
-                        }
-                    </ul>
-                </section>
-            }
 
             <ResourceCommentsPanel @key="resource.Id" ResourceId="resource.Id" IsAuthenticated="_isAuthenticated"
                                    CurrentUserId="@_currentUserId" CanModerate="_canModerateComments"
@@ -237,7 +251,11 @@ else if (_resource is { } resource)
             {
                 <div class="detail-version-actions"><p class="detail-muted">Manage the releases of your resource.</p><NavLink class="detail-action" href="@($"/Resource/{ResourceId}/Versions/Create")">+ Add version</NavLink></div>
             }
-            <ResourceReleaseList ResourceId="resource.Id" Versions="@Versions" CanManage="CanManage" />
+            <ResourceSectionStatus Loading="_versions.Loading" ErrorStatus="_versions.ErrorStatus" ErrorBody="@_versions.ErrorBody" Label="version history" OnRetry="LoadVersionsAsync" />
+            @if (_versions.Ready)
+            {
+                <ResourceReleaseList ResourceId="resource.Id" Versions="@Versions" CanManage="CanManage" />
+            }
         </div>
         <NavLink class="detail-library-link" href="/Resources">← Back to resources</NavLink>
     </article>

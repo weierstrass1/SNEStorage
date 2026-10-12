@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
-using SNEStorage.Models;
+using SNEStorage.DTOs;
 using SNEStorage.Services;
 
 namespace SNEStorage.Components.Resources;
@@ -9,8 +9,8 @@ public partial class ResourceCommentList : IAsyncDisposable
 {
     private const int PageSize = 20;
     private readonly Dictionary<long, CommentActionState> _actions = [];
-    private List<Comment> _comments = [];
-    private readonly List<Comment> _recentComments = [];
+    private List<CommentReadDto> _comments = [];
+    private readonly List<CommentReadDto> _recentComments = [];
     private CommentApiClient? _api;
     private string? _contextKey;
     private string? _error;
@@ -36,15 +36,15 @@ public partial class ResourceCommentList : IAsyncDisposable
     [Parameter] public string? CurrentUserId { get; set; }
     [Parameter] public bool CanModerate { get; set; }
     [Parameter] public int Revision { get; set; }
-    [Parameter] public Comment? PublishedComment { get; set; }
+    [Parameter] public CommentReadDto? PublishedComment { get; set; }
     [Parameter] public IReadOnlyList<long> Ancestors { get; set; } = [];
     [Parameter] public EventCallback OnEmpty { get; set; }
     [Inject] private IJSRuntime JavaScript { get; set; } = default!;
     [Inject] private ILogger<ResourceCommentList> Logger { get; set; } = default!;
 
-    protected IReadOnlyList<Comment> VisibleComments => _recentComments.Concat(_comments)
+    protected IReadOnlyList<CommentReadDto> VisibleComments => _recentComments.Concat(_comments)
         .DistinctBy(c => c.Id).Where(c => !Ancestors.Contains(c.Id) &&
-            (!c.Deleted || c.Childrens.Count > 0)).ToArray();
+            (!c.Deleted || c.HasReplies)).ToArray();
     protected bool IsRecentlyPosted(long id) => _recentComments.Any(c => c.Id == id);
 
     protected override void OnParametersSet()
@@ -103,7 +103,7 @@ public partial class ResourceCommentList : IAsyncDisposable
         _loading = true;
         _error = null;
         StateHasChanged();
-        List<Comment> fetched = [];
+        List<CommentReadDto> fetched = [];
         var lastPage = page;
         var hasNext = false;
         for (var currentPage = page; currentPage <= (throughPage ?? page); currentPage++)
@@ -155,13 +155,21 @@ public partial class ResourceCommentList : IAsyncDisposable
     protected string? ActionMessage(long id) => _actions.GetValueOrDefault(id)?.Message;
     protected int ActionRevision(long id) => _actions.GetValueOrDefault(id)?.Revision ?? 0;
     protected int ReplyRevision(long id) => _actions.GetValueOrDefault(id)?.ReplyRevision ?? 0;
-    protected Comment? PublishedReply(long id) => _actions.GetValueOrDefault(id)?.PublishedReply;
+    protected CommentReadDto? PublishedReply(long id) => _actions.GetValueOrDefault(id)?.PublishedReply;
+
+    private void ReplaceComment(CommentReadDto comment)
+    {
+        var index = _comments.FindIndex(c => c.Id == comment.Id);
+        if (index >= 0) _comments[index] = comment;
+        index = _recentComments.FindIndex(c => c.Id == comment.Id);
+        if (index >= 0) _recentComments[index] = comment;
+    }
 
     protected Task HandleRepliesEmptyAsync(long commentId)
     {
         // An exhausted, empty replies GET confirms that this displayed parent has no children.
         var comment = _comments.Concat(_recentComments).FirstOrDefault(c => c.Id == commentId);
-        comment?.Childrens.Clear();
+        if (comment is not null) ReplaceComment(CommentPresentation.Update(comment, hasReplies: false));
         if (_actions.TryGetValue(commentId, out var state)) state.PublishedReply = null;
         return Task.CompletedTask;
     }
@@ -171,9 +179,8 @@ public partial class ResourceCommentList : IAsyncDisposable
         if (_disposed || _busy || _loading || _api is null || !IsAuthenticated || string.IsNullOrEmpty(CurrentUserId)) return;
         var comment = VisibleComments.FirstOrDefault(c => c.Id == request.CommentId);
         if (comment is null || comment.Deleted || comment.UserId == CurrentUserId) return;
-        var previous = comment.Score?.LikesUsers.FirstOrDefault(vote => vote.UserId == CurrentUserId);
-        var value = previous?.Value == request.Positive ? LikeValues.Remove :
-            request.Positive ? LikeValues.Like : LikeValues.Dislike;
+        var selected = request.Positive ? LikeValues.Like : LikeValues.Dislike;
+        var value = comment.MyVote == selected ? LikeValues.Remove : selected;
         var context = _contextVersion;
         var userId = CurrentUserId;
         if (!_actions.TryGetValue(comment.Id, out var state)) _actions[comment.Id] = state = new();
@@ -185,11 +192,9 @@ public partial class ResourceCommentList : IAsyncDisposable
             if (_disposed || context != _contextVersion) return;
             if (!result.Success) { state.Message = result.Message; return; }
             // Only display the result confirmed by CommentController.
-            comment.Score ??= new Score { Id = comment.ScoreId };
-            foreach (var vote in comment.Score.LikesUsers.Where(v => v.UserId == userId).ToArray())
-                comment.Score.LikesUsers.Remove(vote);
-            if (value != LikeValues.Remove && result.Value is { } saved)
-                comment.Score.LikesUsers.Add(saved);
+            var confirmed = value == LikeValues.Remove || result.Value is null ? LikeValues.Remove
+                : result.Value.Value ? LikeValues.Like : LikeValues.Dislike;
+            ReplaceComment(CommentPresentation.WithVote(comment, confirmed));
         }
         finally
         {
@@ -217,27 +222,27 @@ public partial class ResourceCommentList : IAsyncDisposable
             state.Revision++;
             if (request.Kind == CommentActionKind.Reply)
             {
-                if (result.Value is { } saved && !comment.Childrens.Any(link => link.Id == saved.Id))
-                    comment.Childrens.Add(new CommentComment
-                    {
-                        Id = saved.Id,
-                        ParentCommentId = saved.ParentCommentId,
-                        ChildCommentId = saved.ChildCommentId
-                    });
+                ReplaceComment(CommentPresentation.Update(comment, hasReplies: true));
                 state.ReplyRevision++;
-                state.PublishedReply = result.Value?.ChildComment;
+                state.PublishedReply = result.Value?.ChildComment is { } child
+                    ? CommentPresentation.FromCreatedComment(child) : null;
                 state.Message = "Your reply has been posted.";
             }
             else
             {
                 _actionMessage = request.Kind == CommentActionKind.Edit ? "Your comment has been updated." : "The comment has been deleted.";
                 // Keep a just-posted comment accurate even when the selected sort places it on a later page.
-                if (request.Kind == CommentActionKind.Edit) comment.Text = request.Text!;
+                if (request.Kind == CommentActionKind.Edit)
+                    ReplaceComment(CommentPresentation.Update(comment, text: request.Text!));
                 else
                 {
-                    _recentComments.RemoveAll(c => c.Id == comment.Id);
-                    if (comment.Childrens.Count > 0) { comment.Deleted = true; comment.Text = string.Empty; }
-                    else _comments.RemoveAll(c => c.Id == comment.Id);
+                    if (comment.HasReplies)
+                        ReplaceComment(CommentPresentation.Update(comment, deleted: true, text: string.Empty));
+                    else
+                    {
+                        _recentComments.RemoveAll(c => c.Id == comment.Id);
+                        _comments.RemoveAll(c => c.Id == comment.Id);
+                    }
                 }
                 // The GET decides whether deletion removed the row or left a placeholder.
                 await LoadPageAsync(0, throughPage: _page);

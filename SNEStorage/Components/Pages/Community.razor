@@ -1,0 +1,61 @@
+@page "/Community"
+@using SNEStorage.Components.Community
+@inherits StaticDocumentPage<CommunityDocument>
+
+<PageTitle>@(_document?.Title ?? "Community") | SNEStorage</PageTitle>
+
+<div class="community-page">
+    <header class="community-heading">
+        <p class="community-kicker">@(_document?.Kicker ?? "SNESTORAGE COMMUNITY")</p>
+        <h1>@(_document?.Title ?? "Community")</h1>
+        @if (_document is { } document)
+        {
+            <p class="community-introduction">@document.Introduction</p>
+        }
+    </header>
+
+    @if (_loading)
+    {
+        <div class="community-status" role="status">Loading community information…</div>
+    }
+    else if (_error is not null)
+    {
+        <div class="community-status" role="alert"><p>@_error</p><button type="button" @onclick="LoadAsync">Try again</button></div>
+    }
+    else if (_document is { } community)
+    {
+        <section class="discord-panel" aria-labelledby="discord-title">
+            <div class="discord-art" aria-hidden="true">
+                <span class="discord-orbit"></span>
+                <svg class="discord-icon" viewBox="0 0 24 24" focusable="false"><path fill="currentColor" d="M20.317 4.37a19.792 19.792 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.211.375-.445.865-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.319 13.58.099 18.057a.082.082 0 0 0 .031.057c2.051 1.506 4.038 2.421 5.988 3.028a.077.077 0 0 0 .084-.028c.461-.63.873-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.075 13.075 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.291a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.099.246.197.372.291a.077.077 0 0 1-.006.128 12.3 12.3 0 0 1-1.873.892.076.076 0 0 0-.04.107c.36.698.772 1.363 1.225 1.993a.077.077 0 0 0 .084.028c1.96-.607 3.948-1.522 5.999-3.028a.077.077 0 0 0 .031-.055c.5-5.177-.838-9.673-3.549-13.66a.061.061 0 0 0-.032-.03ZM8.02 15.33c-1.182 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.419 0 1.334-.956 2.419-2.157 2.419Zm7.975 0c-1.182 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.419 0 1.334-.947 2.419-2.157 2.419Z" /></svg>
+            </div>
+            <div class="discord-copy">
+                <h2 id="discord-title">@community.DiscordTitle</h2>
+                <p>@community.DiscordDescription</p>
+                @if (community.SafeDiscordUrl is { } invite)
+                {
+                    <a class="discord-button" href="@invite" target="_blank" rel="noopener noreferrer">@community.JoinLabel <span aria-hidden="true">↗</span></a>
+                    <small class="discord-link-note">@community.LinkNote</small>
+                }
+                else
+                {
+                    <p class="discord-unavailable">@community.UnavailableText</p>
+                }
+            </div>
+        </section>
+
+        <section class="community-topics" aria-labelledby="community-topics-title">
+            <h2 id="community-topics-title">@community.SectionsTitle</h2>
+            <div class="topic-grid">
+                @foreach (var section in community.Sections)
+                {
+                    <article class="topic-card"><span class="topic-pixel" aria-hidden="true"></span><h3>@section.Title</h3><p>@section.Text</p></article>
+                }
+            </div>
+        </section>
+        <aside class="community-guidelines">
+            <p>@community.GuidelinesText</p>
+            <a href="/Rules">@community.GuidelinesLinkLabel <span aria-hidden="true">→</span></a>
+        </aside>
+    }
+</div>

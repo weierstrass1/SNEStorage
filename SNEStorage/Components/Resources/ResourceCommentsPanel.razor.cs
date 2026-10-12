@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Components;
-using SNEStorage.Models;
+using SNEStorage.DTOs;
 
 namespace SNEStorage.Components.Resources;
 
@@ -19,7 +19,7 @@ public partial class ResourceCommentsPanel
     [Parameter] public bool Saving { get; set; }
     [Parameter] public string? Message { get; set; }
     [Parameter] public int SubmissionRevision { get; set; }
-    [Parameter] public Comment? PublishedComment { get; set; }
+    [Parameter] public CommentReadDto? PublishedComment { get; set; }
     [Parameter] public EventCallback<string> OnPost { get; set; }
     protected bool CanPost => IsAuthenticated && OnPost.HasDelegate;
     protected override void OnParametersSet()

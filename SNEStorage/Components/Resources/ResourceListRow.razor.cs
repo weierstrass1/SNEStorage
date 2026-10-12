@@ -1,0 +1,38 @@
+using System.Globalization;
+using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.Components;
+using SNEStorage.DTOs;
+
+namespace SNEStorage.Components.Resources;
+
+public partial class ResourceListRow
+{
+    private static readonly Regex HexColor = new("\\A#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})\\z", RegexOptions.CultureInvariant);
+    [Parameter, EditorRequired] public ResourceFinderViewDTO Item { get; set; } = default!;
+    [Parameter] public bool ShowGame { get; set; } = true;
+    [Parameter] public bool ShowTypes { get; set; } = true;
+    [Parameter] public bool ShowCategories { get; set; } = true;
+    private IReadOnlyList<ResourceListValue> Authors { get; set; } = [];
+    private IReadOnlyList<ResourceListValue> Types { get; set; } = [];
+    private IReadOnlyList<ResourceListValue> Categories { get; set; } = [];
+    private IReadOnlyList<IdNamePair> Tags { get; set; } = [];
+    private IReadOnlyList<string> Warnings { get; set; } = [];
+    private string TagsId => $"library-tags-{Item.ResourceIdName.Id}";
+    private string RatingWidth => $"width:{(Math.Clamp(Item.Score, 0, 5) * 20).ToString("0.##", CultureInfo.InvariantCulture)}%";
+    protected override void OnParametersSet()
+    {
+        Authors = Item.AuthorsUserSummary.Select(author => new ResourceListValue($"user-{author.Id}", author.Username,
+            $"/Profile/{Uri.EscapeDataString(author.Username)}", author.UsernameColor is { } color && HexColor.IsMatch(color) ? color : "#dcc8fa"))
+            .Concat(Item.ExternalAuthors.Select(author => new ResourceListValue($"external-{author.Id}", author.Name)))
+            .OrderBy(author => author.Name, StringComparer.OrdinalIgnoreCase).ToArray();
+        Types = Values(Item.Types);
+        Categories = Values(Item.Categories);
+        Tags = Item.Tags.DistinctBy(tag => tag.Id).OrderBy(tag => tag.Name, StringComparer.OrdinalIgnoreCase).ToArray();
+        Warnings = new[] { Item.IncludesPorn ? "Sexual content" : null, Item.IncludesGore ? "Gore" : null,
+            Item.IncludesPolitics ? "Politics" : null, Item.IncludesSlurs ? "Slurs" : null,
+            Item.IncludesSensitiveContent ? "Sensitive content" : null }.OfType<string>().ToArray();
+    }
+    private static ResourceListValue[] Values(IEnumerable<IdNamePair> values) => values.DistinctBy(value => value.Id)
+        .OrderBy(value => value.Name, StringComparer.OrdinalIgnoreCase).Select(value => new ResourceListValue(value.Id.ToString(), value.Name)).ToArray();
+    private static string Date(DateTime value) => value.ToString("MMM d, yyyy", CultureInfo.InvariantCulture);
+}

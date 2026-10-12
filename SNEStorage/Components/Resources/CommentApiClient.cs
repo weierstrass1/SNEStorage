@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Microsoft.JSInterop;
 using SNEStorage.Models;
+using SNEStorage.DTOs;
 using SNEStorage.Services;
 
 namespace SNEStorage.Components.Resources;
@@ -14,7 +15,7 @@ internal sealed class CommentApiClient(IJSRuntime javascript, ILogger logger) : 
     private IJSObjectReference? _module;
     private bool _disposed;
 
-    public async Task<CommentApiResult<List<Comment>>> GetAsync(long resourceId, long? parentId,
+    public async Task<CommentApiResult<List<CommentReadDto>>> GetAsync(long resourceId, long? parentId,
         int page, int pageSize, CommentSorting sort)
     {
         var response = await CallAsync("getComments", resourceId, parentId, page, pageSize, sort.ToString(), _requestKey);
@@ -23,7 +24,7 @@ internal sealed class CommentApiClient(IJSRuntime javascript, ILogger logger) : 
             return new(false, Message: ApiErrorPresentation.Describe(response.Status, response.Body, "comment").Message);
         try
         {
-            var comments = JsonSerializer.Deserialize<List<Comment>>(response.Body ?? "", JsonOptions);
+            var comments = JsonSerializer.Deserialize<List<CommentReadDto>>(response.Body ?? "", JsonOptions);
             return comments is not null && comments.All(comment => comment.Id > 0)
                 ? new(true, comments)
                 : new(false, Message: "The comment list could not be read. Refresh the comments to try again.");
@@ -35,7 +36,7 @@ internal sealed class CommentApiClient(IJSRuntime javascript, ILogger logger) : 
         }
     }
 
-    public async Task<CommentApiResult<LikeUsers>> VoteAsync(Comment comment, LikeValues value, string userId)
+    public async Task<CommentApiResult<LikeUsers>> VoteAsync(CommentReadDto comment, LikeValues value, string userId)
     {
         var response = await CallAsync("submitCommentVote", comment.Id, value.ToString(), $"{_requestKey}-action");
         const string uncertain = "We could not confirm your vote. Refresh the comments before trying again.";
@@ -69,7 +70,7 @@ internal sealed class CommentApiClient(IJSRuntime javascript, ILogger logger) : 
         }
     }
 
-    private async Task<CommentApiResult<LikeUsers>> GetVoteAsync(Comment comment, string userId)
+    private async Task<CommentApiResult<LikeUsers>> GetVoteAsync(CommentReadDto comment, string userId)
     {
         var response = await CallAsync("getCommentVote", comment.Id, _requestKey);
         if (response.Cancelled) return new(false, Cancelled: true);
@@ -106,10 +107,7 @@ internal sealed class CommentApiClient(IJSRuntime javascript, ILogger logger) : 
                     saved.ParentCommentId == request.CommentId && child.UserId == userId
                     ? new(true, saved) : new(false, Message: uncertain);
             }
-            using var document = JsonDocument.Parse(response.Body ?? "");
-            var value = document.RootElement;
-            var success = value.ValueKind == JsonValueKind.Number && value.TryGetInt32(out var number) && number == (int)CommentServiceResult.Success ||
-                value.ValueKind == JsonValueKind.String && string.Equals(value.GetString(), nameof(CommentServiceResult.Success), StringComparison.OrdinalIgnoreCase);
+            var success = ApiErrorPresentation.IsSuccess(response.Body, "comment");
             return success ? new(true) : new(false, Message: uncertain);
         }
         catch (JsonException exception)
@@ -124,7 +122,7 @@ internal sealed class CommentApiClient(IJSRuntime javascript, ILogger logger) : 
         if (_disposed) return new() { Cancelled = true };
         try
         {
-            _module ??= await javascript.InvokeAsync<IJSObjectReference>("import", _lifetime.Token, "./js/comment-api.js?v=4");
+            _module ??= await javascript.InvokeAsync<IJSObjectReference>("import", _lifetime.Token, "./js/comment-api.js?v=8");
             if (_disposed) return new() { Cancelled = true };
             var json = await _module.InvokeAsync<string>(function, _lifetime.Token, arguments);
             return JsonSerializer.Deserialize<BrowserResponse>(json, JsonOptions) ?? new() { Status = 502 };

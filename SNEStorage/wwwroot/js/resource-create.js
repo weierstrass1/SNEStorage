@@ -1,4 +1,7 @@
 import { appendPreviews } from "./resource-previews.js?v=2";
+import { captchaFetch } from "./captcha.js?v=3";
+import { validateVersionInputs } from "./resource-version.js?v=2";
+import { validateResourceTextFields } from "./resource-form-validation.js?v=1";
 
 const uploads = new Map();
 const maxArchiveBytes = 250 * 1024 * 1024;
@@ -39,18 +42,8 @@ export function validateResourceForm(formId) {
     const form = document.getElementById(formId);
     if (!(form instanceof HTMLFormElement)) return { valid: false, tab: 0, message: "The form is unavailable." };
     // Check trimmed text as well as native constraints, including values restored by Blazor.
-    for (const [name, minimum, maximum, message] of [
-        ["Name", 2, 50, "Enter a resource name with 2–50 characters."],
-        ["Description", 10, Infinity, "Enter a description with at least 10 characters."],
-        ["Version", 1, 20, "Enter a version label with 1–20 characters."],
-        ["ChangeLog", 1, Infinity, "Add release notes before submitting."]
-    ]) {
-        const field = form.elements.namedItem(name);
-        if (field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement) {
-            const length = field.value.trim().length;
-            field.setCustomValidity(length < minimum || length > maximum ? message : "");
-        }
-    }
+    validateResourceTextFields(form);
+    validateVersionInputs(form);
     const invalid = invalidField(form);
     if (invalid) return { valid: false,
         tab: Number(invalid.closest("[data-resource-tab-panel]")?.dataset.resourceTabPanel ?? 0),
@@ -153,14 +146,14 @@ export async function submitResource(formId) {
     const controller = new AbortController();
     uploads.set(formId, controller);
     try {
-        const response = await fetch(form.action, {
+        const response = await captchaFetch(form.action, {
             method: "POST",
             credentials: "same-origin",
             headers: { Accept: "application/json" },
             body: data,
             redirect: "error",
             signal: controller.signal
-        });
+        }, "resource_create", true);
         return await readResponse(response);
     } finally {
         if (uploads.get(formId) === controller) {

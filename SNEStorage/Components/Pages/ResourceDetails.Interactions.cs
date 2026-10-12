@@ -1,6 +1,8 @@
 using System.Text.Json;
 using Microsoft.JSInterop;
 using SNEStorage.Models;
+using SNEStorage.DTOs;
+using SNEStorage.Components.Resources;
 
 namespace SNEStorage.Components.Pages;
 
@@ -11,11 +13,21 @@ public partial class ResourceDetails
     private bool _savingComment;
     private string? _commentMessage;
     private int _commentSubmissionRevision;
-    private Comment? _publishedComment;
+    private CommentReadDto? _publishedComment;
+
+    private void ResetInteractions()
+    {
+        _savingRating = false;
+        _ratingMessage = null;
+        _savingComment = false;
+        _commentMessage = null;
+        _commentSubmissionRevision = 0;
+        _publishedComment = null;
+    }
 
     protected async Task RateAsync(int value)
     {
-        if (_savingRating || !_isAuthenticated || CanManage || value is < 1 or > 5 || _module is null || _resource is null || _resource.VisibilityId == 3) return;
+        if (_savingRating || !RatingPermissionsReady || !_isAuthenticated || CanManage || value is < 1 or > 5 || _module is null || _resource is null || _resource.Visibility.Id == 3) return;
         var resource = _resource;
         var userId = _currentUserId;
         var generation = _generation;
@@ -33,17 +45,16 @@ public partial class ResourceDetails
                 return;
             }
             var vote = JsonSerializer.Deserialize<ScoreUsers>(response.Body ?? string.Empty, JsonOptions);
-            if (vote is null || vote.Id <= 0 || vote.ScoreId != resource.ScoreId || vote.UserId != userId || vote.Value != value)
+            if (vote is null || vote.Id <= 0 || vote.ScoreId <= 0 || vote.UserId != userId || vote.Value != value)
             {
                 _ratingMessage = "We could not confirm your saved rating. Reload the resource to check it.";
                 return;
             }
-            // Display the saved result returned by ResourceController; do not refetch the whole resource.
-            resource.Score ??= new Score { Id = resource.ScoreId };
-            foreach (var previous in resource.Score.ScoresUsers.Where(item => item.UserId == vote.UserId).ToArray())
-                resource.Score.ScoresUsers.Remove(previous);
-            resource.Score.ScoresUsers.Add(vote);
-            _ratingMessage = "Your rating has been saved.";
+            // Refresh only the aggregate returned by the rating action.
+            await LoadRatingAsync();
+            if (!InteractionIsCurrent(resource, generation, accountGeneration)) return;
+            _ratingMessage = _rating.Ready ? "Your rating has been saved."
+                : "Your rating has been saved. Retry loading the rating to refresh the summary.";
         }
         catch (Exception exception) when (exception is JSDisconnectedException or JSException or JsonException or OperationCanceledException)
         {
@@ -87,7 +98,7 @@ public partial class ResourceDetails
                 _commentMessage = "We could not confirm your comment was posted. Reload the resource before posting again; your text has been kept.";
                 return;
             }
-            _publishedComment = comment;
+            _publishedComment = CommentPresentation.FromCreatedComment(comment);
             _commentSubmissionRevision++;
             _commentMessage = "Your comment has been posted.";
         }
@@ -105,7 +116,7 @@ public partial class ResourceDetails
         }
     }
 
-    private bool InteractionIsCurrent(Resource resource, int generation, int accountGeneration) =>
+    private bool InteractionIsCurrent(ResourceReadDTO resource, int generation, int accountGeneration) =>
         !_disposed && ReferenceEquals(_resource, resource) && resource.Id == ResourceId &&
         generation == _generation && accountGeneration == _accountGeneration;
 }

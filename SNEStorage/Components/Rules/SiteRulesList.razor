@@ -1,0 +1,16 @@
+@if (Entries.Count > 0)
+{
+    <ol class="rules-list @(Gold ? "quality-list" : null)" start="@StartNumber">
+        @foreach (var rule in Entries)
+        {
+            <li id="@rule.Id">
+                <span class="rule-number" aria-hidden="true">@Letter.@rule.Number</span>
+                <div>
+                    @if (Grouped) { <h4>@rule.Title</h4> }
+                    else { <h3>@rule.Title</h3> }
+                    <p>@rule.Text</p>
+                </div>
+            </li>
+        }
+    </ol>
+}

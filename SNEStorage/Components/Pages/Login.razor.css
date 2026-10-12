@@ -7,12 +7,16 @@
     margin: 0 auto;
 }
 
+.login-forgot { margin: 1rem 0 0; font-size: .88rem; text-align: right; }
+.login-forgot ::deep a { color: #d4b5ff; }
+.login-forgot ::deep a:hover { color: #ffe14d; }
+
 .login-card {
     width: 100%;
     padding: clamp(1.5rem, 4vw, 2.5rem);
     border: 2px solid #d9cbff;
     border-radius: 6px;
-    background: linear-gradient(145deg, rgba(35, 18, 77, .98), rgba(14, 8, 34, .98));
+    background: linear-gradient(145deg, rgba(35, 18, 77, var(--ui-surface-alpha)), rgba(14, 8, 34, var(--ui-surface-alpha)));
     box-shadow: 0 0 0 3px #000, 0 0 28px rgba(138, 61, 255, .35), inset 0 0 0 2px #6a2be0;
 }
 

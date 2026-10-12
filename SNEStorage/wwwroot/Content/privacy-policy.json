@@ -1,0 +1,244 @@
+{
+  "title": "Privacy policy",
+  "kicker": "SNESTORAGE · YOUR INFORMATION",
+  "introduction": "This page explains the information SNEStorage handles when you browse, create an account, publish resources, or participate in the community.",
+  "updatedLabel": "Last updated:",
+  "updatedOn": "2026-10-09",
+  "navigationTitle": "On this page",
+  "summaryTitle": "Know what you share",
+  "summaryText": "Your contributions can identify you through your username, avatar, and author credits. Choose your email and resource visibility carefully, and avoid putting private information in public profiles, comments, archives, or previews.",
+  "contactTitle": "Privacy questions or requests?",
+  "contact": {
+    "label": "Contact SNEStorage staff",
+    "description": "Contact staff through the SNEStorage community Discord and ask for a private conversation about your request. Do not post your email, identity documents, passwords, or confirmation links in public channels.",
+    "url": "https://discord.gg/NpUXn7H"
+  },
+  "providerLinksTitle": "Provider privacy information",
+  "providerLinks": [
+    {
+      "label": "Cloudflare Turnstile",
+      "description": "Information about the signals processed for bot detection.",
+      "url": "https://www.cloudflare.com/turnstile-privacy-policy/"
+    },
+    {
+      "label": "Mailtrap",
+      "description": "Privacy information for the currently configured email provider.",
+      "url": "https://mailtrap.io/privacy/"
+    },
+    {
+      "label": "Google",
+      "description": "Privacy information for externally delivered fonts and Google services.",
+      "url": "https://policies.google.com/privacy"
+    },
+    {
+      "label": "Discord",
+      "description": "Privacy information for the community platform used to contact staff.",
+      "url": "https://discord.com/privacy"
+    }
+  ],
+  "sections": [
+    {
+      "id": "privacy-about",
+      "title": "About this notice",
+      "description": "The scope of this page and the people who manage the site.",
+      "rules": [
+        {
+          "id": "privacy-site-operator",
+          "title": "SNEStorage and its staff",
+          "text": "SNEStorage is an independent community project for SNES resources. The site operator and authorized staff administer accounts, resources, and community participation. Use the contact section below for questions about information handled by SNEStorage."
+        },
+        {
+          "id": "privacy-notice-scope",
+          "title": "This website and linked services",
+          "text": "This notice describes SNEStorage's website. When you follow a social, donation, repository, or external download link, the destination website handles your visit under its own privacy terms."
+        }
+      ]
+    },
+    {
+      "id": "privacy-information",
+      "title": "Information we handle",
+      "description": "Information you submit and technical information involved in operating the website.",
+      "rules": [
+        {
+          "id": "privacy-account-information",
+          "title": "Account and registration details",
+          "text": "Registration collects your username, email address, password, date of birth, avatar, username color, time zone, and email visibility preference. The account system stores a password hash for authentication rather than a readable password. Your date of birth is stored as an account detail; it is not a substitute for identity verification."
+        },
+        {
+          "id": "privacy-profile-information",
+          "title": "Profile information",
+          "text": "Profile information can include your avatar, title, biography, username color, preferences, and the social or support links you choose to provide. Fields you leave blank do not require you to supply those optional details."
+        },
+        {
+          "id": "privacy-contributions",
+          "title": "Resources and participation",
+          "text": "We store submitted resource files, versions, release notes, previews, descriptions, classifications, tags, author credits, dependencies, visibility settings, comments, ratings, and reactions. Contributions are associated with the relevant account, including resource and version submitters. Archives and previews may themselves contain personal information you include in them."
+        },
+        {
+          "id": "privacy-technical-information",
+          "title": "Technical information",
+          "text": "Serving the website and protecting requests involves technical information such as IP addresses, browser request headers, requested addresses, session identifiers, and request or error diagnostics. The hosting and security providers may process this information as part of their services. What is retained depends on the site's and providers' logging configuration."
+        }
+      ]
+    },
+    {
+      "id": "privacy-use",
+      "title": "How information is used",
+      "description": "The website uses information to provide account, resource, and community features.",
+      "rules": [
+        {
+          "id": "privacy-account-purpose",
+          "title": "Accounts and access",
+          "text": "Account information supports registration, email confirmation, sign-in, session handling, and access permissions. Profile preferences control features such as display colors, time zone presentation, and email visibility."
+        },
+        {
+          "id": "privacy-community-purpose",
+          "title": "The resource library and community",
+          "text": "Submitted content and its account associations allow SNEStorage to display resources, identify authors and submitters, provide downloads, preserve version histories, and show comments, ratings, and reactions."
+        },
+        {
+          "id": "privacy-security-purpose",
+          "title": "Security, moderation, and support",
+          "text": "Access information, technical signals, and relevant contributions help authenticate requests, detect automated abuse, investigate errors, enforce site rules, and handle support or privacy requests. Authorized staff may review information needed for those tasks."
+        }
+      ]
+    },
+    {
+      "id": "privacy-visibility",
+      "title": "Public and restricted information",
+      "description": "Understand what others can see before publishing information.",
+      "rules": [
+        {
+          "id": "privacy-public-content",
+          "title": "Public contributions identify their contributors",
+          "text": "Public resource information, author credits, comments, and associated usernames or avatars can be visible to other visitors. Profile descriptions and social links are intended for display where profile features make them available. Public information can be copied or indexed by others outside SNEStorage's control."
+        },
+        {
+          "id": "privacy-email-visibility",
+          "title": "Email visibility",
+          "text": "Your email visibility setting controls whether your email is included in user summaries shown to others. Your own account view can show your email even when it is hidden from other users. Hiding an email from public display does not remove it from the account system or prevent its use for confirmation and account administration."
+        },
+        {
+          "id": "privacy-resource-visibility",
+          "title": "Public, unlisted, and private resources",
+          "text": "Public resources are available to visitors. Unlisted resources can be accessed by anyone with the direct link; an unlisted link is not a confidentiality control. Private resources restrict access, but remain available to authorized administrators and moderators, authors, the resource submitter, and users who submitted a version of that resource."
+        },
+        {
+          "id": "privacy-resource-contents",
+          "title": "Check files and previews before uploading",
+          "text": "Resource visibility applies to access through SNEStorage. It cannot withdraw copies already downloaded by someone who had access. Check archives, document metadata, image metadata, previews, and release notes for information you do not want to share."
+        }
+      ]
+    },
+    {
+      "id": "privacy-browser",
+      "title": "Cookies and browser storage",
+      "description": "Browser features support sign-in, safe forms, and navigation.",
+      "rules": [
+        {
+          "id": "privacy-essential-cookies",
+          "title": "Account, session, and form protection",
+          "text": "SNEStorage uses authentication and session cookies to maintain account access, and antiforgery protection to help prevent unauthorized form submissions. Blocking these cookies can prevent sign-in or protected forms from working."
+        },
+        {
+          "id": "privacy-browser-memory",
+          "title": "Temporary account information in the page",
+          "text": "The interface temporarily reuses account information in the current page's memory to avoid repeating the same request during navigation. This account snapshot is not persisted in localStorage or sessionStorage. It is separate from the account and session cookies."
+        },
+        {
+          "id": "privacy-browser-controls",
+          "title": "Your browser controls",
+          "text": "You can manage cookies and cached website files through your browser. Clearing them may sign you out or require the website to reload its assets. Provider-specific browser storage, when used, is described in the relevant provider's privacy information."
+        }
+      ]
+    },
+    {
+      "id": "privacy-providers",
+      "title": "Providers and hosting",
+      "description": "External services involved in hosting, security, email, fonts, and support.",
+      "rules": [
+        {
+          "id": "privacy-hosting",
+          "title": "Hosting in the United States",
+          "text": "SNEStorage is hosted with MonsterASP.NET on servers located in the United States. Account data, stored contributions, and files hosted there may therefore be processed in the United States even if you access the website from another country. External providers may process their own service data in additional locations."
+        },
+        {
+          "id": "privacy-turnstile",
+          "title": "Cloudflare Turnstile",
+          "text": "Protected actions use Cloudflare Turnstile to distinguish visitors from bots. Cloudflare processes technical signals including the IP address, browser User-Agent, TLS fingerprint, and the website origin. Its Turnstile privacy notice explains the processing used to provide and improve bot detection."
+        },
+        {
+          "id": "privacy-email-provider",
+          "title": "Account emails",
+          "text": "Confirmation messages are processed through the configured email provider, currently Mailtrap. The provider processes the recipient email address and message content, which includes the username and confirmation link. Treat confirmation links as private and do not share them."
+        },
+        {
+          "id": "privacy-fonts",
+          "title": "Externally delivered fonts",
+          "text": "The website loads fonts from Google Fonts. Your browser contacts Google's font servers to request them, which involves your network address and request headers. Google's privacy information describes its handling of service requests."
+        },
+        {
+          "id": "privacy-discord",
+          "title": "Community support",
+          "text": "The current contact link directs you to the community on Discord. Discord processes your use of that service under its own policy. Staff can receive the information you send when discussing a support or privacy request. Do not send passwords or account confirmation tokens."
+        }
+      ]
+    },
+    {
+      "id": "privacy-retention",
+      "title": "Retention and removal",
+      "description": "Account information and published contributions can have different retention needs.",
+      "rules": [
+        {
+          "id": "privacy-retention-criteria",
+          "title": "Stored accounts and contributions",
+          "text": "Stored accounts, comments, and uploads do not currently expire automatically. They remain available according to their visibility and the site's editing and moderation features. Contact staff to discuss removal of account information or a contribution. Relevant records may need to be retained for unresolved support matters, security investigations, attribution, or applicable legal obligations."
+        },
+        {
+          "id": "privacy-removal-differences",
+          "title": "Removing content and removing personal information",
+          "text": "Account data requests and requests to remove a resource are reviewed separately. Published contributions can have other authors, replies, version histories, or dependent resources. Site resource policies do not replace rights that apply to your personal information. Explain whether your request concerns the account, identifying details, or the contribution itself."
+        },
+        {
+          "id": "privacy-deleted-comments",
+          "title": "Comments with replies",
+          "text": "A deleted comment may remain as a deleted placeholder when it has replies, so the conversation structure is preserved. Removal from the visible interface does not by itself confirm that every associated record, diagnostic log, or provider copy has been erased."
+        }
+      ]
+    },
+    {
+      "id": "privacy-requests",
+      "title": "Your choices and requests",
+      "description": "How to manage your information or contact staff for assistance.",
+      "rules": [
+        {
+          "id": "privacy-self-service",
+          "title": "Manage your profile",
+          "text": "Use the profile editor to change supported profile fields, remove optional social links, and adjust email visibility. Changes to the account username, email address, or date of birth currently require staff assistance."
+        },
+        {
+          "id": "privacy-data-requests",
+          "title": "Ask about your information",
+          "text": "Contact staff to request information about your personal data, a correction, a copy, or deletion. Depending on the law that applies, additional rights such as restriction or objection may be available. Staff may need to verify that the request concerns your account before disclosing or changing its information."
+        },
+        {
+          "id": "privacy-request-details",
+          "title": "Keep requests private and specific",
+          "text": "Provide your username and describe which information or contribution concerns you through a private conversation with staff. Do not put sensitive account details in public comments or channels. If you believe information was exposed incorrectly, include the relevant page address without sharing secret tokens."
+        }
+      ]
+    },
+    {
+      "id": "privacy-updates",
+      "title": "Updates to this notice",
+      "description": "The policy should reflect the services and features currently in use.",
+      "rules": [
+        {
+          "id": "privacy-policy-changes",
+          "title": "Check the revision date",
+          "text": "This notice may change when the website's features, providers, or information-handling practices change. The date at the top identifies its latest revision. Contact staff if you need clarification about a change."
+        }
+      ]
+    }
+  ]
+}

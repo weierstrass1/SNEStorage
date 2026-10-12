@@ -1,0 +1,86 @@
+@page "/Donations"
+@using SNEStorage.Components.Donations
+@inherits StaticDocumentPage<DonationsDocument>
+
+<PageTitle>@(_document?.Title ?? "Support SNEStorage") | SNEStorage</PageTitle>
+
+<div class="donations-page">
+    <header class="donations-heading">
+        <p class="donations-kicker">@(_document?.Kicker ?? "SUPPORT SNES CREATION")</p>
+        <h1>@(_document?.Title ?? "Support SNEStorage")</h1>
+        @if (_document is { } document)
+        {
+            <p class="donations-introduction">@document.Introduction</p>
+        }
+    </header>
+
+    @if (_loading)
+    {
+        <div class="donations-status" role="status">Loading donation information…</div>
+    }
+    else if (_error is not null)
+    {
+        <div class="donations-status" role="alert"><p>@_error</p><button type="button" @onclick="LoadAsync">Try again</button></div>
+    }
+    else if (_document is { } donations)
+    {
+        <section class="patreon-panel" aria-labelledby="patreon-title">
+            <div class="support-art" aria-hidden="true">
+                <svg class="support-heart" viewBox="0 0 16 16" focusable="false"><path d="M2 2h4v2h4V2h4v2h2v6h-2v2h-2v2h-2v2H6v-2H4v-2H2v-2H0V4h2Z" /></svg>
+                <img src="images/caja.png" alt="" width="110" height="94" />
+            </div>
+            <div class="patreon-copy">
+                <h2 id="patreon-title">@donations.PatreonTitle</h2>
+                <p>@donations.PatreonDescription</p>
+                @if (donations.SafePatreonUrl is { } patreonUrl)
+                {
+                    <a class="patreon-button" href="@patreonUrl" target="_blank" rel="noopener noreferrer">
+                        @donations.SupportLabel <span aria-hidden="true">↗</span>
+                    </a>
+                    <small class="patreon-note">@donations.LinkNote</small>
+                }
+                else
+                {
+                    <p class="patreon-unavailable">@donations.UnavailableText</p>
+                }
+            </div>
+        </section>
+
+        @if (donations.Benefits.Count > 0)
+        {
+            <section class="support-goals supporter-benefits" aria-labelledby="support-benefits-title">
+                <h2 id="support-benefits-title">@donations.BenefitsTitle</h2>
+                <div class="support-grid">
+                    @foreach (var benefit in donations.Benefits)
+                    {
+                        <article class="support-card">
+                            <span class="support-pixel" aria-hidden="true"></span>
+                            <h3>@benefit.Title</h3>
+                            <p>@benefit.Text</p>
+                        </article>
+                    }
+                </div>
+            </section>
+        }
+
+        <section class="support-goals" aria-labelledby="support-goals-title">
+            <h2 id="support-goals-title">@donations.SectionsTitle</h2>
+            <div class="support-grid">
+                @foreach (var section in donations.Sections)
+                {
+                    <article class="support-card">
+                        <span class="support-pixel" aria-hidden="true"></span>
+                        <h3>@section.Title</h3>
+                        <p>@section.Text</p>
+                    </article>
+                }
+            </div>
+        </section>
+
+        <aside class="support-thanks">
+            <h2>@donations.ThanksTitle</h2>
+            <p>@donations.ThanksText</p>
+            <a href="/Community">@donations.CommunityLinkLabel <span aria-hidden="true">→</span></a>
+        </aside>
+    }
+</div>

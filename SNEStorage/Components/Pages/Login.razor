@@ -15,7 +15,7 @@
             <div class="login-status" role="status"><span aria-hidden="true">◆</span> @StatusMessage</div>
         }
 
-        <form class="login-form" action="/api/login/submit" method="post" data-enhance="false">
+        <form class="login-form" action="@LoginAction" method="post" data-enhance="false">
             <AntiforgeryToken />
             <input type="hidden" name="returnUrl" value="@LoginReturnUrl" />
             <div class="login-field">
@@ -29,6 +29,7 @@
             <button class="login-submit" type="submit">Log in <span aria-hidden="true">→</span></button>
         </form>
 
+        <p class="login-forgot"><NavLink href="/Account/ForgotPassword">Forgot password?</NavLink></p>
         <p class="login-register">New to SNEStorage? <a href="/Register">Create an account</a></p>
     </section>
 </div>

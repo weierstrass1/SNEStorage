@@ -74,7 +74,8 @@
     {
         <EditForm id="@($"reply-form-{Comment.Id}")" Model="_reply" OnSubmit="ReplyAsync" class="comment-editor" aria-busy="@Saving">
             <label for="@($"reply-{Comment.Id}")">Reply to @Username</label>
-            <InputTextArea id="@($"reply-{Comment.Id}")" @bind-Value="_reply.Text" @oninput="ReplyChanged" rows="3" disabled="@Saving" />
+            <InputTextArea id="@($"reply-{Comment.Id}")" @bind-Value="_reply.Text" @oninput="ReplyChanged" rows="3" maxlength="5000" disabled="@Saving" />
+            <small>Up to 5,000 characters.</small>
             <div class="comment-actions">
                 <button type="submit" disabled="@(Saving || string.IsNullOrWhiteSpace(_reply.Text))">@(Saving ? "Posting…" : "Post reply")</button>
                 <button type="button" @onclick="CloseEditor" disabled="@Saving">Cancel</button>
@@ -85,7 +86,8 @@
     {
         <EditForm Model="_edit" OnSubmit="EditAsync" class="comment-editor" aria-busy="@Saving">
             <label for="@($"edit-comment-{Comment.Id}")">Edit comment</label>
-            <InputTextArea id="@($"edit-comment-{Comment.Id}")" @bind-Value="_edit.Text" @oninput="EditChanged" rows="3" disabled="@Saving" />
+            <InputTextArea id="@($"edit-comment-{Comment.Id}")" @bind-Value="_edit.Text" @oninput="EditChanged" rows="3" maxlength="5000" disabled="@Saving" />
+            <small>Up to 5,000 characters.</small>
             <div class="comment-actions">
                 <button type="submit" disabled="@(Saving || string.IsNullOrWhiteSpace(_edit.Text))">Save changes</button>
                 <button type="button" @onclick="CloseEditor" disabled="@Saving">Cancel</button>

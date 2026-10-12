@@ -1,0 +1,78 @@
+<div class="library-filters">
+<EditForm Model="State" OnValidSubmit="ApplyAsync">
+    <ValidationSummary />
+    <label class="name-filter">Name contains<InputText type="search" @bind-Value="State.Finder.NameLike" placeholder="Search resources…" /></label>
+
+    <details class="filter-group">
+        <summary>Authors &amp; tags</summary>
+        <div class="filter-grid text-filters">
+            <label>Author contains<InputText type="search" @bind-Value="State.AuthorLike" placeholder="Username or external author…" /></label>
+            <label>Tag contains<InputText type="search" @bind-Value="State.Finder.TagLike" placeholder="Search tags…" /></label>
+        </div>
+    </details>
+
+    <details class="filter-group">
+        <summary>Classification</summary>
+        <div class="filter-grid classification-filters">
+            <div class="game-filter">
+                <SearchableVideogamePicker @bind-Value="State.GameId" InitialSelection="State.Game" SelectionChanged="SelectGame" Required="false" AutoSelectAny="false" Placeholder="All games" />
+                @if (State.GameId is not null) { <button type="button" class="clear-choice" @onclick="ClearGame">Clear game</button> }
+            </div>
+            <ResourcePicker PickerId="library-category-picker" Label="Categories">
+                <SummaryContent><span>@CategoryLabel</span></SummaryContent>
+                <ChildContent>
+                    @foreach (var category in Categories)
+                    {
+                        <label class="category-choice" @key="category.Id"><input type="checkbox" checked="@State.Finder.CategoryIDs.Contains(category.Id)" @onchange="args => ToggleCategory(category.Id, args)" /><span>@category.Name</span></label>
+                    }
+                    @if (Categories.Count == 0) { <p>No categories available.</p> }
+                </ChildContent>
+            </ResourcePicker>
+            <ResourceTypePicker Options="Types" @bind-Values="State.Finder.TypeIds" Required="false" Placeholder="All resource types" />
+            <label>Seal of Quality<InputSelect @bind-Value="SealSelection"><option value="any">Any</option><option value="true">With seal</option><option value="false">Without seal</option></InputSelect></label>
+        </div>
+    </details>
+
+    <details class="filter-group">
+        <summary>Rating</summary>
+        <div class="filter-grid rating-filters">
+            <label>Rating status<InputSelect @bind-Value="RatingSelection"><option value="any">Any</option><option value="true">Rated</option><option value="false">Not rated</option></InputSelect></label>
+            <label>Minimum rating<InputNumber @bind-Value="State.Finder.ScoreLowerLimit" min="1" max="5" placeholder="Any" /></label>
+            <label>Maximum rating<InputNumber @bind-Value="State.Finder.ScoreHigherLimit" min="1" max="5" placeholder="Any" /></label>
+        </div>
+    </details>
+
+    <details class="filter-group">
+        <summary>Dates</summary>
+        <div class="date-filters">
+            <fieldset class="date-range">
+                <legend>Created At</legend>
+                <div class="filter-grid date-inputs">
+                    <label>From<InputDate @bind-Value="State.Finder.CreatedAtFrom" /></label>
+                    <label>Through<InputDate @bind-Value="State.Finder.CreatedAtTo" /></label>
+                </div>
+            </fieldset>
+            <fieldset class="date-range">
+                <legend>Last Version Created At</legend>
+                <div class="filter-grid date-inputs">
+                    <label>From<InputDate @bind-Value="State.Finder.VersionCreatedAtFrom" /></label>
+                    <label>Through<InputDate @bind-Value="State.Finder.VersionCreatedAtTo" /></label>
+                </div>
+            </fieldset>
+        </div>
+    </details>
+
+    <details class="filter-group content-settings">
+        <summary>Content preferences <small>Sensitive content is hidden by default</small></summary>
+        <div class="content-choices">
+            <label><input type="checkbox" @bind="State.Finder.CanIncludesPorn" />Can include sexual content</label>
+            <label><input type="checkbox" @bind="State.Finder.CanIncludesGore" />Can include gore</label>
+            <label><input type="checkbox" @bind="State.Finder.CanIncludesPolitics" />Can include political content</label>
+            <label><input type="checkbox" @bind="State.Finder.CanIncludesSlurs" />Can include slurs</label>
+            <label><input type="checkbox" @bind="State.Finder.CanIncludesSensitiveContent" />Can include other sensitive content</label>
+        </div>
+    </details>
+    @if (Error is not null) { <p class="filter-error" role="alert">@Error</p> }
+    <div class="filter-actions"><button class="apply" type="submit" disabled="@Disabled">Apply filters</button><button type="button" @onclick="OnReset" disabled="@Disabled">Reset filters</button></div>
+</EditForm>
+</div>

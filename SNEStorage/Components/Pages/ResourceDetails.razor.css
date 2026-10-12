@@ -12,35 +12,6 @@
 .detail-header h1 { display: flex; align-items: center; gap: .6rem; min-width: 0; margin: 0; color: #f5edff; font: 900 clamp(1.65rem, 4vw, 2.4rem)/1.15 "Exo 2", sans-serif; letter-spacing: -.025em; overflow-wrap: anywhere; }
 .detail-header h1 > span { min-width: 0; }
 .detail-resource-name.has-quality-seal { color: #f5d475; text-shadow: 0 1px 2px #6b461a70; }
-@supports ((background-clip: text) or (-webkit-background-clip: text)) {
-    .detail-resource-name.has-quality-seal {
-        background-image:
-            linear-gradient(135deg,
-                transparent 40%,
-                #ffd66d50 45%,
-                #fff0bdbf 48%,
-                #fffffff5 49.5%,
-                #fffffff5 50.5%,
-                #fff0bdbf 52%,
-                #ffd66d50 55%,
-                transparent 60%),
-            linear-gradient(180deg, #fff1b5 0%, #f5d475 38%, #d9a53c 67%, #f5d475 100%);
-        background-repeat: no-repeat;
-        background-size: 240% 100%, 100% 100%;
-        background-position: 100% 50%, center;
-        -webkit-background-clip: text;
-        background-clip: text;
-        color: transparent;
-        -webkit-text-fill-color: transparent;
-        text-shadow: none;
-        filter: drop-shadow(0 1px 1px #6b461a70);
-        animation: resource-title-gold-sweep 2.2s ease-in-out -.15s infinite;
-    }
-}
-@keyframes resource-title-gold-sweep {
-    0%, 5% { background-position: 100% 50%, center; }
-    55%, 100% { background-position: 0% 50%, center; }
-}
 .detail-header ::deep .resource-rating { gap: .35rem; }
 .detail-header ::deep .rating-stars { font-size: 1.1rem; }
 .detail-authors { display: flex; flex-wrap: wrap; align-items: baseline; gap: .7rem; margin: .7rem 0 .8rem; }
@@ -56,7 +27,7 @@
 .detail-tabs button > span { padding: .05rem .4rem; border-radius: 3px; background: #432660; color: #e4cef9; font-size: .75rem; }
 .detail-tab-panel { display: flex; flex-direction: column; gap: .75rem; padding-top: .75rem; }
 .detail-tab-panel[hidden] { display: none; }
-.detail-panel { padding: .9rem 1rem; border: 1px solid #694394; border-radius: 6px; background: linear-gradient(135deg, #1e1030, #130b21); }
+.detail-panel { padding: .9rem 1rem; border: 1px solid #694394; border-radius: 6px; background: linear-gradient(135deg, rgba(30, 16, 48, var(--ui-surface-alpha)), rgba(19, 11, 33, var(--ui-surface-alpha))); }
 .detail-panel h2, .detail-previews h2, .detail-download-section h2 { margin: 0 0 .5rem; color: #ede0ff; font: 700 1.05rem "Exo 2", sans-serif; }
 .detail-overview h3 { margin: .8rem 0 .4rem; color: #bba5d0; font-size: .85rem; }
 .detail-metadata { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .55rem 1.2rem; margin: 0; }
@@ -68,7 +39,7 @@
 .detail-tags > span:not(.detail-muted) { border-color: transparent; }
 .detail-description { margin: 0; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
 .detail-muted { margin: 0; color: #b69ace; font-size: .85rem; line-height: 1.7; }
-.detail-content-warning { padding: .7rem .9rem; border: 1px solid #a66a43; border-left: 4px solid #f0b15a; border-radius: 5px; color: #efc697; background: #302016; }
+.detail-content-warning { padding: .7rem .9rem; border: 1px solid #a66a43; border-left: 4px solid #f0b15a; border-radius: 5px; color: #efc697; background: rgba(48, 32, 22, var(--ui-surface-alpha)); }
 .detail-content-warning p { margin: .25rem 0 .5rem; font-size: .8rem; }
 .detail-warning-badge { padding: .25rem .6rem; border: 1px solid #956041; border-radius: 3px; color: #ffddaf; font-size: .75rem; }
 .detail-dependencies { margin: 0; padding: 0; list-style: none; }
@@ -81,7 +52,7 @@
 .detail-mirrors { display: flex; flex-wrap: wrap; gap: .8rem; margin-top: .5rem; font-size: .78rem; }
 .detail-mirrors:empty { display: none; }
 .detail-overview .detail-download-section { margin-top: .75rem; }
-.detail-download-section { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .8rem; padding: .9rem 1rem; border: 1px solid #68532d; border-radius: 6px; background: #211828; }
+.detail-download-section { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .8rem; padding: .9rem 1rem; border: 1px solid #68532d; border-radius: 6px; background: rgba(33, 24, 40, var(--ui-surface-alpha)); }
 .detail-download-section h2 { margin-bottom: .5rem; }
 .detail-download-section p { margin: 0 0 .4rem; color: #cfb8e5; font-size: .85rem; }
 .detail-download-section > div > span { color: #b9a1cd; font-size: .75rem; }
@@ -95,7 +66,7 @@
 .resource-detail ::deep .detail-action:hover, .resource-detail ::deep .detail-library-link:hover { background: #3b2052; color: #fff; }
 .resource-detail ::deep .detail-library-link { margin-top: .8rem; }
 .detail-footer-meta { margin: 0; color: #a68bbf; font-size: .75rem; }
-.detail-loading { max-width: 760px; margin: 2rem auto; padding: 2rem; border: 1px solid #8654bc; border-radius: 6px; background: #1c102e; text-align: center; color: #cbb6df; }
+.detail-loading { max-width: 760px; margin: 2rem auto; padding: 2rem; border: 1px solid #8654bc; border-radius: 6px; background: rgba(28, 16, 46, var(--ui-surface-alpha)); text-align: center; color: #cbb6df; }
 .detail-loading h1 { color: #eedeff; font: 700 1.7rem "Exo 2", sans-serif; }
 .detail-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
 .resource-detail ::deep a:focus-visible, .detail-tabs button:focus-visible { outline: 3px solid #ffe14d; outline-offset: 3px; }

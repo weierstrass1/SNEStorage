@@ -11,5 +11,5 @@ internal sealed class CommentActionState
     public string? Message { get; set; }
     public int Revision { get; set; }
     public int ReplyRevision { get; set; }
-    public SNEStorage.Models.Comment? PublishedReply { get; set; }
+    public SNEStorage.DTOs.CommentReadDto? PublishedReply { get; set; }
 }

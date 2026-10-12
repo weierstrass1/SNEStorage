@@ -7,5 +7,9 @@ public class APIConfigDTO
     public required string Login { get; set; }
     public required string Register { get; set; }
     public required string Email { get; set; }
+    public required int EmailPort { get; set; }
+    public required string EmailSMPTP { get; set; }
     public required string EmailPassword { get; set; }
+    public required string TurnstileSiteKey { get; set; }
+    public required string[] TurnstileAllowedHostnames { get; set; }
 }

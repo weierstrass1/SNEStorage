@@ -38,7 +38,7 @@
     min-width: 0;
     padding: clamp(1rem, 3vw, 2rem);
     border-radius: 6px;
-    background: linear-gradient(180deg, rgba(26, 14, 47, .94), rgba(13, 8, 30, .94));
+    background: linear-gradient(180deg, rgba(26, 14, 47, var(--ui-surface-alpha)), rgba(13, 8, 30, var(--ui-surface-alpha)));
 }
 .resource-form-sections { min-width: 0; }
 .resource-tabs { display: flex; gap: .35rem; min-width: 0; overflow-x: auto; padding-bottom: .7rem; border-bottom: 1px solid #59408f; scrollbar-color: #7a4aa5 #110a23; }
@@ -94,7 +94,7 @@
     font: inherit;
     font-size: .94rem;
 }
-.resource-section ::deep .resource-input::placeholder { color: #9286b1; }
+.resource-section ::deep .resource-input::placeholder { color: var(--ui-control-placeholder, #bbacd0); }
 .resource-section ::deep .resource-input:focus-visible { border-color: #b14cff; outline: 2px solid rgba(177, 76, 255, .5); outline-offset: 2px; box-shadow: 0 0 13px rgba(177, 76, 255, .15); }
 .resource-section ::deep textarea.resource-input { resize: vertical; line-height: 1.65; }
 .resource-section ::deep select.resource-input { color-scheme: dark; }
@@ -162,7 +162,7 @@
 .resource-notice { padding: .9rem 1rem; border: 1px solid #ff718b; border-radius: 4px; color: #ffe0e7; background: rgba(81, 15, 42, .75); font-size: .9rem; }
 .resource-notice p { margin: 0; }
 .resource-notice ul { margin: .5rem 0 0; }
-.resource-message { padding: clamp(1.25rem, 4vw, 2.5rem); border: 1px solid #7950b3; border-radius: 6px; background: linear-gradient(145deg, #231142, #100923); }
+.resource-message { padding: clamp(1.25rem, 4vw, 2.5rem); border: 1px solid #7950b3; border-radius: 6px; background: linear-gradient(145deg, rgba(35, 17, 66, var(--ui-surface-alpha)), rgba(16, 9, 35, var(--ui-surface-alpha))); }
 .resource-message h2 { margin: 0; color: #f1eaff; font-family: "Exo 2", "Segoe UI", sans-serif; font-size: 1.5rem; font-weight: 800; }
 .resource-message > p:not(.resource-kicker) { margin: .7rem 0 1.2rem; color: #c9bada; line-height: 1.7; }
 .resource-message-error { border-color: #ff718b; }

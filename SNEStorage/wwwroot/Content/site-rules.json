@@ -1,0 +1,163 @@
+{
+  "title": "Site rules",
+  "introduction": "SNEStorage is a community for SNES hacking, documentation, tools, and homebrew. These rules keep resources useful, creators credited, and the community welcoming.",
+  "updatedLabel": "Last revised:",
+  "updatedOn": "2026-10-09",
+  "navigationTitle": "On this page",
+  "contextTitle": "Context matters",
+  "contextDescription": "Staff consider the context, intent, impact, and previous violations when reviewing an incident. Repeated violations may lead to more severe penalties.",
+  "sections": [
+    {
+      "id": "community",
+      "title": "Community and public profiles",
+      "description": "Respect other users wherever you participate on SNEStorage.",
+      "rules": [
+        {
+          "id": "no-harassment",
+          "title": "Do not harass other users",
+          "text": "Do not use SNEStorage to harass, intimidate, or deliberately bother other users."
+        },
+        {
+          "id": "appropriate-profiles",
+          "title": "Keep your public profile appropriate",
+          "text": "Do not use your avatar or other public profile information to display political, controversial, offensive, or otherwise disturbing content."
+        },
+        {
+          "id": "language-in-context",
+          "title": "Language depends on context",
+          "text": "No word is prohibited solely for being a particular word. However, do not use language to deliberately provoke, insult, or upset other users. Context and intent matter."
+        }
+      ]
+    },
+    {
+      "id": "resources",
+      "title": "Resources and previews",
+      "description": "Describe and classify your resource accurately, and show what users will actually receive.",
+      "rules": [
+        {
+          "id": "accurate-uploads",
+          "title": "Uploads must match their description",
+          "text": "Do not deliberately misrepresent an upload or include unrelated material. If you describe a resource as a particular tool or asset, the downloaded files must correspond to that resource."
+        },
+        {
+          "id": "content-warnings",
+          "title": "Apply the appropriate content warnings",
+          "text": "If your resource contains sensitive content, select all of the content warning flags that apply."
+        },
+        {
+          "id": "snes-material",
+          "title": "SNES material only",
+          "text": "Only upload material relevant to the SNES, such as hacking resources, documentation, tools, and homebrew. Unrelated uploads are not allowed."
+        },
+        {
+          "id": "relevant-previews",
+          "title": "Use previews to demonstrate the resource",
+          "text": "Previews must be relevant to the resource. Do not use them to upload unrelated or controversial content."
+        },
+        {
+          "id": "accurate-classification",
+          "title": "Choose accurate classifications",
+          "text": "Use submission forms correctly. The game, resource types, categories, and other information must match the resource. For example, do not classify an enemy resource as a player resource."
+        },
+        {
+          "id": "precise-information",
+          "title": "Provide precise information",
+          "text": "Be accurate and specific when filling out forms. Avoid vague descriptions or information that does not help users understand the resource."
+        }
+      ]
+    },
+    {
+      "id": "safety-and-authorship",
+      "title": "Safety, distribution, and authorship",
+      "description": "Share only material you are allowed to distribute, and give every contributor proper credit.",
+      "rules": [
+        {
+          "id": "illegal-material",
+          "title": "No illegal material",
+          "text": "Do not upload illegal material to SNEStorage."
+        },
+        {
+          "id": "safe-links",
+          "title": "Use safe and relevant links",
+          "text": "Do not put malicious links, links to dubious websites, or links unrelated to a form's purpose into any form."
+        },
+        {
+          "id": "rom-uploads",
+          "title": "No ROM uploads: share BPS or IPS patches",
+          "text": "Uploading ROMs is strictly prohibited, except for homebrew that does not infringe copyright. To share a ROM hack or modified game, upload a BPS or IPS patch instead of the ROM. Do not include the original ROM with the patch."
+        },
+        {
+          "id": "redistribution-permission",
+          "title": "Get permission before sharing someone else's work",
+          "text": "Do not upload resources you did not create without permission to redistribute them. Crediting the author does not replace that permission."
+        },
+        {
+          "id": "author-credits",
+          "title": "Credit every author",
+          "text": "When uploading a resource, list all of its authors, including contributors who do not have a SNEStorage account."
+        }
+      ]
+    },
+    {
+      "id": "comments",
+      "title": "Comments and discussions",
+      "description": "Keep discussions useful and relevant to the resource.",
+      "rules": [
+        {
+          "id": "comment-spam",
+          "title": "Do not spam comments",
+          "text": "Do not post promotional links, unrelated or nonsensical messages, or repeated comments multiple times or across different resources."
+        },
+        {
+          "id": "sensitive-discussions",
+          "title": "Sensitive discussions need a relevant context",
+          "text": "Discussions of sensitive subjects, such as politics or religion, are prohibited in comments unless they are relevant to the context of the resource or discussion."
+        },
+        {
+          "id": "meaningful-comments",
+          "title": "Write meaningful comments",
+          "text": "Vague or nonsensical comments may be removed."
+        }
+      ]
+    },
+    {
+      "id": "visibility-and-permissions",
+      "title": "Visibility and resource permissions",
+      "description": "Private visibility does not remove staff access or the permissions of resource contributors.",
+      "rules": [
+        {
+          "id": "private-access",
+          "title": "Who can view a private resource",
+          "text": "A private resource can be viewed by moderators and administrators, its authors, the user who submitted the resource, and anyone who previously submitted a version of it."
+        },
+        {
+          "id": "resource-management",
+          "title": "Who can manage a resource",
+          "text": "Any resource author, the user who submitted the resource, and anyone who previously submitted a version of it may upload new versions, edit the resource, and delete it. Deleting resources or versions must follow the dependency and minimum-version rules in this section."
+        },
+        {
+          "id": "dependency-visibility",
+          "title": "Dependencies must remain accessible",
+          "text": "A private resource cannot be used as a dependency of another resource. A resource referenced as a dependency by another resource on SNEStorage cannot be made private. If another resource depends on your resource, you must speak with an administrator or moderator before deleting it."
+        },
+        {
+          "id": "minimum-versions",
+          "title": "Keep at least one version",
+          "text": "An existing resource must always have at least one version. You may delete individual versions, but you must not delete the last remaining version."
+        }
+      ]
+    },
+    {
+      "id": "moderation",
+      "title": "Moderation and repeated violations",
+      "description": "Staff review incidents in context rather than treating every mistake the same way.",
+      "rules": [
+        {
+          "id": "repeated-violations",
+          "title": "Repeated violations can lead to stronger penalties",
+          "text": "If a user breaks the rules more than once, penalties may become more severe. Staff determine the appropriate response based on the circumstances of each incident."
+        }
+      ]
+    }
+  ]
+}

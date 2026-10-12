@@ -1,0 +1,43 @@
+<div class="latest-resources" aria-busy="@_loading">
+    @if (_loading)
+    {
+        <div class="latest-status" role="status">Loading latest resources…</div>
+    }
+    else if (_error is not null)
+    {
+        <div class="latest-status" role="alert">
+            <p>@_error</p>
+            <button type="button" @onclick="LoadAsync">Try again</button>
+        </div>
+    }
+    else if (_resources.Count == 0)
+    {
+        <div class="latest-status">No public resources to show yet.</div>
+    }
+    else if (Compact)
+    {
+        <div class="latest-cards">
+            @foreach (var resource in _resources)
+            {
+                <ResourceSummaryCard @key="resource.ResourceIdName.Id" Item="resource" />
+            }
+        </div>
+    }
+    else
+    {
+        <div class="latest-table-scroll" tabindex="0" role="region" aria-label="Latest resources">
+            <table>
+                <caption class="visually-hidden">The five newest public resources without sensitive content, newest first.</caption>
+                <thead>
+                    <tr><th scope="col">Resource</th><th scope="col">Video game</th><th scope="col">Authors</th><th scope="col">Rating</th><th scope="col" class="download-heading">Download</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var resource in _resources)
+                    {
+                        <ResourceListRow @key="resource.ResourceIdName.Id" Item="resource" ShowTypes="false" ShowCategories="false" />
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

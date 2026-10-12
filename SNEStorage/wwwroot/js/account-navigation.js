@@ -1,27 +1,15 @@
-import { accountAvatarUrl } from "./profile.js?v=7";
+import { accountAvatarUrl } from "./profile.js?v=10";
+import { getAccountSession, watchAccountSession } from "./account-session.js?v=2";
 
-export function watchAccount(profilePath, receiver) {
-    const profileUrl = new URL(profilePath, document.baseURI);
-    let channel;
-    try {
-        if (typeof BroadcastChannel === "function") channel = new BroadcastChannel("snestorage-account");
-    } catch { /* Focus/navigation checks still work when cross-tab messaging is unavailable. */ }
+export function watchAccount(receiver) {
     let stopped = false;
     let checking = false;
     let checkAgain = false;
     let activeRequest;
-    let lastIdentity;
 
     async function report(account) {
         if (stopped) return;
         await receiver.invokeMethodAsync("UpdateAccount", account);
-        if (account.authenticated != null) {
-            const identity = JSON.stringify([account.authenticated, account.username ?? ""]);
-            if (identity !== lastIdentity) {
-                lastIdentity = identity;
-                channel?.postMessage("changed");
-            }
-        }
     }
 
     async function checkSession() {
@@ -30,27 +18,24 @@ export function watchAccount(profilePath, receiver) {
         checking = true;
         const request = new AbortController();
         activeRequest = request;
-        const timeout = window.setTimeout(() => request.abort(), 10000);
         try {
-            // Fresh browser cookies determine the current API session, not the circuit's original user.
-            const response = await fetch(profileUrl, {
-                credentials: "same-origin", cache: "no-store", redirect: "manual",
-                headers: { Accept: "application/json" }, signal: request.signal
-            });
+            const response = await getAccountSession(request.signal);
+            if (stopped || request.signal.aborted) return;
+            if (response.cancelled) {
+                await report({ authenticated: null, status: response.status || 499 });
+                return;
+            }
             if (response.status === 401) {
-                await response.body?.cancel();
                 await report({ authenticated: false, status: 401 });
-            } else if (response.status === 200 && (response.headers.get("Content-Type") ?? "").includes("json")) {
-                const profile = await response.json();
-                if (!profile?.userId) { await report({ authenticated: null, status: 502 }); return; }
+            } else if (response.status === 200) {
+                const profile = JSON.parse(response.body);
                 let avatarUrl = "";
                 try { avatarUrl = accountAvatarUrl(profile.userSummary?.avatar ?? profile.avatar); } catch { /* An optional image must not hide an account. */ }
-                await report({ authenticated: true, status: 200,
+                await report({ authenticated: true, status: 200, userId: profile.userId,
                     username: profile.userSummary?.username,
                     usernameColor: profile.userSummary?.usernameColor ?? profile.usernameColor, avatarUrl });
             } else {
                 // A missing profile, DB failure or forbidden request doesn't prove the user logged out.
-                await response.body?.cancel();
                 await report({ authenticated: null, status: response.status });
             }
         } catch {
@@ -59,7 +44,6 @@ export function watchAccount(profilePath, receiver) {
                 try { await report({ authenticated: null, status: 0 }); } catch { /* The circuit may have closed. */ }
             }
         } finally {
-            window.clearTimeout(timeout);
             activeRequest = undefined;
             checking = false;
             if (checkAgain && !stopped) { checkAgain = false; void checkSession(); }
@@ -67,23 +51,17 @@ export function watchAccount(profilePath, receiver) {
     }
 
     function check() { void checkSession(); }
-    function visible() { if (!document.hidden) check(); }
+    const monitor = watchAccountSession(check);
     function stop() {
         if (stopped) return;
         stopped = true;
+        monitor.stop();
         activeRequest?.abort();
-        window.removeEventListener("focus", check);
-        window.removeEventListener("snestorage-session-rejected", check);
-        window.removeEventListener("pagehide", stop);
-        document.removeEventListener("visibilitychange", visible);
-        channel?.close();
+        window.removeEventListener("pagehide", pageHidden);
     }
 
-    window.addEventListener("focus", check);
-    window.addEventListener("snestorage-session-rejected", check);
-    window.addEventListener("pagehide", stop);
-    document.addEventListener("visibilitychange", visible);
-    if (channel) channel.onmessage = check;
+    function pageHidden(event) { if (!event.persisted) stop(); }
+    window.addEventListener("pagehide", pageHidden);
     check();
     return { check, stop };
 }

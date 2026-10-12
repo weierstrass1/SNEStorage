@@ -1,0 +1,39 @@
+.library { padding: 1.5rem 0 3rem; }
+.library-heading { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+.library-kicker { color: #c396ff; font-family: "Press Start 2P", monospace; font-size: .65rem; letter-spacing: 1px; margin-bottom: .75rem; }
+h1 { font-family: "Exo 2", sans-serif; font-style: italic; font-weight: 900; font-size: clamp(2.2rem, 5vw, 3.1rem); color: #ede0ff; margin-bottom: .4rem; }
+.library-heading p:last-child { font-size: .9rem; color: #b4a0ca; margin: 0; }
+.submit-resource { display: inline-block; border: 1px solid #ad82da; padding: .7rem 1rem; border-radius: 10px; color: #f5eaff; background: #58337d; text-decoration: none; font-size: .9rem; font-weight: 750; white-space: nowrap; }
+.submit-resource:hover { background: #76469f; box-shadow: 0 0 20px #9d57d533; }
+.library-toolbar { display: flex; flex-wrap: wrap; align-items: end; gap: .75rem; margin-bottom: .8rem; }
+.library-toolbar > label { display: grid; gap: .3rem; font-size: .7rem; color: #b9a5ca; }
+.library-toolbar ::deep select { color: #ecdef8; background: rgba(36, 20, 49, var(--ui-inset-alpha)); border: 1px solid #654180; border-radius: 8px; font-size: .82rem; padding: .5rem 1.6rem .5rem .7rem; min-height: 39px; }
+.filters-button { margin-right: auto; color: #e1cbff; background: #342047; border: 1px solid #8760ad; border-radius: 9px; padding: .55rem 1rem; min-height: 39px; }
+.filter-summary { display: flex; align-items: center; flex-wrap: wrap; gap: .4rem; margin-bottom: .85rem; }
+.filter-summary span { color: #e3cafa; border: 1px solid #57316f; padding: .25rem .5rem; border-radius: 6px; font-size: .7rem; background: rgba(46, 26, 62, var(--ui-surface-alpha)); }
+.filter-summary small { color: #9e88b2; font-size: .68rem; }
+.filter-summary button, .text-button { border: 0; background: none; color: #d8b0ff; font-size: .75rem; text-decoration: underline; }
+.results { scroll-margin-top: 1rem; }
+.library-table-scroll { overflow-x: auto; border: 1px solid #593777; border-radius: 14px; background: rgba(23, 13, 36, var(--ui-surface-alpha)); box-shadow: 0 14px 35px #0003; }
+.library-table-scroll:focus-visible { outline: 2px solid #b287e4; outline-offset: 3px; }
+.library-table { width: 100%; border-collapse: collapse; }
+th { background: #2a173c; border-bottom: 1px solid #715093; color: #cdb3e9; text-align: left; padding: .85rem .8rem; font-size: .7rem; text-transform: uppercase; letter-spacing: .5px; }
+.downloads-heading { text-align: right; }
+.load-sentinel { min-height: 1px; text-align: center; }
+.load-more { margin: 1rem auto 0; }
+.library-pagination { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-top: 1rem; }
+.library-pagination p { margin: 0; font-size: .8rem; color: #c0aaca; }
+.library-pagination small { display: block; font-size: .68rem; color: #927fa3; margin-top: .2rem; }
+.library-pagination > div { display: flex; gap: .5rem; }
+.library-pagination button, .load-more, .library-empty button { border: 1px solid #745092; background: #301c43; color: #e9d9ff; border-radius: 8px; padding: .55rem .8rem; font-size: .8rem; }
+button:hover:not(:disabled) { filter: brightness(1.15); }
+button:disabled { opacity: .4; cursor: default; }
+.library-loading, .library-empty { padding: 3rem 1rem; text-align: center; border: 1px solid #4c3065; border-radius: 14px; background: rgba(26, 16, 41, var(--ui-surface-alpha)); color: #c8b2dd; }
+.library-empty > span { font-size: 3rem; color: #b883f1; }
+.library-empty h2 { font-family: "Exo 2", sans-serif; font-size: 1.5rem; color: #f0ddff; }
+.library-empty p { color: #a692bb; font-size: .9rem; }
+.library-status { margin: .8rem 0; color: #b89dcd; font-size: .8rem; text-align: center; }
+.loading-pixel { display: inline-block; width: 12px; height: 12px; background: #bd8cf2; margin-right: .6rem; animation: pulse 1s alternate infinite; }
+@keyframes pulse { to { opacity: .3; } }
+@media(max-width: 700px) { .library-heading { align-items: start; flex-direction: column; } .library-toolbar > label { flex: 1; min-width: 100px; } .filters-button { width: 100%; margin-right: 0; } .library-pagination { align-items: start; } }
+@media(prefers-reduced-motion: reduce) { .loading-pixel { animation: none; } }

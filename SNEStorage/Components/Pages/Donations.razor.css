@@ -1,0 +1,44 @@
+.donations-page { max-width: 1050px; margin: 0 auto; padding: 1rem 0 2.5rem; color: #e8defa; }
+.donations-heading { margin-bottom: 1.8rem; }
+.donations-kicker { margin: 0 0 .8rem; color: #c29afa; font-family: 'Press Start 2P', monospace; font-size: .65rem; line-height: 1.9; letter-spacing: .06em; }
+h1, h2, h3 { font-family: 'Exo 2', sans-serif; font-weight: 800; }
+h1 { margin: 0 0 .8rem; font-size: clamp(2rem, 4vw, 3rem); color: #f4ecff; }
+.donations-introduction { max-width: 750px; margin: 0; font-size: 1.08rem; line-height: 1.7; color: #c9b9dd; }
+.patreon-panel { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 2rem; align-items: center; border: 1px solid #9061ae; border-radius: 20px; padding: 2.2rem; background: radial-gradient(ellipse at top left, #90446838, transparent 65%), linear-gradient(135deg, rgba(45, 24, 63, var(--ui-surface-alpha)), rgba(20, 14, 35, var(--ui-surface-alpha))); box-shadow: 0 12px 35px #06040d44; }
+.support-art { display: flex; flex-direction: column; align-items: center; gap: .9rem; }
+.support-heart { width: 75px; height: 75px; fill: #ef8dad; filter: drop-shadow(0 0 15px #dc688845); }
+.support-art img { width: 110px; height: auto; object-fit: contain; }
+.patreon-copy h2 { margin: 0 0 .9rem; font-size: clamp(1.5rem, 3vw, 2rem); color: #f9e6f5; }
+.patreon-copy p { max-width: 620px; margin-bottom: 1.3rem; line-height: 1.75; color: #cebedf; }
+.patreon-button, .donations-status button { display: inline-flex; align-items: center; justify-content: center; gap: .8rem; min-height: 48px; padding: .75rem 1.2rem; border: 1px solid #e3a0d6; border-radius: 9px; background: #80416e; color: #fff4fc; text-decoration: none; font-weight: 700; transition: background .15s, border-color .15s; }
+.patreon-button:hover, .donations-status button:hover { background: #9a5084; border-color: #f8c5ee; color: #fff; }
+.patreon-button:focus-visible, .donations-status button:focus-visible, .support-thanks a:focus-visible { outline: 2px solid #e4b2ff; outline-offset: 4px; }
+.patreon-note { display: block; margin-top: .75rem; color: #bdadcf; line-height: 1.6; }
+.patreon-unavailable { color: #f1c79a; }
+.support-goals { margin-top: 2rem; }
+.support-goals > h2 { font-size: 1.35rem; margin: 0 0 1rem; }
+.support-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+.support-card { padding: 1.4rem; border: 1px solid #513567; border-radius: 12px; background: rgba(27, 17, 40, var(--ui-surface-alpha)); }
+.support-pixel { display: block; width: 9px; height: 9px; background: #d38cdb; box-shadow: 12px 0 #d38cdb44; margin-bottom: 1rem; }
+.support-card h3 { font-size: 1.1rem; color: #eee2ff; margin: 0 0 .6rem; }
+.support-card p { margin: 0; line-height: 1.65; color: #bdadcf; }
+.supporter-benefits > h2 { color: #f9c8e7; }
+.supporter-benefits .support-card { border-color: #895175; background: linear-gradient(145deg, rgba(45, 24, 54, var(--ui-surface-alpha)), rgba(27, 17, 40, var(--ui-surface-alpha))); }
+.supporter-benefits .support-pixel { background: #ef8dad; box-shadow: 12px 0 #ef8dad44; }
+.support-thanks { margin-top: 1.5rem; padding: 1.3rem 1.5rem; border-left: 3px solid #9d6cc5; background: rgba(33, 21, 45, var(--ui-surface-alpha)); border-radius: 0 10px 10px 0; }
+.support-thanks h2 { font-size: 1.2rem; margin: 0 0 .5rem; }
+.support-thanks p { line-height: 1.65; color: #cbb9dc; margin: 0 0 .75rem; }
+.support-thanks a { color: #ddaeff; text-decoration: none; font-weight: 600; }
+.support-thanks a:hover { color: #f5e4ff; text-decoration: underline; }
+.donations-status { padding: 1.5rem; border: 1px solid #5d407b; border-radius: 12px; background: rgba(28, 19, 42, var(--ui-surface-alpha)); }
+@media (max-width: 767px) {
+    .support-grid { grid-template-columns: 1fr; }
+    .patreon-panel { grid-template-columns: 120px minmax(0, 1fr); gap: 1.3rem; padding: 1.5rem; }
+    .support-heart { width: 55px; height: 55px; }
+    .support-art img { width: 90px; }
+}
+@media (max-width: 480px) {
+    .patreon-panel { grid-template-columns: 1fr; }
+    .support-art { flex-direction: row; justify-content: flex-start; gap: 1.5rem; }
+    .patreon-button { width: 100%; }
+}

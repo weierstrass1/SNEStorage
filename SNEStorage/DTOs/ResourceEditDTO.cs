@@ -27,6 +27,7 @@ public class ResourceEditDTO
     public string[] ExternalAuthors { get; set; } = [];
     public string[] AuthorsIDs { get; set; } = [];
     public long[] DependencyIDs { get; set; } = [];
+    public bool? IAmAuthor { get; set; }
     [DisplayFormat(ConvertEmptyStringToNull = false)]
     public string? RepositoryURL { get; set; }
     public ExternalDependencyDTO[] ExternalDependencies { get; set; } = [];

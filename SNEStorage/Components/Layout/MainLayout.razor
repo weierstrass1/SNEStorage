@@ -1,71 +1,71 @@
 @inherits LayoutComponentBase
 
-<div class="app-shell">
+<div class="app-shell @(_sidebarMinimized ? "sidebar-minimized" : null)">
     <header class="site-header">
         <div class="header-inner container">
-            <a class="brand-lockup" href="/" aria-label="SNEStorage home">
-                <img src="images/caja.png" alt="" />
-                <span class="brand-copy">
-                    <span class="brand-name">SNEStorage</span>
-                </span>
+            <a class="header-brand" href="/" aria-label="SNEStorage home">
+                <img src="images/caja.png" alt="" width="44" height="44" />
+                <span>SNEStorage</span>
             </a>
-
-            <button class="navigation-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#main-navigation" aria-controls="main-navigation" aria-expanded="false" aria-label="Toggle navigation">
-                <span></span>
-                <span></span>
-                <span></span>
-            </button>
-
-            <div class="site-navigation collapse" id="main-navigation">
-                <nav class="navigation-links" aria-label="Main navigation">
-                    <NavLink class="navigation-button" href="/" Match="NavLinkMatch.All">Home</NavLink>
-                    <NavLink class="navigation-button" href="/Resources">Resources</NavLink>
-                    <NavLink class="navigation-button" href="/Home/Privacy">Privacy</NavLink>
-                </nav>
-
-                <div class="account-links">
-                    <AccountNavigation />
-                </div>
+            <div class="account-links">
+                <AccountNavigation />
             </div>
         </div>
     </header>
 
-    <main class="container app-content">
-        @if (CurrentPageRoute is { } routeData)
-        {
-            <PageAccessGuard RouteData="routeData">
-                @Body
-                <FocusOnNavigate RouteData="routeData" Selector="h1" />
-            </PageAccessGuard>
-        }
-        else
-        {
-            @Body
-        }
-    </main>
+    <SideNavigation Minimized="_sidebarMinimized" ToggleRequested="ToggleSidebar" />
 
-    <footer class="site-footer">
-        <div class="footer-main container">
-            <div class="footer-brand">
-                <div class="footer-brand-name">
-                    <img src="images/caja.png" alt="" />
-                    <span>SNEStorage</span>
+    <div class="page-region">
+        <div class="mobile-navigation container">
+            <button class="navigation-toggle" type="button" data-bs-toggle="offcanvas" data-bs-target="#site-sidebar" aria-controls="site-sidebar" aria-label="Open navigation">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
+                Menu
+            </button>
+        </div>
+
+        <main class="container app-content">
+            @if (CurrentPageRoute is { } routeData)
+            {
+                <PageAccessGuard RouteData="routeData">
+                    @Body
+                    <FocusOnNavigate RouteData="routeData" Selector="h1" />
+                </PageAccessGuard>
+            }
+            else
+            {
+                @Body
+            }
+        </main>
+
+        <footer class="site-footer">
+            <div class="footer-main container">
+                <div class="footer-brand">
+                    <div class="footer-brand-name">
+                        <img src="images/caja.png" alt="" />
+                        <span>SNEStorage</span>
+                    </div>
+                    <p>A home for SNES hacks, homebrew, and creator tools.</p>
                 </div>
-                <p>A home for SNES hacks, homebrew, and creator tools.</p>
+
+                <nav class="footer-links" aria-label="Footer navigation">
+                    <NavLink href="/Resources">Resource library</NavLink>
+                    <NavLink href="/Community">Community</NavLink>
+                    <NavLink href="/About">About</NavLink>
+                    <NavLink href="/Donations">Donations</NavLink>
+                    <NavLink href="/Rules">Site rules</NavLink>
+                    <NavLink href="/SealOfQuality">Seal of Quality</NavLink>
+                    <NavLink href="/Privacy">Privacy</NavLink>
+                    <a href="https://www.youtube.com/anonimxwz" target="_blank" rel="noopener noreferrer">YouTube <span aria-hidden="true">↗</span></a>
+                    <a href="https://twitter.com/anonimzwx" target="_blank" rel="noopener noreferrer">Twitter <span aria-hidden="true">↗</span></a>
+                </nav>
             </div>
 
-            <nav class="footer-links" aria-label="Footer navigation">
-                <NavLink href="/Resources">Resource library</NavLink>
-                <NavLink href="/Home/Privacy">Privacy</NavLink>
-                <a href="https://www.youtube.com/anonimxwz" target="_blank" rel="noopener noreferrer">YouTube <span aria-hidden="true">↗</span></a>
-                <a href="https://discord.gg/NpUXn7H" target="_blank" rel="noopener noreferrer">Discord <span aria-hidden="true">↗</span></a>
-                <a href="https://twitter.com/anonimzwx" target="_blank" rel="noopener noreferrer">Twitter <span aria-hidden="true">↗</span></a>
-            </nav>
-        </div>
-
-        <div class="footer-bottom container">
-            <p class="footer-disclaimer"><span>COMMUNITY DISCLAIMER</span> SNEStorage is an independent fan community project and is not affiliated with or endorsed by Nintendo. Nintendo and Super Nintendo are trademarks of Nintendo.</p>
-            <p class="footer-credit">BUILT FOR THE SNES HACKING COMMUNITY</p>
-        </div>
-    </footer>
+            <div class="footer-bottom container">
+                <p class="footer-disclaimer"><span>COMMUNITY DISCLAIMER</span> SNEStorage is an independent fan community project and is not affiliated with or endorsed by Nintendo. Nintendo and Super Nintendo are trademarks of Nintendo.</p>
+                <p class="footer-credit">BUILT FOR THE SNES HACKING COMMUNITY</p>
+            </div>
+        </footer>
+    </div>
 </div>
+
+<CaptchaPrompt />

@@ -1,77 +1,156 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using OneOf;
 using SNEStorage.DTOs;
+using SNEStorage.Filters.Attributes;
 using SNEStorage.Services;
 
 namespace SNEStorage.Controllers;
 
 [ApiController]
 [Route("api/account")]
-public class AccountController(AccountService accountService) : ControllerBase
+public class AccountController(AccountService accountService,
+    EmailController emailController,
+    FileController fileController) : ControllerBase
 {
-    public AccountService AccountService { get; } = accountService;
-
+    private readonly AccountService _accountService = accountService;
+    private readonly EmailController _emailController = emailController;
+    private readonly FileController _fileController = fileController;
+    [EnableRateLimiting("writes")]
+    [HttpPost("password/change")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [AllowAnonymous]
+    public async Task<ActionResult> ChangePassword([FromBody] ChangePasswordDTO dto, CancellationToken ct)
+    {
+        var res = await _accountService.ChangePassword(dto, ct);
+        return GetActionResult(res);
+    }
+    [EnableRateLimiting("password-email")]
+    [HttpPost("password/request")]
+    [RequireCaptcha("password_reset_request")]
+    [AllowAnonymous]
+    public async Task<ActionResult> RequestChangePassword([FromBody] string email, CancellationToken ct)
+    {
+        var res = await _accountService.RequestPasswordReset(email, ct);
+        return GetActionResult(res);
+    }
+    [EnableRateLimiting("register")]
     [HttpPost("register")]
+    [RequireCaptcha("user_register")]
     public async Task<ActionResult<RegisterResponseDTO>> Register(RegisterInfo credentials)
     {
-        var res = await AccountService.Register(credentials);
-
-        if (res.TryPickT0(out var response, out var error))
-            return response;
-
-        return BadRequest(error);
+        var res = await _accountService.Register(credentials);
+        return GetActionResult(res);
     }
+    [EnableRateLimiting("login")]
     [HttpPost("login")]
     public async Task<ActionResult<AuthenticationResponse>> Login(LoginCredentials credentials)
     {
-        var res = await AccountService.Login(credentials);
-        return res == null ? 
-            BadRequest() : 
+        var res = await _accountService.Login(credentials);
+        return res == null ?
+            BadRequest() :
             res;
     }
     [HttpPost("logout")]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<ActionResult> Logout()
     {
-        var res = await AccountService.Logout();
+        var res = await _accountService.Logout();
         return res ?
             Ok() :
             BadRequest();
     }
     [HttpGet("refresh-token")]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [RequireCaptcha("user_refreshToken")]
     public async Task<ActionResult<AuthenticationResponse>> RefreshToken()
     {
-        var res = await AccountService.RefreshToken();
-        return res == null ? 
-            BadRequest() : 
+        var res = await _accountService.RefreshToken();
+        return res == null ?
+            BadRequest() :
             res;
     }
+    [EnableRateLimiting("writes")]
     [HttpPost("add-role")]
-    [Authorize(AuthenticationSchemes =JwtBearerDefaults.AuthenticationScheme, Policy = "Admin")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "Admin")]
     public async Task<ActionResult> AddRole(EditRole editRole)
     {
-        return await AccountService.AddRole(editRole) ?
+        return await _accountService.AddRole(editRole) ?
             NoContent() :
             BadRequest();
     }
+    [EnableRateLimiting("writes")]
     [HttpPost("remove-role")]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Policy = "Admin")]
     public async Task<ActionResult> RemoveRole(EditRole editRole)
     {
-        return await AccountService.RemoveRole(editRole) ?
+        return await _accountService.RemoveRole(editRole) ?
             NoContent() :
-            BadRequest(); 
+            BadRequest();
     }
 
     internal async Task<IActionResult> ConfirmUser(string userId, string token)
     {
-        return await AccountService.ConfirmUser(userId, token) switch
+        return await _accountService.ConfirmUser(userId, token) switch
         {
             AccountServiceResult.UserNotFound => NotFound(),
             AccountServiceResult.InvalidToken => BadRequest(),
             _ => Ok(),
         };
+    }
+    [NonAction]
+    public ObjectResult GetActionResult(AccountServiceResult result)
+    {
+        string res = $"{GetType().Name}-{result}";
+
+        return result switch
+        {
+            AccountServiceResult.Success => Ok(res),
+
+            AccountServiceResult.UserNotFound => NotFound(res),
+
+            AccountServiceResult.UserAlreadyExists => Conflict(res),
+
+            AccountServiceResult.InvalidEmail or
+            AccountServiceResult.InvalidPassword or
+            AccountServiceResult.InvalidToken or
+            AccountServiceResult.PasswordChangeError or
+            AccountServiceResult.UserCreationError => BadRequest(res),
+
+            AccountServiceResult.CancelledToken => StatusCode(499, res),
+
+            AccountServiceResult.AvatarLoadError or
+            AccountServiceResult.TokenCreationError or
+            AccountServiceResult.DBError or
+            AccountServiceResult.Error =>
+                StatusCode(StatusCodes.Status500InternalServerError, res),
+
+            _ => StatusCode(StatusCodes.Status500InternalServerError, res)
+        };
+    }
+    [NonAction]
+    public ObjectResult GetActionResult(OneOf<AccountServiceResult, EmailServiceResult> result)
+    {
+        return result.TryPickT0(out var error1, out var error2) ?
+            GetActionResult(error1) :
+            _emailController.GetActionResult(error2);
+    }
+    [NonAction]
+    public ObjectResult GetActionResult(OneOf<AccountServiceResult, FileServiceResult> result)
+    {
+        return result.TryPickT0(out var error1, out var error2) ?
+            GetActionResult(error1) :
+            _fileController.GetActionResult(error2);
+    }
+    [NonAction]
+    public ActionResult<T> GetActionResult<T>(OneOf<T, AccountServiceResult, FileServiceResult> result)
+    {
+        return result.TryPickT0(out var res, out var error) ?
+                    res :
+                    error.TryPickT0(out var error1, out var error2) ?
+                        GetActionResult(error1) :
+                        _fileController.GetActionResult(error2);
     }
 }

@@ -1,0 +1,44 @@
+.about-page { max-width: 1050px; margin: 0 auto; padding: 1rem 0 2.5rem; color: #e8defa; }
+.about-hero { display: flex; align-items: center; gap: 2rem; padding: 2rem; border: 1px solid #664697; border-radius: 20px; background: radial-gradient(ellipse at top right, #57317445, transparent 65%), linear-gradient(135deg, rgba(35, 19, 55, var(--ui-surface-alpha)), rgba(16, 11, 28, var(--ui-surface-alpha))); }
+.about-logo { flex: 0 0 auto; width: 128px; height: auto; object-fit: contain; filter: drop-shadow(0 0 20px #ae73f03b); }
+.about-kicker { margin: 0 0 .8rem; color: #c29afa; font-family: 'Press Start 2P', monospace; font-size: .65rem; line-height: 1.9; letter-spacing: .06em; }
+h1, h2, h3 { font-family: 'Exo 2', sans-serif; font-weight: 800; }
+h1 { margin: 0 0 .8rem; font-size: clamp(2rem, 4vw, 3rem); color: #f4ecff; }
+.about-introduction { max-width: 650px; margin: 0; color: #c9b9dd; font-size: 1.08rem; line-height: 1.7; }
+.about-purpose { margin: 2rem 0; }
+.about-purpose > h2 { font-size: 1.35rem; margin: 0 0 1rem; }
+.about-section-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+.about-section { padding: 1.4rem; border: 1px solid #493360; border-radius: 12px; background: rgba(23, 16, 36, var(--ui-surface-alpha)); }
+.about-pixel { display: block; width: 9px; height: 9px; background: #ad79ed; box-shadow: 12px 0 #ad79ed44; margin-bottom: 1rem; }
+.about-section h3 { margin: 0 0 .6rem; font-size: 1.1rem; color: #eee2ff; }
+.about-section p { margin: 0; line-height: 1.65; color: #bdadcf; }
+.creator-panel { padding: 2rem; border: 1px solid #72509c; border-radius: 20px; background: linear-gradient(130deg, rgba(40, 23, 62, var(--ui-surface-alpha)), rgba(21, 16, 32, var(--ui-surface-alpha)) 75%); }
+.creator-heading { display: flex; align-items: center; gap: 1.3rem; margin-bottom: 1.3rem; }
+.creator-symbol { display: grid; place-items: center; flex: 0 0 auto; width: 78px; height: 78px; border: 1px solid #9060c5; border-radius: 16px; background: #35224e; color: #d8b6ff; font: 2rem 'VT323', monospace; box-shadow: inset 0 0 20px #8f5aba22; }
+.creator-heading .about-kicker { margin-bottom: .35rem; }
+.creator-heading h2 { font-size: 2rem; color: #f2e7ff; margin: 0 0 .2rem; overflow-wrap: anywhere; }
+.creator-role { margin: 0; color: #bca2d8; }
+.creator-copy p { max-width: 850px; line-height: 1.75; margin: 0 0 .9rem; color: #cebedf; }
+.creator-projects { display: flex; flex-wrap: wrap; gap: .5rem; list-style: none; padding: 0; margin: 1.3rem 0; }
+.creator-projects li { padding: .4rem .8rem; border-radius: 6px; border: 1px solid #745297; background: #382348; color: #e0c5ff; font-size: .86rem; }
+.creator-links, .about-actions { display: flex; flex-wrap: wrap; gap: .7rem; }
+.creator-links a, .about-actions a, .about-status button { display: inline-flex; align-items: center; justify-content: center; gap: .8rem; min-height: 44px; border: 1px solid #80609f; border-radius: 8px; padding: .6rem 1rem; background: #332143; color: #ede1fc; text-decoration: none; font-weight: 600; transition: background .15s, border-color .15s; }
+.creator-links a:hover, .about-actions a:hover, .about-status button:hover { background: #4c2f67; border-color: #c08bf2; color: #fff; }
+.creator-links a:focus-visible, .about-actions a:focus-visible, .about-status button:focus-visible { outline: 2px solid #d0a3ff; outline-offset: 4px; }
+.about-actions { margin-top: 1.5rem; }
+.about-actions .about-primary-action { background: #653791; border-color: #b085de; }
+.about-status { margin-top: 1.5rem; border: 1px solid #5d407b; border-radius: 12px; padding: 1.5rem; background: rgba(28, 19, 42, var(--ui-surface-alpha)); }
+@media (max-width: 767px) {
+    .about-section-grid { grid-template-columns: 1fr; }
+    .about-hero { gap: 1.2rem; padding: 1.5rem; }
+    .about-logo { width: 90px; }
+    .creator-panel { padding: 1.5rem; }
+}
+@media (max-width: 480px) {
+    .about-hero { flex-direction: column; align-items: flex-start; }
+    .about-logo { width: 76px; }
+    .creator-heading { gap: 1rem; }
+    .creator-symbol { width: 56px; height: 56px; border-radius: 10px; }
+    .creator-heading h2 { font-size: 1.7rem; }
+    .about-actions a { flex: 1 1 100%; }
+}

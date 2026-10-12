@@ -1,0 +1,23 @@
+.news-editor { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #77509a; }
+fieldset { display: grid; gap: 1.1rem; min-width: 0; padding: 0; margin: 0; border: 0; }
+.news-field { display: grid; gap: .4rem; }
+.news-field label { color: #ede1ff; font-weight: 700; }
+.news-field ::deep input, .news-field ::deep textarea { width: 100%; padding: .7rem .85rem; font: inherit; color: #f3eaff; background: #100a22; border: 1px solid #8262ac; border-radius: 5px; }
+.news-field ::deep textarea { resize: vertical; min-height: 200px; line-height: 1.7; }
+.news-field ::deep input:focus, .news-field ::deep textarea:focus { outline: 2px solid #b794ee; outline-offset: 2px; }
+.news-field ::deep .validation-message { color: #ffacb9; font-size: .85rem; }
+.news-field ::deep .invalid { border-color: #ff9cab; }
+.news-field small, .news-saving { color: #bdaacf; font-size: .85rem; }
+.news-actions { display: flex; flex-wrap: wrap; gap: .65rem; }
+.news-actions button { padding: .6rem .9rem; border: 1px solid #a677d6; border-radius: 5px; background: #322047; color: #e5caff; font-weight: 700; cursor: pointer; }
+.news-actions .news-save { border-color: #ffe14d; background: #ffe14d; color: #211331; }
+.news-save:hover { background: #fff08a; }
+.news-cancel:hover { background: #4a2d68; }
+.news-actions button:focus-visible { outline: 2px solid #ffe14d; outline-offset: 3px; }
+fieldset:disabled button { opacity: .55; cursor: wait; }
+.news-error { margin-bottom: 1rem; padding: .85rem; border: 1px solid #ff9cab; border-radius: 5px; color: #e0cfe9; background: #54203340; }
+.news-error strong { color: #f4eaff; }
+.news-error p { margin: .4rem 0 0; line-height: 1.6; }
+.news-error ul { margin-bottom: 0; }
+.news-error ::deep a { display: inline-block; margin-top: .6rem; color: #f6d5e0; }
+.news-saving { margin: .8rem 0 0; }

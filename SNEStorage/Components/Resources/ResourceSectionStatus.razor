@@ -1,0 +1,11 @@
+@if (Loading)
+{
+    <p class="section-loading" role="status"><span aria-hidden="true">◌</span> Loading @Label…</p>
+}
+else if (ErrorStatus is not null)
+{
+    <div class="section-error" role="status">
+        <span>@ErrorMessage</span>
+        <button type="button" @onclick="OnRetry">Try again</button>
+    </div>
+}

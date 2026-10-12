@@ -129,7 +129,7 @@ public partial class ResourceAuthorPicker : IAsyncDisposable
             if (_disposed || revision != _revision) return;
             if (response.Status != 200 || !response.ContentType.Contains("json", StringComparison.OrdinalIgnoreCase))
             {
-                _error = "Authors could not be loaded. Please try again.";
+                _error = ApiErrorPresentation.Describe(response.Status, response.Body, "search").Message;
                 return;
             }
 

@@ -1,0 +1,51 @@
+@page "/News/Create"
+
+<PageTitle>Create news | SNEStorage</PageTitle>
+<div class="news-create-page">
+    <section class="news-create-card" aria-labelledby="news-create-heading" aria-busy="@_saving">
+        <header>
+            <span class="eyebrow">STAFF ANNOUNCEMENTS</span>
+            <h1 id="news-create-heading">Create news</h1>
+            <p>Share an update with the SNEStorage community.</p>
+        </header>
+
+        @if (_error is not null)
+        {
+            <div class="news-error" role="alert">
+                <h2>@_error.Title</h2>
+                <p>@_error.Message</p>
+                @if (_validationErrors.Length > 0)
+                {
+                    <ul>@foreach (var message in _validationErrors) { <li>@message</li> }</ul>
+                }
+                @if (_error.SignIn)
+                {
+                    <NavLink href="/Login?returnUrl=%2FNews%2FCreate">Log in to continue</NavLink>
+                }
+            </div>
+        }
+
+        <EditForm Model="_form" OnValidSubmit="SubmitAsync" FormName="create-news" class="news-form">
+            <DataAnnotationsValidator />
+            <fieldset disabled="@_saving">
+                <div class="news-field">
+                    <label for="news-title">Title</label>
+                    <InputText id="news-title" @bind-Value="_form.Title" maxlength="200" placeholder="What's new at SNEStorage?" required />
+                    <ValidationMessage For="@(() => _form.Title)" />
+                    <small>Up to 200 characters.</small>
+                </div>
+                <div class="news-field">
+                    <label for="news-text">Announcement</label>
+                    <InputTextArea id="news-text" @bind-Value="_form.Text" rows="12" placeholder="Write your announcement…" required aria-describedby="news-text-hint" />
+                    <ValidationMessage For="@(() => _form.Text)" />
+                    <small id="news-text-hint">Use plain text. Line breaks are preserved when your news is published.</small>
+                </div>
+                <div class="news-actions">
+                    <button class="news-publish" type="submit">@(_saving ? "Publishing…" : "Publish news")</button>
+                    <NavLink class="news-cancel" href="/News">Cancel</NavLink>
+                </div>
+            </fieldset>
+            @if (_saving) { <p class="news-saving" role="status">Publishing your announcement…</p> }
+        </EditForm>
+    </section>
+</div>

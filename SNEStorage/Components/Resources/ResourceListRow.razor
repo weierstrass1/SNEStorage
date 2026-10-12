@@ -1,0 +1,54 @@
+@using System.Globalization
+<tr class="library-row @(Item.SealOfQuality ? "quality-row" : null)">
+    <td class="resource-cell">
+        <div class="resource-title">
+            @if (Item.SealOfQuality) { <ResourceQualitySeal Size="42" Title="At least one release meets SNEStorage's quality standards." /> }
+            <a class="resource-name @(Item.SealOfQuality ? "quality-name" : null)" href="@($"/Resource/{Item.ResourceIdName.Id}")">
+                @if (Item.SealOfQuality) { <QualityText Text="@Item.ResourceIdName.Name" /> }
+                else { @Item.ResourceIdName.Name }
+            </a>
+            <span class="version">@Item.Version</span>
+        </div>
+        @if (Warnings.Count > 0) { <div class="warnings">@foreach (var warning in Warnings) { <span>⚠ @warning</span> }</div> }
+        <div class="resource-meta">
+        @if (Tags.Count > 0)
+        {
+            <div class="inline-tags" aria-label="Tags">
+                @foreach (var tag in Tags.Take(5)) { <span class="tag-chip" @key="tag.Id">@tag.Name</span> }
+                @if (Tags.Count > 5)
+                {
+                    <button class="tags-trigger" type="button" popovertarget="@TagsId" aria-label="@($"Show {Tags.Count - 5} more tags for {Item.ResourceIdName.Name}")">+@(Tags.Count - 5) more</button>
+                }
+            </div>
+            @if (Tags.Count > 5)
+            {
+                <div id="@TagsId" class="tags-overlay" popover="auto">
+                    <div class="tags-heading"><strong>More tags · @Item.ResourceIdName.Name</strong><button type="button" popovertarget="@TagsId" popovertargetaction="hide" aria-label="Close tags">×</button></div>
+                    <div class="tag-chips">@foreach (var tag in Tags.Skip(5)) { <span @key="tag.Id">@tag.Name</span> }</div>
+                </div>
+            }
+        }
+        <div class="dates">
+            <span>Created At: <time datetime="@Item.CreatedAt.ToString("O")">@Date(Item.CreatedAt)</time></span>
+            @if (Item.VersionCreatedAt != Item.CreatedAt) { <span>Last Version Created At: <time datetime="@Item.VersionCreatedAt.ToString("O")">@Date(Item.VersionCreatedAt)</time></span> }
+        </div>
+        </div>
+    </td>
+    @if (ShowGame) { <td class="game-cell">@Item.Videogame?.Name</td> }
+    <td class="authors-cell"><ResourceListValues Items="Authors" /></td>
+    @if (ShowTypes) { <td><ResourceListValues Items="Types" /></td> }
+    @if (ShowCategories) { <td><ResourceListValues Items="Categories" /></td> }
+    <td class="rating-cell" aria-label="@(Item.Votes > 0 ? $"Rating {Item.Score.ToString("0.0", CultureInfo.InvariantCulture)} out of 5" : "Not rated")">
+        <span class="stars" aria-hidden="true">★★★★★<span style="@RatingWidth">★★★★★</span></span>
+        @if (Item.Votes > 0) { <strong>@Item.Score.ToString("0.0", CultureInfo.InvariantCulture)<small>/5</small></strong><span class="votes">@Item.Votes.ToString("N0", CultureInfo.InvariantCulture) @(Item.Votes == 1 ? "vote" : "votes")</span> }
+        else { <span class="votes">Not rated</span> }
+    </td>
+    <td class="download-cell">
+        @if (Item.MainVersion is { Id: > 0 } file)
+        {
+            <a class="download-button" href="@($"/api/resource/{Item.ResourceIdName.Id}/file/{file.Id}/download")" data-enhance-nav="false" aria-label="@($"Download {Item.ResourceIdName.Name} {Item.Version}")">↓ Download</a>
+        }
+        else { <small>Unavailable</small> }
+        <small class="download-count">Downloads: <span>@Item.Downloads.ToString("N0", CultureInfo.InvariantCulture)</span></small>
+    </td>
+</tr>

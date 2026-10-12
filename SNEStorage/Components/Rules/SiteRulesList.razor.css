@@ -1,0 +1,14 @@
+.rules-list { margin: 0; padding: .2rem 1.3rem; list-style: none; }
+.rules-list li { display: flex; gap: 1rem; padding: 1.15rem 0; scroll-margin-top: 1.5rem; }
+.rules-list li + li { border-top: 1px solid #3d2852; }
+.rule-number { min-width: 3.5ch; flex: 0 0 auto; padding-top: .05rem; color: #dac0ff; font-family: "VT323", monospace; font-size: 1.3rem; line-height: 1.2; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.rules-list :is(h3, h4) { margin: 0 0 .35rem; color: #f7efff; font-size: .98rem; font-weight: 700; line-height: 1.45; }
+.rules-list p { margin: 0; color: #cebfde; font-size: .91rem; line-height: 1.75; overflow-wrap: anywhere; }
+.quality-list .rule-number { color: #ffe39a; }
+.quality-list :is(h3, h4) { color: #fff0c7; }
+.quality-list p { color: #ded2bc; }
+.quality-list li + li { border-color: #58452c; }
+@media (max-width: 480px) {
+    .rules-list { padding-inline: .85rem; }
+    .rules-list li { gap: .65rem; }
+}

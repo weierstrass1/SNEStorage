@@ -17,8 +17,9 @@ public partial class ResourceEditor : IAsyncDisposable
     private readonly string _requestKey = Guid.NewGuid().ToString("N");
     private readonly CancellationTokenSource _lifetime = new();
     private IJSObjectReference? _module;
-    private Resource? _resource;
+    private ResourceReadDTO? _resource;
     private ResourceVersion? _version;
+    private ResourceEditorData _data = new();
     private ResourceCreateOptionsDto? _options;
     private EditorFields _form = new();
     private ResourceEditorSelectionSnapshot _originalSelections = new();
@@ -120,7 +121,8 @@ public partial class ResourceEditor : IAsyncDisposable
             }
             _message = response.Status == 0
                 ? "The save response could not be received. Check the resource before submitting again."
-                : ApiErrorPresentation.Describe(response.Status, response.Body, "resource").Message;
+                : ApiErrorPresentation.Describe(response.Status, response.Body,
+                    Mode == ResourceEditorMode.EditVersion ? "resource" : "resource-upload").Message;
             _validationErrors = ResourceEditorResponse.ValidationErrors(response.Body);
         }
         catch (JSDisconnectedException) { }
@@ -173,57 +175,55 @@ public partial class ResourceEditor : IAsyncDisposable
         {
             if (_disposed) return;
             if (ResourceId <= 0) { _errorStatus = 404; return; }
-            _module ??= await JavaScript.InvokeAsync<IJSObjectReference>("import", _lifetime.Token, "./js/resource-editor.js?v=8");
+            _module ??= await JavaScript.InvokeAsync<IJSObjectReference>("import", _lifetime.Token, "./js/resource-editor.js?v=16");
             if (_disposed) return;
             var userId = PageAccount?.Profile.UserId;
             if (string.IsNullOrWhiteSpace(userId)) { _errorStatus = 403; return; }
-            _resource = _useAccessResource ? PageAccount?.Resource : null;
+            var reuseAccess = _useAccessResource && PageAccount?.Resource?.Id == ResourceId;
+            _resource = reuseAccess ? PageAccount?.Resource : null;
             if (_resource is null)
             {
                 var json = await _module.InvokeAsync<string>("getResource", _lifetime.Token, ResourceId, _requestKey);
                 if (_disposed) return;
                 var response = JsonSerializer.Deserialize<BrowserResponse>(json, JsonOptions);
                 if (!AcceptResponse(response)) return;
-                _resource = JsonSerializer.Deserialize<Resource>(response!.Body!, JsonOptions);
+                _resource = JsonSerializer.Deserialize<ResourceReadDTO>(response!.Body!, JsonOptions);
             }
             _useAccessResource = false;
             if (_resource is null || _resource.Id != ResourceId) { _errorStatus = 502; return; }
             if (!ResourceManagementAccess.CanDisplay(_resource, userId)) { _errorStatus = 403; return; }
+            var dataLoad = LoadEditorDataAsync();
+            var optionsLoad = Mode == ResourceEditorMode.Resource ? LoadOptionsAsync() : Task.FromResult(true);
+            await Task.WhenAll(dataLoad, optionsLoad);
+            if (_disposed || !await dataLoad || !await optionsLoad) return;
             if (Mode == ResourceEditorMode.EditVersion)
             {
-                _version = _resource.ResourceVersions.FirstOrDefault(version => version.Id == VersionId);
+                _version = _data.Versions.FirstOrDefault(version => version.Id == VersionId);
                 if (_version is null) { _errorStatus = 404; return; }
             }
-            if (Mode == ResourceEditorMode.Resource)
+            _originalSelections = ResourceEditorSelectionSnapshot.From(_resource, _version, _data, userId);
+            _authorNames = _data.Authors.GroupBy(author => author.UserSummary.Id)
+                .ToDictionary(group => group.Key, group => string.IsNullOrWhiteSpace(group.First().UserSummary.Username)
+                    ? "Unknown user" : group.First().UserSummary.Username);
+            _dependencyChoices = _data.Dependencies.Select(dependency => new SelectOptionDto
             {
-                var optionsJson = await _module.InvokeAsync<string>("getResourceOptions", _lifetime.Token, _requestKey);
-                if (_disposed) return;
-                var optionsResponse = JsonSerializer.Deserialize<BrowserResponse>(optionsJson, JsonOptions);
-                if (!AcceptResponse(optionsResponse)) return;
-                _options = JsonSerializer.Deserialize<ResourceCreateOptionsDto>(optionsResponse!.Body!, JsonOptions);
-                if (_options is null) { _errorStatus = 502; return; }
-            }
-            _originalSelections = ResourceEditorSelectionSnapshot.From(_resource, _version);
-            _authorNames = _resource.ResourcesAuthors.GroupBy(author => author.UserId)
-                .ToDictionary(group => group.Key, group => string.IsNullOrWhiteSpace(group.First().UserSummary?.Username)
-                    ? "Unknown user" : group.First().UserSummary!.Username);
-            _dependencyChoices = _resource.ResourceDependencies.Select(dependency => new SelectOptionDto
-            {
-                Id = dependency.DependencyResourceId, Name = dependency.DependencyResource?.Name ?? $"Resource #{dependency.DependencyResourceId}"
+                Id = dependency.DependencyResourceId, Name = dependency.Name ?? $"Resource #{dependency.DependencyResourceId}"
             }).DistinctBy(dependency => dependency.Id).ToArray();
-            _existingPreviews = _resource.ResourcePreviews.ToArray();
+            _existingPreviews = _data.Previews.ToArray();
             _form = new()
             {
-                Name = _resource.Name, Description = _resource.Description, VideogameId = _resource.VideogameId,
-                VisibilityId = _resource.VisibilityId,
-                Types = _resource.ResourceResourceTypes.Select(type => type.ResourceTypeId).Distinct().ToArray(),
-                Tags = _resource.ResourceTags.Where(tag => !string.IsNullOrWhiteSpace(tag.Tag?.Name))
-                    .Select(tag => tag.Tag!.Name).Distinct(StringComparer.OrdinalIgnoreCase).ToArray(),
-                AuthorsIDs = _resource.ResourcesAuthors.Select(author => author.UserId).Distinct().ToArray(),
-                ExternalAuthors = _resource.ResourceExternalAuthors.Select(author => author.Author).Distinct(StringComparer.OrdinalIgnoreCase).ToArray(),
-                DependencyIDs = _resource.ResourceDependencies.Select(dependency => dependency.DependencyResourceId).Distinct().ToArray(),
+                Name = _resource.Name, Description = _resource.Description, VideogameId = _resource.Videogame.Id,
+                VisibilityId = _resource.Visibility.Id,
+                Types = _resource.Types.Select(type => type.ResourceTypeId).Distinct().ToArray(),
+                Tags = _resource.Tags.Where(tag => !string.IsNullOrWhiteSpace(tag.Name))
+                    .Select(tag => tag.Name).Distinct(StringComparer.OrdinalIgnoreCase).ToArray(),
+                IAmAuthor = _data.Authors.Any(author => author.UserSummary.Id == userId),
+                AuthorsIDs = _data.Authors.Select(author => author.UserSummary.Id)
+                    .Where(id => id != userId).Distinct().ToArray(),
+                ExternalAuthors = _data.ExternalAuthors.Select(author => author.Author).Distinct(StringComparer.OrdinalIgnoreCase).ToArray(),
+                DependencyIDs = _data.Dependencies.Select(dependency => dependency.DependencyResourceId).Distinct().ToArray(),
                 PreviewIDs = _existingPreviews.Select(preview => preview.Id).ToArray(),
-                ExternalDependencies = _resource.ResourceExternalDependencies.Select(dependency => new ExternalDependencyDTO
+                ExternalDependencies = _data.ExternalDependencies.Select(dependency => new ExternalDependencyDTO
                 {
                     DependencyName = dependency.DependencyName, DependencyURL = dependency.DependencyURL,
                     Mirror1 = dependency.Mirror1, Mirror2 = dependency.Mirror2, Mirror3 = dependency.Mirror3, Mirror4 = dependency.Mirror4
@@ -288,6 +288,7 @@ public partial class ResourceEditor : IAsyncDisposable
         public long[] Types { get; set; } = [];
         public string[] Tags { get; set; } = [];
         public string[] AuthorsIDs { get; set; } = [];
+        public bool IAmAuthor { get; set; }
         public string[] ExternalAuthors { get; set; } = [];
         public long[] DependencyIDs { get; set; } = [];
         public ExternalDependencyDTO[] ExternalDependencies { get; set; } = [];

@@ -1,0 +1,46 @@
+.community-page { max-width: 1050px; margin: 0 auto 2rem; color: #f1e7ff; }
+.community-heading { max-width: 750px; margin-bottom: 1.8rem; }
+.community-kicker { margin: 0 0 .9rem; color: #c599f4; font: .55rem/1.8 "Press Start 2P", monospace; letter-spacing: .09em; }
+h1 { margin: 0 0 .85rem; font: 900 clamp(2.4rem, 5vw, 3.8rem)/1.08 "Exo 2", "Segoe UI", sans-serif; letter-spacing: -.04em; }
+.community-introduction { margin: 0; color: #cbb8dd; font-size: 1.03rem; line-height: 1.8; }
+.discord-panel { position: relative; isolation: isolate; display: grid; grid-template-columns: minmax(160px, .65fr) minmax(0, 1.35fr); align-items: center; gap: clamp(1.5rem, 4vw, 3rem); overflow: hidden; padding: clamp(1.5rem, 4vw, 3rem); border: 1px solid #9b6ed6; border-radius: 18px; background: radial-gradient(ellipse at 0 50%, #644bb955, transparent 65%), linear-gradient(135deg, rgba(45, 25, 76, var(--ui-surface-alpha)), rgba(23, 15, 42, var(--ui-surface-alpha))); box-shadow: 0 16px 45px #05020c55, inset 0 1px #e3c7ff1c; }
+.discord-panel::before { position: absolute; z-index: -1; inset: 0; content: ""; pointer-events: none; opacity: .18; background: repeating-linear-gradient(0deg, #0005 0 1px, transparent 1px 4px); }
+.discord-art { position: relative; display: grid; min-height: 220px; place-items: center; }
+.discord-orbit { position: absolute; width: min(100%, 215px); aspect-ratio: 1; border: 1px solid #b3a2ff77; border-radius: 50%; background: radial-gradient(circle, #8470ed2b, transparent 65%); box-shadow: 0 0 40px #9281ff20, inset 0 0 30px #9281ff18; }
+.discord-icon { position: relative; width: min(65%, 142px); height: auto; color: #c8bbff; filter: drop-shadow(0 0 18px #9080ff60); }
+.discord-copy { min-width: 0; }
+.discord-copy h2 { margin: 0 0 .85rem; color: #f8f0ff; font: 800 clamp(1.6rem, 3vw, 2.1rem)/1.2 "Exo 2", sans-serif; }
+.discord-copy > p { margin: 0 0 1.4rem; color: #d0bfdf; font-size: .97rem; line-height: 1.8; }
+.discord-button { display: inline-flex; min-height: 48px; align-items: center; justify-content: center; gap: .8rem; padding: .8rem 1.25rem; border: 1px solid #b9aaff; border-radius: 7px; color: #fff; background: #6750c7; box-shadow: 0 3px 0 #352068, 0 0 22px #8871ff25; font: 750 .95rem "Exo 2", sans-serif; text-decoration: none; transition: background .15s ease, box-shadow .15s ease; }
+.discord-button:hover { color: #fff; background: #7c60e0; box-shadow: 0 3px 0 #352068, 0 0 28px #8871ff45; }
+.discord-link-note { display: block; margin-top: .85rem; color: #ad99c6; font-size: .73rem; }
+.discord-copy .discord-unavailable { color: #edc3d5; margin: 0; }
+.community-topics { margin-top: 2rem; }
+.community-topics > h2 { margin: 0 0 1rem; color: #e8d7fb; font: 750 1.25rem "Exo 2", sans-serif; }
+.topic-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+.topic-card { min-width: 0; padding: 1.3rem; border: 1px solid #5e3d7e; border-radius: 10px; background: rgba(26, 16, 42, var(--ui-surface-alpha)); }
+.topic-pixel { display: block; width: 10px; height: 10px; margin-bottom: 1rem; background: #b787ee; box-shadow: 4px 4px 0 #553373; }
+.topic-card h3 { margin: 0 0 .65rem; color: #eaddf9; font: 750 1.05rem/1.35 "Exo 2", sans-serif; }
+.topic-card p { margin: 0; color: #bca7d0; font-size: .85rem; line-height: 1.8; }
+.community-guidelines { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .65rem 1.2rem; margin-top: 1.3rem; padding: 1rem 1.15rem; border-left: 3px solid #9870c6; border-radius: 0 6px 6px 0; background: rgba(38, 22, 55, var(--ui-surface-alpha)); }
+.community-guidelines p { flex: 1 1 260px; margin: 0; color: #c9b3dd; font-size: .83rem; line-height: 1.7; }
+.community-guidelines a { color: #e5c7ff; font-size: .84rem; font-weight: 650; text-decoration: none; }
+.community-guidelines a:hover { color: #ffe14d; }
+.community-status { padding: 1.5rem; border: 1px solid #715091; border-radius: 10px; color: #d9c4ed; background: rgba(26, 16, 42, var(--ui-surface-alpha)); }
+.community-status p { margin: 0 0 .8rem; }
+.community-status button { padding: .6rem 1rem; border: 1px solid #b58adb; border-radius: 5px; color: #f6efff; background: #41235f; }
+a:focus-visible, button:focus-visible { outline: 2px solid #ffe14d; outline-offset: 4px; }
+@media (max-width: 800px) { .topic-grid { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 600px) {
+    .discord-panel { grid-template-columns: minmax(0, 1fr); gap: 1rem; text-align: center; }
+    .discord-art { min-height: 150px; }
+    .discord-orbit { width: 150px; }
+    .discord-icon { width: 98px; }
+    .discord-button { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) { .discord-button { transition: none; } }
+@media (forced-colors: active) {
+    .discord-panel, .topic-card, .community-guidelines { background: Canvas; border-color: CanvasText; }
+    .discord-icon { color: CanvasText; filter: none; }
+    .discord-button { background: ButtonFace; color: ButtonText; border-color: ButtonText; box-shadow: none; }
+}

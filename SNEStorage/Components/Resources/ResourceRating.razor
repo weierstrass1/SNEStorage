@@ -5,7 +5,7 @@
             <span class="rating-fill" style="width: @FillWidth" aria-hidden="true">★★★★★</span>
         </span>
         <strong>@Average.ToString("0.#", DisplayCulture) / 5</strong>
-        <span class="rating-count">@(Votes.Count == 0 ? "Not rated" : $"{Votes.Count.ToString("N0", DisplayCulture)} {(Votes.Count == 1 ? "vote" : "votes")}")</span>
+        <span class="rating-count">@(VoteCount == 0 ? "Not rated" : $"{VoteCount.ToString("N0", DisplayCulture)} {(VoteCount == 1 ? "vote" : "votes")}")</span>
     </div>
     @if (IsAuthenticated && !IsOwnResource && !IsPrivate)
     {
@@ -24,7 +24,7 @@
         </div>
         @if (!CanSubmit)
         {
-            <p class="rating-message">Saving ratings is currently unavailable.</p>
+            <p class="rating-message">@(PermissionsReady ? "Saving ratings is currently unavailable." : "Waiting for account permissions…")</p>
         }
     }
     @if (IsPrivate)

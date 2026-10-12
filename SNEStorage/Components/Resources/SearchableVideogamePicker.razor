@@ -1,5 +1,5 @@
 <input type="hidden" name="VideogameId" value="@Value" />
-<ResourcePicker @ref="_picker" PickerId="resource-game-picker" Label="Video game" Required="true" FocusSearch="true">
+<ResourcePicker @ref="_picker" PickerId="resource-game-picker" Label="Video game" Required="@Required" FocusSearch="true">
     <SummaryContent><span title="@SelectedName">@SelectedName</span></SummaryContent>
     <ChildContent>
     <label class="game-search-label" for="resource-game-search">Search games</label>

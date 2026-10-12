@@ -1,10 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
 namespace SNEStorage.DTOs;
+
 public class EditProfileDTO
 {
     public string? UsernameColor { get; set; }
     public IFormFile? File { get; set; }
+    [StringLength(2000)]
     public string? Bio { get; set; }
     [DisplayFormat(ConvertEmptyStringToNull = false)]
     public string? Patreon { get; set; }

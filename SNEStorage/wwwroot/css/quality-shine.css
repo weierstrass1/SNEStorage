@@ -1,0 +1,5 @@
+:root {
+    /* A 640ms sweep, followed by a quiet interval; shared by every quality accent. */
+    --quality-shine-cycle: 1600ms;
+    --quality-shine-easing: cubic-bezier(.45, 0, .25, 1);
+}

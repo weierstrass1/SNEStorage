@@ -1,0 +1,37 @@
+<article class="resource-summary @(Item.SealOfQuality ? "has-quality" : null)">
+    <div class="summary-title">
+        @if (Item.SealOfQuality)
+        {
+            <ResourceQualitySeal Size="36" Title="At least one release meets SNEStorage's quality standards." />
+        }
+        <h3>
+            <a href="@($"/Resource/{Item.ResourceIdName.Id}")">
+                @if (Item.SealOfQuality) { <QualityText Text="@Item.ResourceIdName.Name" /> }
+                else { @Item.ResourceIdName.Name }
+            </a>
+        </h3>
+        <span class="summary-version">@Item.Version</span>
+    </div>
+    <div class="summary-meta">
+        <span>@Item.Videogame.Name</span>
+        <time datetime="@Item.CreatedAt.ToString("O")">@PublicationDate</time>
+    </div>
+    <div class="summary-authors"><ResourceListValues Items="Authors" Limit="2" /></div>
+    @if (Item.Tags.Length > 0)
+    {
+        <div class="summary-tags" aria-label="Tags">
+            @foreach (var tag in Item.Tags.Take(3)) { <span>@tag.Name</span> }
+            @if (Item.Tags.Length > 3) { <span>+@(Item.Tags.Length - 3)</span> }
+        </div>
+    }
+    <div class="summary-footer">
+        <span class="summary-rating">@RatingLabel</span>
+        <div class="summary-download">
+            @if (DownloadUrl is not null)
+            {
+                <a href="@DownloadUrl" data-enhance-nav="false" aria-label="@($"Download {Item.ResourceIdName.Name} {Item.Version}")">↓ Download</a>
+            }
+            <small>Downloads: @Item.Downloads.ToString("N0", System.Globalization.CultureInfo.InvariantCulture)</small>
+        </div>
+    </div>
+</article>

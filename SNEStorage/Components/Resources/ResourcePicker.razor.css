@@ -9,6 +9,6 @@
 .picker-value { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .picker-arrow { flex-shrink: 0; color: #c28aff; font-size: 1.1rem; line-height: 1; }
 .picker[data-open="true"] .picker-arrow { transform: rotate(180deg); }
-.picker-options { position: absolute; top: 100%; left: 0; right: 0; max-height: min(360px, 55vh); overflow-y: auto; padding: .75rem; border: 1px solid #9861d1; border-radius: 4px; background: #140c25; box-shadow: 0 12px 28px #05030dcc; scrollbar-color: #7a4aa5 #140c25; overscroll-behavior: contain; }
+.picker-options { position: absolute; top: 100%; left: 0; right: 0; max-height: min(360px, 55vh); overflow-y: auto; padding: .75rem; border: 1px solid #9861d1; border-radius: 4px; background: rgba(20, 12, 37, var(--ui-popup-alpha)); box-shadow: 0 12px 28px #05030dcc; scrollbar-color: #7a4aa5 #140c25; overscroll-behavior: contain; }
 .picker[data-placement="above"] > .picker-options { top: auto; bottom: 100%; }
 .picker-options[hidden] { display: none; }

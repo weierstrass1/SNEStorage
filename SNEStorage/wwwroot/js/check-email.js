@@ -1,5 +1,6 @@
-export function watchSession(profilePath, homePath) {
-    const profileUrl = new URL(profilePath, document.baseURI);
+import { getAccountSession, watchAccountSession } from "./account-session.js?v=2";
+
+export function watchSession(homePath) {
     const homeUrl = new URL(homePath, document.baseURI);
     let stopped = false;
     let checking = false;
@@ -8,39 +9,23 @@ export function watchSession(profilePath, homePath) {
     function stop() {
         stopped = true;
         window.clearInterval(interval);
-        window.removeEventListener("focus", checkSession);
-        document.removeEventListener("visibilitychange", onVisibilityChange);
-        window.removeEventListener("pagehide", stop);
+        monitor.stop();
+        window.removeEventListener("pagehide", pageHidden);
         activeRequest?.abort();
     }
 
     async function checkSession() {
-        if (stopped || checking) {
+        if (stopped || checking || document.hidden) {
             return;
         }
 
         checking = true;
         const request = new AbortController();
         activeRequest = request;
-        const timeout = window.setTimeout(() => request.abort(), 10000);
 
         try {
-            // Browser requests carry the latest cookies, including a login from another tab.
-            const response = await fetch(profileUrl, {
-                method: "GET",
-                credentials: "same-origin",
-                cache: "no-store",
-                redirect: "manual",
-                headers: { Accept: "application/json" },
-                signal: request.signal
-            });
-
-            const contentType = response.headers.get("Content-Type") ?? "";
-            const authenticated = response.status === 204 ||
-                (response.status === 200 && contentType.includes("application/json"));
-            response.body?.cancel().catch(() => {});
-
-            if (!stopped && !response.redirected && authenticated) {
+            const response = await getAccountSession(request.signal);
+            if (!stopped && !response.cancelled && response.status === 200) {
                 stop();
                 // Reload Home so its Blazor circuit also receives the current authentication state.
                 window.location.replace(homeUrl.href);
@@ -48,22 +33,15 @@ export function watchSession(profilePath, homePath) {
         } catch {
             // A failed request leaves the page open; a later check can retry.
         } finally {
-            window.clearTimeout(timeout);
             activeRequest = undefined;
             checking = false;
         }
     }
 
-    function onVisibilityChange() {
-        if (!document.hidden) {
-            void checkSession();
-        }
-    }
-
+    const monitor = watchAccountSession(() => { void checkSession(); });
     const interval = window.setInterval(checkSession, 5000);
-    window.addEventListener("focus", checkSession);
-    document.addEventListener("visibilitychange", onVisibilityChange);
-    window.addEventListener("pagehide", stop);
+    function pageHidden(event) { if (!event.persisted) stop(); }
+    window.addEventListener("pagehide", pageHidden);
     void checkSession();
 
     return { stop };

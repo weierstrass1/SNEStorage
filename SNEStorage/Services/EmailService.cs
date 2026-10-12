@@ -1,6 +1,7 @@
 ﻿using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;
+using System.Net;
 
 namespace SNEStorage.Services;
 public enum EmailServiceResult
@@ -39,15 +40,10 @@ public class EmailService(IWebHostEnvironment webHostEnvironment,
             return EmailServiceResult.TemplateLoadError;
 
         html = html
-            .Replace("{{ConfirmationUrl}}", url) 
-            .Replace("{{Username}}", username)
+            .Replace("{{ConfirmationUrl}}", WebUtility.HtmlEncode(url)) 
+            .Replace("{{Username}}", WebUtility.HtmlEncode(username))
             .Replace("{{Year}}", year.ToString())
-            .Replace("{{SiteUrl}}", "https://snestorage.dev/");
-
-        var message = new MimeMessage();
-        message.From.Add(new MailboxAddress("SNEStorage", _apiConfig.Email));
-        message.To.Add(new MailboxAddress(username, email));
-        message.Subject = "Confirm your email | SNEStorage";
+            .Replace("{{SiteUrl}}", WebUtility.HtmlEncode("https://snestorage.dev/"));
 
         var body = new BodyBuilder
         {
@@ -56,32 +52,75 @@ public class EmailService(IWebHostEnvironment webHostEnvironment,
                "If you didn't create this account, ignore this email."
         };
 
-        var logoPath = Path.Combine(
-            _webHostEnvironment.ContentRootPath,
-            "EmailTemplates",
-            "assets",
-            "caja.png");
+        return await SendEmail("Confirm your email | SNEStorage",
+            body, new(username, email), ct);
+    }
+    public async Task<EmailServiceResult> PasswordReset(string username, string userId,
+        string email, string token, CancellationToken ct = default)
+    {
+        var path = Path.Combine(_webHostEnvironment.ContentRootPath, "EmailTemplates",
+            "PasswordReset.html");
 
-        var logo = body.LinkedResources.Add(logoPath);
+        int? year = await _dbHelperService.TryFunction(
+            async cancel => await _dateTimeService.GetYear(userId, cancel), ct: ct);
+        if (year == null)
+            return EmailServiceResult.UserNotFound;
+
+        var siteUrl = "https://snestorage.dev/";
+        var url = $"{siteUrl}Account/ResetPassword/" +
+            $"{Uri.EscapeDataString(userId)}?token={Uri.EscapeDataString(token)}";
+
+        var html = await _dbHelperService.TryFunction(
+            async cancel => await File.ReadAllTextAsync(path, cancel), ct: ct);
+        if (html == null)
+            return EmailServiceResult.TemplateLoadError;
+
+        html = html
+            .Replace("{{PasswordResetUrl}}", WebUtility.HtmlEncode(url))
+            .Replace("{{Username}}", WebUtility.HtmlEncode(username))
+            .Replace("{{Year}}", year.ToString())
+            .Replace("{{SiteUrl}}", WebUtility.HtmlEncode(siteUrl));
+
+        var body = new BodyBuilder
+        {
+            HtmlBody = html,
+            TextBody = $"Hi {username},\n\nPassword Change:\n{url}\n\n" +
+                "If you didn't request a password change, ignore this email."
+        };
+
+        return await SendEmail("Password Change | SNEStorage",
+            body, new(username, email), ct);
+    }
+    private async Task<EmailServiceResult> SendEmail(string subject, BodyBuilder body, MailboxAddress To, CancellationToken ct = default)
+    {
+        var logoPath = Path.Combine(_webHostEnvironment.ContentRootPath,
+            "EmailTemplates", "assets", "caja.png");
+
+        var logo = _dbHelperService.TryFunction(
+            () => body.LinkedResources.Add(logoPath, ct));
+
+        if (logo == null)
+            return EmailServiceResult.TemplateLoadError;
+
         logo.ContentId = "snestorage-logo";
 
+        var message = new MimeMessage();
+        message.From.Add(new MailboxAddress("SNEStorage", _apiConfig.Email));
+        message.To.Add(To);
+        message.Subject = subject;
         message.Body = body.ToMessageBody();
-
         using var smtp = new SmtpClient();
+        return await _dbHelperService.TryFunction(
+            async cancel =>
+            {
+                await smtp.ConnectAsync(_apiConfig.EmailSMPTP, _apiConfig.EmailPort,
+                    SecureSocketOptions.StartTls, ct);
 
-        try
-        {
-            await smtp.ConnectAsync("sandbox.smtp.mailtrap.io", 2525, 
-                SecureSocketOptions.StartTls, ct);
-
-            await smtp.AuthenticateAsync(_apiConfig.Email, _apiConfig.EmailPassword, ct);
-            await smtp.SendAsync(message, ct);
-            await smtp.DisconnectAsync(true, ct);
-            return EmailServiceResult.Success;
-        }
-        catch
-        {
-            return EmailServiceResult.EmailConnectionError;
-        }
+                await smtp.AuthenticateAsync(_apiConfig.Email, _apiConfig.EmailPassword, ct);
+                await smtp.SendAsync(message, ct);
+                await smtp.DisconnectAsync(true, ct);
+            }, ct: ct) ?
+            EmailServiceResult.Success :
+            EmailServiceResult.EmailConnectionError;
     }
 }

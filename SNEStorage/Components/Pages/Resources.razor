@@ -1,65 +1,70 @@
 @page "/Resource"
 @page "/Resources"
 @page "/Resource/Index"
+@using SNEStorage.Components.Resources
 
 <PageTitle>Resources | SNEStorage</PageTitle>
-
-<section class="page-heading">
-    <div>
-        <p class="eyebrow">COMMUNITY LIBRARY</p>
-        <h1>Resources</h1>
-        <p>Browse shared resources for Super Nintendo projects.</p>
+<section class="library">
+    <header class="library-heading">
+        <div><p class="library-kicker">SNESTORAGE ARCHIVE</p><h1>Resources</h1><p>Discover the next piece of your project.</p></div>
+        <VerifiedAccountContent>
+            <a class="submit-resource" href="/Resource/Create" data-enhance-nav="false">+ Submit a resource</a>
+        </VerifiedAccountContent>
+    </header>
+    <div class="library-toolbar">
+        <button class="filters-button" type="button" aria-expanded="@_filtersOpen" aria-controls="library-filter-panel" @onclick="ToggleFiltersAsync">☷ Filters @(HasActiveFilters ? "•" : "")</button>
+        <label>Sort by<InputSelect @bind-Value="_sort" @bind-Value:after="OrderChangedAsync"><option value="@ResourceSorting.CreatedAt">Creation date</option><option value="@ResourceSorting.VersionCreatedAt">Latest release</option><option value="@ResourceSorting.Name">Name</option><option value="@ResourceSorting.Downloads">Downloads</option><option value="@ResourceSorting.BestScore">Rating</option><option value="@ResourceSorting.NumberOfVotes">Votes</option></InputSelect></label>
+        <label>Order<InputSelect @bind-Value="_descending" @bind-Value:after="OrderChangedAsync"><option value="true">Descending</option><option value="false">Ascending</option></InputSelect></label>
+        <label>Per page<InputSelect @bind-Value="_pageSize" @bind-Value:after="PageSizeChangedAsync"><option value="20">20</option><option value="50">50</option><option value="100">100</option><option value="200">200</option><option value="0">All</option></InputSelect></label>
     </div>
-    <a class="btn btn-primary" href="/Resource/Create" data-enhance-nav="false">Submit a resource</a>
-</section>
-
-@if (_isLoading)
-{
-    <p class="text-secondary" role="status">Loading resources…</p>
-}
-else if (!string.IsNullOrWhiteSpace(_error))
-{
-    <div class="alert alert-danger" role="alert">@_error</div>
-}
-else if (_resources.Count == 0)
-{
-    <div class="empty-state">
-        <h2>No resources yet</h2>
-        <p>Be the first to share a resource with the community.</p>
+    <div id="library-filter-panel" hidden="@(!_filtersOpen)">
+        @if (_filtersOpen)
+        {
+            @if (_optionsLoading) { <p class="library-status" role="status">Loading filter choices…</p> }
+            @if (_optionsError is not null) { <p role="alert">@_optionsError <button type="button" class="text-button" @onclick="LoadOptionsAsync">Try again</button></p> }
+            <ResourceListFilters @key="_draft" State="_draft" Types="_types" OnApply="ApplyFiltersAsync" OnReset="ResetFiltersAsync" Error="@_filterError" Disabled="@(_module is null)" />
+        }
     </div>
-}
-else
-{
-    <div class="table-responsive resource-table-wrap">
-        <table class="table align-middle resource-table">
-            <thead>
-                <tr>
-                    <th scope="col">Resource</th>
-                    <th scope="col">Type</th>
-                    <th scope="col">Usage</th>
-                    <th class="text-center" scope="col">Downloads</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var resource in _resources)
+    <div class="filter-summary" aria-label="Applied filters">
+        @foreach (var summary in _applied.Summary(_types)) { <span>@summary</span> }
+        <small>Sensitive content: @ContentSummary</small>
+        @if (HasActiveFilters) { <button type="button" @onclick="ResetFiltersAsync">Clear filters ×</button> }
+    </div>
+    <div id="library-results" class="results" aria-busy="@_loading">
+        @if (_loading)
+        {
+            <div class="library-loading" role="status"><span class="loading-pixel" aria-hidden="true"></span>Loading resources…</div>
+        }
+        else if (_error is not null && _resources.Count == 0)
+        {
+            <ErrorPanel StatusCode="_errorStatus" ErrorBody="@_errorBody" Domain="resource" OnRetry="RetryAsync" />
+        }
+        else if (_resources.Count == 0)
+        {
+            <div class="library-empty"><span aria-hidden="true">□</span><h2>No resources found</h2><p>Try different filters or share something with the community.</p><button type="button" @onclick="ResetFiltersAsync">Reset filters</button></div>
+        }
+        else
+        {
+            <div class="library-table-scroll" tabindex="0" role="region" aria-label="Resource list">
+                <table class="library-table">
+                    <caption class="visually-hidden">Resources matching your filters, ordered by @SortLabel.</caption>
+                    <thead><tr><th scope="col">Resource</th>@if (ShowGame) { <th scope="col">Video game</th> }<th scope="col">Authors</th>@if (ShowTypes) { <th scope="col">Types</th> }@if (ShowCategories) { <th scope="col">Categories</th> }<th scope="col">Rating</th><th scope="col" class="downloads-heading">Downloads</th></tr></thead>
+                    <tbody>@foreach (var item in _resources) { <ResourceListRow @key="item.ResourceIdName.Id" Item="item" ShowGame="ShowGame" ShowTypes="ShowTypes" ShowCategories="ShowCategories" /> }</tbody>
+                </table>
+            </div>
+            <div @ref="_sentinel" class="load-sentinel">
+                @if (_loadingMore) { <p class="library-status" role="status">Loading more resources…</p> }
+                else if (_error is not null) { <p role="alert">@_error <button class="text-button" type="button" @onclick="LoadMoreAsync">Try again</button></p> }
+                else if (CanLoadMore) { <button class="load-more" type="button" @onclick="LoadMoreAsync">Load more resources</button> }
+            </div>
+            <nav class="library-pagination" aria-label="Resource pages">
+                <p>@RangeLabel @if (_pageSize > 0) { <small>Page @(_page + 1)</small> }</p>
+                @if (_pageSize > 0)
                 {
-                    <tr>
-                        <td>
-                            <strong>@resource.Name @resource.Version</strong>
-                            <span class="resource-subtitle">@resource.Videogame</span>
-                            <span class="resource-subtitle">Added @resource.CreatedAt.ToString("dd MMM yyyy")</span>
-                        </td>
-                        <td>@resource.Type</td>
-                        <td>@resource.Usage</td>
-                        <td class="text-center">
-                            <a class="download-link" href="/Resource/Download/@resource.Id" aria-label="Download @resource.Name">
-                                <img src="Content/Images/download.png" alt="" />
-                                <span>@resource.Downloads</span>
-                            </a>
-                        </td>
-                    </tr>
+                    <div><button type="button" disabled="@(_page == 0 || _loadingMore)" @onclick="PreviousPageAsync">← Previous</button><button type="button" disabled="@(!CanNextPage)" @onclick="NextPageAsync">Next →</button></div>
                 }
-            </tbody>
-        </table>
+            </nav>
+            @if (_announcement is not null) { <p class="library-status" role="status">@_announcement</p> }
+        }
     </div>
-}
+</section>

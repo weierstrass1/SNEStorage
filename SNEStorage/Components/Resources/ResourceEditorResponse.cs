@@ -1,5 +1,4 @@
 using System.Text.Json;
-using SNEStorage.Services;
 
 namespace SNEStorage.Components.Resources;
 
@@ -19,26 +18,11 @@ internal static class ResourceEditorResponse
                     && value.TryGetProperty("id", out var id) && id.ValueKind == JsonValueKind.Number && id.TryGetInt64(out var versionId) && versionId > 0
                     && value.TryGetProperty("resourceId", out var resource) && resource.ValueKind == JsonValueKind.Number && resource.TryGetInt64(out var parentId) && parentId == resourceId;
             }
-            return value.ValueKind is JsonValueKind.String or JsonValueKind.Number
-                && Enum.TryParse<ResourceServiceResult>(value.ToString(), true, out var result)
-                && result == ResourceServiceResult.Success;
+            return ApiErrorPresentation.IsSuccess(body, "resource");
         }
         catch (JsonException) { return false; }
     }
 
     public static string[] ValidationErrors(string? body)
-    {
-        if (string.IsNullOrWhiteSpace(body)) return [];
-        try
-        {
-            using var document = JsonDocument.Parse(body);
-            if (document.RootElement.ValueKind != JsonValueKind.Object
-                || !document.RootElement.TryGetProperty("errors", out var errors) || errors.ValueKind != JsonValueKind.Object) return [];
-            return errors.EnumerateObject().Where(field => field.Value.ValueKind == JsonValueKind.Array)
-                .SelectMany(field => field.Value.EnumerateArray())
-                .Where(value => value.ValueKind == JsonValueKind.String)
-                .Select(value => value.GetString()!).ToArray();
-        }
-        catch (JsonException) { return []; }
-    }
+        => ApiErrorPresentation.ValidationErrors(body);
 }

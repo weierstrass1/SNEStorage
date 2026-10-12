@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SNEStorage.DTOs;
@@ -11,6 +12,7 @@ public class LoginController(AccountController accountController) : Controller
 {
     private readonly AccountController _accountController = accountController;
 
+    [EnableRateLimiting("login")]
     [HttpPost("submit")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Login([FromForm] LoginCredentials credentials, [FromForm] string? returnUrl = null)

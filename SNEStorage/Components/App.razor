@@ -1,21 +1,33 @@
+@inject IConfiguration Configuration
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="snestorage-turnstile-sitekey" content="@Configuration["APISettings:TurnstileSiteKey"]" />
     <base href="/" />
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
     <link href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,400;0,600;0,700;0,900;1,900&family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="css/site.css" />
-    <link rel="stylesheet" href="SNEStorage.styles.css" />
+    <link rel="stylesheet" href="css/surfaces.css?v=1" />
+    <link rel="stylesheet" href="css/site.css?v=surfaces-1" />
+    <link rel="stylesheet" href="SNEStorage.styles.css?v=surfaces-20261011-2" />
+    <link rel="stylesheet" href="css/quality-shine.css?v=1" />
+    <link rel="stylesheet" href="css/controls.css?v=surfaces-1" />
     <HeadOutlet @rendermode="InteractiveServer" />
 </head>
 <body>
+    <div id="request-verification" hidden aria-hidden="true">
+        <AntiforgeryToken />
+    </div>
     <Routes @rendermode="InteractiveServer" />
     <script src="lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module" src="js/quality-shine.js?v=1"></script>
+    <script type="module" src="js/side-navigation.js?v=1"></script>
     <script src="_framework/blazor.web.js"></script>
 </body>
 </html>

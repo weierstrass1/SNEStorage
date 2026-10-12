@@ -1,0 +1,33 @@
+using System.Text.Json;
+using Microsoft.JSInterop;
+using SNEStorage.DTOs;
+using SNEStorage.Services;
+
+namespace SNEStorage.Components.News;
+
+// Browser HTTP requests to NewsController; no business logic or database access.
+internal sealed class NewsApiClient(IJSObjectReference module, string requestKey)
+{
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+
+    public Task<NewsWriteResponse> CreateAsync(NewsCreateDTO dto, CancellationToken ct) =>
+        module.InvokeAsync<NewsWriteResponse>("createNews", ct, requestKey, dto).AsTask();
+
+    public Task<NewsWriteResponse> EditAsync(long newsId, NewsEditDTO dto, CancellationToken ct) =>
+        module.InvokeAsync<NewsWriteResponse>("editNews", ct, requestKey, newsId, dto).AsTask();
+
+    public async Task<List<NewsReadDTO>> ReadAsync(int amount, int page, NewsSorting sort)
+    {
+        var json = await module.InvokeAsync<string>("readNews", requestKey, amount, page, sort.ToString());
+        var response = JsonSerializer.Deserialize<BrowserResponse>(json, JsonOptions);
+        if (response is null || response.Status is < 200 or >= 300)
+            throw new JsonException("The news endpoint did not return a successful response.");
+
+        return JsonSerializer.Deserialize<List<NewsReadDTO>>(response.Body, JsonOptions)
+            ?? throw new JsonException("The news endpoint returned no list.");
+    }
+
+    private sealed record BrowserResponse(int Status, string Body);
+}
+
+internal sealed record NewsWriteResponse(int Status, string Body);

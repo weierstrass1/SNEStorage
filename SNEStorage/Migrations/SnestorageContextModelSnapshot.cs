@@ -295,7 +295,8 @@ namespace SNEStorage.Migrations
                     b.HasKey("Id")
                         .HasName("PK_Comment");
 
-                    b.HasIndex("ScoreId");
+                    b.HasIndex("ScoreId")
+                        .IsUnique();
 
                     b.HasIndex("UserId");
 
@@ -604,6 +605,43 @@ namespace SNEStorage.Migrations
                     b.ToTable("memory_address_values", (string)null);
                 });
 
+            modelBuilder.Entity("SNEStorage.Models.New", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("PosterUserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("poster_user_id");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("text");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)")
+                        .HasColumnName("title");
+
+                    b.HasKey("Id")
+                        .HasName("PK_New");
+
+                    b.HasIndex("PosterUserId");
+
+                    b.ToTable("new", (string)null);
+                });
+
             modelBuilder.Entity("SNEStorage.Models.Reason", b =>
                 {
                     b.Property<long>("Id")
@@ -671,11 +709,11 @@ namespace SNEStorage.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("nvarchar(50)")
+                        .HasColumnType("nvarchar(100)")
                         .HasColumnName("name");
 
                     b.Property<string>("RepositoryURL")
-                        .HasColumnType("nvarchar(100)")
+                        .HasColumnType("nvarchar(2048)")
                         .HasColumnName("repository_url");
 
                     b.Property<long>("ScoreId")
@@ -704,7 +742,8 @@ namespace SNEStorage.Migrations
 
                     b.HasIndex("FileId");
 
-                    b.HasIndex("ScoreId");
+                    b.HasIndex("ScoreId")
+                        .IsUnique();
 
                     b.HasIndex("SubmitterId");
 
@@ -1098,8 +1137,8 @@ namespace SNEStorage.Migrations
                         .HasColumnName("updated_at");
 
                     b.Property<string>("Version")
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)")
+                        .HasMaxLength(25)
+                        .HasColumnType("nvarchar(25)")
                         .HasColumnName("version");
 
                     b.HasKey("Id")
@@ -1154,9 +1193,10 @@ namespace SNEStorage.Migrations
                     b.HasKey("Id")
                         .HasName("PK_Score_Users");
 
-                    b.HasIndex("ScoreId");
-
                     b.HasIndex("UserId");
+
+                    b.HasIndex("ScoreId", "UserId")
+                        .IsUnique();
 
                     b.ToTable("score_users", (string)null);
                 });
@@ -1480,8 +1520,8 @@ namespace SNEStorage.Migrations
             modelBuilder.Entity("SNEStorage.Models.Comment", b =>
                 {
                     b.HasOne("SNEStorage.Models.Score", "Score")
-                        .WithMany("Comments")
-                        .HasForeignKey("ScoreId")
+                        .WithOne("Comment")
+                        .HasForeignKey("SNEStorage.Models.Comment", "ScoreId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("FK_comment_score");
@@ -1648,6 +1688,18 @@ namespace SNEStorage.Migrations
                     b.Navigation("MemoryAddress");
                 });
 
+            modelBuilder.Entity("SNEStorage.Models.New", b =>
+                {
+                    b.HasOne("SNEStorage.Models.ApplicationUser", "PosterUser")
+                        .WithMany()
+                        .HasForeignKey("PosterUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_new_poster_user");
+
+                    b.Navigation("PosterUser");
+                });
+
             modelBuilder.Entity("SNEStorage.Models.Resource", b =>
                 {
                     b.HasOne("SNEStorage.Models.File", null)
@@ -1655,8 +1707,8 @@ namespace SNEStorage.Migrations
                         .HasForeignKey("FileId");
 
                     b.HasOne("SNEStorage.Models.Score", "Score")
-                        .WithMany("Resources")
-                        .HasForeignKey("ScoreId")
+                        .WithOne("Resource")
+                        .HasForeignKey("SNEStorage.Models.Resource", "ScoreId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("FK_resource_score");
@@ -2110,11 +2162,11 @@ namespace SNEStorage.Migrations
 
             modelBuilder.Entity("SNEStorage.Models.Score", b =>
                 {
-                    b.Navigation("Comments");
+                    b.Navigation("Comment");
 
                     b.Navigation("LikesUsers");
 
-                    b.Navigation("Resources");
+                    b.Navigation("Resource");
 
                     b.Navigation("ScoresUsers");
                 });

@@ -1,3 +1,6 @@
+import { getAccountSession, invalidateAccountSession } from "./account-session.js?v=2";
+import { antiforgeryFetch } from "./antiforgery.js?v=1";
+
 const profileRequests = new Map();
 
 export function cancelProfileRequest(key) {
@@ -12,7 +15,11 @@ export async function getProfile(url, requestKey, notifySession = true) {
         profileRequests.set(requestKey, controller);
     }
     try {
-        const response = await fetch(new URL(url, document.baseURI), {
+        const requestUrl = new URL(url, document.baseURI);
+        if (requestUrl.origin === window.location.origin && requestUrl.pathname === "/api/profile/me" && !requestUrl.search) {
+            return JSON.stringify(await getAccountSession(controller.signal));
+        }
+        const response = await fetch(requestUrl, {
             method: "GET",
             credentials: "same-origin",
             cache: "no-store",
@@ -104,7 +111,7 @@ export async function updateProfile(url, fields, fileInputId) {
         formData.append("File", file, file.name);
     }
 
-    const response = await fetch(new URL(url, document.baseURI), {
+    const response = await antiforgeryFetch(new URL(url, document.baseURI), {
         method: "PUT",
         credentials: "same-origin",
         headers: { Accept: "application/json" },
@@ -112,6 +119,7 @@ export async function updateProfile(url, fields, fileInputId) {
     });
 
     if (response.status === 401) window.dispatchEvent(new Event("snestorage-session-rejected"));
+    if (response.ok) invalidateAccountSession(true);
 
     return JSON.stringify({
         status: response.status,

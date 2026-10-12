@@ -1,0 +1,13 @@
+.version-input { min-width: 0; padding: 1rem; border: 1px solid #694394; border-radius: 6px; background: rgba(33, 19, 51, var(--ui-inset-alpha)); }
+.version-heading { display: flex; align-items: center; justify-content: space-between; gap: .75rem; margin-bottom: .85rem; color: #f0e4ff; font-size: .95rem; font-weight: 700; }
+.version-required { color: #ffe14d; }
+.version-preview { min-width: 0; padding: .25rem .55rem; border: 1px solid #9673bb; border-radius: 4px; background: #130d22; color: #ffe14d; font: 600 .9rem ui-monospace, monospace; overflow-wrap: anywhere; }
+.version-fields { display: flex; flex-wrap: wrap; gap: .75rem; }
+.version-field { display: flex; flex: 1 1 150px; min-width: 0; flex-direction: column; gap: .4rem; }
+.version-base-field { flex-basis: 210px; }
+.version-field > label { margin: 0; color: #e1d8f3; font-size: .82rem; font-weight: 600; }
+.version-field > label span { color: #c2afd8; font-weight: 400; }
+.version-field input, .version-field select { width: 100%; min-height: 44px; padding: .6rem .7rem; border: 1px solid #9673bb; border-radius: 4px; background: #130d22; color: #f4eaff; font: inherit; font-size: .9rem; color-scheme: dark; }
+.version-field input:focus-visible, .version-field select:focus-visible { outline: 2px solid #ddb9ff; outline-offset: 2px; }
+.version-help { margin: .75rem 0 0; color: #c2afd8; font-size: .8rem; line-height: 1.6; }
+@media (max-width: 480px) { .version-heading { align-items: flex-start; flex-direction: column; } .version-field { flex-basis: 100%; } }

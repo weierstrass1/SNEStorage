@@ -68,7 +68,7 @@
     text-decoration: none;
 }
 
-.profile-edit-form {
+.profile-edit-page ::deep .profile-edit-form {
     display: grid;
     gap: 1rem;
 }
@@ -79,7 +79,7 @@
     padding: clamp(1rem, 3vw, 1.5rem);
     border: 1px solid rgba(106, 43, 224, .58);
     border-radius: 6px;
-    background: linear-gradient(145deg, rgba(25, 16, 49, .97), rgba(10, 8, 21, .98));
+    background: linear-gradient(145deg, rgba(25, 16, 49, var(--ui-surface-alpha)), rgba(10, 8, 21, var(--ui-surface-alpha)));
     box-shadow: 0 12px 34px rgba(0, 0, 0, .2);
 }
 
@@ -148,13 +148,13 @@
     font-weight: 700;
 }
 
-.profile-edit-file {
+.profile-edit-page ::deep .profile-edit-file {
     width: min(100%, 420px);
     color: #c9c0df;
     font-size: .88rem;
 }
 
-.profile-edit-file::file-selector-button {
+.profile-edit-page ::deep .profile-edit-file::file-selector-button {
     margin-right: .65rem;
     padding: .5rem .7rem;
     border: 1px solid #7a45ca;
@@ -203,7 +203,7 @@
     margin-top: .5rem;
 }
 
-.profile-edit-color {
+.profile-edit-page ::deep .profile-edit-color {
     width: 42px;
     height: 34px;
     padding: 2px;
@@ -226,7 +226,7 @@
     gap: .4rem;
 }
 
-.profile-edit-control {
+.profile-edit-page ::deep .profile-edit-control {
     width: 100%;
     min-height: 42px;
     padding: .65rem .75rem;
@@ -237,25 +237,25 @@
     outline: none;
 }
 
-.profile-edit-control:focus {
+.profile-edit-page ::deep .profile-edit-control:focus {
     border-color: #bd79ff;
     box-shadow: 0 0 0 3px rgba(177, 76, 255, .16);
 }
 
-.profile-edit-control:disabled,
-.profile-edit-control[readonly] {
-    border-color: rgba(119, 102, 151, .4);
-    color: #9c93b4;
-    background: rgba(8, 7, 16, .72);
+.profile-edit-page ::deep .profile-edit-control:disabled,
+.profile-edit-page ::deep .profile-edit-control[readonly] {
+    border-color: #78658f;
+    color: var(--ui-control-disabled-text, #b4a7c5);
+    background: var(--ui-control-disabled-bg, #201a2c);
     cursor: not-allowed;
 }
 
-textarea.profile-edit-control {
+.profile-edit-page ::deep textarea.profile-edit-control {
     min-height: 130px;
     resize: vertical;
 }
 
-select.profile-edit-control option {
+.profile-edit-page ::deep select.profile-edit-control option {
     color: #f2edff;
     background: #17102b;
 }

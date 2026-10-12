@@ -1,0 +1,12 @@
+.news-page { max-width: 880px; margin-inline: auto; min-width: 0; }
+.news-heading { margin-bottom: 1.75rem; padding-bottom: 1.25rem; border-bottom: 1px solid #593777; }
+.eyebrow { color: #b997e8; font: 700 .65rem/1.8 "Press Start 2P", monospace; letter-spacing: .08em; }
+h1 { margin: .6rem 0; color: #f0e5ff; font: 900 clamp(1.8rem, 4vw, 2.8rem)/1.2 "Exo 2", sans-serif; }
+.news-heading p { margin: 0; color: #c6b2dd; line-height: 1.7; }
+.news-heading ::deep .create-news { display: inline-flex; align-items: center; gap: .5rem; margin-top: 1rem; padding: .55rem .9rem; border: 1px solid #ffe14d; border-radius: 5px; background: #ffe14d; color: #211331; font-weight: 800; text-decoration: none; }
+.news-heading ::deep .create-news:hover { background: #fff08a; }
+.news-heading ::deep .create-news:focus-visible { outline: 2px solid #fff0a6; outline-offset: 4px; }
+.news-toolbar { display: flex; align-items: center; justify-content: flex-end; gap: .65rem; margin-bottom: 1rem; }
+.news-toolbar label { color: #c6b2dd; font-size: .85rem; font-weight: 700; }
+.news-toolbar select { padding: .5rem .75rem; border: 1px solid #8262ac; border-radius: 5px; color: #f0e5ff; background: rgba(27, 16, 44, var(--ui-inset-alpha)); font: inherit; font-size: .9rem; color-scheme: dark; }
+.news-toolbar select:focus-visible { outline: 2px solid #cfa4ff; outline-offset: 3px; }

@@ -1,0 +1,131 @@
+{
+  "title": "Seal of Quality",
+  "kicker": "REVIEWED BY SNESTORAGE STAFF",
+  "introduction": "The Seal of Quality certifies that a specific version of a resource has been reviewed by SNEStorage staff and meets SNEStorage's minimum quality standards. The seal applies to that reviewed version; it does not automatically apply to other versions.",
+  "updatedLabel": "Last revised:",
+  "updatedOn": "2026-10-09",
+  "navigationTitle": "On this page",
+  "relatedLinkLabel": "Read all site rules",
+  "sections": [
+    {
+      "id": "quality-request",
+      "title": "How to request a review",
+      "description": "The Seal of Quality is optional and is requested for a specific version.",
+      "rules": [
+        {
+          "id": "quality-review-request",
+          "title": "An optional review, requested per version",
+          "text": "Requesting the Seal of Quality is optional. Enable the \"Request the Seal of Quality\" checkbox for the version you want SNEStorage staff to review. A request is not an award: the seal is granted only after the version has been reviewed and approved."
+        }
+      ]
+    },
+    {
+      "id": "quality-benefits",
+      "title": "What you gain",
+      "description": "Recognition for a reviewed release, with a visible distinction throughout the resource library.",
+      "rules": [
+        {
+          "id": "quality-reviewed-standard",
+          "title": "A quality standard users can recognize",
+          "text": "Other users can see that a version of your resource has been reviewed by SNEStorage staff and meets our minimum quality standards."
+        },
+        {
+          "id": "quality-library-recognition",
+          "title": "A highlighted listing and a dedicated filter",
+          "text": "Your resource is highlighted in the resource list. Users can also filter the library to find only resources with a Seal of Quality."
+        },
+        {
+          "id": "quality-visible-seal",
+          "title": "The seal beside your resource's name",
+          "text": "The Seal of Quality logo appears beside the name of your resource."
+        },
+        {
+          "id": "quality-golden-name",
+          "title": "A golden resource name",
+          "text": "Your resource's name is displayed in gold."
+        }
+      ]
+    },
+    {
+      "id": "quality-commitments",
+      "title": "What you commit to",
+      "description": "Reviewing a release takes additional staff effort. Resources awarded the seal must respect these commitments.",
+      "rules": [
+        {
+          "id": "quality-protected-resource",
+          "title": "Do not delete a resource with a sealed version",
+          "text": "A resource with at least one version awarded the Seal of Quality cannot be deleted through normal resource management. Exceptional deletion must be discussed with SNEStorage staff as described below."
+        },
+        {
+          "id": "quality-protected-versions",
+          "title": "Do not delete sealed versions",
+          "text": "Versions awarded the Seal of Quality cannot be deleted."
+        },
+        {
+          "id": "quality-edit-permission",
+          "title": "Get staff permission before editing",
+          "text": "Do not edit a resource that has a sealed version, or a version awarded the Seal of Quality, without permission from SNEStorage staff."
+        },
+        {
+          "id": "quality-public-visibility",
+          "title": "Keep the resource public",
+          "text": "A resource with a version awarded the Seal of Quality must remain public."
+        },
+        {
+          "id": "quality-exceptional-deletion",
+          "title": "Contact staff if deletion is genuinely necessary",
+          "text": "If the authors have a genuine problem that requires deleting the resource, they must contact a SNEStorage staff member to arrange its deletion. This exception cannot be demanded if any resource author, the resource submitter, or anyone who submitted one of its versions is banned."
+        }
+      ]
+    },
+    {
+      "id": "quality-removal",
+      "title": "Can the seal be removed?",
+      "description": "The account standing of everyone associated with the resource matters.",
+      "rules": [
+        {
+          "id": "quality-removal-eligibility",
+          "title": "Only if no associated authors or submitters are banned",
+          "text": "You may request that the resource stop carrying the Seal of Quality only if none of its authors, its original submitter, or the submitters of any of its versions are banned."
+        }
+      ]
+    },
+    {
+      "id": "quality-requirements",
+      "title": "What staff review",
+      "description": "The reviewed version must meet all of the following requirements.",
+      "rules": [
+        {
+          "id": "quality-site-rules",
+          "title": "Compliance with all SNEStorage rules",
+          "text": "The resource and the reviewed version must comply with all SNEStorage site rules."
+        },
+        {
+          "id": "quality-correct-function",
+          "title": "The resource works as intended",
+          "text": "Code must do what it is expected to do. Graphics must use their specified formats, music must work correctly, and other resources must function properly for their stated purpose."
+        },
+        {
+          "id": "quality-complete-information",
+          "title": "Complete and accurate resource information",
+          "text": "The resource form must be correctly filled out, including accurate classifications, specific dependencies, all authors, and the other information relevant to the resource."
+        },
+        {
+          "id": "quality-readme",
+          "title": "Adequate README documentation",
+          "text": "Include appropriate README documentation that clearly explains how to use the resource."
+        },
+        {
+          "id": "quality-artistic-standard",
+          "title": "A minimum artistic quality",
+          "text": "Graphics, music, sound effects, and other artistic resources must meet a minimum level of quality, as assessed by SNEStorage staff."
+        },
+        {
+          "id": "quality-good-previews",
+          "title": "Good previews when required",
+          "text": "Provide good-quality previews when they are required to demonstrate the resource."
+        }
+      ]
+    }
+  ]
+}

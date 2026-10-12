@@ -1,0 +1,48 @@
+@using SNEStorage.Components.Resources
+
+<aside class="offcanvas offcanvas-end side-navigation @(Minimized ? "is-minimized" : null)" id="site-sidebar" tabindex="-1" aria-label="Site navigation">
+    <div class="sidebar-heading">
+        <span class="sidebar-title">Navigation</span>
+        <button class="sidebar-minimize" type="button" @onclick="ToggleRequested" aria-expanded="@(!Minimized)" aria-controls="sidebar-links" aria-label="@(Minimized ? "Expand navigation" : "Minimize navigation")" title="@(Minimized ? "Expand navigation" : "Minimize navigation")">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7" /></svg>
+        </button>
+        <button class="sidebar-close" type="button" data-bs-dismiss="offcanvas" aria-label="Close navigation">×</button>
+    </div>
+    <div class="sidebar-body">
+        <p class="sidebar-caption">EXPLORE</p>
+        <nav class="site-navigation" id="sidebar-links" aria-label="Main navigation">
+            <NavLink class="navigation-button" href="/Resources" aria-label="Resources" title="Resources">
+                <svg class="navigation-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m3 7 9-4 9 4-9 4-9-4ZM3 7v10l9 4 9-4V7M12 11v10" /></svg>
+                <span class="navigation-label">Resources</span>
+            </NavLink>
+            <NavLink class="navigation-button" href="/News" aria-label="News" title="News">
+                <svg class="navigation-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h16v18H5a2 2 0 0 1-2-2V7h2M9 7h8M9 11h8M9 15h3M15 15h2" /></svg>
+                <span class="navigation-label">News</span>
+            </NavLink>
+            <NavLink class="navigation-button" href="/Community" aria-label="Community" title="Community">
+                <svg class="navigation-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v12H9l-5 4V4ZM8 8h8M8 12h5" /></svg>
+                <span class="navigation-label">Community</span>
+            </NavLink>
+            <NavLink class="navigation-button" href="/Rules" aria-label="Rules" title="Rules">
+                <svg class="navigation-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18H6zM9 7h6M9 11h6M9 15h4" /></svg>
+                <span class="navigation-label">Rules</span>
+            </NavLink>
+            <NavLink class="navigation-button navigation-button-quality" href="/SealOfQuality" aria-label="Seal of Quality" title="Seal of Quality">
+                <span class="quality-navigation-icon" aria-hidden="true"><ResourceQualitySeal Size="24" Title="SNEStorage Seal of Quality" /></span>
+                <span class="quality-navigation-label navigation-label">Seal of Quality</span>
+            </NavLink>
+            <NavLink class="navigation-button" href="/About" aria-label="About" title="About">
+                <svg class="navigation-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 11v6M12 7v1" /></svg>
+                <span class="navigation-label">About</span>
+            </NavLink>
+            <NavLink class="navigation-button" href="/Donations" aria-label="Donations" title="Donations">
+                <svg class="navigation-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21 3.5 12.5a5.5 5.5 0 0 1 8.5-7 5.5 5.5 0 0 1 8.5 7L12 21Z" /></svg>
+                <span class="navigation-label">Donations</span>
+            </NavLink>
+            <NavLink class="navigation-button" href="/Privacy" aria-label="Privacy" title="Privacy">
+                <svg class="navigation-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3ZM9 12l2 2 4-4" /></svg>
+                <span class="navigation-label">Privacy</span>
+            </NavLink>
+        </nav>
+    </div>
+</aside>

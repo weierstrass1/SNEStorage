@@ -1,0 +1,86 @@
+@page "/Rules"
+@using SNEStorage.Components.Rules
+@inherits StaticDocumentPage<SiteRulesDocument>
+
+<PageTitle>Rules | SNEStorage</PageTitle>
+
+<div class="rules-page">
+    <header class="rules-heading">
+        <p class="rules-kicker">SNESTORAGE COMMUNITY</p>
+        <h1>@(_document?.Title ?? "Site rules")</h1>
+        @if (_document is { } document)
+        {
+            <p class="rules-introduction">@document.Introduction</p>
+            <p class="rules-updated">@document.UpdatedLabel <time datetime="@document.UpdatedOn">@document.UpdatedOn</time></p>
+        }
+    </header>
+
+    @if (_loading)
+    {
+        <div class="rules-status" role="status" aria-live="polite">Loading site rules…</div>
+    }
+    else if (_error is not null)
+    {
+        <div class="rules-status rules-error" role="alert">
+            <p>@_error</p>
+            <button type="button" @onclick="LoadAsync">Try again</button>
+        </div>
+    }
+    else if (_document is { } rules)
+    {
+        <div class="rules-layout">
+            <nav class="rules-contents" aria-label="@rules.NavigationTitle">
+                <h2>@rules.NavigationTitle</h2>
+                @foreach (var section in rules.Sections)
+                {
+                    <a href="@($"Rules#{section.Id}")" data-enhance-nav="false">
+                        <span class="contents-label"><span class="section-letter">@section.Letter.</span>@section.Title</span>
+                        <span class="contents-arrow" aria-hidden="true">↓</span>
+                    </a>
+                    @if (section.Groups.Count > 0)
+                    {
+                        <div class="rules-subcontents">
+                            @foreach (var group in section.Groups)
+                            {
+                                <a href="@($"Rules#{group.Id}")" data-enhance-nav="false">@group.Title</a>
+                            }
+                        </div>
+                    }
+                }
+            </nav>
+
+            <div class="rules-sections">
+                <aside class="rules-context" aria-labelledby="rules-context-title">
+                    <span class="context-mark" aria-hidden="true">!</span>
+                    <div><h2 id="rules-context-title">@rules.ContextTitle</h2><p>@rules.ContextDescription</p></div>
+                </aside>
+
+                @foreach (var section in rules.Sections)
+                {
+                    <section class="rules-section" id="@section.Id" aria-labelledby="@($"{section.Id}-title")">
+                        <header>
+                            <h2 id="@($"{section.Id}-title")"><span class="section-letter">@section.Letter.</span>@section.Title</h2>
+                            <p>@section.Description</p>
+                        </header>
+                        <SiteRulesList Letter="@section.Letter" Entries="section.Rules" />
+                        @if (section.Groups.Count > 0)
+                        {
+                            <div class="rule-groups">
+                                @foreach (var group in section.Groups)
+                                {
+                                    <section class="rule-group" id="@group.Id" aria-labelledby="@($"{group.Id}-title")">
+                                        <header>
+                                            <h3 id="@($"{group.Id}-title")">@group.Title</h3>
+                                            <p>@group.Description</p>
+                                        </header>
+                                        <SiteRulesList Letter="@section.Letter" Entries="group.Rules" Grouped="true" />
+                                    </section>
+                                }
+                            </div>
+                        }
+                    </section>
+                }
+            </div>
+        </div>
+    }
+</div>

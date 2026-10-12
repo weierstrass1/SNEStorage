@@ -107,7 +107,7 @@ public partial class CreateResource : IAsyncDisposable
 
         try
         {
-            var module = await JavaScript.InvokeAsync<IJSObjectReference>("import", "./js/resource-create.js?v=7");
+            var module = await JavaScript.InvokeAsync<IJSObjectReference>("import", "./js/resource-create.js?v=12");
             if (_disposed)
             {
                 await module.DisposeAsync();
@@ -262,7 +262,7 @@ public partial class CreateResource : IAsyncDisposable
             _forbidden = response.Status is 401 or 403;
             _error = response.Status is >= 200 and < 300
                 ? "The server did not return a resource ID. Check your resources before submitting again."
-                : ApiErrorPresentation.Describe(response.Status, response.Body, "resource").Message;
+                : ApiErrorPresentation.Describe(response.Status, response.Body, "resource-upload").Message;
             ReadValidationErrors(response);
         }
         catch (JSException exception)

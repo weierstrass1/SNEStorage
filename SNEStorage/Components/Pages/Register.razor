@@ -36,14 +36,24 @@
 
         @if (!string.IsNullOrWhiteSpace(StatusMessage))
         {
-            <div class="register-alert" role="alert"><span aria-hidden="true">!</span> @StatusMessage</div>
+            <div id="registration-error" class="register-alert" role="alert" tabindex="-1">
+                <span aria-hidden="true">!</span>
+                <div>
+                    @StatusMessage
+                    @if (_validationErrors.Length > 0)
+                    {
+                        <ul>@foreach (var error in _validationErrors) { <li>@error</li> }</ul>
+                    }
+                </div>
+            </div>
         }
         @if (!string.IsNullOrWhiteSpace(_optionsError))
         {
             <div class="register-alert" role="alert"><span aria-hidden="true">!</span> @_optionsError</div>
         }
 
-        <form class="register-form" action="/api/register/submit" method="post" enctype="multipart/form-data">
+        <form id="register-form" class="register-form" action="/api/register/submit" method="post" enctype="multipart/form-data"
+              aria-busy="@(_saving ? "true" : "false")" novalidate @onsubmit="SubmitAsync" @onsubmit:preventDefault="true">
             <AntiforgeryToken />
 
             <fieldset class="register-fieldset">
@@ -51,7 +61,8 @@
                 <div class="register-grid">
                     <div class="register-field username-field">
                         <label for="username">Username <span aria-hidden="true">*</span></label>
-                        <input class="register-input" id="username" name="User" type="text" autocomplete="username" placeholder="Your player name" required />
+                        <input class="register-input" id="username" name="User" type="text" autocomplete="username" placeholder="Your player name" aria-describedby="username-error" required />
+                        <span class="field-error" id="username-error" aria-live="polite" data-validation-for="User"></span>
                     </div>
 
                     <div class="register-field color-field">
@@ -64,7 +75,8 @@
 
                     <div class="register-field field-full">
                         <label for="email">Email address <span aria-hidden="true">*</span></label>
-                        <input class="register-input" id="email" name="Email" type="email" autocomplete="email" placeholder="you@example.com" required />
+                        <input class="register-input" id="email" name="Email" type="email" autocomplete="email" placeholder="you@example.com" aria-describedby="email-error" required />
+                        <span class="field-error" id="email-error" aria-live="polite" data-validation-for="Email"></span>
                     </div>
                 </div>
             </fieldset>
@@ -74,12 +86,22 @@
                 <div class="register-grid">
                     <div class="register-field">
                         <label for="password">Password <span aria-hidden="true">*</span></label>
-                        <input class="register-input" id="password" name="Password" type="password" autocomplete="new-password" placeholder="Create a password" required />
+                        <input class="register-input" id="password" name="Password" type="password" autocomplete="new-password" placeholder="Create a password" aria-describedby="password-rules password-error" required />
+                        <span class="field-error" id="password-error" aria-live="polite" data-validation-for="Password"></span>
                     </div>
                     <div class="register-field">
                         <label for="password-repeat">Confirm password <span aria-hidden="true">*</span></label>
-                        <input class="register-input" id="password-repeat" name="PasswordRepeat" type="password" autocomplete="new-password" placeholder="Enter it again" required />
+                        <input class="register-input" id="password-repeat" name="PasswordRepeat" type="password" autocomplete="new-password" placeholder="Enter it again" aria-describedby="password-repeat-error" required />
+                        <span class="field-error" id="password-repeat-error" aria-live="polite" data-validation-for="PasswordRepeat"></span>
                     </div>
+                    <ul class="password-rules field-full" id="password-rules" aria-label="Password requirements">
+                        <li data-password-rule="length">At least @AccountOptions.Value.Password.RequiredLength characters</li>
+                        @if (AccountOptions.Value.Password.RequireUppercase) { <li data-password-rule="uppercase">An uppercase letter (A–Z)</li> }
+                        @if (AccountOptions.Value.Password.RequireLowercase) { <li data-password-rule="lowercase">A lowercase letter (a–z)</li> }
+                        @if (AccountOptions.Value.Password.RequireDigit) { <li data-password-rule="digit">A number (0–9)</li> }
+                        @if (AccountOptions.Value.Password.RequireNonAlphanumeric) { <li data-password-rule="symbol">A symbol, such as !, @@, or #</li> }
+                        @if (AccountOptions.Value.Password.RequiredUniqueChars > 1) { <li data-password-rule="unique">At least @AccountOptions.Value.Password.RequiredUniqueChars different characters</li> }
+                    </ul>
                 </div>
             </fieldset>
 
@@ -88,40 +110,44 @@
                 <div class="register-grid">
                     <div class="register-field">
                         <label for="birthday">Date of birth <span aria-hidden="true">*</span></label>
-                        <input class="register-input" id="birthday" name="Birthday" type="date" value="@InitialBirthday" required />
+                        <input class="register-input" id="birthday" name="Birthday" type="date" max="@InitialBirthday" aria-describedby="birthday-error" required />
+                        <span class="field-error" id="birthday-error" aria-live="polite" data-validation-for="Birthday"></span>
                     </div>
 
                     <div class="register-field">
                         <label for="avatar">Profile avatar <span aria-hidden="true">*</span></label>
-                        <input class="register-input register-file" id="avatar" name="Avatar" type="file" accept=".png,.jpg,.jpeg,image/png,image/jpeg" required />
-                        <span class="field-hint">PNG or JPG image</span>
+                        <input class="register-input register-file" id="avatar" name="Avatar" type="file" accept=".png,.jpg,.jpeg,image/png,image/jpeg" aria-describedby="avatar-hint avatar-error" required />
+                        <span class="field-hint" id="avatar-hint">PNG or JPG image · up to 5 MB</span>
+                        <span class="field-error" id="avatar-error" aria-live="polite" data-validation-for="Avatar"></span>
                     </div>
 
                     <div class="register-field">
                         <label for="time-zone">Time zone <span aria-hidden="true">*</span></label>
-                        <select class="register-input" id="time-zone" name="TimeZoneId" required>
+                        <select class="register-input" id="time-zone" name="TimeZoneId" aria-describedby="time-zone-error" required>
                             @foreach (var timeZone in _timeZones)
                             {
                                 <option value="@timeZone.Id" selected="@(timeZone.Id == DefaultTimeZoneId)">@timeZone.Name</option>
                             }
                         </select>
+                        <span class="field-error" id="time-zone-error" aria-live="polite" data-validation-for="TimeZoneId"></span>
                     </div>
 
                     <div class="register-field">
                         <label for="email-visibility">Email visibility <span aria-hidden="true">*</span></label>
-                        <select class="register-input" id="email-visibility" name="EmailVisibilityId" required>
+                        <select class="register-input" id="email-visibility" name="EmailVisibilityId" aria-describedby="email-visibility-hint email-visibility-error" required>
                             @foreach (var visibility in _emailVisibilities)
                             {
                                 <option value="@visibility.Id" selected="@(visibility.Id == DefaultEmailVisibilityId)">@visibility.Name</option>
                             }
                         </select>
-                        <span class="field-hint">Choose who can see your email address.</span>
+                        <span class="field-hint" id="email-visibility-hint">Choose who can see your email address.</span>
+                        <span class="field-error" id="email-visibility-error" aria-live="polite" data-validation-for="EmailVisibilityId"></span>
                     </div>
                 </div>
             </fieldset>
 
-            <button class="register-submit" type="submit" disabled="@(_timeZones.Count == 0 || _emailVisibilities.Count == 0)">
-                Create account <span aria-hidden="true">→</span>
+            <button class="register-submit" type="submit" disabled="@(_saving || _timeZones.Count == 0 || _emailVisibilities.Count == 0)">
+                @(_saving ? "Creating account…" : "Create account") <span aria-hidden="true">→</span>
             </button>
             <p class="required-note"><span aria-hidden="true">*</span> Required fields</p>
         </form>

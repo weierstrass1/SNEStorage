@@ -1,5 +1,4 @@
 .quality-seal {
-    --seal-shine-duration: 2.2s;
     position: relative;
     display: inline-flex;
     flex: 0 0 auto;
@@ -22,27 +21,25 @@
 .quality-seal-shine::before {
     content: "";
     position: absolute;
-    inset: -100%;
-    transform: translate(-50%, -50%);
-    opacity: 0;
-    animation: seal-gold-sweep var(--seal-shine-duration) ease-in-out -.15s infinite;
-    /* Directly overlay the masked logo: the highlight must remain visible on its pale centre. */
+    inset: -50%;
+    /* A narrow, feathered reflection moves along both axes, clipped to the seal. */
     background: linear-gradient(135deg,
-        transparent 42%,
-        #dca52b30 45%,
-        #ffd66d80 47%,
-        #fff0bdd1 48.5%,
-        #fffffff5 49.5%,
-        #fffffff5 50.5%,
-        #fff0bdd1 51.5%,
-        #ffd66d80 53%,
-        #dca52b30 55%,
-        transparent 58%);
+        transparent 43%, #f2d27b15 45%, #fcebad65 47%,
+        #fff6d6ba 49%, #fffeecf2 50%, #fff6d6ba 51%,
+        #fcebad65 53%, #f2d27b15 55%, transparent 57%);
+    transform: translate(-60%, -60%);
+    animation: snestorage-quality-seal-sweep var(--quality-shine-cycle, 1600ms) var(--quality-shine-easing, ease-in-out) infinite;
 }
 
-@keyframes seal-gold-sweep {
-    0% { transform: translate(-50%, -50%); opacity: 0; }
-    5% { opacity: 1; }
-    55% { transform: translate(50%, 50%); opacity: 1; }
-    60%, 100% { transform: translate(50%, 50%); opacity: 0; }
+@keyframes snestorage-quality-seal-sweep {
+    0%, 4% { transform: translate(-60%, -60%); }
+    44%, 100% { transform: translate(60%, 60%); }
+}
+@media (prefers-reduced-motion: reduce) {
+    /* Reduce emphasis while preserving the explicitly requested speed and rhythm. */
+    .quality-seal-shine { opacity: .65; }
+}
+@media (forced-colors: active) {
+    .quality-seal { filter: none; }
+    .quality-seal-shine { display: none; }
 }

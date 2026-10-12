@@ -1,0 +1,49 @@
+.quality-text {
+    position: relative;
+    display: inline-block;
+    max-width: 100%;
+    color: #edbd4b;
+    vertical-align: baseline;
+    text-shadow: 0 1px 2px #6b461a70;
+}
+.quality-text-base { display: block; }
+.quality-text-highlight { display: none; }
+
+@supports ((background-clip: text) or (-webkit-background-clip: text)) {
+    .quality-text-base {
+        background: linear-gradient(180deg, #ffe89b 0%, #f4c956 35%, #c58b25 65%, #f2c354 100%);
+        background-clip: text;
+        -webkit-background-clip: text;
+        color: transparent;
+        -webkit-text-fill-color: transparent;
+        text-shadow: none;
+    }
+    .quality-text-highlight {
+        position: absolute;
+        display: block;
+        inset: 0;
+        pointer-events: none;
+        /* A separate narrow beam travels fully across the letters, including short titles. */
+        background: linear-gradient(135deg, transparent 15%, #fcebad30 30%, #fff6d6a8 44%, #fffeecf2 50%, #fff6d6a8 56%, #fcebad30 70%, transparent 85%) no-repeat;
+        background-size: 55% 100%;
+        background-position: -150% 50%;
+        background-clip: text;
+        -webkit-background-clip: text;
+        color: transparent;
+        -webkit-text-fill-color: transparent;
+        text-shadow: none;
+        animation: snestorage-quality-text-sweep var(--quality-shine-cycle, 1600ms) var(--quality-shine-easing, ease-in-out) infinite;
+    }
+}
+
+@keyframes snestorage-quality-text-sweep {
+    0%, 4% { background-position: -150% 50%; }
+    44%, 100% { background-position: 250% 50%; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .quality-text-highlight { opacity: .65; }
+}
+@media (forced-colors: active) {
+    .quality-text, .quality-text-base { background: none; color: inherit; -webkit-text-fill-color: currentColor; text-shadow: none; }
+    .quality-text-highlight { display: none; animation: none; }
+}

@@ -1,17 +1,23 @@
-.account-placeholder {
+.account-placeholder, .account-unavailable {
     display: inline-flex;
     align-items: center;
     gap: .5rem;
+    min-height: 44px;
+    color: #d3bfe9;
+    font-size: .85rem;
 }
 
-.account-placeholder-button {
-    width: 96px;
-    height: 44px;
-    border: 2px solid #3a2755;
-    border-radius: 5px;
+.account-retry {
+    padding: .4rem .65rem;
+    border: 1px solid #8062a3;
+    border-radius: 6px;
     background: #170c30;
+    color: #eadcff;
 }
 
-.account-placeholder-button:last-child {
-    width: 104px;
+.account-retry:hover { background: #302047; }
+.account-retry:focus-visible { outline: 2px solid #c6a2ff; outline-offset: 2px; }
+
+@media (max-width: 560px) {
+    .account-unavailable { flex-wrap: wrap; justify-content: flex-end; }
 }

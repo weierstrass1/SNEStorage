@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -28,6 +29,7 @@ public class ProfileController(AccountService accountService) : ControllerBase
             _ => BadRequest(),
         };
     }
+    [EnableRateLimiting("uploads")]
     [HttpPut("me/edit")]
     [Consumes("multipart/form-data")]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]

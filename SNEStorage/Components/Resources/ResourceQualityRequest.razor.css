@@ -1,4 +1,4 @@
-.quality-request { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: .75rem; margin-top: 1rem; border: 1px solid #796139; border-radius: 6px; background: linear-gradient(120deg, #2b1d35, #1b1128); }
+.quality-request { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: .75rem; margin-top: 1rem; border: 1px solid #796139; border-radius: 6px; background: linear-gradient(120deg, rgba(43, 29, 53, var(--ui-surface-alpha)), rgba(27, 17, 40, var(--ui-surface-alpha))); }
 .quality-request-seal { padding: .75rem 1rem .75rem 0; }
 .quality-request:hover { border-color: #b79b50; }
 .quality-request:has(input:checked) { border-color: #d3b54e; background: linear-gradient(120deg, #35263b, #21162f); }

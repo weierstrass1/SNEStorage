@@ -1,0 +1,52 @@
+@page "/SealOfQuality"
+@using SNEStorage.Components.Rules
+@using SNEStorage.Components.Resources
+@inherits StaticDocumentPage<SiteRulesDocument>
+
+<PageTitle>Seal of Quality | SNEStorage</PageTitle>
+
+<div class="quality-page">
+    <header class="quality-hero">
+        <div class="quality-logo"><ResourceQualitySeal Size="144" /></div>
+        <div>
+            <p class="quality-kicker">@(_document?.Kicker ?? "SNESTORAGE QUALITY PROGRAM")</p>
+            <h1><QualityText Text="@(_document?.Title ?? "Seal of Quality")" /></h1>
+            @if (_document is { } document)
+            {
+                <p class="quality-introduction">@document.Introduction</p>
+                <p class="quality-updated">@document.UpdatedLabel <time datetime="@document.UpdatedOn">@document.UpdatedOn</time></p>
+            }
+        </div>
+    </header>
+
+    @if (_loading)
+    {
+        <div class="quality-status" role="status">Loading the Seal of Quality guide…</div>
+    }
+    else if (_error is not null)
+    {
+        <div class="quality-status quality-error" role="alert"><p>@_error</p><button type="button" @onclick="LoadAsync">Try again</button></div>
+    }
+    else if (_document is { } guide)
+    {
+        <div class="quality-layout">
+            <nav class="quality-contents" aria-label="@guide.NavigationTitle">
+                <h2>@guide.NavigationTitle</h2>
+                @foreach (var section in guide.Sections)
+                {
+                    <a href="@($"SealOfQuality#{section.Id}")" data-enhance-nav="false"><span class="section-letter">@section.Letter.</span><span>@section.Title</span></a>
+                }
+                <a class="related-rules" href="Rules">@guide.RelatedLinkLabel <span aria-hidden="true">↗</span></a>
+            </nav>
+            <div class="quality-sections">
+                @foreach (var section in guide.Sections)
+                {
+                    <section class="quality-section" id="@section.Id" aria-labelledby="@($"{section.Id}-title")">
+                        <header><h2 id="@($"{section.Id}-title")"><span class="section-letter">@section.Letter.</span>@section.Title</h2><p>@section.Description</p></header>
+                        <SiteRulesList Letter="@section.Letter" Entries="section.Rules" Gold="true" />
+                    </section>
+                }
+            </div>
+        </div>
+    }
+</div>

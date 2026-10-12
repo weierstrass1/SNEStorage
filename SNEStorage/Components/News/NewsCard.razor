@@ -1,0 +1,27 @@
+<article class="news-card @(Compact ? "is-compact" : null)" id="@($"news-{Item.Id}")" aria-labelledby="@($"news-heading-{Item.Id}")">
+    <div class="news-meta">
+        <img class="author-avatar" src="@AvatarUrl" alt="" width="32" height="32" loading="lazy" @onerror="ShowFallbackAvatar" />
+        <a class="author-name" href="@ProfileUrl" style="color:@UsernameColor">@Item.UserSummary.Username</a>
+        <time datetime="@Item.CreatedAt.ToString("O")">@PublicationDate</time>
+        @if (CanEdit)
+        {
+            <button class="edit-news" type="button" @onclick="StartEditing" aria-expanded="@_editing" aria-controls="@($"news-editor-{Item.Id}")" aria-label="@($"Edit news: {Item.Title}")" disabled="@_editing">Edit news</button>
+        }
+    </div>
+    <h3 id="@($"news-heading-{Item.Id}")">@Item.Title</h3>
+    @if (_editing && CanEdit)
+    {
+        <div id="@($"news-editor-{Item.Id}")">
+            <NewsEditForm Item="Item" OnSaved="NewsSaved" OnCancel="CancelEditing" />
+        </div>
+    }
+    else
+    {
+        <p class="news-text">@Item.Text</p>
+        @if (_saved) { <p class="news-saved" role="status">Changes saved.</p> }
+    }
+    @if (Compact)
+    {
+        <a class="read-news" href="@($"/News#news-{Item.Id}")" aria-label="@($"Read full news: {Item.Title}")">Read full update <span aria-hidden="true">→</span></a>
+    }
+</article>

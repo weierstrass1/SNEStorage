@@ -1,0 +1,11 @@
+.latest-table-scroll { overflow-x: auto; border: 1px solid #593777; border-radius: 12px; background: rgba(23, 13, 36, var(--ui-surface-alpha)); box-shadow: 0 12px 30px #0002; }
+.latest-table-scroll:focus-visible { outline: 2px solid #b287e4; outline-offset: 3px; }
+table { width: 100%; border-collapse: collapse; }
+th { padding: .85rem .7rem; border-bottom: 1px solid #715093; color: #cdb3e9; background: #2a173c; font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; text-align: left; white-space: nowrap; }
+.download-heading { text-align: right; }
+.latest-status { padding: 2rem 1rem; border: 1px solid #4c3065; border-radius: 12px; color: #c8b2dd; background: rgba(26, 16, 41, var(--ui-surface-alpha)); text-align: center; font-size: .9rem; }
+.latest-status p { margin: 0 0 1rem; }
+.latest-status button { padding: .5rem .9rem; border: 1px solid #9565bf; border-radius: 6px; color: #ecddff; background: #39214f; }
+.latest-status button:hover { background: #502f6d; }
+.latest-status button:focus-visible { outline: 2px solid #ffe14d; outline-offset: 3px; }
+.latest-cards { display: flex; flex-direction: column; gap: 1rem; min-width: 0; }

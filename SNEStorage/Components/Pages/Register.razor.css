@@ -149,7 +149,7 @@
     padding: clamp(1.25rem, 3vw, 2.1rem);
     border: 2px solid #d9cbff;
     border-radius: 6px;
-    background: linear-gradient(145deg, rgba(35, 18, 77, .98), rgba(14, 8, 34, .98));
+    background: linear-gradient(145deg, rgba(35, 18, 77, var(--ui-surface-alpha)), rgba(14, 8, 34, var(--ui-surface-alpha)));
     box-shadow: 0 0 0 3px #000, 0 0 28px rgba(138, 61, 255, .34), inset 0 0 0 2px #6a2be0;
 }
 
@@ -376,8 +376,8 @@
 }
 
 .register-submit:disabled {
-    color: #69627c;
-    background: #b8afc9;
+    color: #cbbada;
+    background: #342644;
     box-shadow: 3px 3px 0 #40336a;
     cursor: not-allowed;
 }
@@ -489,3 +489,14 @@
         transition-duration: .01ms !important;
     }
 }
+.register-alert > div { min-width: 0; flex: 1; overflow-wrap: anywhere; }
+.register-alert ul { margin: .6rem 0 0; padding-left: 1.2rem; }
+.register-alert li + li { margin-top: .3rem; }
+.field-error { color: #ffb6c5; font-size: .78rem; line-height: 1.5; }
+.field-error:empty { display: none; }
+.register-input[aria-invalid="true"] { border-color: #ff718b; box-shadow: 0 0 0 1px #ff718b35; }
+.password-rules { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .35rem .75rem; margin: .2rem 0 0; padding: .85rem; list-style: none; border: 1px solid #59408f; border-radius: 6px; background: rgba(21, 12, 37, var(--ui-inset-alpha)); color: #c6b4de; font-size: .76rem; }
+.password-rules li::before { content: "○"; margin-right: .45rem; }
+.password-rules li[data-met="true"] { color: #a5e4b8; }
+.password-rules li[data-met="true"]::before { content: "✓"; }
+@media (max-width: 480px) { .password-rules { grid-template-columns: minmax(0, 1fr); } }

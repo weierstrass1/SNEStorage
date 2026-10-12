@@ -1,0 +1,23 @@
+@page "/News"
+@using SNEStorage.Components.News
+
+<PageTitle>News | SNEStorage</PageTitle>
+<div class="news-page">
+    <header class="news-heading">
+        <span class="eyebrow">FROM THE ARCHIVE</span>
+        <h1>SNEStorage news</h1>
+        <p>Updates, announcements, and what's new at SNEStorage.</p>
+        @if (_canCreateNews)
+        {
+            <NavLink class="create-news" href="/News/Create"><span aria-hidden="true">＋</span> Create news</NavLink>
+        }
+    </header>
+    <div class="news-toolbar">
+        <label for="news-sort">Sort by</label>
+        <select id="news-sort" @bind="_sort">
+            <option value="RecentFirst">Newest first</option>
+            <option value="RecentLast">Oldest first</option>
+        </select>
+    </div>
+    <NewsFeed @key="_sort" Infinite="true" CanEdit="_canCreateNews" Sort="_sort" />
+</div>

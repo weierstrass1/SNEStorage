@@ -1,4 +1,5 @@
 using SNEStorage.Models;
+using SNEStorage.DTOs;
 
 namespace SNEStorage.Components.Resources;
 
@@ -8,6 +9,7 @@ internal sealed class ResourceEditorSelectionSnapshot
     public TagSelection[] Tags { get; init; } = [];
     public TypeSelection[] Types { get; init; } = [];
     public AuthorSelection[] Authors { get; init; } = [];
+    public string? CurrentUserId { get; init; }
     public TagSelection[] ExternalAuthors { get; init; } = [];
     public DependencySelection[] Dependencies { get; init; } = [];
     public ExternalDependencySelection[] ExternalDependencies { get; init; } = [];
@@ -15,21 +17,22 @@ internal sealed class ResourceEditorSelectionSnapshot
     public string? RepositoryURL { get; init; }
     public VersionSelection? Version { get; init; }
 
-    public static ResourceEditorSelectionSnapshot From(Resource resource, ResourceVersion? version) => new()
+    public static ResourceEditorSelectionSnapshot From(ResourceReadDTO resource, ResourceVersion? version, ResourceEditorData data, string userId) => new()
     {
         RepositoryURL = resource.RepositoryURL,
+        CurrentUserId = userId,
         Version = version is null ? null : new VersionSelection(version.Version, version.ChangeLog, version.SealOfQualityRequested),
-        Tags = resource.ResourceTags
-            .Where(tag => !string.IsNullOrWhiteSpace(tag.Tag?.Name))
-            .Select(tag => new TagSelection(tag.Id, tag.Tag!.Name)).ToArray(),
-        Types = resource.ResourceResourceTypes
+        Tags = resource.Tags
+            .Where(tag => !string.IsNullOrWhiteSpace(tag.Name))
+            .Select(tag => new TagSelection(tag.Id, tag.Name)).ToArray(),
+        Types = resource.Types
             .Select(type => new TypeSelection(type.Id, type.ResourceTypeId)).ToArray(),
-        Authors = resource.ResourcesAuthors.Select(author => new AuthorSelection(author.Id, author.UserId)).ToArray(),
-        ExternalAuthors = resource.ResourceExternalAuthors.Select(author => new TagSelection(author.Id, author.Author)).ToArray(),
-        Dependencies = resource.ResourceDependencies.Select(dependency => new DependencySelection(dependency.Id, dependency.DependencyResourceId)).ToArray(),
-        ExternalDependencies = resource.ResourceExternalDependencies.Select(dependency => new ExternalDependencySelection(
+        Authors = data.Authors.Select(author => new AuthorSelection(author.Id, author.UserSummary.Id)).ToArray(),
+        ExternalAuthors = data.ExternalAuthors.Select(author => new TagSelection(author.Id, author.Author)).ToArray(),
+        Dependencies = data.Dependencies.Select(dependency => new DependencySelection(dependency.Id, dependency.DependencyResourceId)).ToArray(),
+        ExternalDependencies = data.ExternalDependencies.Select(dependency => new ExternalDependencySelection(
             dependency.Id, dependency.DependencyName, dependency.DependencyURL, dependency.Mirror1, dependency.Mirror2, dependency.Mirror3, dependency.Mirror4)).ToArray(),
-        PreviewIds = resource.ResourcePreviews.Select(preview => preview.Id).ToArray()
+        PreviewIds = data.Previews.Select(preview => preview.Id).ToArray()
     };
 
     internal sealed record TagSelection(long Id, string Name);

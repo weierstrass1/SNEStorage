@@ -40,7 +40,7 @@ public partial class CheckEmail : IAsyncDisposable
 
         if (firstRender && !_disposed)
         {
-            _sessionModule = await JavaScript.InvokeAsync<IJSObjectReference>("import", "./js/check-email.js");
+            _sessionModule = await JavaScript.InvokeAsync<IJSObjectReference>("import", "./js/check-email.js?v=3");
             if (_disposed)
             {
                 await _sessionModule.DisposeAsync();
@@ -48,7 +48,7 @@ public partial class CheckEmail : IAsyncDisposable
             }
 
             _sessionMonitor = await _sessionModule.InvokeAsync<IJSObjectReference>(
-                "watchSession", "api/profile/me", Navigation.BaseUri);
+                "watchSession", Navigation.BaseUri);
             if (_disposed)
             {
                 await StopMonitorAsync();

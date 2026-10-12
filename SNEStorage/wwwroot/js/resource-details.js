@@ -1,14 +1,8 @@
-import { getProfile, cancelProfileRequest } from "./profile.js?v=7";
-export { watchPageAccess } from "./page-access.js?v=1";
-
-// Keep browser credentials on requests to ResourceController, including private resources.
-export function getResource(resourceId, requestKey) {
-    return getProfile(`/api/resource/${encodeURIComponent(resourceId)}`, requestKey);
-}
-
-export function getResourceOptions(requestKey) {
-    return getProfile("/api/resource/options", requestKey);
-}
+import { getProfile, cancelProfileRequest } from "./profile.js?v=10";
+import { cancelResourceReads } from "./resource-read.js?v=2";
+import { captchaFetch } from "./captcha.js?v=3";
+export { getResource, getResourceOptions, getResourceSection } from "./resource-read.js?v=2";
+export { watchPageAccess } from "./page-access.js?v=5";
 
 export function getResourceAccount(requestKey) {
     return getProfile("/api/profile/me", `${requestKey}-account`, false);
@@ -17,24 +11,24 @@ export function getResourceAccount(requestKey) {
 const interactionRequests = new Map();
 
 export function rateResource(resourceId, value, requestKey) {
-    return submitInteraction(`/api/resource/${encodeURIComponent(resourceId)}/Score/Submit/${encodeURIComponent(value)}`, `${requestKey}-score`);
+    return submitInteraction(`/api/resource/${encodeURIComponent(resourceId)}/Score/Submit/${encodeURIComponent(value)}`, `${requestKey}-score`, undefined, "resource_addOrEditScore");
 }
 
 export function postResourceComment(resourceId, commentText, requestKey) {
     const data = new FormData();
     data.set("commentText", commentText);
-    return submitInteraction(`/api/resource/${encodeURIComponent(resourceId)}/Comment/Submit`, `${requestKey}-comment`, data);
+    return submitInteraction(`/api/resource/${encodeURIComponent(resourceId)}/Comment/Submit`, `${requestKey}-comment`, data, "resource_addComment");
 }
 
-async function submitInteraction(url, requestKey, body) {
+async function submitInteraction(url, requestKey, body, captchaAction) {
     interactionRequests.get(requestKey)?.abort();
     const controller = new AbortController();
     interactionRequests.set(requestKey, controller);
     try {
-        const response = await fetch(new URL(url, document.baseURI), {
+        const response = await captchaFetch(new URL(url, document.baseURI), {
             method: "POST", credentials: "same-origin", cache: "no-store", redirect: "error",
             headers: { Accept: "application/json" }, body, signal: controller.signal
-        });
+        }, captchaAction);
         if (response.status === 401) window.dispatchEvent(new Event("snestorage-session-rejected"));
         return JSON.stringify({ status: response.status, body: await response.text(), cancelled: response.status === 499 });
     } catch (error) {
@@ -54,8 +48,12 @@ export function cancelResourceInteractions(requestKey) {
 }
 
 export function cancelResourceRequest(requestKey) {
-    cancelProfileRequest(requestKey);
+    cancelResourceContent(requestKey);
     cancelProfileRequest(`${requestKey}-account`);
+}
+
+export function cancelResourceContent(requestKey) {
+    cancelResourceReads(requestKey);
     cancelResourceInteractions(requestKey);
 }
 

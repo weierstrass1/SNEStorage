@@ -1,0 +1,84 @@
+@page "/About"
+@using SNEStorage.Components.About
+@inherits StaticDocumentPage<AboutDocument>
+
+<PageTitle>@(_document?.Title ?? "About") | SNEStorage</PageTitle>
+
+<div class="about-page">
+    <header class="about-hero">
+        <img class="about-logo" src="images/caja.png" alt="" width="128" height="108" />
+        <div>
+            <p class="about-kicker">@(_document?.Kicker ?? "THE SNES CREATOR ARCHIVE")</p>
+            <h1>@(_document?.Title ?? "About SNEStorage")</h1>
+            @if (_document is { } document)
+            {
+                <p class="about-introduction">@document.Introduction</p>
+            }
+        </div>
+    </header>
+
+    @if (_loading)
+    {
+        <div class="about-status" role="status">Loading about information…</div>
+    }
+    else if (_error is not null)
+    {
+        <div class="about-status" role="alert"><p>@_error</p><button type="button" @onclick="LoadAsync">Try again</button></div>
+    }
+    else if (_document is { } about)
+    {
+        <section class="about-purpose" aria-labelledby="about-purpose-title">
+            <h2 id="about-purpose-title">@about.SectionsTitle</h2>
+            <div class="about-section-grid">
+                @foreach (var section in about.Sections)
+                {
+                    <article class="about-section">
+                        <span class="about-pixel" aria-hidden="true"></span>
+                        <h3>@section.Title</h3>
+                        <p>@section.Text</p>
+                    </article>
+                }
+            </div>
+        </section>
+
+        <section class="creator-panel" aria-labelledby="creator-title">
+            <div class="creator-heading">
+                <span class="creator-symbol" aria-hidden="true">&lt;/&gt;</span>
+                <div>
+                    <p class="about-kicker">@about.CreatorTitle</p>
+                    <h2 id="creator-title">@about.Creator.Name</h2>
+                    <p class="creator-role">@about.Creator.Role</p>
+                </div>
+            </div>
+            <div class="creator-copy">
+                @foreach (var paragraph in about.Creator.Paragraphs)
+                {
+                    <p>@paragraph</p>
+                }
+            </div>
+            @if (about.Creator.Projects.Count > 0)
+            {
+                <ul class="creator-projects" aria-label="Creator projects">
+                    @foreach (var project in about.Creator.Projects)
+                    {
+                        <li>@project</li>
+                    }
+                </ul>
+            }
+            <div class="creator-links">
+                @foreach (var link in about.Creator.Links)
+                {
+                    @if (link.SafeUrl is { } url)
+                    {
+                        <a href="@url" target="_blank" rel="noopener noreferrer">@link.Label <span aria-hidden="true">↗</span></a>
+                    }
+                }
+            </div>
+        </section>
+
+        <nav class="about-actions" aria-label="Explore SNEStorage">
+            <a class="about-primary-action" href="/Resources">@about.ResourcesLinkLabel <span aria-hidden="true">→</span></a>
+            <a href="/Community">@about.CommunityLinkLabel <span aria-hidden="true">→</span></a>
+        </nav>
+    }
+</div>

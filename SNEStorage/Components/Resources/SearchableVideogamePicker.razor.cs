@@ -32,13 +32,18 @@ public partial class SearchableVideogamePicker : IAsyncDisposable
     [Parameter]
     public EventCallback<long?> ValueChanged { get; set; }
 
+    [Parameter] public bool Required { get; set; } = true;
+    [Parameter] public bool AutoSelectAny { get; set; } = true;
+    [Parameter] public string Placeholder { get; set; } = "Choose a game";
+    [Parameter] public EventCallback<SelectOptionDto> SelectionChanged { get; set; }
+
     [Inject]
     private IJSRuntime JavaScript { get; set; } = default!;
 
     [Inject]
     private ILogger<SearchableVideogamePicker> Logger { get; set; } = default!;
 
-    protected string SelectedName => _selected?.Name ?? "Choose a game";
+    protected string SelectedName => _selected?.Name ?? Placeholder;
 
     protected override void OnParametersSet()
     {
@@ -94,6 +99,7 @@ public partial class SearchableVideogamePicker : IAsyncDisposable
     {
         _selected = game;
         await ValueChanged.InvokeAsync(game.Id);
+        await SelectionChanged.InvokeAsync(game);
         if (closePicker && _picker is not null && !_disposed) await _picker.CloseAsync();
     }
 
@@ -147,7 +153,7 @@ public partial class SearchableVideogamePicker : IAsyncDisposable
 
             if (response.Status != 200 || !response.ContentType.Contains("json", StringComparison.OrdinalIgnoreCase))
             {
-                _error = "Games could not be loaded. Please try again.";
+                _error = ApiErrorPresentation.Describe(response.Status, response.Body, "search").Message;
                 return;
             }
 
@@ -157,7 +163,7 @@ public partial class SearchableVideogamePicker : IAsyncDisposable
             {
                 _defaults = choices.Where(game => game.Id is 1 or 2).OrderBy(game => game.Id).ToList();
                 _matches = _defaults;
-                if (Value is null && _defaults.FirstOrDefault(game => game.Id == 1) is { } anyGame)
+                if (AutoSelectAny && Value is null && _defaults.FirstOrDefault(game => game.Id == 1) is { } anyGame)
                 {
                     await SelectAsync(anyGame, closePicker: false);
                 }

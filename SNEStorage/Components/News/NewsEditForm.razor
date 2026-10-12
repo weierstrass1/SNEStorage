@@ -1,0 +1,39 @@
+<section class="news-editor" aria-label="Edit announcement" aria-busy="@_saving">
+    @if (_error is not null)
+    {
+        <div class="news-error" role="alert">
+            <strong>@_error.Title</strong>
+            <p>@_error.Message</p>
+            @if (_validationErrors.Length > 0)
+            {
+                <ul>@foreach (var message in _validationErrors) { <li>@message</li> }</ul>
+            }
+            @if (_error.SignIn)
+            {
+                <NavLink href="/Login?returnUrl=%2FNews">Log in to continue</NavLink>
+            }
+        </div>
+    }
+    <EditForm Model="_form" OnValidSubmit="SaveAsync" FormName="@($"edit-news-{Item.Id}")">
+        <DataAnnotationsValidator />
+        <fieldset disabled="@_saving">
+            <div class="news-field">
+                <label for="@($"edit-news-title-{Item.Id}")">Title</label>
+                <InputText id="@($"edit-news-title-{Item.Id}")" @bind-Value="_form.Title" maxlength="200" required />
+                <ValidationMessage For="@(() => _form.Title)" />
+                <small>Up to 200 characters.</small>
+            </div>
+            <div class="news-field">
+                <label for="@($"edit-news-text-{Item.Id}")">Announcement</label>
+                <InputTextArea id="@($"edit-news-text-{Item.Id}")" @bind-Value="_form.Text" rows="10" required />
+                <ValidationMessage For="@(() => _form.Text)" />
+                <small>Use plain text. Line breaks are preserved.</small>
+            </div>
+            <div class="news-actions">
+                <button class="news-save" type="submit">@(_saving ? "Saving…" : "Save changes")</button>
+                <button class="news-cancel" type="button" @onclick="OnCancel">Cancel</button>
+            </div>
+        </fieldset>
+        @if (_saving) { <p class="news-saving" role="status">Saving your changes…</p> }
+    </EditForm>
+</section>

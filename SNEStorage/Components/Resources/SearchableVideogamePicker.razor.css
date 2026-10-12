@@ -4,7 +4,7 @@
 .game-search:focus-visible, .game-results:focus-visible { outline: 2px solid #b14cff; outline-offset: 2px; }
 .game-search::-webkit-search-cancel-button { filter: grayscale(1) brightness(2); }
 .game-result-count { margin: 0 0 .45rem; color: #b5a8ce; font-size: .8rem; }
-.game-results { margin: .5rem 0; border: 1px solid #59408f; border-radius: 4px; background: #0d091d; }
+.game-results { margin: .5rem 0; border: 1px solid #59408f; border-radius: 4px; background: rgba(13, 9, 29, var(--ui-popup-alpha)); }
 .game-choice { display: flex; width: 100%; height: 44px; align-items: center; justify-content: space-between; gap: .75rem; padding: 0 .85rem; border: 0; border-bottom: 1px solid #2e1d4b; color: #ded5ef; background: transparent; font: inherit; font-size: .92rem; text-align: left; }
 .game-choice > span:first-child { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .game-choice:hover { background: #2b1748; color: #fff; }

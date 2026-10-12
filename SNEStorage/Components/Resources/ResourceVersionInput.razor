@@ -1,0 +1,30 @@
+<div class="version-input" data-version-input role="group" aria-labelledby="@(InputId + "-title")">
+    <div class="version-heading">
+        <span id="@(InputId + "-title")">Version <span class="version-required" aria-hidden="true">*</span></span>
+        <output class="version-preview" aria-label="Complete version" aria-live="polite">@(string.IsNullOrEmpty(CompleteVersion) ? "Enter a version" : CompleteVersion)</output>
+    </div>
+    <div class="version-fields">
+        <div class="version-field version-base-field">
+            <label for="@InputId">Number</label>
+            <input id="@InputId" type="text" inputmode="decimal" value="@_baseVersion" @oninput="BaseChangedAsync" maxlength="14" placeholder="e.g. 1, 1.2 or 1.2.3" required autocomplete="off" spellcheck="false" aria-describedby="@(InputId + "-help")" data-version-base />
+        </div>
+        <div class="version-field">
+            <label for="@(InputId + "-release")">Release</label>
+            <select id="@(InputId + "-release")" value="@_release" @onchange="ReleaseChangedAsync" data-version-release>
+                <option value="">Stable</option>
+                <option value="alpha">Alpha</option>
+                <option value="beta">Beta</option>
+                <option value="rc">Release candidate</option>
+            </select>
+        </div>
+        @if (_release.Length > 0)
+        {
+            <div class="version-field">
+                <label for="@(InputId + "-suffix-number")">Suffix number <span>(optional)</span></label>
+                <input id="@(InputId + "-suffix-number")" type="text" inputmode="numeric" value="@_releaseNumber" @oninput="NumberChangedAsync" maxlength="4" placeholder="e.g. 10" autocomplete="off" aria-describedby="@(InputId + "-help")" data-version-number />
+            </div>
+        }
+    </div>
+    <p id="@(InputId + "-help")" class="version-help">One to three numbers of 1–4 digits, separated by dots. Optional alpha, beta or rc suffix, with or without a number. Maximum 25 characters in total.</p>
+    <input type="hidden" name="Version" value="@CompleteVersion" data-version-value />
+</div>

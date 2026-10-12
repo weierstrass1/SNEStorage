@@ -8,6 +8,8 @@ public partial class ResourceTypePicker
     [Parameter] public IReadOnlyList<ResourceTypeDTO> Options { get; set; } = [];
     [Parameter] public long[] Values { get; set; } = [];
     [Parameter] public EventCallback<long[]> ValuesChanged { get; set; }
+    [Parameter] public bool Required { get; set; } = true;
+    [Parameter] public string Placeholder { get; set; } = "Choose resource types";
 
     private IReadOnlyList<TypeCategory> Categories { get; set; } = [];
     protected override void OnParametersSet() => Categories = Options
@@ -20,7 +22,7 @@ public partial class ResourceTypePicker
     private int SelectedCount(TypeCategory category) => category.Options.Count(option => Values.Contains(option.Id));
 
     protected string SelectedNames => Values.Length == 0
-        ? "Choose resource types"
+        ? Placeholder
         : string.Join(", ", Options.Where(option => Values.Contains(option.Id)).Select(option => option.Name));
 
     protected Task SelectionChangedAsync(long id, ChangeEventArgs args) => ValuesChanged.InvokeAsync(

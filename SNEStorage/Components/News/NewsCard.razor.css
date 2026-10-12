@@ -1,0 +1,20 @@
+.news-card { padding: 1.4rem; border: 1px solid #593777; border-radius: 12px; background: linear-gradient(135deg, rgba(34, 18, 49, var(--ui-surface-alpha)), rgba(21, 13, 35, var(--ui-surface-alpha))); box-shadow: 0 8px 24px #0002; scroll-margin-top: 100px; min-width: 0; }
+.news-meta { display: flex; align-items: center; flex-wrap: wrap; gap: .55rem; margin-bottom: .85rem; font-size: .8rem; }
+.author-avatar { flex: 0 0 32px; border: 1px solid #77509a; border-radius: 8px; object-fit: cover; }
+.author-name { min-width: 0; font-weight: 700; text-decoration: none; overflow-wrap: anywhere; }
+.author-name:hover { text-decoration: underline; }
+time { margin-left: auto; color: #bda5d3; font-size: .75rem; }
+h3 { margin: 0 0 .7rem; color: #f1e5ff; font: 800 1.3rem/1.35 "Exo 2", sans-serif; overflow-wrap: anywhere; }
+.news-text { margin: 0; color: #d3c2e4; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.75; }
+.is-compact { padding: 1rem; }
+.is-compact h3 { font-size: 1.1rem; }
+.is-compact .news-text { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4; overflow: hidden; font-size: .9rem; line-height: 1.65; }
+.read-news { display: inline-flex; gap: .5rem; margin-top: .8rem; color: #d0a4fb; font-size: .8rem; font-weight: 700; text-decoration: none; }
+.read-news:hover { color: #ffe14d; }
+a:focus-visible { outline: 2px solid #ffe14d; outline-offset: 3px; }
+.edit-news { padding: .35rem .65rem; border: 1px solid #a677d6; border-radius: 5px; background: #322047; color: #e5caff; font: inherit; font-weight: 700; cursor: pointer; }
+.edit-news:hover { background: #4a2d68; border-color: #cfa4ff; }
+.edit-news:focus-visible { outline: 2px solid #ffe14d; outline-offset: 3px; }
+.edit-news:disabled { opacity: .55; cursor: default; }
+.news-saved { margin: .8rem 0 0; color: #a6edbd; font-size: .85rem; }
+@media (max-width: 480px) { .news-card { padding: 1rem; } time { margin-left: 0; } }

@@ -1,0 +1,15 @@
+<div class="value-list">
+    @foreach (var item in Visible)
+    {
+        @if (item.Href is not null)
+        {
+            <a href="@item.Href" style="color:@item.Color" @key="item.Key">@item.Name</a>
+        }
+        else { <span @key="item.Key">@item.Name</span> }
+    }
+    @if (Items.Count == 0) { <span class="empty">—</span> }
+    @if (Items.Count > Limit)
+    {
+        <button type="button" aria-expanded="@_expanded" @onclick="Toggle">@(_expanded ? "Show less" : $"Read more (+{Items.Count - Limit})")</button>
+    }
+</div>

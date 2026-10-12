@@ -72,7 +72,7 @@
 .profile-message {
     border: 1px solid rgba(106, 43, 224, .58);
     border-radius: 6px;
-    background: linear-gradient(145deg, rgba(25, 16, 49, .97), rgba(10, 8, 21, .98));
+    background: linear-gradient(145deg, rgba(25, 16, 49, var(--ui-surface-alpha)), rgba(10, 8, 21, var(--ui-surface-alpha)));
     box-shadow: 0 12px 34px rgba(0, 0, 0, .2);
 }
 

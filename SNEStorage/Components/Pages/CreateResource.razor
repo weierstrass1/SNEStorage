@@ -83,13 +83,13 @@
                             <div class="resource-grid resource-general-grid">
                                 <div class="resource-field resource-field-full">
                                     <label for="resource-name">Resource name <span aria-hidden="true">*</span></label>
-                                    <InputText class="resource-input" id="resource-name" name="Name" @bind-Value="_form.Name" placeholder="Give your resource a clear name" minlength="2" maxlength="50" required />
-                                    <p class="resource-help">2–50 characters.</p>
+                                    <InputText class="resource-input" id="resource-name" name="Name" @bind-Value="_form.Name" placeholder="Give your resource a clear name" minlength="2" maxlength="100" required />
+                                    <p class="resource-help">2–100 characters. Letters, numbers and spaces between words.</p>
                                 </div>
                                 <div class="resource-field resource-field-full">
                                     <label for="resource-description">Description <span aria-hidden="true">*</span></label>
-                                    <InputTextArea class="resource-input" id="resource-description" name="Description" @bind-Value="_form.Description" rows="4" placeholder="Describe what the resource does, how to use it, and any requirements." minlength="10" required />
-                                    <p class="resource-help">At least 10 characters. Include installation or usage instructions where needed.</p>
+                                    <InputTextArea class="resource-input" id="resource-description" name="Description" @bind-Value="_form.Description" rows="4" placeholder="Describe what the resource does, how to use it, and any requirements." minlength="10" maxlength="10000" required />
+                                    <p class="resource-help">10–10,000 characters. Include installation or usage instructions where needed.</p>
                                 </div>
                                 <div class="resource-field">
                                     <SearchableVideogamePicker @bind-Value="_form.VideogameId" />
@@ -122,8 +122,8 @@
                                 </div>
                                 <div class="resource-field resource-field-full">
                                     <label for="resource-repository">Repository URL</label>
-                                    <InputText type="url" class="resource-input" id="resource-repository" name="RepositoryURL" @bind-Value="_form.RepositoryURL" maxlength="100" pattern="https?://.+" placeholder="https://github.com/your-account/your-project" />
-                                    <p class="resource-help">Optional link to the source repository. HTTP or HTTPS, up to 100 characters.</p>
+                                    <InputText type="url" class="resource-input" id="resource-repository" name="RepositoryURL" @bind-Value="_form.RepositoryURL" maxlength="2048" placeholder="https://github.com/your-account/your-project" />
+                                    <p class="resource-help">Optional link to the source repository. HTTP or HTTPS, up to 2,048 characters.</p>
                                 </div>
                             </div>
                         </fieldset>
@@ -149,13 +149,12 @@
                             </div>
                             <div class="resource-grid">
                                 <div class="resource-field">
-                                    <label for="resource-version">Version label <span aria-hidden="true">*</span></label>
-                                    <InputText class="resource-input" id="resource-version" name="Version" @bind-Value="_form.Version" maxlength="20" placeholder="e.g. 1.0 or 1.0-beta" required />
-                                    <p class="resource-help">Up to 20 characters.</p>
+                                    <ResourceVersionInput InputId="resource-version" @bind-Value="_form.Version" />
                                 </div>
                                 <div class="resource-field resource-field-full">
                                     <label for="resource-changelog">Release notes <span aria-hidden="true">*</span></label>
-                                    <InputTextArea class="resource-input" id="resource-changelog" name="ChangeLog" @bind-Value="_form.ChangeLog" rows="4" placeholder="Add notes about this first release." required />
+                                    <InputTextArea class="resource-input" id="resource-changelog" name="ChangeLog" @bind-Value="_form.ChangeLog" rows="4" placeholder="Add notes about this first release." minlength="10" maxlength="10000" required />
+                                    <p class="resource-help">10–10,000 characters.</p>
                                 </div>
                             </div>
                             <ResourceQualityRequest @bind-Value="_form.SealOfQualityRequested" />

@@ -2,10 +2,9 @@
 using SNEStorage.Models;
 
 namespace SNEStorage.Services;
-public class DBHelperService(SnestorageContext context, FileService fileService)
+public class DBHelperService(SnestorageContext context)
 {
     private readonly SnestorageContext _context = context;
-    private readonly FileService _fileService = fileService;
     public async Task<OneOf<T1,T2>> TrySyncContext<T1, T2>(T1 res, T2 error, CancellationToken ct = default)
     {
         try
@@ -15,6 +14,7 @@ public class DBHelperService(SnestorageContext context, FileService fileService)
         }
         catch
         {
+            _context.ChangeTracker.Clear();
             return error;
         }
     }
@@ -27,34 +27,7 @@ public class DBHelperService(SnestorageContext context, FileService fileService)
         }
         catch
         {
-            return false;
-        }
-    }
-    public async Task<OneOf<T1,T2>> TrySyncContextWithFiles<T1,T2>(string batchPath, T1 res, T2 error, CancellationToken ct = default)
-    {
-        try
-        {
-            await _context.SaveChangesAsync(ct);
-            _fileService.BatchComplete(batchPath);
-            return res;
-        }
-        catch
-        {
-            await _fileService.BatchRollback(batchPath, ct);
-            return error;
-        }
-    }
-    public async Task<bool> TrySyncContextWithFiles(string batchPath, CancellationToken ct = default)
-    {
-        try
-        {
-            await _context.SaveChangesAsync(ct);
-            _fileService.BatchComplete(batchPath);
-            return true;
-        }
-        catch
-        {
-            await _fileService.BatchRollback(batchPath, ct);
+            _context.ChangeTracker.Clear();
             return false;
         }
     }
@@ -71,18 +44,15 @@ public class DBHelperService(SnestorageContext context, FileService fileService)
             return error;
         }
     }
-    public async Task<bool> TryAction(Action func, Func<Task>? ErrorCallback = null)
+    public T? TryFunction<T>(Func<T> func)
     {
         try
         {
-            func();
-            return true;
+            return func();
         }
         catch
         {
-            if (ErrorCallback != null)
-                await ErrorCallback();
-            return false;
+            return default;
         }
     }
     public async Task<T1?> TryFunction<T1>(Func<CancellationToken, Task<T1>> func, 

@@ -3,7 +3,7 @@
 .resource-editor h1 { margin: 0; color: #f4eaff; font: 900 clamp(1.8rem, 5vw, 2.6rem) "Exo 2", sans-serif; }
 .resource-editor header p { margin: .65rem 0 1.25rem; color: #bba2d0; overflow-wrap: anywhere; }
 .resource-editor ::deep .editor-form { display: grid; gap: 1.3rem; }
-.editor-form fieldset { min-width: 0; margin: 0; padding: 1.3rem; border: 1px solid #694394; border-radius: 6px; background: #190e28; }
+.editor-form fieldset { min-width: 0; margin: 0; padding: 1.3rem; border: 1px solid #694394; border-radius: 6px; background: rgba(25, 14, 40, var(--ui-surface-alpha)); }
 .editor-form legend { float: none; width: auto; padding: 0 .5rem; color: #e6d6fb; font-size: 1rem; font-weight: 700; }
 .editor-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.2rem; }
 .editor-field { display: flex; min-width: 0; flex-direction: column; gap: .5rem; }
@@ -15,8 +15,13 @@
 .editor-flags { display: flex; flex-wrap: wrap; gap: 1rem 1.4rem; }
 .editor-flags label { display: flex; align-items: center; gap: .6rem; color: #d9c5ed; font-size: .85rem; cursor: pointer; }
 .editor-flags ::deep input { accent-color: #b14cff; width: 18px; height: 18px; }
+.editor-self-author { display: flex; align-items: flex-start; gap: .75rem; margin: .9rem 0 1.2rem; padding: .9rem 1rem; border: 1px solid #7952a0; border-radius: 6px; background: #25143a; cursor: pointer; }
+.editor-self-author ::deep input { flex: 0 0 auto; width: 18px; height: 18px; margin-top: .2rem; accent-color: #b14cff; }
+.editor-self-author span { display: grid; gap: .3rem; }
+.editor-self-author strong { color: #f0e4ff; font-size: .9rem; }
+.editor-self-author small { color: #c4abd9; font-size: .8rem; }
 .editor-form footer { display: flex; justify-content: flex-end; align-items: center; flex-wrap: wrap; gap: .8rem; }
-.editor-form ::deep .editor-cancel, .editor-download { display: inline-flex; align-items: center; min-height: 42px; padding: .6rem .9rem; border: 1px solid #8053ab; border-radius: 4px; color: #ddc8f7; background: #28163b; text-decoration: none; font-size: .85rem; }
+.editor-form ::deep .editor-cancel, .editor-download { display: inline-flex; align-items: center; min-height: 42px; padding: .6rem .9rem; border: 1px solid #8053ab; border-radius: 4px; color: #ddc8f7; background: rgba(40, 22, 59, var(--ui-surface-alpha)); text-decoration: none; font-size: .85rem; }
 .editor-step { min-height: 42px; padding: .6rem .9rem; border: 1px solid #8053ab; border-radius: 4px; color: #ddc8f7; background: #28163b; font: inherit; font-size: .85rem; cursor: pointer; }
 .editor-step:disabled { opacity: .4; cursor: not-allowed; }
 .editor-progress { margin-right: auto; color: #ac91c6; font-size: .8rem; }

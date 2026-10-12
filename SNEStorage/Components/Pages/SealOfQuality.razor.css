@@ -1,0 +1,38 @@
+.quality-page { max-width: 1120px; margin: 0 auto 2rem; color: #f4ebd8; }
+.quality-hero { display: flex; align-items: center; gap: 1.7rem; padding: 1.8rem; margin-bottom: 1.5rem; border: 1px solid #b38a45; border-radius: 12px; background: radial-gradient(ellipse at 10% 30%, #66502160, transparent 65%), linear-gradient(115deg, rgba(51, 39, 24, var(--ui-surface-alpha)), rgba(32, 21, 39, var(--ui-surface-alpha))); box-shadow: 0 0 24px #b48a2e16; }
+.quality-hero > div:last-child { min-width: 0; }
+.quality-logo { display: grid; flex: 0 0 auto; place-items: center; padding: .4rem; border: 1px solid #d3a65270; border-radius: 50%; background: radial-gradient(circle, #ffd97830, transparent 70%); box-shadow: 0 0 26px #ffd66820; }
+.quality-logo ::deep .quality-seal { filter: drop-shadow(0 2px 3px #24150480) drop-shadow(0 0 9px #ffd56a75); }
+.quality-kicker { margin: 0 0 .65rem; color: #e9c778; font-family: "Press Start 2P", monospace; font-size: .5rem; line-height: 1.9; letter-spacing: .06em; }
+.quality-hero h1 { margin: 0 0 .65rem; color: #ffe7a2; font-family: "Exo 2", sans-serif; font-size: clamp(2rem, 5vw, 3.3rem); font-weight: 900; letter-spacing: -.035em; text-shadow: 0 2px 14px #e7b44930; }
+.quality-introduction { margin: 0; color: #e3d3b4; font-size: 1rem; line-height: 1.8; }
+.quality-updated { margin: .85rem 0 0; color: #c5b392; font-size: .8rem; }
+.quality-updated time { color: #f1dfb5; }
+.quality-layout { display: grid; grid-template-columns: 230px minmax(0, 1fr); align-items: start; gap: 1.6rem; }
+.quality-contents { position: sticky; top: 1rem; display: grid; gap: .3rem; padding: 1rem; border: 1px solid #7d6236; border-radius: 10px; background: rgba(29, 22, 29, var(--ui-chrome-alpha)); }
+.quality-contents h2 { margin: 0 0 .65rem; color: #ffe39a; font-size: .9rem; font-weight: 700; }
+.quality-contents a { display: flex; align-items: baseline; gap: .5rem; padding: .55rem .65rem; border-radius: 5px; color: #e2d2b2; font-size: .86rem; text-decoration: none; line-height: 1.5; }
+.quality-contents a:hover { color: #fff0c7; background: #35291b; }
+.quality-contents .related-rules { margin-top: .65rem; padding-top: .8rem; border-top: 1px solid #6d542f; border-radius: 0; color: #dec5fb; }
+.quality-contents a:focus-visible, .quality-status button:focus-visible { outline: 2px solid #ffe39a; outline-offset: 3px; }
+.section-letter { color: #ffe39a; font-weight: 700; flex: 0 0 auto; }
+.quality-sections { display: grid; gap: 1.25rem; min-width: 0; }
+.quality-section { overflow: hidden; border: 1px solid #896837; border-radius: 10px; background: linear-gradient(150deg, rgba(30, 25, 18, var(--ui-surface-alpha)), rgba(19, 14, 27, var(--ui-surface-alpha)) 65%); scroll-margin-top: 1.5rem; }
+.quality-section > header { padding: 1.1rem 1.3rem; border-bottom: 1px solid #58452c; background: linear-gradient(100deg, rgba(53, 41, 27, var(--ui-inset-alpha)), rgba(33, 24, 35, var(--ui-inset-alpha))); }
+.quality-section h2 { margin: 0 0 .3rem; color: #ffe39a; font-family: "Exo 2", sans-serif; font-size: 1.3rem; font-weight: 700; }
+.quality-section h2 .section-letter { margin-right: .5rem; }
+.quality-section > header p { margin: 0; color: #d1bfa0; font-size: .86rem; line-height: 1.65; }
+.quality-status { padding: 1.4rem; border: 1px solid #896837; border-radius: 10px; color: #e3d3b4; background: rgba(29, 22, 29, var(--ui-surface-alpha)); }
+.quality-error { border-color: #d47b94; }
+.quality-status button { padding: .6rem 1rem; border: 1px solid #bc9657; border-radius: 5px; color: #fff0c7; background: #41321c; font-weight: 600; }
+@media (max-width: 850px) {
+    .quality-layout { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+    .quality-contents { position: static; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .quality-contents h2, .quality-contents .related-rules { grid-column: 1 / -1; }
+}
+@media (max-width: 575px) {
+    .quality-hero { flex-direction: column; align-items: flex-start; gap: 1rem; padding: 1.2rem; }
+    .quality-logo { align-self: center; }
+    .quality-contents { grid-template-columns: minmax(0, 1fr); }
+    .quality-section > header { padding-inline: .85rem; }
+}

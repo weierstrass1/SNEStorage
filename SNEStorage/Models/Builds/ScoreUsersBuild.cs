@@ -8,6 +8,10 @@ public partial class ScoreUsers
     {
         entity.ToTable("score_users");
 
+        entity
+            .HasIndex(s => new { s.ScoreId, s.UserId })
+            .IsUnique();
+
         entity.HasKey(p => p.Id)
             .HasName("PK_Score_Users");
         entity.Property(e => e.Id)

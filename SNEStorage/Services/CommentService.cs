@@ -151,7 +151,7 @@ public class CommentService(SnestorageContext context,
         like.Value = value == LikeValues.Like;
         return await _dbHelperService.TrySyncContext(like, CommentServiceResult.DBError, ct);
     }
-    public async Task<OneOf<List<Comment>,CommentServiceResult>> GetReplies(long commentId, int maxAmount = 20, int page = 0, CommentSorting sort = CommentSorting.RecentFirst, CancellationToken ct = default)
+    public async Task<OneOf<List<CommentReadDto>,CommentServiceResult>> GetReplies(long commentId, int maxAmount = 20, int page = 0, CommentSorting sort = CommentSorting.RecentFirst, CancellationToken ct = default)
     {
         if (!GetStart(maxAmount, page, sort).TryPickT0(out var query, out var error))
             return error;
@@ -194,7 +194,7 @@ public class CommentService(SnestorageContext context,
             error;
     }
 
-    public async Task<OneOf<List<Comment>,CommentServiceResult>> GetResourceComments(long resourceId, int maxAmount = 20, int page = 0, CommentSorting sort = CommentSorting.RecentFirst, CancellationToken ct = default)
+    public async Task<OneOf<List<CommentReadDto>,CommentServiceResult>> GetResourceComments(long resourceId, int maxAmount = 20, int page = 0, CommentSorting sort = CommentSorting.RecentFirst, CancellationToken ct = default)
     {
         if (!GetStart(maxAmount, page, sort).TryPickT0(out var query, out var error))
             return error;
@@ -251,27 +251,70 @@ public class CommentService(SnestorageContext context,
             return CommentServiceResult.InvalidAmountOfCommentsPerPage;
 
         IQueryable<Comment> query = _context.Comments
-                    .AsNoTracking()
-                    .Include(r => r.Score)
-                        .ThenInclude(r => r!.LikesUsers)
-                    .Include(r => r.Childrens)
-                    .Include(r => r.User)
-                        .ThenInclude(u => u!.UserInfo)
-                        .ThenInclude(info => info!.Avatar);
+                    .AsNoTracking();
         return OneOf<IQueryable<Comment>, CommentServiceResult>.FromT0(query);
     }
-    private async Task<OneOf<List<Comment>, CommentServiceResult>> GetEnd(IQueryable<Comment> query, int maxAmount, int page, CommentSorting sort, CancellationToken ct = default)
+    private async Task<OneOf<List<CommentReadDto>, CommentServiceResult>> GetEnd(
+        IQueryable<Comment> query,
+        int maxAmount,
+        int page,
+        CommentSorting sort,
+        CancellationToken ct = default)
     {
-        var res = await _dbHelperService.TryFunction(
-            async cancel => await SortComments(query, sort)
-            .Skip(maxAmount * page)
-            .Take(maxAmount)
-            .ToListAsync(cancel), ct: ct);
-        if (res == null)
-            return CommentServiceResult.DBError;
-        UserNameDTO.FillUserSummaries((target, summary) => target.UserSummary = summary,
-            () => res.Select(r => (r, r.User!)));
-        return res;
+        string? userId = _accountService.GetUserID();
+        int skip = (int)((long)maxAmount * page);
+
+        // Excluirlos antes de paginar evita páginas con huecos.
+        query = query.Where(c => !c.Deleted || c.Childrens.Any());
+
+        return await _dbHelperService.TryFunction(
+            cancel => SortComments(query, sort)
+                .Skip(skip)
+                .Take(maxAmount)
+                .Select(c => new CommentReadDto
+                {
+                    Id = c.Id,
+                    UserId = c.UserId,
+                    ScoreId = c.ScoreId,
+                    Text = c.Text,
+                    Deleted = c.Deleted,
+                    PublishDate = c.PublishDate,
+                    UpdatedAt = c.UpdatedAt,
+
+                    Likes = c.Score!.LikesUsers.Count(v => v.Value),
+                    Dislikes = c.Score!.LikesUsers.Count(v => !v.Value),
+                    HasReplies = c.Childrens.Any(),
+
+                    MyVote = c.Score!.LikesUsers
+                        .Where(v => userId != null && v.UserId == userId)
+                        .OrderBy(v => v.Id)
+                        .Select(v => (LikeValues?)(v.Value
+                            ? LikeValues.Like
+                            : LikeValues.Dislike))
+                        .FirstOrDefault() ?? LikeValues.Remove,
+
+                    UserSummary = c.User == null ? null : new UserNameDTO
+                    {
+                        Id = c.UserId,
+                        Username = c.User.UserName!,
+                        UsernameColor = c.User.UserInfo == null
+                            ? null
+                            : c.User.UserInfo.UsernameColor,
+
+                        Avatar = c.User.UserInfo != null &&
+                                 c.User.UserInfo.Avatar != null
+                            ? new FileResponse
+                            {
+                                Id = c.User.UserInfo.Avatar.Id,
+                                URL = c.User.UserInfo.Avatar.URL,
+                                FileTypeId = c.User.UserInfo.Avatar.FileTypeId
+                            }
+                            : null
+                    }
+                })
+                .ToListAsync(cancel),
+            CommentServiceResult.DBError,
+            ct: ct);
     }
     public async Task<OneOf<LikeUsers, CommentServiceResult>> GetUserLike(long commentId, CancellationToken ct = default)
     {

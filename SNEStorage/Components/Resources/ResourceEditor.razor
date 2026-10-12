@@ -37,8 +37,8 @@ else if (_resource is { } resource)
                 <fieldset inert="@(_saving ? string.Empty : null)">
                     <legend>General information</legend>
                     <div class="editor-fields">
-                        <div class="editor-field editor-wide"><label for="edit-resource-name">Resource name</label><InputText id="edit-resource-name" name="Name" class="editor-input" @bind-Value="_form.Name" minlength="2" maxlength="50" required /><small>2–50 characters.</small></div>
-                        <div class="editor-field editor-wide"><label for="edit-resource-description">Description</label><InputTextArea id="edit-resource-description" name="Description" class="editor-input" @bind-Value="_form.Description" rows="4" minlength="10" required /><small>At least 10 characters.</small></div>
+                        <div class="editor-field editor-wide"><label for="edit-resource-name">Resource name</label><InputText id="edit-resource-name" name="Name" class="editor-input" @bind-Value="_form.Name" minlength="2" maxlength="100" required /><small>2–100 characters. Letters, numbers and spaces between words.</small></div>
+                        <div class="editor-field editor-wide"><label for="edit-resource-description">Description</label><InputTextArea id="edit-resource-description" name="Description" class="editor-input" @bind-Value="_form.Description" rows="4" minlength="10" maxlength="10000" required /><small>10–10,000 characters.</small></div>
                         <div class="editor-field"><SearchableVideogamePicker InitialSelection="InitialGame" @bind-Value="_form.VideogameId" /></div>
                         @if (_options is { } options)
                         {
@@ -46,7 +46,7 @@ else if (_resource is { } resource)
                             <div class="editor-field"><label for="edit-resource-visibility">Visibility</label><InputSelect id="edit-resource-visibility" name="VisibilityId" class="editor-input" @bind-Value="_form.VisibilityId">@foreach (var visibility in options.Visibilities) { <option value="@visibility.Id">@visibility.Name</option> }</InputSelect></div>
                         }
                         <div class="editor-field"><label for="edit-resource-tags">Tags</label><ResourceTokenInput InputId="edit-resource-tags" @bind-Values="_form.Tags" /></div>
-                        <div class="editor-field editor-wide"><label for="edit-resource-repository">Repository URL</label><InputText id="edit-resource-repository" name="RepositoryURL" type="url" class="editor-input" @bind-Value="_form.RepositoryURL" maxlength="100" pattern="https?://.+" placeholder="https://github.com/your-account/your-project" /><small>Optional HTTP or HTTPS link, up to 100 characters.</small></div>
+                        <div class="editor-field editor-wide"><label for="edit-resource-repository">Repository URL</label><InputText id="edit-resource-repository" name="RepositoryURL" type="url" class="editor-input" @bind-Value="_form.RepositoryURL" maxlength="2048" placeholder="https://github.com/your-account/your-project" /><small>Optional HTTP or HTTPS link, up to 2,048 characters.</small></div>
                     </div>
                 </fieldset>
                 </section>
@@ -64,7 +64,11 @@ else if (_resource is { } resource)
                     <fieldset>
                         <legend>Authorship</legend>
                         <p class="editor-muted">Credit the people who made this resource. Add or remove accounts and external authors below.</p>
-                        <ResourceAuthorPicker InitialNames="_authorNames" @bind-Values="_form.AuthorsIDs" />
+                        <label class="editor-self-author" for="@(FormId + "-self-author")">
+                            <InputCheckbox id="@(FormId + "-self-author")" name="IAmAuthor" @bind-Value="_form.IAmAuthor" />
+                            <span><strong>I am an author</strong><small>Credit your SNEStorage account as an author of this resource.</small></span>
+                        </label>
+                        <ResourceAuthorPicker InitialNames="_authorNames" ExcludedUserId="@(PageAccount?.Profile.UserId)" @bind-Values="_form.AuthorsIDs" />
                         <div class="editor-divider"><ResourceAuthorPicker External="true" @bind-Values="_form.ExternalAuthors" /></div>
                         <p class="editor-muted">Authors and submitters can manage this resource.</p>
                     </fieldset>
@@ -89,8 +93,8 @@ else if (_resource is { } resource)
                 <fieldset inert="@(_saving ? string.Empty : null)">
                     <legend>Release details</legend>
                     <div class="editor-fields">
-                        <div class="editor-field editor-wide"><label for="edit-version-name">Version name</label><InputText id="edit-version-name" name="Version" class="editor-input" @bind-Value="_form.Version" maxlength="20" placeholder="e.g. 1.1.0" required="@(Mode == ResourceEditorMode.CreateVersion)" /></div>
-                        <div class="editor-field editor-wide"><label for="edit-release-notes">Release notes</label><InputTextArea id="edit-release-notes" name="ReleaseNotes" class="editor-input" @bind-Value="_form.ChangeLog" rows="7" placeholder="Describe the changes in this version." required="@(Mode == ResourceEditorMode.CreateVersion)" /></div>
+                        <div class="editor-field editor-wide"><ResourceVersionInput InputId="@(FormId + "-version")" @bind-Value="_form.Version" /></div>
+                        <div class="editor-field editor-wide"><label for="edit-release-notes">Release notes</label><InputTextArea id="edit-release-notes" name="ReleaseNotes" class="editor-input" @bind-Value="_form.ChangeLog" rows="7" maxlength="10000" placeholder="Describe the changes in this version." required="@(Mode == ResourceEditorMode.CreateVersion)" /><small>10–10,000 characters when changed.</small></div>
                         @if (Mode == ResourceEditorMode.CreateVersion)
                         {
                             <div class="editor-field editor-wide">

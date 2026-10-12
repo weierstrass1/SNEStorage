@@ -21,8 +21,8 @@ public partial class ProfileEdit : IAsyncDisposable
     private UserInfo? _profile;
     private ProfileEditForm? _form;
     private ProfileEditForm? _initialForm;
-    private List<SelectOptionDto> _timeZones = [];
-    private List<SelectOptionDto> _emailVisibilities = [];
+    private List<IdNamePair> _timeZones = [];
+    private List<IdNamePair> _emailVisibilities = [];
     private string? _avatarName;
     private string? _avatarPreviewUrl;
     private string? _error;
@@ -97,7 +97,7 @@ public partial class ProfileEdit : IAsyncDisposable
         }
         try
         {
-            _profileModule = await JavaScript.InvokeAsync<IJSObjectReference>("import", _lifetime.Token, "./js/profile.js?v=7");
+            _profileModule = await JavaScript.InvokeAsync<IJSObjectReference>("import", _lifetime.Token, "./js/profile.js?v=10");
         }
         catch (Exception exception) when (exception is JSDisconnectedException or JSException or OperationCanceledException)
         {
@@ -171,6 +171,8 @@ public partial class ProfileEdit : IAsyncDisposable
 
             using var response = JsonDocument.Parse(responseJson);
             var statusCode = response.RootElement.GetProperty("status").GetInt32();
+            var body = response.RootElement.TryGetProperty("body", out var responseBody)
+                && responseBody.ValueKind == JsonValueKind.String ? responseBody.GetString() : null;
 
             if (statusCode is >= 200 and < 300)
             {
@@ -180,14 +182,7 @@ public partial class ProfileEdit : IAsyncDisposable
 
             if (statusCode is 401 or 403) { _isAuthenticated = false; _profile = null; _form = null; }
 
-            _feedback = statusCode switch
-            {
-                400 => "Some profile values were rejected. Check your entries and try again.",
-                401 or 403 => "Your session could not be verified. Please log in again.",
-                415 => "The profile update endpoint must accept multipart form data to save the avatar.",
-                404 or 405 => "The profile update action is not available yet.",
-                _ => "Your changes could not be saved. Please try again later."
-            };
+            _feedback = ApiErrorPresentation.Describe(statusCode, body, "account-upload").Message;
         }
         catch (OperationCanceledException)
         {

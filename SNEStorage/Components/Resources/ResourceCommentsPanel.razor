@@ -12,7 +12,8 @@
         <EditForm id="resource-comment-composer" Model="_draft" OnSubmit="PostAsync" class="comment-composer" aria-busy="@Saving">
             <label for="resource-comment-text">Leave a comment</label>
             <InputTextArea id="resource-comment-text" @bind-Value="_draft.Text" @oninput="DraftChanged" rows="3"
-                           disabled="@Saving" placeholder="Share your feedback about this resource…" />
+                           maxlength="5000" disabled="@Saving" placeholder="Share your feedback about this resource…" />
+            <small>Up to 5,000 characters.</small>
             <div class="composer-actions">
                 <button type="button" @onclick="CancelComment" disabled="@Saving">Cancel</button>
                 <button type="submit" disabled="@(!CanPost || Saving || string.IsNullOrWhiteSpace(_draft.Text))">@(Saving ? "Posting…" : "Post comment")</button>

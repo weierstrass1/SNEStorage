@@ -92,7 +92,7 @@ public partial class ResourceDependencyPicker : IAsyncDisposable
             if (_disposed || revision != _revision) return;
             if (response.Status != 200 || !response.ContentType.Contains("json", StringComparison.OrdinalIgnoreCase))
             {
-                _error = ApiErrorPresentation.Describe(response.Status, response.Body, "resource").Message;
+                _error = ApiErrorPresentation.Describe(response.Status, response.Body, "search").Message;
                 return;
             }
             _matches = (JsonSerializer.Deserialize<List<SelectOptionDto>>(response.Body, JsonOptions) ?? [])

@@ -9,10 +9,13 @@ public partial class ResourceVersion
         entity.ToTable("resource_version");
 
         entity.HasKey(e => e.Id).HasName("PK_resource_version");
-        entity.Property(e => e.Version).HasColumnName("version").HasMaxLength(20);
-        entity.Property(e => e.ChangeLog).HasColumnName("change_log").HasColumnType("nvarchar(max)");
-        entity.Property(e => e.Downloads).HasColumnName("downloads").HasDefaultValue(0);
-        entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("CURRENT_TIMESTAMP");
+        entity.Property(e => e.Version).HasColumnName("version").HasMaxLength(25);
+        entity.Property(e => e.ChangeLog).HasColumnName("change_log")
+            .HasColumnType("nvarchar(max)");
+        entity.Property(e => e.Downloads).HasColumnName("downloads")
+            .HasDefaultValue(0);
+        entity.Property(e => e.CreatedAt).HasColumnName("created_at")
+            .HasDefaultValueSql("CURRENT_TIMESTAMP");
         entity.Property(e => e.UpdatedAt)
             .HasColumnName("updated_at");
         entity.HasOne(e => e.Resource)

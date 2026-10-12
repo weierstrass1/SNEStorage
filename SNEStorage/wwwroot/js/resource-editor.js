@@ -1,7 +1,10 @@
-import { getResource, getResourceOptions, getResourceAccount, cancelResourceRequest } from "./resource-details.js?v=8";
+import { getResource, getResourceOptions, getResourceSection, getResourceAccount, cancelResourceRequest } from "./resource-details.js?v=14";
 import { appendPreviews, previewCount } from "./resource-previews.js?v=2";
+import { captchaFetch } from "./captcha.js?v=3";
+import { validateVersionInputs } from "./resource-version.js?v=2";
+import { validateResourceTextFields } from "./resource-form-validation.js?v=1";
 
-export { getResource, getResourceOptions, getResourceAccount };
+export { getResource, getResourceOptions, getResourceSection, getResourceAccount };
 
 const submissions = new Map();
 const maxArchiveBytes = 250 * 1024 * 1024;
@@ -17,25 +20,15 @@ document.addEventListener("keydown", event => {
     }
 });
 
-function invalidInput(form, mode, previewInputId) {
+function invalidInput(form, mode, previewInputId, original) {
     for (const field of form.elements) {
         if (typeof field.setCustomValidity === "function") field.setCustomValidity("");
     }
-    const limits = mode === "Resource"
-        ? [["Name", 2, 50, "Enter a resource name with 2–50 characters."],
-            ["Description", 10, Infinity, "Enter a description with at least 10 characters."]]
-        : [["Version", mode === "CreateVersion" ? 1 : 0, 20, "Enter a version label with up to 20 characters."],
-            ["ReleaseNotes", mode === "CreateVersion" ? 1 : 0, Infinity, "Add release notes before uploading."]];
-    for (const [name, minimum, maximum, message] of limits) {
-        const field = form.elements.namedItem(name);
-        if (field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement) {
-            const length = field.value.trim().length;
-            field.setCustomValidity(length < minimum || length > maximum ? message : "");
-        }
-    }
+    validateResourceTextFields(form, mode === "EditVersion" ? original?.version?.releaseNotes ?? "" : null);
     for (const field of form.querySelectorAll("input[name^='ExternalDependencies[']")) {
         if (field.required && !field.value.trim()) field.setCustomValidity("Complete this dependency field before saving.");
     }
+    validateVersionInputs(form, mode === "EditVersion" ? original?.version?.label ?? null : null);
     const invalid = Array.from(form.elements).find(field => typeof field.checkValidity === "function" && !field.checkValidity());
     if (invalid) {
         const label = invalid.labels?.[0]?.textContent.trim() || "this field";
@@ -152,7 +145,7 @@ function appendExternalDependencyChanges(data, previous) {
 export async function submitEditor(formId, resourceId, versionId, mode, original, requestKey, previewInputId) {
     const form = document.getElementById(formId);
     if (!(form instanceof HTMLFormElement)) return { status: 0, body: "", cancelled: false, validationMessage: "The form is unavailable. Please reload the page." };
-    const validation = invalidInput(form, mode, previewInputId);
+    const validation = invalidInput(form, mode, previewInputId, original);
     if (validation) return { status: 0, body: "", cancelled: false, ...validation };
 
     const data = new FormData(form);
@@ -167,6 +160,13 @@ export async function submitEditor(formId, resourceId, versionId, mode, original
         method = "PUT";
         data.set("Id", String(resourceId));
         for (const name of contentFlags) data.set(name, form.elements.namedItem(name)?.checked ? "true" : "false");
+        const isAuthor = form.elements.namedItem("IAmAuthor")?.checked === true;
+        const userId = original?.currentUserId;
+        const wasAuthor = (original?.authors ?? []).some(author => author.userId === userId);
+        // Include self in the selection diff so unchecking removes the original join row.
+        if (isAuthor && userId) data.append("AuthorsIDs", userId);
+        if (isAuthor === wasAuthor) data.delete("IAmAuthor");
+        else data.set("IAmAuthor", isAuthor ? "true" : "false");
         if (data.get("RepositoryURL") === (original?.repositoryURL ?? "").trim()) data.delete("RepositoryURL");
         const keptCount = data.getAll("KeptPreviewIDs").length;
         appendSelectionChanges(data, original);
@@ -194,10 +194,12 @@ export async function submitEditor(formId, resourceId, versionId, mode, original
     const controller = new AbortController();
     submissions.set(requestKey, controller);
     try {
-        const response = await fetch(url, {
+        const captchaAction = mode === "Resource" ? "resource_edit"
+            : mode === "CreateVersion" ? "resource_createVersion" : "resource_editVersion";
+        const response = await captchaFetch(url, {
             method, credentials: "same-origin", headers: { Accept: "application/json" },
             body: data, redirect: "error", signal: controller.signal
-        });
+        }, captchaAction, true);
         if (response.status === 401) window.dispatchEvent(new Event("snestorage-session-rejected"));
         return { status: response.status, body: await response.text(), cancelled: response.status === 499, validationMessage: "" };
     } catch (error) {

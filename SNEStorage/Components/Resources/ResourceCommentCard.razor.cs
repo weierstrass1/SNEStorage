@@ -1,7 +1,8 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Components;
-using SNEStorage.Models;
+using SNEStorage.DTOs;
+using SNEStorage.Services;
 
 namespace SNEStorage.Components.Resources;
 
@@ -10,7 +11,7 @@ public partial class ResourceCommentCard
     private readonly CommentDraft _reply = new();
     private readonly CommentDraft _edit = new();
     private long _previousCommentId;
-    private Comment? _previousComment;
+    private CommentReadDto? _previousComment;
     private bool? _hasRepliesOverride;
     private int _previousActionRevision;
     private int _previousReplyRevision;
@@ -18,9 +19,9 @@ public partial class ResourceCommentCard
     private bool _replying;
     private bool _editing;
     private bool _confirmDelete;
-    private Comment? _publishedReply;
+    private CommentReadDto? _publishedReply;
     private static readonly Regex HexColor = new("\\A#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})\\z", RegexOptions.Compiled);
-    [Parameter, EditorRequired] public Comment Comment { get; set; } = default!;
+    [Parameter, EditorRequired] public CommentReadDto Comment { get; set; } = default!;
     [Parameter] public long ResourceId { get; set; }
     [Parameter] public IReadOnlyList<long> Ancestors { get; set; } = [];
     [Parameter] public bool IsAuthenticated { get; set; }
@@ -30,7 +31,7 @@ public partial class ResourceCommentCard
     [Parameter] public string? Message { get; set; }
     [Parameter] public int ActionRevision { get; set; }
     [Parameter] public int ReplyRevision { get; set; }
-    [Parameter] public Comment? PublishedReply { get; set; }
+    [Parameter] public CommentReadDto? PublishedReply { get; set; }
     [Parameter] public bool JustPosted { get; set; }
     [Parameter] public EventCallback<CommentActionRequest> OnAction { get; set; }
     [Parameter] public EventCallback<CommentVoteRequest> OnVote { get; set; }
@@ -40,12 +41,12 @@ public partial class ResourceCommentCard
     protected bool CanReply => IsAuthenticated && !Comment.Deleted && OnAction.HasDelegate;
     protected bool CanVote => IsAuthenticated && !string.IsNullOrEmpty(CurrentUserId) &&
         Comment.UserId != CurrentUserId && !Comment.Deleted && OnVote.HasDelegate;
-    protected bool HasReplies => _hasRepliesOverride ?? Comment.Childrens.Count > 0;
-    protected int Likes => Comment.Score?.LikesUsers.Count(vote => vote.Value) ?? 0;
-    protected int Dislikes => Comment.Score?.LikesUsers.Count(vote => !vote.Value) ?? 0;
+    protected bool HasReplies => _hasRepliesOverride ?? Comment.HasReplies;
+    protected int Likes => Comment.Likes;
+    protected int Dislikes => Comment.Dislikes;
     protected string Approval => (100d * Likes / (Likes + Dislikes)).ToString("0.#", CultureInfo.GetCultureInfo("en-US"));
     protected bool? MyVote => IsAuthenticated && !string.IsNullOrEmpty(CurrentUserId)
-        ? Comment.Score?.LikesUsers.FirstOrDefault(vote => vote.UserId == CurrentUserId)?.Value : null;
+        ? Comment.MyVote switch { LikeValues.Like => true, LikeValues.Dislike => false, _ => null } : null;
     protected string Username => string.IsNullOrWhiteSpace(Comment.UserSummary?.Username) ? "Community member" : Comment.UserSummary.Username;
     protected string UsernameColor => Comment.UserSummary?.UsernameColor is { } color && HexColor.IsMatch(color) ? color : "#e6d2fb";
     protected string? ProfileUrl => string.IsNullOrWhiteSpace(Comment.UserSummary?.Username) ? null : $"/Profile/{Uri.EscapeDataString(Comment.UserSummary.Username)}";
