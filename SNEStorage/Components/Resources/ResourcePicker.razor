@@ -3,7 +3,7 @@
     <div id="@PickerId" class="picker" data-resource-picker data-open="@(_isOpen ? "true" : "false")" data-hover="@(_openedByHover ? "true" : "false")" @onkeydown="KeyDownAsync">
         <button type="button" class="picker-trigger" data-picker-trigger @onclick="Toggle" @onmouseenter="OpenFromHover" aria-expanded="@(_isOpen ? "true" : "false")" aria-controls="@(PickerId + "-options")" aria-labelledby="@(PickerId + "-label " + PickerId + "-value")">
             <span id="@(PickerId + "-value")" class="picker-value">@SummaryContent</span>
-            <span class="picker-arrow" aria-hidden="true">⌄</span>
+            <svg class="picker-arrow" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m4 6 4 4 4-4" /></svg>
         </button>
         <div id="@(PickerId + "-options")" class="picker-options" hidden="@(!_isOpen)">@ChildContent</div>
     </div>

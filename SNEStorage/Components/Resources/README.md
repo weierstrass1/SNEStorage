@@ -165,9 +165,11 @@ Version history loads when its tab opens. Comments, replies and votes use their
 existing controller actions. The previous Used by block had no populated response
 or dedicated endpoint; it is not rendered with this DTO.
 
-Community credits display UserSummary.Username and link to the agreed public profile route
-`/Profile/{username}` with URL-encoded usernames. That public profile page is still
-pending implementation. External credits remain plain author strings without a
+Community credits display UserSummary.Username and link to `/Profile/{userId}`
+using UserSummary.Id. PublicProfile reads `/api/profile/{userId}`; the backend
+replaces Birthday before returning public data and respects email visibility.
+The private `/Profile/me` page reads the verified account and displays its birthday.
+Both pages share UserProfileView. External credits remain plain author strings without a
 SNEStorage profile link. Load ResourcesAuthors -> User -> UserInfo in the backend
 to populate those summaries; ApplicationUser is ignored when serializing the response.
 ResourceExternalAuthors.Author is a scalar string and requires no ThenInclude.
@@ -274,7 +276,7 @@ multipart requests to the ResourceController actions listed below.
   an Overview tab with game, types, tags, description, content warnings, dependencies,
   latest-version download and compact previews. Comments remain below those sections.
 - Community author names use UserSummary.UsernameColor (validated hex, matching
-  the existing profile presentation) and keep the /Profile/{username} links.
+  the existing profile presentation) and link to /Profile/{userId} using the summary ID.
 - ResourceRating displays five empty stars, 0 / 5 and Not rated when no votes exist.
   Rated resources show their average and vote count from Score.ScoresUsers. Logged-in
   users can preview a 1–5 selection; Save rating is disabled until a rating contract

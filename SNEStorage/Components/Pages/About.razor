@@ -42,14 +42,30 @@
         </section>
 
         <section class="creator-panel" aria-labelledby="creator-title">
-            <div class="creator-heading">
-                <span class="creator-symbol" aria-hidden="true">&lt;/&gt;</span>
-                <div>
-                    <p class="about-kicker">@about.CreatorTitle</p>
-                    <h2 id="creator-title">@about.Creator.Name</h2>
-                    <p class="creator-role">@about.Creator.Role</p>
-                </div>
-            </div>
+            <PublicProfileLoader UserId="@about.Creator.UserId">
+                <ChildContent Context="profile">
+                    <div class="creator-heading" style="--creator-color: @CreatorColor(profile)">
+                        <a class="creator-avatar" href="@CreatorProfileUrl" aria-label="View @about.Creator.Name's profile">
+                            <img src="@CreatorAvatar(profile)" alt="@($"{about.Creator.Name}'s avatar")" width="78" height="78" />
+                        </a>
+                        <div>
+                            <p class="about-kicker">@about.CreatorTitle</p>
+                            <h2 id="creator-title"><a class="creator-name" href="@CreatorProfileUrl">@(profile.UserSummary?.Username ?? about.Creator.Name)</a></h2>
+                            <p class="creator-role">@about.Creator.Role</p>
+                        </div>
+                    </div>
+                </ChildContent>
+                <FallbackContent>
+                    <div class="creator-heading">
+                        <span class="creator-avatar-placeholder" aria-hidden="true"></span>
+                        <div>
+                            <p class="about-kicker">@about.CreatorTitle</p>
+                            <h2 id="creator-title"><a class="creator-name" href="@CreatorProfileUrl">@about.Creator.Name</a></h2>
+                            <p class="creator-role">@about.Creator.Role</p>
+                        </div>
+                    </div>
+                </FallbackContent>
+            </PublicProfileLoader>
             <div class="creator-copy">
                 @foreach (var paragraph in about.Creator.Paragraphs)
                 {

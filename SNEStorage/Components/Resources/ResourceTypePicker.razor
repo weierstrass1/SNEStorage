@@ -11,7 +11,7 @@
                 <details class="type-category" @key="category.Id">
                     <summary>
                         <strong class="type-category-title">@category.Name</strong>
-                        <small class="type-category-count">@SelectedCount(category)/@category.Options.Count selected</small>
+                        <small class="type-category-count">@SelectedCount(category) selected</small>
                     </summary>
                     <div class="type-category-options" role="group" aria-label="@category.Name">
                         @foreach (var type in category.Options)

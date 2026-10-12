@@ -75,7 +75,7 @@ public partial class ResourceDetails : IAsyncDisposable
     protected static string? AuthorProfileUrl(ResourceAuthorDTO author) =>
         string.IsNullOrWhiteSpace(author.UserSummary.Username)
             ? null
-            : $"/Profile/{Uri.EscapeDataString(author.UserSummary.Username)}";
+            : $"/Profile/{Uri.EscapeDataString(author.UserSummary.Id)}";
     protected static string AuthorColor(ResourceAuthorDTO author) => UsernameColor(author.UserSummary.UsernameColor);
     private static string UsernameColor(string? color) =>
         color is not null && HexColorPattern.IsMatch(color) ? color : "#e6d2fb";

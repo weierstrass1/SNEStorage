@@ -37,14 +37,15 @@ public sealed class ResourceListFilterState
         return null;
     }
 
-    public IEnumerable<string> Summary(IReadOnlyList<ResourceTypeDTO> types)
+    public IEnumerable<string> Summary(IReadOnlyList<ResourceTypeDTO> types, IReadOnlyList<IdNamePair> categories)
     {
         if (!string.IsNullOrWhiteSpace(Finder.NameLike)) yield return $"Name: {Finder.NameLike.Trim()}";
         if (!string.IsNullOrWhiteSpace(AuthorLike)) yield return $"Author: {AuthorLike}";
         if (!string.IsNullOrWhiteSpace(Finder.TagLike)) yield return $"Tag: {Finder.TagLike.Trim()}";
         if (GameId is not null) yield return $"Game: {Game?.Name ?? "Selected game"}";
         foreach (var name in types.Where(t => Finder.TypeIds.Contains(t.Id)).Select(t => t.Name)) yield return $"Type: {name}";
-        foreach (var name in types.Where(t => Finder.CategoryIDs.Contains(t.CategoryId)).Select(t => t.CategoryName).Distinct()) yield return $"Category: {name}";
+        foreach (var categoryId in Finder.CategoryIDs)
+            yield return $"Category: {categories.FirstOrDefault(c => c.Id == categoryId)?.Name ?? "Selected category"}";
         if (Finder.CreatedAtFrom is { } from) yield return $"Created from {Date(from)}";
         if (Finder.CreatedAtTo is { } to) yield return $"Created through {Date(to)}";
         if (Finder.VersionCreatedAtFrom is { } releaseFrom) yield return $"Release from {Date(releaseFrom)}";

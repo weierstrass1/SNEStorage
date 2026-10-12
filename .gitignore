@@ -116,3 +116,38 @@ src/.vs/config/applicationhost.config
 
 # JetBrains Rider's auto generated files
 .idea/
+
+# Temporary build, review, and publish output
+/tmp/
+[Aa]rtifacts/
+[Pp]ublish/
+*.binlog
+
+# Local deployment profiles and credentials
+*.pubxml
+*.publishsettings
+*.pfx
+*.p12
+
+# Local configuration and secrets (keep shared appsettings.json files)
+.env
+.env.*
+!.env.example
+!.env.sample
+appsettings.Local.json
+appsettings.*.Local.json
+appsettings.Production.json
+secrets.json
+
+# Runtime uploads and file batch manifests
+/SNEStorage/Storage/
+/SNEStorage/App_Data/files/
+/SNEStorage/wwwroot/Content/Avatars/
+/SNEStorage/wwwroot/resources/
+
+# Persisted authentication keys and local database files
+[Dd]ataProtectionKeys/
+*.mdf
+*.ldf
+*.ndf
+*.bak

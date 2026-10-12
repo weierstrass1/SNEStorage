@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>SNEStorage</title>
+  <path d="M4 12 38 5 60 12v42l-25 7L4 52Z" fill="#100a1b" stroke="#100a1b" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M4 12 35 18v43L4 52Z" fill="#c5722b"/>
+  <path d="m35 18 25-6v42l-25 7Z" fill="#e2a56b"/>
+  <path d="m4 12 34-7 26 7-29 6Z" fill="#efa766"/>
+  <path d="m43 8 7 2-11 7-7-1Z" fill="#ddd9d1"/>
+  <path d="m39 17 7-2v32l-7 2Z" fill="#c9c5bd"/>
+  <path d="M4 12 35 18v43M35 18l25-6" fill="none" stroke="#38221a" stroke-width="2" stroke-linejoin="round"/>
+  <ellipse cx="14" cy="29" rx="5" ry="7" fill="#00aeef" transform="rotate(-18 14 29)"/>
+  <ellipse cx="26" cy="35" rx="5" ry="7" fill="#f00028" transform="rotate(-12 26 35)"/>
+  <ellipse cx="11" cy="42" rx="6" ry="4" fill="#71bd21" transform="rotate(-12 11 42)"/>
+  <ellipse cx="23" cy="48" rx="7" ry="4" fill="#ffe200" transform="rotate(-15 23 48)"/>
+</svg>

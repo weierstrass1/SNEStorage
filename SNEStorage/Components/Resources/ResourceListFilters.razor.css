@@ -20,6 +20,7 @@
 .date-inputs ::deep input { min-height: 36px; font-size: .75rem; }
 .category-choice { display: flex; align-items: center; gap: .65rem; cursor: pointer; padding: .65rem; border-radius: 7px; }
 .category-choice:hover { background: #302044; }
+.category-choice span { min-width: 0; white-space: normal; overflow-wrap: break-word; }
 input[type=checkbox] { accent-color: #b883ff; width: 17px; height: 17px; flex: none; }
 .clear-choice { font-size: .75rem; margin-top: .4rem; }
 .content-settings small { font-size: .7rem; font-weight: 400; color: #a899bf; margin-left: .5rem; }

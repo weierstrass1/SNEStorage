@@ -176,7 +176,7 @@ public partial class ProfileEdit : IAsyncDisposable
 
             if (statusCode is >= 200 and < 300)
             {
-                Navigation.NavigateTo("/Profile", forceLoad: true);
+                Navigation.NavigateTo("/Profile/me", forceLoad: true);
                 return;
             }
 

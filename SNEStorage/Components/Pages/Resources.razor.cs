@@ -15,12 +15,13 @@ public partial class Resources : IAsyncDisposable
     private ElementReference _sentinel;
     private List<ResourceFinderViewDTO> _resources = [];
     private IReadOnlyList<ResourceTypeDTO> _types = [];
+    private IReadOnlyList<IdNamePair> _categories = [];
     private ResourceListFilterState _draft = new(), _applied = new();
     private ResourceSorting _sort = ResourceSorting.CreatedAt;
     private bool _descending = true;
     private int _pageSize = 20, _page, _blocks, _revision, _errorStatus;
     private int? _lastPage;
-    private bool _loading = true, _loadingMore, _endReached, _filtersOpen, _optionsLoading, _optionsLoaded, _syncObserver, _disposed, _scrollPending;
+    private bool _loading = true, _loadingMore, _endReached, _filtersOpen, _optionsLoading, _syncObserver, _disposed, _scrollPending;
     private string? _error, _errorBody, _filterError, _optionsError, _announcement;
     [Inject] private IJSRuntime JavaScript { get; set; } = default!;
     [Inject] private ILogger<Resources> Logger { get; set; } = default!;
@@ -30,7 +31,7 @@ public partial class Resources : IAsyncDisposable
     private bool ShowGame => _applied.Finder.VideogameIDs.Length != 1;
     private bool ShowTypes => _applied.Finder.TypeIds.Length != 1;
     private bool ShowCategories => _applied.Finder.CategoryIDs.Length != 1;
-    private bool HasActiveFilters => _applied.Summary(_types).Any() || _applied.Finder.CanIncludesPorn ||
+    private bool HasActiveFilters => _applied.Summary(_types, _categories).Any() || _applied.Finder.CanIncludesPorn ||
         _applied.Finder.CanIncludesGore || _applied.Finder.CanIncludesPolitics || _applied.Finder.CanIncludesSlurs || _applied.Finder.CanIncludesSensitiveContent;
     private bool CanLoadMore => !_loading && !_loadingMore && !_endReached && (_pageSize == 0 || _blocks < BlocksPerPage);
     private bool CanNextPage => !_loadingMore && _error is null && _blocks == BlocksPerPage && !_endReached && (_lastPage is null || _page < _lastPage);
@@ -188,7 +189,7 @@ public partial class Resources : IAsyncDisposable
     private async Task ToggleFiltersAsync()
     {
         _filtersOpen = !_filtersOpen;
-        if (_filtersOpen && !_optionsLoaded) await LoadOptionsAsync();
+        if (_filtersOpen) await LoadOptionsAsync();
     }
     private async Task LoadOptionsAsync()
     {
@@ -199,7 +200,11 @@ public partial class Resources : IAsyncDisposable
         {
             var result = await _api.OptionsAsync();
             if (_disposed) return;
-            if (result.Success) { _types = result.Data!.ResourceTypes; _optionsLoaded = true; }
+            if (result.Success)
+            {
+                _types = result.Data!.ResourceTypes;
+                _categories = result.Data.Categories;
+            }
             else _optionsError = "Filter choices could not be loaded.";
         }
         catch (JSDisconnectedException) { }

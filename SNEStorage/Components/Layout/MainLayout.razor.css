@@ -125,7 +125,7 @@
 
 .footer-main {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
     gap: 2rem;
     padding-bottom: 1.5rem;
@@ -162,29 +162,28 @@
     display: flex;
     justify-content: flex-end;
     flex-wrap: wrap;
-    gap: .65rem;
+    align-items: center;
+    gap: .5rem 1.25rem;
 }
 
 .footer-links ::deep a {
     display: inline-flex;
     align-items: center;
-    gap: .35rem;
-    padding: .45rem .55rem;
-    border: 1px solid rgba(106, 43, 224, .65);
+    padding: .35rem 0;
     color: #d2c6f3;
-    background: rgba(20, 10, 52, .55);
-    font-family: "Press Start 2P", "Courier New", monospace;
-    font-size: .4rem;
+    font-family: "Exo 2", "Segoe UI", sans-serif;
+    font-size: .85rem;
+    font-weight: 600;
     line-height: 1.7;
     text-decoration: none;
-    transition: border-color .15s ease, color .15s ease, box-shadow .15s ease;
+    white-space: nowrap;
+    transition: color .15s ease;
 }
 
 .footer-links ::deep a:hover {
-    border-color: #b14cff;
     color: #ffe14d;
-    box-shadow: 0 0 12px rgba(177, 76, 255, .32);
-    text-decoration: none;
+    text-decoration: underline;
+    text-underline-offset: .25em;
 }
 
 .footer-links ::deep a:focus-visible { outline: 2px solid #ffe14d; outline-offset: 3px; }

@@ -1326,6 +1326,18 @@ namespace SNEStorage.Migrations
                         .HasColumnType("nvarchar(100)")
                         .HasColumnName("discord");
 
+                    b.Property<DateTime?>("DiscordLinkedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("discord_linked_at");
+
+                    b.Property<string>("DiscordUserId")
+                        .HasColumnType("varchar(20)")
+                        .HasColumnName("discord_user_id");
+
+                    b.Property<string>("DiscordUsername")
+                        .HasColumnType("nvarchar(32)")
+                        .HasColumnName("discord_username");
+
                     b.Property<long>("EmailVisibilityId")
                         .HasColumnType("bigint")
                         .HasColumnName("email_visibility_id");
@@ -1392,6 +1404,10 @@ namespace SNEStorage.Migrations
 
                     b.HasIndex("AvatarId")
                         .IsUnique();
+
+                    b.HasIndex("DiscordUserId")
+                        .IsUnique()
+                        .HasFilter("[discord_user_id] IS NOT NULL");
 
                     b.HasIndex("EmailVisibilityId");
 

@@ -3,7 +3,7 @@
   "kicker": "REVIEWED BY SNESTORAGE STAFF",
   "introduction": "The Seal of Quality certifies that a specific version of a resource has been reviewed by SNEStorage staff and meets SNEStorage's minimum quality standards. The seal applies to that reviewed version; it does not automatically apply to other versions.",
   "updatedLabel": "Last revised:",
-  "updatedOn": "2026-10-09",
+  "updatedOn": "2026-10-12",
   "navigationTitle": "On this page",
   "relatedLinkLabel": "Read all site rules",
   "sections": [
@@ -53,13 +53,8 @@
       "rules": [
         {
           "id": "quality-protected-resource",
-          "title": "Do not delete a resource with a sealed version",
-          "text": "A resource with at least one version awarded the Seal of Quality cannot be deleted through normal resource management. Exceptional deletion must be discussed with SNEStorage staff as described below."
-        },
-        {
-          "id": "quality-protected-versions",
-          "title": "Do not delete sealed versions",
-          "text": "Versions awarded the Seal of Quality cannot be deleted."
+          "title": "Do not delete sealed resources or versions",
+          "text": "A resource with at least one version awarded the Seal of Quality, and any version awarded the seal, cannot be deleted through normal resource management. Exceptional deletion must be discussed with SNEStorage staff as described below."
         },
         {
           "id": "quality-edit-permission",

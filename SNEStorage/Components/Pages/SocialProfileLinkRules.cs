@@ -7,7 +7,7 @@ internal static class SocialProfileLinkRules
     private static readonly Regex GenericHandle = new("\\A[A-Za-z0-9][A-Za-z0-9._-]{0,63}\\z", RegexOptions.Compiled);
     private static readonly Regex PatreonHandle = new("\\A[A-Za-z0-9][A-Za-z0-9_-]{0,63}\\z", RegexOptions.Compiled);
     private static readonly Regex PaypalHandle = new("\\A[A-Za-z0-9][A-Za-z0-9_-]{0,19}\\z", RegexOptions.Compiled);
-    private static readonly Regex DiscordInviteCode = new("\\A[A-Za-z0-9_-]{2,32}\\z", RegexOptions.Compiled);
+    private static readonly Regex DiscordUsername = new("\\A(?!.*\\.\\.)[a-z0-9._]{2,32}\\z", RegexOptions.Compiled);
     private static readonly Regex NumericId = new("\\A[0-9]{17,20}\\z", RegexOptions.Compiled);
     private static readonly Regex TwitterHandle = new("\\A[A-Za-z0-9_]{1,15}\\z", RegexOptions.Compiled);
     private static readonly Regex FacebookHandle = new("\\A[A-Za-z0-9.]{5,50}\\z", RegexOptions.Compiled);
@@ -41,6 +41,18 @@ internal static class SocialProfileLinkRules
             }
 
             normalized = input;
+            return true;
+        }
+
+        if (platform == "Discord" && !input.Contains('/') && !input.Contains(':'))
+        {
+            var username = input.TrimStart('@').ToLowerInvariant();
+            if (!DiscordUsername.IsMatch(username))
+            {
+                error = "Enter your Discord username: 2–32 letters, numbers, underscores, or periods, without consecutive periods.";
+                return false;
+            }
+            normalized = username;
             return true;
         }
 
@@ -96,11 +108,13 @@ internal static class SocialProfileLinkRules
             return input;
         }
 
-        if (!TryNormalize(platform, input, out var normalized, out _) ||
-            !Uri.TryCreate(normalized, UriKind.Absolute, out var uri))
+        if (!TryNormalize(platform, input, out var normalized, out _))
         {
-            return "Link format needs updating";
+            return platform == "Discord" ? "Discord username needs updating" : "Link format needs updating";
         }
+        if (platform == "Discord" && !normalized.StartsWith("https://", StringComparison.Ordinal))
+            return $"@{normalized}";
+        if (!Uri.TryCreate(normalized, UriKind.Absolute, out var uri)) return "Link format needs updating";
 
         var segments = GetPathSegments(uri);
         return platform switch
@@ -108,8 +122,7 @@ internal static class SocialProfileLinkRules
             "Patreon" when segments.Length == 1 && EqualsIgnoreCase(segments[0], "user") => "Patreon profile",
             "Patreon" => segments[^1],
             "PayPal" => $"paypal.me/{segments[^1]}",
-            "Discord" when segments.Length > 0 && EqualsIgnoreCase(segments[0], "users") => "Discord profile",
-            "Discord" => "Join my Discord server",
+            "Discord" => "Discord user profile",
             "YouTube" when segments.Length > 0 && segments[0].StartsWith('@') => segments[0],
             "YouTube" => "YouTube channel",
             "Facebook" when segments.Length > 0 && (EqualsIgnoreCase(segments[0], "profile.php") || EqualsIgnoreCase(segments[0], "people")) => "Facebook profile",
@@ -145,7 +158,6 @@ internal static class SocialProfileLinkRules
             "Patreon" => $"https://www.patreon.com/{handle}",
             "PayPal" => $"https://www.paypal.me/{handle}",
             "Buy Me a Coffee" => $"https://www.buymeacoffee.com/{handle}",
-            "Discord" => $"https://discord.gg/{handle}",
             "Twitter / X" => $"https://x.com/{handle}",
             "Facebook" => $"https://www.facebook.com/{handle}",
             "YouTube" => $"https://www.youtube.com/@{handle}",
@@ -197,10 +209,8 @@ internal static class SocialProfileLinkRules
             "PayPal" => host == "paypal.me" && HasOneHandle(segments, PaypalHandle) ||
                         host == "paypal.com" && segments.Length == 2 && EqualsIgnoreCase(segments[0], "paypalme") && Matches(PaypalHandle, segments[1]),
             "Buy Me a Coffee" => host == "buymeacoffee.com" && HasOneHandle(segments, GenericHandle),
-            "Discord" => host == "discord.gg" && segments.Length == 1 && DiscordInviteCode.IsMatch(segments[0]) ||
-                         (host is "discord.com" or "discordapp.com") && segments.Length == 2 &&
-                         (EqualsIgnoreCase(segments[0], "invite") && DiscordInviteCode.IsMatch(segments[1]) ||
-                          EqualsIgnoreCase(segments[0], "users") && NumericId.IsMatch(segments[1])),
+            "Discord" => (host is "discord.com" or "discordapp.com") && segments.Length == 2 &&
+                         EqualsIgnoreCase(segments[0], "users") && NumericId.IsMatch(segments[1]),
             "Twitter / X" => (host is "x.com" or "twitter.com") && HasOneHandle(segments, TwitterHandle),
             "Facebook" => (host is "facebook.com" or "fb.com" or "m.facebook.com" or "web.facebook.com") &&
                            (segments.Length == 1 && (EqualsIgnoreCase(segments[0], "profile.php")
@@ -276,7 +286,6 @@ internal static class SocialProfileLinkRules
         "Patreon" => PatreonHandle.IsMatch(value),
         "PayPal" => PaypalHandle.IsMatch(value),
         "Buy Me a Coffee" => Matches(GenericHandle, value),
-        "Discord" => DiscordInviteCode.IsMatch(value),
         "Twitter / X" => TwitterHandle.IsMatch(value),
         "Facebook" => FacebookHandle.IsMatch(value),
         "YouTube" => Matches(YoutubeHandle, value),
@@ -324,7 +333,7 @@ internal static class SocialProfileLinkRules
         "Patreon" => "Enter a Patreon username, patreon.com/c/username, or patreon.com/user?u=ID profile link.",
         "PayPal" => "Enter a PayPal.Me username or a paypal.me profile link.",
         "Buy Me a Coffee" => "Enter a Buy Me a Coffee username or profile link.",
-        "Discord" => "Enter a valid Discord invite or discord.com/users profile link.",
+        "Discord" => "Enter your Discord username or a discord.com/users/ID profile link. Server invites are not accepted.",
         "Twitter / X" => "Enter a valid X or Twitter username (up to 15 letters, numbers, or underscores) or profile link.",
         "Facebook" => "Enter a Facebook username or a facebook.com/profile.php?id=... link.",
         "YouTube" => "Enter a valid YouTube handle or channel link.",

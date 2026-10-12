@@ -29,6 +29,25 @@ public class ProfileController(AccountService accountService) : ControllerBase
             _ => BadRequest(),
         };
     }
+    [AllowAnonymous]
+    [HttpGet("{userId}")]
+    [ProducesResponseType<UserInfo>(StatusCodes.Status200OK)]
+    public async Task<ActionResult<UserInfo?>> GetProfile([FromRoute] string userId, CancellationToken ct)
+    {
+        var result = await _accountService.GetUserInfo(userId, ct);
+        if (result.IsT0)
+        {
+            UserInfo ui = result.AsT0;
+            ui.Birthday = DateOnly.MinValue;
+            return Ok(result.AsT0);
+        }
+        return result.AsT1 switch
+        {
+            AccountServiceResult.UserNotFound => NotFound(),
+            AccountServiceResult.CancelledToken => StatusCode(StatusCodes.Status499ClientClosedRequest),
+            _ => BadRequest(),
+        };
+    }
     [EnableRateLimiting("uploads")]
     [HttpPut("me/edit")]
     [Consumes("multipart/form-data")]

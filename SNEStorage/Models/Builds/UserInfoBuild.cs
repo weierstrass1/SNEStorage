@@ -106,5 +106,21 @@ public partial class UserInfo
             .HasForeignKey<UserInfo>(d => d.UserId)
             .OnDelete(DeleteBehavior.Cascade)
             .HasConstraintName("FK_user_info_user");
+
+        entity.Property(e => e.DiscordUserId)
+            .HasColumnType("varchar(20)")
+            .HasColumnName("discord_user_id");
+
+        entity.HasIndex(e => e.DiscordUserId)
+            .IsUnique()
+            .HasFilter("[discord_user_id] IS NOT NULL");
+
+        entity.Property(e => e.DiscordUsername)
+            .HasColumnType("nvarchar(32)")
+            .HasColumnName("discord_username");
+
+        entity.Property(e => e.DiscordLinkedAt)
+            .HasColumnType("datetime2")
+            .HasColumnName("discord_linked_at");
     }
 }

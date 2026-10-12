@@ -64,6 +64,9 @@ public class ResourceController(SnestorageContext context,
         var visibilities = await _cacheService.GetAllVisibilities(ct);
         if (visibilities == null)
             return StatusCode(StatusCodes.Status503ServiceUnavailable);
+        var categories = await _cacheService.GetAllCategories(ct);
+        if(categories == null)
+            return StatusCode(StatusCodes.Status503ServiceUnavailable);
 
         var options = new ResourceCreateOptionsDto
         {
@@ -77,6 +80,13 @@ public class ResourceController(SnestorageContext context,
                     CategoryName = r.Value.Category!.Name
                 })],
             Visibilities = [..visibilities
+                .OrderBy(v => v.Value.Id)
+                .Select(v => new IdNamePair
+                {
+                    Id = v.Value.Id,
+                    Name = v.Value.Name!
+                })],
+            Categories = [..categories
                 .OrderBy(v => v.Value.Id)
                 .Select(v => new IdNamePair
                 {

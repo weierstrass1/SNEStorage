@@ -27,6 +27,9 @@ public partial class UserInfo
     public long EmailVisibilityId { get; set; }
     public long TimeZoneId { get; set; }
     public required string UserId {  get; set; }
+    public string? DiscordUserId { get; set; }
+    public string? DiscordUsername { get; set; }
+    public DateTime? DiscordLinkedAt { get; set; }
     [JsonIgnore]
     public virtual ApplicationUser? User { get; set; }
     [NotMapped]

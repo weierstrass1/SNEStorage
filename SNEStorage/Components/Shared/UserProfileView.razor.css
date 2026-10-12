@@ -1,0 +1,454 @@
+.profile-page {
+    width: min(100%, 1040px);
+    margin: 0 auto;
+}
+
+.profile-page-heading {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.profile-kicker,
+.profile-hero-label {
+    margin: 0 0 .55rem;
+    color: #ffe14d;
+    font-family: "Press Start 2P", "Courier New", monospace;
+    font-size: .48rem;
+    line-height: 1.8;
+}
+
+.profile-kicker span {
+    color: #b14cff;
+}
+
+.profile-page-heading h1 {
+    margin: 0;
+    color: #f1eaff;
+    font-family: "Exo 2", "Segoe UI", sans-serif;
+    font-size: clamp(2rem, 5vw, 3.25rem);
+    font-style: italic;
+    font-weight: 900;
+    letter-spacing: -.04em;
+}
+
+.profile-intro {
+    margin: .35rem 0 0;
+    color: #b8afd6;
+}
+
+.profile-edit-button,
+.profile-action-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .65rem;
+    padding: .8rem 1rem;
+    border: 2px solid #b14cff;
+    border-radius: 4px;
+    color: #f1eaff;
+    background: #170d31;
+    box-shadow: 0 0 14px rgba(177, 76, 255, .25);
+    font-family: "Press Start 2P", "Courier New", monospace;
+    font-size: .48rem;
+    line-height: 1.6;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.profile-edit-button:hover,
+.profile-action-link:hover {
+    color: #ffe14d;
+    background: #241344;
+    box-shadow: 0 0 18px rgba(177, 76, 255, .5);
+    text-decoration: none;
+}
+
+.profile-hero,
+.profile-panel,
+.profile-message {
+    border: 1px solid rgba(106, 43, 224, .58);
+    border-radius: 6px;
+    background: linear-gradient(145deg, rgba(25, 16, 49, var(--ui-surface-alpha)), rgba(10, 8, 21, var(--ui-surface-alpha)));
+    box-shadow: 0 12px 34px rgba(0, 0, 0, .2);
+}
+
+.profile-hero {
+    position: relative;
+    display: flex;
+    min-height: 210px;
+    align-items: center;
+    gap: 1.5rem;
+    overflow: hidden;
+    padding: clamp(1.25rem, 4vw, 2.2rem);
+    border-left: 4px solid var(--profile-accent, #b14cff);
+}
+
+.profile-hero::after {
+    position: absolute;
+    right: -45px;
+    bottom: -100px;
+    width: 260px;
+    height: 260px;
+    border: 1px solid color-mix(in srgb, var(--profile-accent, #b14cff) 55%, transparent);
+    border-radius: 50%;
+    box-shadow: 0 0 0 22px rgba(177, 76, 255, .035), 0 0 0 44px rgba(177, 76, 255, .025);
+    content: "";
+    pointer-events: none;
+}
+
+.profile-avatar-frame {
+    z-index: 1;
+    display: grid;
+    width: 130px;
+    height: 130px;
+    flex: 0 0 130px;
+    place-items: center;
+    overflow: hidden;
+    border: 3px solid var(--profile-accent, #b14cff);
+    border-radius: 8px;
+    background: #080711;
+    box-shadow: 0 0 22px color-mix(in srgb, var(--profile-accent, #b14cff) 35%, transparent);
+    image-rendering: pixelated;
+}
+
+.profile-avatar-frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    image-rendering: auto;
+}
+
+.profile-identity {
+    z-index: 1;
+    min-width: 0;
+}
+
+.profile-hero-label {
+    color: #bca9ef;
+    font-size: .42rem;
+}
+
+.profile-identity h2 {
+    margin: 0;
+    overflow-wrap: anywhere;
+    color: var(--profile-accent, #f1eaff);
+    font-family: "Exo 2", "Segoe UI", sans-serif;
+    font-size: clamp(1.8rem, 5vw, 2.8rem);
+    font-style: italic;
+    font-weight: 900;
+    letter-spacing: -.035em;
+    text-shadow: 0 0 18px color-mix(in srgb, var(--profile-accent, #b14cff) 32%, transparent);
+}
+
+.profile-title {
+    margin: .2rem 0 0;
+    color: #ffe14d;
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+
+.profile-email {
+    margin: .55rem 0 0;
+    color: #b8afd6;
+    overflow-wrap: anywhere;
+}
+
+.profile-level-badge {
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    margin-left: auto;
+    padding: .5rem .6rem;
+    border: 1px solid rgba(255, 225, 77, .45);
+    color: #ffe14d;
+    background: rgba(10, 7, 21, .72);
+    font-family: "Press Start 2P", "Courier New", monospace;
+    font-size: .4rem;
+    white-space: nowrap;
+}
+
+.profile-level-badge span {
+    font-size: .8rem;
+}
+
+.profile-content-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.profile-panel {
+    padding: clamp(1rem, 3vw, 1.5rem);
+}
+
+.profile-panel-heading {
+    display: flex;
+    align-items: center;
+    gap: .7rem;
+    margin-bottom: 1rem;
+    padding-bottom: .7rem;
+    border-bottom: 1px solid rgba(106, 43, 224, .38);
+}
+
+.profile-panel-heading h2 {
+    margin: 0;
+    color: #f1eaff;
+    font-family: "Exo 2", "Segoe UI", sans-serif;
+    font-size: 1.25rem;
+    font-weight: 800;
+}
+
+.panel-index {
+    color: #ffe14d;
+    font-family: "Press Start 2P", "Courier New", monospace;
+    font-size: .4rem;
+}
+
+.profile-bio,
+.profile-empty-copy {
+    margin: 0;
+    color: #c4bddc;
+    line-height: 1.8;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.profile-empty-copy {
+    color: #9389b6;
+    font-style: italic;
+}
+
+.profile-details-list {
+    display: grid;
+    gap: .8rem;
+    margin: 0;
+}
+
+.profile-details-list > div {
+    display: grid;
+    grid-template-columns: minmax(115px, .8fr) minmax(0, 1.2fr);
+    gap: .8rem;
+    align-items: start;
+}
+
+.profile-details-list dt {
+    color: #988fb9;
+    font-size: .85rem;
+}
+
+.profile-details-list dd {
+    margin: 0;
+    color: #e7e2ff;
+    overflow-wrap: anywhere;
+}
+
+.profile-social-panel {
+    grid-column: 1 / -1;
+}
+
+.profile-social-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr));
+    gap: .7rem;
+}
+
+.profile-social-card {
+    display: flex;
+    min-width: 0;
+    min-height: 68px;
+    align-items: center;
+    gap: .75rem;
+    padding: .65rem .75rem;
+    border: 1px solid rgba(132, 94, 193, .42);
+    border-radius: 5px;
+    color: #eee8ff;
+    background: rgba(10, 8, 22, .72);
+    text-decoration: none;
+    transition: border-color .15s ease, background .15s ease, transform .15s ease, box-shadow .15s ease;
+}
+
+a.profile-social-card:hover,
+a.profile-social-card:focus-visible {
+    transform: translateY(-2px);
+    border-color: rgba(195, 139, 255, .8);
+    color: #fff;
+    background: rgba(35, 21, 62, .9);
+    box-shadow: 0 7px 18px rgba(0, 0, 0, .2), 0 0 15px rgba(177, 76, 255, .12);
+    text-decoration: none;
+}
+
+a.profile-social-card:focus-visible {
+    outline: 2px solid #ffe14d;
+    outline-offset: 3px;
+}
+
+.profile-social-card-static {
+    cursor: default;
+}
+
+.social-brand-icon {
+    display: inline-grid;
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+    place-items: center;
+    border: 1px solid rgba(255, 255, 255, .18);
+    border-radius: 8px;
+    color: #fff;
+    background: #34234e;
+    font-family: "Exo 2", "Segoe UI", sans-serif;
+    font-size: 1.25rem;
+    font-weight: 900;
+    line-height: 1;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, .4);
+}
+
+.social-brand-icon svg {
+    width: 24px;
+    height: 24px;
+    fill: currentColor;
+}
+
+.social-brand-icon--patreon { background: #f15b46; }
+.social-brand-icon--paypal { background: #17479e; font-style: italic; }
+.social-brand-icon--coffee { background: #a66a43; font-size: 1.15rem; }
+.social-brand-icon--discord { background: #5865f2; }
+.social-brand-icon--x { background: #111; font-size: 1.2rem; }
+.social-brand-icon--facebook { background: #0866ff; font-family: Arial, sans-serif; font-size: 1.8rem; }
+.social-brand-icon--youtube { background: #f00; font-size: 1rem; }
+.social-brand-icon--instagram { background: linear-gradient(135deg, #7655d9, #d34488, #ed9b42); }
+.social-brand-icon--steam { background: #16436b; }
+.social-brand-icon--twitch { background: #9146ff; font-size: .95rem; }
+.social-brand-icon--github { background: #24292f; }
+.social-brand-icon--nintendo { color: #e60012; background: #fff; font-size: .85rem; }
+
+.profile-social-card-copy {
+    display: grid;
+    min-width: 0;
+    gap: .18rem;
+}
+
+.profile-social-name {
+    color: #d8c9f8;
+    font-size: .78rem;
+    font-weight: 700;
+}
+
+.profile-social-handle {
+    overflow: hidden;
+    color: #fff;
+    font-size: .92rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.profile-social-open {
+    margin-left: auto;
+    color: #a98bda;
+    font-size: 1.05rem;
+}
+
+.profile-message {
+    display: grid;
+    justify-items: center;
+    padding: clamp(2rem, 7vw, 4rem) 1.25rem;
+    text-align: center;
+}
+
+.profile-message-icon {
+    display: grid;
+    width: 54px;
+    height: 54px;
+    place-items: center;
+    margin-bottom: .8rem;
+    border: 1px solid #6a2be0;
+    border-radius: 50%;
+    color: #ffe14d;
+    background: #140a34;
+    font-size: 1.4rem;
+}
+
+.profile-message h2 {
+    margin: 0;
+    color: #f1eaff;
+    font-family: "Exo 2", "Segoe UI", sans-serif;
+    font-size: 1.6rem;
+    font-weight: 800;
+}
+
+.profile-message p {
+    max-width: 520px;
+    margin: .55rem 0 1rem;
+    color: #b8afd6;
+}
+
+.profile-message-error {
+    border-color: rgba(255, 100, 124, .55);
+}
+
+.profile-message-error .profile-message-icon {
+    border-color: #ff647c;
+    color: #ff9baa;
+}
+
+.profile-back-link-wrap {
+    margin-top: 1.2rem;
+}
+
+.profile-back-link-wrap a {
+    color: #c9b4f7;
+    text-decoration: none;
+}
+
+.profile-back-link-wrap a:hover {
+    color: #ffe14d;
+    text-decoration: underline;
+}
+
+@media (max-width: 720px) {
+    .profile-page-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .profile-hero {
+        flex-wrap: wrap;
+    }
+
+    .profile-level-badge {
+        margin-left: 0;
+    }
+
+    .profile-content-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .profile-social-panel {
+        grid-column: auto;
+    }
+}
+
+@media (max-width: 480px) {
+    .profile-hero {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .profile-avatar-frame {
+        width: 100px;
+        height: 100px;
+        flex-basis: 100px;
+    }
+
+    .profile-details-list > div {
+        grid-template-columns: 1fr;
+        gap: .2rem;
+    }
+
+}

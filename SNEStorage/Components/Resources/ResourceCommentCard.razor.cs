@@ -49,7 +49,7 @@ public partial class ResourceCommentCard
         ? Comment.MyVote switch { LikeValues.Like => true, LikeValues.Dislike => false, _ => null } : null;
     protected string Username => string.IsNullOrWhiteSpace(Comment.UserSummary?.Username) ? "Community member" : Comment.UserSummary.Username;
     protected string UsernameColor => Comment.UserSummary?.UsernameColor is { } color && HexColor.IsMatch(color) ? color : "#e6d2fb";
-    protected string? ProfileUrl => string.IsNullOrWhiteSpace(Comment.UserSummary?.Username) ? null : $"/Profile/{Uri.EscapeDataString(Comment.UserSummary.Username)}";
+    protected string? ProfileUrl => string.IsNullOrWhiteSpace(Comment.UserSummary?.Username) ? null : $"/Profile/{Uri.EscapeDataString(Comment.UserSummary.Id)}";
     protected string AvatarUrl => PublicFileUrl.Resolve(Comment.UserSummary?.Avatar?.URL, "/images/caja.png");
     protected IReadOnlyList<long> NextAncestors => [.. Ancestors, Comment.Id];
     protected override void OnParametersSet()

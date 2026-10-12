@@ -1,0 +1,6 @@
+.public-profile-loading { width: min(100%, 1040px); margin: 0 auto; padding: 2rem; border: 1px solid #684895; border-radius: 8px; background: rgba(23, 16, 38, var(--ui-surface-alpha)); }
+.public-profile-loading h1 { color: #f1eaff; font-family: "Exo 2", sans-serif; }
+.public-profile-loading p { color: #b8afd6; }
+.profile-load-error { margin: .5rem 0 1rem; color: #b8afd6; font-size: .85rem; }
+.profile-load-error button { padding: .2rem .5rem; border: 1px solid #76539e; border-radius: 4px; background: #2b1c40; color: #eaddff; }
+.profile-load-error button:focus-visible { outline: 2px solid #ffe14d; outline-offset: 2px; }

@@ -22,11 +22,11 @@
         {
             @if (_optionsLoading) { <p class="library-status" role="status">Loading filter choices…</p> }
             @if (_optionsError is not null) { <p role="alert">@_optionsError <button type="button" class="text-button" @onclick="LoadOptionsAsync">Try again</button></p> }
-            <ResourceListFilters @key="_draft" State="_draft" Types="_types" OnApply="ApplyFiltersAsync" OnReset="ResetFiltersAsync" Error="@_filterError" Disabled="@(_module is null)" />
+            <ResourceListFilters @key="_draft" State="_draft" Types="_types" CategoryOptions="_categories" OnApply="ApplyFiltersAsync" OnReset="ResetFiltersAsync" Error="@_filterError" Disabled="@(_module is null)" />
         }
     </div>
     <div class="filter-summary" aria-label="Applied filters">
-        @foreach (var summary in _applied.Summary(_types)) { <span>@summary</span> }
+        @foreach (var summary in _applied.Summary(_types, _categories)) { <span>@summary</span> }
         <small>Sensitive content: @ContentSummary</small>
         @if (HasActiveFilters) { <button type="button" @onclick="ResetFiltersAsync">Clear filters ×</button> }
     </div>

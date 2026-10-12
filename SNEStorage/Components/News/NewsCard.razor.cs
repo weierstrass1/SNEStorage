@@ -15,7 +15,7 @@ public partial class NewsCard
     [Parameter] public bool CanEdit { get; set; }
     private string ResolvedAvatar => PublicFileUrl.Resolve(Item.UserSummary.Avatar?.URL, "/images/caja.png");
     private string AvatarUrl => _failedAvatar == ResolvedAvatar ? "/images/caja.png" : ResolvedAvatar;
-    private string ProfileUrl => $"/Profile/{Uri.EscapeDataString(Item.UserSummary.Username)}";
+    private string ProfileUrl => $"/Profile/{Uri.EscapeDataString(Item.UserSummary.Id)}";
     private string UsernameColor => Item.UserSummary.UsernameColor is { } color && HexColor.IsMatch(color) ?
         color : "#dec4fa";
     private string PublicationDate => Item.CreatedAt.ToString("MMM d, yyyy", CultureInfo.InvariantCulture);

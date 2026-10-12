@@ -14,7 +14,12 @@ h1 { margin: 0 0 .8rem; font-size: clamp(2rem, 4vw, 3rem); color: #f4ecff; }
 .about-section p { margin: 0; line-height: 1.65; color: #bdadcf; }
 .creator-panel { padding: 2rem; border: 1px solid #72509c; border-radius: 20px; background: linear-gradient(130deg, rgba(40, 23, 62, var(--ui-surface-alpha)), rgba(21, 16, 32, var(--ui-surface-alpha)) 75%); }
 .creator-heading { display: flex; align-items: center; gap: 1.3rem; margin-bottom: 1.3rem; }
-.creator-symbol { display: grid; place-items: center; flex: 0 0 auto; width: 78px; height: 78px; border: 1px solid #9060c5; border-radius: 16px; background: #35224e; color: #d8b6ff; font: 2rem 'VT323', monospace; box-shadow: inset 0 0 20px #8f5aba22; }
+.creator-avatar, .creator-avatar-placeholder { display: block; flex: 0 0 auto; width: 78px; height: 78px; border: 2px solid var(--creator-color, #9060c5); border-radius: 16px; background: #241733; overflow: hidden; }
+.creator-avatar { box-shadow: 0 0 16px color-mix(in srgb, var(--creator-color, #9060c5) 25%, transparent); }
+.creator-avatar img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.creator-name { color: var(--creator-color, #e7e2ff); text-decoration: none; }
+.creator-name:hover { text-decoration: underline; text-underline-offset: .2em; }
+.creator-name:focus-visible, .creator-avatar:focus-visible { outline: 2px solid #ffe14d; outline-offset: 4px; }
 .creator-heading .about-kicker { margin-bottom: .35rem; }
 .creator-heading h2 { font-size: 2rem; color: #f2e7ff; margin: 0 0 .2rem; overflow-wrap: anywhere; }
 .creator-role { margin: 0; color: #bca2d8; }
@@ -38,7 +43,7 @@ h1 { margin: 0 0 .8rem; font-size: clamp(2rem, 4vw, 3rem); color: #f4ecff; }
     .about-hero { flex-direction: column; align-items: flex-start; }
     .about-logo { width: 76px; }
     .creator-heading { gap: 1rem; }
-    .creator-symbol { width: 56px; height: 56px; border-radius: 10px; }
+    .creator-avatar, .creator-avatar-placeholder { width: 56px; height: 56px; border-radius: 10px; }
     .creator-heading h2 { font-size: 1.7rem; }
     .about-actions a { flex: 1 1 100%; }
 }

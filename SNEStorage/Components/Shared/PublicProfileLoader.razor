@@ -1,0 +1,25 @@
+@if (_profile is not null)
+{
+    @ChildContent(_profile)
+}
+else if (FallbackContent is not null)
+{
+    @FallbackContent
+    @if (_errorStatus is not null)
+    {
+        <p class="profile-load-error" role="status">Profile details could not be loaded. <button type="button" @onclick="Retry">Try again</button></p>
+    }
+}
+else if (_errorStatus is { } status)
+{
+    <PageTitle>Profile | SNEStorage</PageTitle>
+    <ErrorPanel StatusCode="status" Domain="profile" OnRetry="Retry" />
+}
+else
+{
+    <PageTitle>Loading profile | SNEStorage</PageTitle>
+    <section class="public-profile-loading" role="status" aria-live="polite">
+        <h1>Player profile</h1>
+        <p>Loading profile…</p>
+    </section>
+}

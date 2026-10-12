@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using SNEStorage.DTOs;
+using System.Text.RegularExpressions;
 
 namespace SNEStorage.Components.Resources;
 
@@ -16,7 +17,8 @@ public partial class ResourceTypePicker
         .GroupBy(option => option.CategoryId)
         .Select(group => new TypeCategory(group.Key,
             group.Select(option => option.CategoryName).FirstOrDefault(name => !string.IsNullOrWhiteSpace(name)) ?? "Other types",
-            group.OrderBy(option => option.Name, StringComparer.OrdinalIgnoreCase).ToArray()))
+            group.OrderBy(option => Regex.IsMatch(option.Name, @"\bOther\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+                .ThenBy(option => option.Name, StringComparer.OrdinalIgnoreCase).ToArray()))
         .OrderBy(category => category.Name, StringComparer.OrdinalIgnoreCase).ToArray();
 
     private int SelectedCount(TypeCategory category) => category.Options.Count(option => Values.Contains(option.Id));
