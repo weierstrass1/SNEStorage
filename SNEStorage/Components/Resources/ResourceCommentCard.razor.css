@@ -11,7 +11,8 @@
 .comment-author ::deep a, .comment-author strong { font-weight: 700; font-size: .85rem; text-decoration: none; overflow-wrap: anywhere; }
 .comment-author ::deep a:hover { text-decoration: underline; }
 .comment-dates { display: flex; flex-wrap: wrap; column-gap: .8rem; row-gap: .25rem; margin-top: .2rem; color: #a990c3; font-size: .7rem; }
-.comment-text, .comment-deleted { margin: .6rem 0 0; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6; }
+.comment-text, .comment-deleted { margin: .6rem 0 0; min-width: 0; overflow-wrap: anywhere; line-height: 1.6; }
+.comment-deleted { white-space: pre-wrap; }
 .comment-deleted { color: #a990c3; font-style: italic; }
 .comment-votes { display: flex; flex-wrap: wrap; gap: .4rem .9rem; margin: .5rem 0 0; color: #b59bcd; font-size: .75rem; }
 .comment-approval { color: #ceb1ef; }

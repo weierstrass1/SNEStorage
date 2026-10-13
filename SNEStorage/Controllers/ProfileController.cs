@@ -11,28 +11,23 @@ namespace SNEStorage.Controllers;
 [ApiController]
 [Route("api/profile")]
 [Authorize]
-public class ProfileController(AccountService accountService) : ControllerBase
+public class ProfileController(AccountService accountService,
+    AccountController accountController) : ControllerBase
 {
     private readonly AccountService _accountService = accountService;
+    private readonly AccountController _accountController = accountController;
     [HttpGet("me")]
     [ProducesResponseType<UserInfo>(StatusCodes.Status200OK)]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    public async Task<ActionResult<UserInfo?>> GetMyProfile(CancellationToken ct)
+    public async Task<ActionResult<UserInfo>> GetMyProfile(CancellationToken ct)
     {
         var result = await _accountService.GetUserInfo(ct);
-        if (result.IsT0)
-            return Ok(result.AsT0);
-        return result.AsT1 switch
-        {
-            AccountServiceResult.UserNotFound => NotFound(),
-            AccountServiceResult.CancelledToken => StatusCode(StatusCodes.Status499ClientClosedRequest),
-            _ => BadRequest(),
-        };
+        return _accountController.GetActionResult(result);
     }
     [AllowAnonymous]
     [HttpGet("{userId}")]
     [ProducesResponseType<UserInfo>(StatusCodes.Status200OK)]
-    public async Task<ActionResult<UserInfo?>> GetProfile([FromRoute] string userId, CancellationToken ct)
+    public async Task<ActionResult<UserInfo>> GetProfile([FromRoute] string userId, CancellationToken ct)
     {
         var result = await _accountService.GetUserInfo(userId, ct);
         if (result.IsT0)
@@ -41,12 +36,7 @@ public class ProfileController(AccountService accountService) : ControllerBase
             ui.Birthday = DateOnly.MinValue;
             return Ok(result.AsT0);
         }
-        return result.AsT1 switch
-        {
-            AccountServiceResult.UserNotFound => NotFound(),
-            AccountServiceResult.CancelledToken => StatusCode(StatusCodes.Status499ClientClosedRequest),
-            _ => BadRequest(),
-        };
+        return _accountController.GetActionResult(result);
     }
     [EnableRateLimiting("uploads")]
     [HttpPut("me/edit")]

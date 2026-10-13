@@ -37,7 +37,7 @@
 .detail-badges, .detail-tags { display: flex; flex-wrap: wrap; gap: .45rem; }
 .detail-badge, .detail-tags > span:not(.detail-muted) { padding: .25rem .6rem; border: 1px solid #8053aa; border-radius: 4px; color: #dec5fa; background: #2c1741; font-size: .78rem; }
 .detail-tags > span:not(.detail-muted) { border-color: transparent; }
-.detail-description { margin: 0; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
+.detail-description { margin: 0; min-width: 0; line-height: 1.6; overflow-wrap: anywhere; }
 .detail-muted { margin: 0; color: #b69ace; font-size: .85rem; line-height: 1.7; }
 .detail-content-warning { padding: .7rem .9rem; border: 1px solid #a66a43; border-left: 4px solid #f0b15a; border-radius: 5px; color: #efc697; background: rgba(48, 32, 22, var(--ui-surface-alpha)); }
 .detail-content-warning p { margin: .25rem 0 .5rem; font-size: .8rem; }

@@ -2,12 +2,69 @@
   "title": "Community",
   "kicker": "SNESTORAGE · LET'S CREATE TOGETHER",
   "introduction": "SNES projects are better with a community. Join us on Discord to meet other creators, share what you are working on, and talk about the Super Nintendo.",
-  "discordTitle": "SNEStorage on Discord",
-  "discordDescription": "Our Discord is a place to connect with people who enjoy SNES hacking, homebrew, graphics, music, and tools. Come say hello and be part of the conversation.",
-  "discordUrl": "https://discord.gg/NpUXn7H",
-  "joinLabel": "Join our Discord",
+  "servers": [
+    {
+      "name": "SNEStorage",
+      "label": "Official SNEStorage community",
+      "description": "Join the official SNEStorage Discord to share resources, discuss SNES projects, ask questions, and help shape the future of the website. This is the main home for our community.",
+      "discordUrl": "https://discord.gg/e8bHBcRKX9",
+      "logoUrl": "/images/snestorageLogo.png",
+      "joinLabel": "Join SNEStorage",
+      "primary": true
+    },
+    {
+      "name": "SNES Office",
+      "label": "anonimzwx's personal server",
+      "description": "Explore anonimzwx's personal Discord community for conversations about SNES hacking, tools, and creative projects.",
+      "discordUrl": "https://discord.gg/NpUXn7H",
+      "logoUrl": "/images/community/snes-office.png",
+      "joinLabel": "Join SNES Office",
+      "primary": false
+    }
+  ],
   "linkNote": "Opens Discord in a new tab.",
   "unavailableText": "The Discord invite is not available right now. Please check back later.",
+  "connectionTitle": "How to join and link your account",
+  "connectionIntroduction": "You must have a registered SNEStorage account with a confirmed email address. Choose one of the two methods below to link your Discord account.",
+  "connectionGuides": [
+    {
+      "title": "Link from Discord",
+      "steps": [
+        {
+          "text": "Sign in to your SNEStorage account."
+        },
+        {
+          "text": "Join the SNEStorage Discord server.",
+          "linkLabel": "Join SNEStorage",
+          "linkUrl": "https://discord.gg/e8bHBcRKX9"
+        },
+        {
+          "text": "Open the rules channel, read the rules, and press Allow Access."
+        }
+      ]
+    },
+    {
+      "title": "Link from SNEStorage",
+      "steps": [
+        {
+          "text": "Sign in to SNEStorage and open your profile.",
+          "linkLabel": "Open my profile",
+          "linkUrl": "/Profile/me"
+        },
+        {
+          "text": "Press Connect to Discord. This links the Discord account you are currently signed in to and redirects you to the SNEStorage server."
+        },
+        {
+          "text": "Join the server from the redirect, or use the invite below.",
+          "linkLabel": "Open the Discord invite",
+          "linkUrl": "https://discord.gg/e8bHBcRKX9"
+        },
+        {
+          "text": "Open the rules channel, read the rules, and press Allow Access."
+        }
+      ]
+    }
+  ],
   "sectionsTitle": "A place for SNES creators",
   "sections": [
     {

@@ -29,11 +29,8 @@ th { background: #2a173c; border-bottom: 1px solid #715093; color: #cdb3e9; text
 button:hover:not(:disabled) { filter: brightness(1.15); }
 button:disabled { opacity: .4; cursor: default; }
 .library-loading, .library-empty { padding: 3rem 1rem; text-align: center; border: 1px solid #4c3065; border-radius: 14px; background: rgba(26, 16, 41, var(--ui-surface-alpha)); color: #c8b2dd; }
-.library-empty > span { font-size: 3rem; color: #b883f1; }
+.library-loading { padding: .5rem; }
 .library-empty h2 { font-family: "Exo 2", sans-serif; font-size: 1.5rem; color: #f0ddff; }
 .library-empty p { color: #a692bb; font-size: .9rem; }
 .library-status { margin: .8rem 0; color: #b89dcd; font-size: .8rem; text-align: center; }
-.loading-pixel { display: inline-block; width: 12px; height: 12px; background: #bd8cf2; margin-right: .6rem; animation: pulse 1s alternate infinite; }
-@keyframes pulse { to { opacity: .3; } }
 @media(max-width: 700px) { .library-heading { align-items: start; flex-direction: column; } .library-toolbar > label { flex: 1; min-width: 100px; } .filters-button { width: 100%; margin-right: 0; } .library-pagination { align-items: start; } }
-@media(prefers-reduced-motion: reduce) { .loading-pixel { animation: none; } }

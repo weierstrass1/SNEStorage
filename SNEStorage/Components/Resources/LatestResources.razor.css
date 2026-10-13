@@ -5,6 +5,8 @@ th { padding: .85rem .7rem; border-bottom: 1px solid #715093; color: #cdb3e9; ba
 .download-heading { text-align: right; }
 .latest-status { padding: 2rem 1rem; border: 1px solid #4c3065; border-radius: 12px; color: #c8b2dd; background: rgba(26, 16, 41, var(--ui-surface-alpha)); text-align: center; font-size: .9rem; }
 .latest-status p { margin: 0 0 1rem; }
+.latest-empty h3 { margin: 0; color: #f0ddff; font: 800 1.25rem/1.4 "Exo 2", sans-serif; }
+.latest-empty p { margin: .5rem 0 0; color: #bca7d0; }
 .latest-status button { padding: .5rem .9rem; border: 1px solid #9565bf; border-radius: 6px; color: #ecddff; background: #39214f; }
 .latest-status button:hover { background: #502f6d; }
 .latest-status button:focus-visible { outline: 2px solid #ffe14d; outline-offset: 3px; }

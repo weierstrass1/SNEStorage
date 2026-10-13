@@ -87,11 +87,7 @@ public partial class SearchableVideogamePicker : IAsyncDisposable
         }
     }
 
-    protected async Task SearchChangedAsync(ChangeEventArgs args)
-    {
-        _search = args.Value?.ToString() ?? string.Empty;
-        await SearchAsync(debounce: true);
-    }
+    protected Task SearchChangedAsync() => SearchAsync(debounce: true);
 
     protected Task RetryAsync() => SearchAsync(debounce: false);
 

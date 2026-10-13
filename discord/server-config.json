@@ -139,6 +139,56 @@
     "infoReadOnly": [
       {
         "target": "everyone",
+        "deny": [
+          "ViewChannel",
+          "SendMessages",
+          "SendMessagesInThreads",
+          "CreatePublicThreads",
+          "CreatePrivateThreads",
+          "CreateInstantInvite",
+          "MentionEveryone"
+        ]
+      },
+      {
+        "target": "member",
+        "allow": [
+          "ViewChannel",
+          "ReadMessageHistory"
+        ],
+        "deny": [
+          "SendMessages",
+          "SendMessagesInThreads",
+          "CreatePublicThreads",
+          "CreatePrivateThreads",
+          "CreateInstantInvite",
+          "MentionEveryone"
+        ]
+      },
+      {
+        "target": "moderator",
+        "allow": [
+          "ViewChannel",
+          "SendMessages",
+          "EmbedLinks",
+          "AttachFiles",
+          "ReadMessageHistory"
+        ]
+      },
+      {
+        "target": "bot",
+        "allow": [
+          "ViewChannel",
+          "SendMessages",
+          "EmbedLinks",
+          "AttachFiles",
+          "ReadMessageHistory",
+          "ManageMessages"
+        ]
+      }
+    ],
+    "rulesPublicReadOnly": [
+      {
+        "target": "everyone",
         "allow": [
           "ViewChannel",
           "ReadMessageHistory"
@@ -393,11 +443,12 @@
           "key": "rules",
           "name": "rules",
           "type": "TEXT",
+          "permissionProfile": "rulesPublicReadOnly",
           "topic": "The community rules. Full policy: https://snestorage.dev/Rules",
           "initialMessages": [
             {
               "pin": true,
-              "content": "# SNEStorage Community Rules\n\nRead these rules before participating. Access to community channels is reserved for members with a confirmed SNEStorage account. Connect your Discord account at https://snestorage.dev/Community.\n\n**1 — Respect others.** Harassment, bullying, threats, discrimination, or deliberately provoking other members will not be tolerated.\n\n**2 — Context matters.** No specific words are automatically banned, but language used to harass, threaten, insult, or target others is prohibited.\n\n**3 — No NSFW or disturbing content.** Do not post pornography, gore, shock content, or similar material.\n\n**4 — Use the appropriate channels.** Keep discussions, support requests, projects, and resources in their corresponding channels whenever possible.\n\n**5 — No spam.** Do not spam messages, images, emojis, mentions, links, advertisements, or repeated content.\n\n**6 — No political or religious debates.** This community is focused on SNES development, homebrew, hacking, tools, and preservation.\n\n**7 — Do not distribute commercial ROMs.** Share modifications as BPS or IPS patches. Original homebrew ROMs may be shared by their creators or with permission.\n\n**8 — Credit creators.** Do not claim someone else's work as your own. Obtain permission before redistributing or modifying their work when required.\n\n**9 — No malicious or deceptive content.** Malware, phishing, scams, misleading downloads, and unsafe links are prohibited.\n\n**10 — No impersonation or ban evasion.** Do not use alternate accounts to bypass moderation or help someone evade a restriction.\n\n**11 — Follow staff instructions.** If you disagree with a decision, discuss it privately and respectfully with staff.\n\n**12 — Follow Discord's rules.** All members must comply with Discord's Terms of Service and Community Guidelines.\n\nFull policy: https://snestorage.dev/Rules"
+              "content": "# SNEStorage Community Rules\n\nRead these rules before participating. Access to community channels is reserved for members with a confirmed SNEStorage account. Connect your Discord account at https://snestorage.dev/Community.\n\n**1 — Respect others.** Harassment, bullying, threats, discrimination, or deliberately provoking other members will not be tolerated.\n\n**2 — Context matters.** No specific words are automatically banned, but language used to harass, threaten, insult, or target others is prohibited.\n\n**3 — No NSFW or disturbing content.** Do not post pornography, gore, shock content, or similar material.\n\n**4 — Use the appropriate channels.** Keep discussions, support requests, projects, and resources in their corresponding channels whenever possible.\n\n**5 — No spam.** Do not spam messages, images, emojis, mentions, links, advertisements, or repeated content.\n\n**6 — No political or religious debates.** This community is focused on SNES development, homebrew, hacking, tools, and preservation.\n\n**7 — Do not distribute commercial ROMs.** Share modifications as BPS or IPS patches. Original homebrew ROMs may be shared by their creators or with permission.\n\n**8 — Credit creators.** Do not claim someone else's work as your own. Obtain permission before redistributing or modifying their work when required.\n\n**9 — No malicious or deceptive content.** Malware, phishing, scams, misleading downloads, and unsafe links are prohibited.\n\n**10 — No impersonation or ban evasion.** Do not use alternate accounts to bypass moderation or help someone evade a restriction.\n\n**11 — Follow staff instructions.** If you disagree with a decision, discuss it privately and respectfully with staff.\n\n**12 — Follow Discord's rules.** All members must comply with Discord's Terms of Service and Community Guidelines.\n\nFull policy: https://snestorage.dev/Rules\n\n**Get access:** Link Discord at https://snestorage.dev/Profile/Edit, then press **Allow Access**."
             }
           ]
         },
@@ -406,6 +457,12 @@
           "name": "announcements",
           "type": "ANNOUNCEMENT",
           "topic": "Official SNEStorage news, releases, and community updates."
+        },
+        {
+          "key": "site-news",
+          "name": "site-news",
+          "type": "TEXT",
+          "topic": "Automatic feed of news published on the SNEStorage website."
         },
         {
           "key": "resource-log",
@@ -432,6 +489,13 @@
           "type": "TEXT",
           "topic": "General discussion.",
           "slowmodeSeconds": 5
+        },
+        {
+          "key": "showoff",
+          "name": "showoff",
+          "type": "TEXT",
+          "topic": "Show the community what you are creating: screenshots, videos, demos, art, music, and other progress.",
+          "slowmodeSeconds": 10
         },
         {
           "key": "introductions",
@@ -477,8 +541,15 @@
           "availableTags": [
             "Idea",
             "Improvement",
+            "Bug",
             "UX",
-            "Content"
+            "Content",
+            "Under Review",
+            "Planned",
+            "In Progress",
+            "Resolved",
+            "Declined",
+            "Duplicate"
           ],
           "defaultSortOrder": "LATEST_ACTIVITY",
           "defaultForumLayout": "LIST",

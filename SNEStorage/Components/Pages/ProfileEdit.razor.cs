@@ -1,7 +1,6 @@
 using System.Globalization;
 using System.Text.Json;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.JSInterop;
 using SNEStorage.DTOs;
 using SNEStorage.Models;
@@ -12,7 +11,6 @@ namespace SNEStorage.Components.Pages;
 [RequireAccount]
 public partial class ProfileEdit : IAsyncDisposable
 {
-    private const long MaxAvatarSize = 5 * 1024 * 1024;
     private const string AvatarInputId = "profile-avatar-file";
     private static readonly CultureInfo EditCulture = CultureInfo.GetCultureInfo("en-US");
     private readonly CancellationTokenSource _lifetime = new();
@@ -23,8 +21,7 @@ public partial class ProfileEdit : IAsyncDisposable
     private ProfileEditForm? _initialForm;
     private List<IdNamePair> _timeZones = [];
     private List<IdNamePair> _emailVisibilities = [];
-    private string? _avatarName;
-    private string? _avatarPreviewUrl;
+    private bool _avatarChanged;
     private string? _error;
     private string? _feedback;
     private string? _optionsError;
@@ -35,6 +32,10 @@ public partial class ProfileEdit : IAsyncDisposable
     private bool _profileNotFound;
     private bool _disposed;
     protected string LoginUrl => LoginNavigation.GetLoginUrl(Navigation);
+
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "discord")]
+    public string? DiscordResult { get; set; }
 
     [CascadingParameter(Name = "VerifiedPageAccount")]
     private AccountPageContext? PageAccount { get; set; }
@@ -53,12 +54,16 @@ public partial class ProfileEdit : IAsyncDisposable
     protected string ProfileName => string.IsNullOrWhiteSpace(_profile?.UserSummary?.Username)
         ? "Player" : _profile.UserSummary.Username;
 
+    protected string DiscordDisplayName => string.IsNullOrWhiteSpace(_profile?.DiscordUsername)
+        ? "Discord account verified"
+        : $"@{_profile.DiscordUsername}";
+
     protected string AvatarPreviewUrl =>
-        _avatarPreviewUrl ?? PublicFileUrl.Resolve(_profile?.UserSummary?.Avatar?.URL ?? _profile?.Avatar?.URL, "/images/caja.png");
+        PublicFileUrl.Resolve(_profile?.UserSummary?.Avatar?.URL ?? _profile?.Avatar?.URL, "/images/caja.png");
 
     protected bool HasChanges =>
         _form is not null && _initialForm is not null &&
-        (_avatarName is not null || GetChangedFields().Count > 0);
+        (_avatarChanged || GetChangedFields().Count > 0);
 
     protected bool HasInvalidSocialLinks => GetSocialLinkErrors().Count > 0;
 
@@ -94,6 +99,7 @@ public partial class ProfileEdit : IAsyncDisposable
         {
             _form = ProfileEditForm.From(_profile);
             _initialForm = _form.Copy();
+            ApplyDiscordFeedback();
         }
         try
         {
@@ -109,36 +115,11 @@ public partial class ProfileEdit : IAsyncDisposable
         }
     }
 
-    protected async Task AvatarSelectedAsync(InputFileChangeEventArgs args)
+    protected void AvatarChanged(bool selected)
     {
+        _avatarChanged = selected;
         _feedback = null;
         _saveSucceeded = false;
-
-        var file = args.File;
-        var extension = Path.GetExtension(file.Name);
-        var isSupportedImage = file.ContentType is "image/png" or "image/jpeg" ||
-                              extension.Equals(".png", StringComparison.OrdinalIgnoreCase) ||
-                              extension.Equals(".jpg", StringComparison.OrdinalIgnoreCase) ||
-                              extension.Equals(".jpeg", StringComparison.OrdinalIgnoreCase);
-
-        if (!isSupportedImage || file.Size > MaxAvatarSize)
-        {
-            _feedback = "Choose a PNG or JPG avatar up to 5 MB.";
-            _avatarName = null;
-            _avatarPreviewUrl = null;
-            await ClearAvatarInputAsync();
-            return;
-        }
-
-        _avatarName = file.Name;
-        _avatarPreviewUrl = await _profileModule!.InvokeAsync<string>("createAvatarPreview", AvatarInputId);
-    }
-
-    protected async Task RemoveSelectedAvatarAsync()
-    {
-        _avatarName = null;
-        _avatarPreviewUrl = null;
-        await ClearAvatarInputAsync();
     }
 
     protected async Task SaveChangesAsync()
@@ -204,14 +185,6 @@ public partial class ProfileEdit : IAsyncDisposable
         }
     }
 
-    private async Task ClearAvatarInputAsync()
-    {
-        if (_profileModule is not null)
-        {
-            await _profileModule.InvokeVoidAsync("clearAvatarInput", AvatarInputId);
-        }
-    }
-
     private Dictionary<string, string> GetChangedFields()
     {
         var changed = new Dictionary<string, string>();
@@ -225,7 +198,6 @@ public partial class ProfileEdit : IAsyncDisposable
         AddSocialIfChanged(changed, nameof(EditProfileDTO.Patreon), "Patreon", _form.Patreon, _initialForm.Patreon);
         AddSocialIfChanged(changed, nameof(EditProfileDTO.Paypal), "PayPal", _form.Paypal, _initialForm.Paypal);
         AddSocialIfChanged(changed, nameof(EditProfileDTO.BuyMeACoffee), "Buy Me a Coffee", _form.BuyMeACoffee, _initialForm.BuyMeACoffee);
-        AddSocialIfChanged(changed, nameof(EditProfileDTO.Discord), "Discord", _form.Discord, _initialForm.Discord);
         AddSocialIfChanged(changed, nameof(EditProfileDTO.Twitter), "Twitter / X", _form.Twitter, _initialForm.Twitter);
         AddSocialIfChanged(changed, nameof(EditProfileDTO.Facebook), "Facebook", _form.Facebook, _initialForm.Facebook);
         AddSocialIfChanged(changed, nameof(EditProfileDTO.Youtube), "YouTube", _form.Youtube, _initialForm.Youtube);
@@ -251,7 +223,6 @@ public partial class ProfileEdit : IAsyncDisposable
         AddSocialError(errors, nameof(EditProfileDTO.Patreon), "Patreon", _form.Patreon, _initialForm.Patreon);
         AddSocialError(errors, nameof(EditProfileDTO.Paypal), "PayPal", _form.Paypal, _initialForm.Paypal);
         AddSocialError(errors, nameof(EditProfileDTO.BuyMeACoffee), "Buy Me a Coffee", _form.BuyMeACoffee, _initialForm.BuyMeACoffee);
-        AddSocialError(errors, nameof(EditProfileDTO.Discord), "Discord", _form.Discord, _initialForm.Discord);
         AddSocialError(errors, nameof(EditProfileDTO.Twitter), "Twitter / X", _form.Twitter, _initialForm.Twitter);
         AddSocialError(errors, nameof(EditProfileDTO.Facebook), "Facebook", _form.Facebook, _initialForm.Facebook);
         AddSocialError(errors, nameof(EditProfileDTO.Youtube), "YouTube", _form.Youtube, _initialForm.Youtube);
@@ -317,6 +288,22 @@ public partial class ProfileEdit : IAsyncDisposable
         }
     }
 
+    private void ApplyDiscordFeedback()
+    {
+        switch (DiscordResult)
+        {
+            case "connected":
+                _feedback = "Your Discord account was connected successfully.";
+                _saveSucceeded = true;
+                break;
+
+            case "authorization-denied":
+                _feedback = "Discord authorization was cancelled. Your account was not changed.";
+                _saveSucceeded = false;
+                break;
+        }
+    }
+
     public async ValueTask DisposeAsync()
     {
         if (_disposed) return;
@@ -326,8 +313,6 @@ public partial class ProfileEdit : IAsyncDisposable
         {
             try
             {
-                using var cleanup = new CancellationTokenSource(TimeSpan.FromSeconds(1));
-                await _profileModule.InvokeVoidAsync("releaseAvatarPreview", cleanup.Token);
                 await _profileModule.DisposeAsync();
             }
             catch (JSDisconnectedException)
@@ -349,7 +334,6 @@ public partial class ProfileEdit : IAsyncDisposable
         public string Patreon { get; set; } = string.Empty;
         public string Paypal { get; set; } = string.Empty;
         public string BuyMeACoffee { get; set; } = string.Empty;
-        public string Discord { get; set; } = string.Empty;
         public string Twitter { get; set; } = string.Empty;
         public string Facebook { get; set; } = string.Empty;
         public string Youtube { get; set; } = string.Empty;
@@ -369,7 +353,6 @@ public partial class ProfileEdit : IAsyncDisposable
             Patreon = profile.Patreon ?? string.Empty,
             Paypal = profile.Paypal ?? string.Empty,
             BuyMeACoffee = profile.BuyMeACoffee ?? string.Empty,
-            Discord = profile.Discord ?? string.Empty,
             Twitter = profile.Twitter ?? string.Empty,
             Facebook = profile.Facebook ?? string.Empty,
             Youtube = profile.Youtube ?? string.Empty,

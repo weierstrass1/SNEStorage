@@ -207,10 +207,15 @@ The backend must still validate selected user IDs and remove duplicate author as
   Tabs support keyboard arrows/Home/End, and Previous/Next buttons. Submission opens
   the tab containing the first invalid native field before focusing it. The form
   uses novalidate because hidden required fields cannot be focused until revealed.
-- ResourceSubmissionRules.razor: editable submission guidelines.
+- ResourceSubmissionRules: collapsible submission guidelines read from the same
+  Content/site-rules.json used by /Rules. Includes distribution and authorship,
+  resources and previews, and visibility and permissions; ROM restrictions are
+  highlighted. The full rules link opens a new tab to preserve form input.
 - SearchableVideogamePicker: initial Any/Other choices, remote search after two
   characters and a 300 ms pause, ten results per request, browser-request cancellation,
-  rejection of obsolete responses. The selected game appears in a compact field;
+  rejection of obsolete responses. Native oninput binding updates Blazor's input
+  value tracking before the asynchronous search, avoiding stale text writes while
+  typing quickly. The selected game appears in a compact field;
   clicking opens the search and choices. Selecting a game closes the dropdown.
 - ResourceTypePicker: a compact multi-select field showing chosen type names. Options
   open on mouse hover, click or keyboard; native checkboxes send repeated Types values.
@@ -223,7 +228,8 @@ The backend must still validate selected user IDs and remove duplicate author as
   consistent vertical selectable rows, labels and multipart boolean names.
 - ResourceQualityRequest: shared request checkbox for the first release during
   resource creation and for version creation/editing. Resource editing does not
-  modify version quality fields.
+  modify version quality fields. Uses the guide's gold title, animated seal and
+  optional review explanation, with a /SealOfQuality link that opens a new tab.
 - ResourcePicker: shared button and floating options panel. Blazor owns open/closed
   state, click/hover/Escape actions and the hidden/aria-expanded attributes. JavaScript enhances outside-click
   and focus-leave dismissal, Escape dismissal with focus restoration, and touch support.

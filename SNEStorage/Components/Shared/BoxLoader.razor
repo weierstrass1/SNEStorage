@@ -1,0 +1,10 @@
+<div class="box-loader @(Compact ? "box-loader-compact" : null)" role="status" aria-live="polite">
+    <div class="loader-box" aria-hidden="true">
+        <img class="box-base" src="/images/loading/box.png" alt="" width="600" height="457" />
+        @foreach (var color in _colors)
+        {
+            <img class="box-color @($"box-{color}")" src="/images/loading/colors.png" alt="" width="600" height="457" />
+        }
+    </div>
+    <span class="loader-label">@Label</span>
+</div>

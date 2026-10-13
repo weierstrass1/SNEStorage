@@ -1,9 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using OneOf;
+using SNEStorage.DTOs;
 using SNEStorage.Models;
 using System.Collections.Frozen;
 
 namespace SNEStorage.Services;
+
 public enum CacheKeys
 {
     Invalid,
@@ -14,144 +17,148 @@ public enum CacheKeys
     Type,
     TimeZone
 }
-public class CacheService(IMemoryCache cache,
-    IServiceScopeFactory factory) : IDisposable
+
+public class CacheService(IMemoryCache cache, IServiceScopeFactory factory) : IDisposable
 {
     private readonly IMemoryCache _cache = cache;
     private readonly IServiceScopeFactory _factory = factory;
-    private static readonly TimeSpan Lifetime = TimeSpan.FromHours(24);
+    private static readonly TimeSpan _lifetime = TimeSpan.FromHours(24);
     private readonly SemaphoreSlim _loadGate = new(1, 1);
-    public async Task<Dictionary<long, Models.TimeZone>?> GetAllTimeZones(CancellationToken ct = default)
-    {
-        return await Get<long, Models.TimeZone>(CacheKeys.TimeZone, ct);
-    }
-    public async Task<Dictionary<long, ResourceType>?> GetAllTypes(CancellationToken ct = default)
-    {
-        return await Get<long, ResourceType>(CacheKeys.Type, ct);
-    }
-    public async Task<Dictionary<long, ResourceCategory>?> GetAllCategories(CancellationToken ct = default)
-    {
-        return await Get<long, ResourceCategory>(CacheKeys.Category, ct);
-    }
-    public async Task<Dictionary<long, Visibility>?> GetAllVisibilities(CancellationToken ct = default)
-    {
-        return await Get<long, Visibility>(CacheKeys.Visibility, ct);
-    }
-    public async Task<Dictionary<string, FileType>?> GetAllFileTypesByMime(CancellationToken ct = default)
-    {
-        return await Get<string, FileType>(CacheKeys.FileTypeByMime, ct);
-    }
-    public async Task<Dictionary<long, FileType>?> GetAllFileTypes(CancellationToken ct = default)
-    {
-        return await Get<long, FileType>(CacheKeys.FileType, ct);
-    }
-    private async Task<Dictionary<T1,T2>?> Get<T1,T2>(CacheKeys key, 
-        CancellationToken ct = default) where T1 : notnull
-    {
-        if (_cache.TryGetValue(key, out var dictionary))
-            return ((FrozenDictionary<T1,T2>)dictionary!).ToDictionary();
 
-        await _loadGate.WaitAsync(ct);
+    private delegate Task<OneOf<FrozenDictionary<TKey, TValue>, ServiceResultContext>>
+        CacheLoader<TKey, TValue>(AsyncServiceScope scope, DBHelperService helper,
+            CancellationToken ct) where TKey : notnull;
+    public Task<OneOf<Dictionary<long, Models.TimeZone>, ServiceResultContext>>
+        GetAllTimeZones(CancellationToken ct = default)
+    {
+        return Get(CacheKeys.TimeZone, LoadTimeZones, ct);
+    }
+    public Task<OneOf<Dictionary<long, ResourceType>, ServiceResultContext>>
+        GetAllTypes(CancellationToken ct = default)
+    {
+        return Get(CacheKeys.Type, LoadTypes, ct);
+    }
+    public Task<OneOf<Dictionary<long, ResourceCategory>, ServiceResultContext>>
+        GetAllCategories(CancellationToken ct = default)
+    {
+        return Get(CacheKeys.Category, LoadCategories, ct);
+    }
 
-        try
-        {
-            if (_cache.TryGetValue(key, out dictionary))
-                return ((FrozenDictionary<T1, T2>)dictionary!).ToDictionary();
+    public Task<OneOf<Dictionary<long, Visibility>, ServiceResultContext>>
+        GetAllVisibilities(CancellationToken ct = default)
+    {
+        return Get(CacheKeys.Visibility, LoadVisibilities, ct);
+    }
+    public Task<OneOf<Dictionary<string, FileType>, ServiceResultContext>>
+        GetAllFileTypesByMime(CancellationToken ct = default)
+    {
+        return Get(CacheKeys.FileTypeByMime, LoadFileTypesByMime, ct);
+    }
+    public Task<OneOf<Dictionary<long, FileType>, ServiceResultContext>>
+        GetAllFileTypes(CancellationToken ct = default)
+    {
+        return Get(CacheKeys.FileType, LoadFileTypes, ct);
+    }
+    private async Task<OneOf<Dictionary<TKey, TValue>, ServiceResultContext>> Get<TKey, TValue>(
+        CacheKeys key, CacheLoader<TKey, TValue> loader, CancellationToken ct = default)
+        where TKey : notnull
+    {
+        if (_cache.TryGetValue(key, out FrozenDictionary<TKey, TValue>? dictionary) &&
+            dictionary is not null)
+            return dictionary.ToDictionary();
 
-            if (!await Load(key, ct))
-                return null;
-
-            return ((FrozenDictionary<T1, T2>)_cache.Get(key)!).ToDictionary();
-        }
-        finally
-        {
-            _loadGate.Release();
-        }
-    }
-    private async Task<bool> Load(CacheKeys key, CancellationToken ct = default)
-    {
-        return key switch
-        {
-            CacheKeys.Category => await LoadCategories(ct),
-            CacheKeys.FileType => await LoadFileTypes(ct),
-            CacheKeys.FileTypeByMime => await LoadFileTypesByMime(ct),
-            CacheKeys.TimeZone => await LoadTimeZones(ct),
-            CacheKeys.Type => await LoadTypes(ct),
-            CacheKeys.Visibility => await LoadVisibilities(ct),
-            _ => false
-        };
-    }
-    private async Task<bool> LoadTypes(CancellationToken ct = default)
-    {
         await using var scope = _factory.CreateAsyncScope();
-        var context = scope.ServiceProvider.GetRequiredService<SnestorageContext>();
-        return await Load(CacheKeys.Type, v => v.Id,
-            context.ResourceTypes
-                .AsNoTracking()
-                .Include(t => t.Category)
-                .ToListAsync, scope, ct);
-    }
-    private async Task<bool> LoadCategories(CancellationToken ct = default)
-    {
-        await using var scope = _factory.CreateAsyncScope();
-        var context = scope.ServiceProvider.GetRequiredService<SnestorageContext>();
-        return await Load(CacheKeys.Category, v => v.Id,
-            context.ResourceCategories
-                .AsNoTracking()
-                .ToListAsync, scope, ct);
-    }
-    private async Task<bool> LoadTimeZones(CancellationToken ct = default)
-    {
-        await using var scope = _factory.CreateAsyncScope();
-        var context = scope.ServiceProvider.GetRequiredService<SnestorageContext>();
-        return await Load(CacheKeys.TimeZone, v => v.Id,
-            context.TimeZones
-                .AsNoTracking()
-                .ToListAsync, scope, ct);
-    }
-    private async Task<bool> LoadVisibilities(CancellationToken ct = default)
-    {
-        await using var scope = _factory.CreateAsyncScope();
-        var context = scope.ServiceProvider.GetRequiredService<SnestorageContext>();
-        return await Load(CacheKeys.Visibility, v => v.Id,
-            context.Visibilities
-                .AsNoTracking()
-                .ToListAsync, scope, ct);
-    }
-    private async Task<bool> LoadFileTypesByMime(CancellationToken ct = default)
-    {
-        await using var scope = _factory.CreateAsyncScope();
-        var context = scope.ServiceProvider.GetRequiredService<SnestorageContext>();
-        return await Load(CacheKeys.FileTypeByMime, v => v.Value,
-            context.FileTypes
-                .AsNoTracking()
-                .ToListAsync, scope, ct);
-    }
-    private async Task<bool> LoadFileTypes(CancellationToken ct = default)
-    {
-        await using var scope = _factory.CreateAsyncScope();
-        var context = scope.ServiceProvider.GetRequiredService<SnestorageContext>();
-        return await Load(CacheKeys.FileType, v => v.Id,
-            context.FileTypes
-                .AsNoTracking()
-                .ToListAsync, scope, ct);
-    }
-    private async Task<bool> Load<T1, T2>(CacheKeys cacheKey,
-        Func<T2, T1> keyFunc, Func<CancellationToken, Task<List<T2>>> getter,
-        AsyncServiceScope scope, CancellationToken ct = default) where T1 : notnull
-    {
         var helper = scope.ServiceProvider.GetRequiredService<DBHelperService>();
 
-        var res = await helper.TryFunction(
-            async cancel => await getter(cancel), ct: ct);
-        if (res == null)
-            return false;
+        var result = await helper.TryFunction<
+            OneOf<Dictionary<TKey, TValue>, ServiceResultContext>>(async cancel =>
+            {
+                await _loadGate.WaitAsync(cancel);
 
-        FrozenDictionary<T1, T2> dictionary = res.ToFrozenDictionary(v => keyFunc(v),
-            v => v);
+                try
+                {
+                    if (_cache.TryGetValue(key, out dictionary) && dictionary is not null)
+                        return dictionary.ToDictionary();
 
-        _cache.Set(cacheKey, dictionary, Lifetime);
-        return true;
+                    var loadResult = await loader(scope, helper, cancel);
+
+                    if (!loadResult.TryPickT0(out var loadedDictionary, out var loadError))
+                        return loadError;
+
+                    return loadedDictionary.ToDictionary();
+                }
+                finally
+                {
+                    _loadGate.Release();
+                }
+            }, ServiceResult.CacheError, ct: ct);
+
+        return result.TryPickT0(out var cacheResult, out var cacheError) ?
+            cacheResult : cacheError;
+    }
+    private Task<OneOf<FrozenDictionary<long, ResourceType>, ServiceResultContext>> LoadTypes(
+        AsyncServiceScope scope, DBHelperService helper, CancellationToken ct)
+    {
+        var context = scope.ServiceProvider.GetRequiredService<SnestorageContext>();
+
+        return Load(CacheKeys.Type, value => value.Id,
+            context.ResourceTypes.AsNoTracking().Include(type => type.Category).ToListAsync,
+            helper, ct);
+    }
+    private Task<OneOf<FrozenDictionary<long, ResourceCategory>, ServiceResultContext>>
+        LoadCategories(AsyncServiceScope scope, DBHelperService helper, CancellationToken ct)
+    {
+        var context = scope.ServiceProvider.GetRequiredService<SnestorageContext>();
+
+        return Load(CacheKeys.Category, value => value.Id,
+            context.ResourceCategories.AsNoTracking().ToListAsync, helper, ct);
+    }
+    private Task<OneOf<FrozenDictionary<long, Models.TimeZone>, ServiceResultContext>>
+        LoadTimeZones(AsyncServiceScope scope, DBHelperService helper, CancellationToken ct)
+    {
+        var context = scope.ServiceProvider.GetRequiredService<SnestorageContext>();
+
+        return Load(CacheKeys.TimeZone, value => value.Id,
+            context.TimeZones.AsNoTracking().ToListAsync, helper, ct);
+    }
+    private Task<OneOf<FrozenDictionary<long, Visibility>, ServiceResultContext>>
+        LoadVisibilities(AsyncServiceScope scope, DBHelperService helper, CancellationToken ct)
+    {
+        var context = scope.ServiceProvider.GetRequiredService<SnestorageContext>();
+
+        return Load(CacheKeys.Visibility, value => value.Id,
+            context.Visibilities.AsNoTracking().ToListAsync, helper, ct);
+    }
+    private Task<OneOf<FrozenDictionary<string, FileType>, ServiceResultContext>>
+        LoadFileTypesByMime(AsyncServiceScope scope, DBHelperService helper, CancellationToken ct)
+    {
+        var context = scope.ServiceProvider.GetRequiredService<SnestorageContext>();
+
+        return Load(CacheKeys.FileTypeByMime, value => value.Value,
+            context.FileTypes.AsNoTracking().ToListAsync, helper, ct);
+    }
+    private Task<OneOf<FrozenDictionary<long, FileType>, ServiceResultContext>> LoadFileTypes(
+        AsyncServiceScope scope, DBHelperService helper, CancellationToken ct)
+    {
+        var context = scope.ServiceProvider.GetRequiredService<SnestorageContext>();
+
+        return Load(CacheKeys.FileType, value => value.Id,
+            context.FileTypes.AsNoTracking().ToListAsync, helper, ct);
+    }
+    private Task<OneOf<FrozenDictionary<TKey, TValue>, ServiceResultContext>> Load<TKey, TValue>(
+        CacheKeys cacheKey, Func<TValue, TKey> keySelector,
+        Func<CancellationToken, Task<List<TValue>>> getter,
+        DBHelperService helper, CancellationToken ct = default)
+        where TKey : notnull
+    {
+        return helper.TryFunction(async cancel =>
+        {
+            var values = await getter(cancel);
+            var dictionary = values.ToFrozenDictionary(keySelector, value => value);
+
+            _cache.Set(cacheKey, dictionary, _lifetime);
+            return dictionary;
+        }, ServiceResult.CacheError, ct: ct);
     }
     public void Dispose()
     {

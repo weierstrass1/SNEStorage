@@ -4,8 +4,8 @@
     display: inline-flex;
     max-width: 260px;
     align-items: center;
-    gap: .65rem;
-    padding: .35rem .6rem .35rem .35rem;
+    gap: .75rem;
+    padding: .5rem .8rem .5rem .55rem;
     border: 1px solid #6a429b;
     border-radius: 5px;
     color: #e7e2ff;
@@ -19,7 +19,8 @@
 
 .account-toggle:hover,
 .account-toggle[aria-expanded="true"] { border-color: #b14cff; color: #fff; background: #241344; box-shadow: 0 0 12px rgba(177, 76, 255, .25); }
-.account-avatar { flex: 0 0 36px; width: 36px; height: 36px; border: 1px solid #8b63be; border-radius: 4px; background: #0a0718; object-fit: cover; }
+.account-avatar-frame { display: grid; flex: 0 0 46px; width: 46px; height: 46px; place-items: center; padding: 4px; border: 1px solid #8b63be; border-radius: 10px; background: #0f081f; }
+.account-avatar { display: block; width: 36px; height: 36px; border-radius: 6px; background: #0a0718; object-fit: cover; }
 .account-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .account-chevron { flex: 0 0 14px; width: 14px; height: 14px; margin-left: .2rem; color: #c7a5ff; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .account-toggle[aria-expanded="true"] .account-chevron { transform: rotate(180deg); }

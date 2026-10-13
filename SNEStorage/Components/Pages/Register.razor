@@ -3,33 +3,11 @@
 <PageTitle>Create an account | SNEStorage</PageTitle>
 
 <div class="register-page">
-    <section class="register-intro" aria-labelledby="register-intro-title">
-        <p class="register-kicker"><span aria-hidden="true">◆</span> PLAYER REGISTRATION</p>
-        <h1 id="register-intro-title">Join the <span>SNES creator archive</span></h1>
-        <p class="register-intro-copy">
-            Create your account to share your work, keep track of your favorite projects, and join the SNEStorage community.
-        </p>
-
-        <div class="register-mascot-scene" aria-hidden="true">
-            <span class="mascot-orbit mascot-orbit-one"></span>
-            <span class="mascot-orbit mascot-orbit-two"></span>
-            <img class="register-mascot" src="images/snestorageLogo.png" alt="" />
-            <span class="mascot-spark mascot-spark-one">✦</span>
-            <span class="mascot-spark mascot-spark-two">✦</span>
-        </div>
-
-        <div class="register-feature-list" aria-label="SNEStorage features">
-            <span><b aria-hidden="true">✓</b> Your own creator profile</span>
-            <span><b aria-hidden="true">✓</b> A home for your SNES projects</span>
-            <span><b aria-hidden="true">✓</b> Community-made tools and inspiration</span>
-        </div>
-    </section>
-
     <section class="register-card" aria-labelledby="register-title">
         <div class="register-card-header">
             <div>
                 <p class="register-section-kicker">START YOUR ADVENTURE</p>
-                <h2 id="register-title">Create your account</h2>
+                <h1 id="register-title">Create your account</h1>
             </div>
             <p class="register-signin">Already registered? <a href="@LoginUrl">Log in</a></p>
         </div>
@@ -57,26 +35,21 @@
             <AntiforgeryToken />
 
             <fieldset class="register-fieldset">
-                <legend><span>01</span> Account details</legend>
-                <div class="register-grid">
-                    <div class="register-field username-field">
-                        <label for="username">Username <span aria-hidden="true">*</span></label>
-                        <input class="register-input" id="username" name="User" type="text" autocomplete="username" placeholder="Your player name" aria-describedby="username-error" required />
-                        <span class="field-error" id="username-error" aria-live="polite" data-validation-for="User"></span>
-                    </div>
-
-                    <div class="register-field color-field">
-                        <label for="username-color">Name color</label>
-                        <div class="color-input-wrap">
-                            <input id="username-color" name="UsernameColor" type="color" value="#ffffff" title="Choose a username color" />
-                            <span>Pick your profile color</span>
+                <legend><span>01</span> Your profile</legend>
+                <div class="register-identity-row">
+                    <AvatarPicker Busy="_saving" />
+                    <div class="register-identity-fields">
+                        <div class="register-field">
+                            <label for="username">Username <span aria-hidden="true">*</span></label>
+                            <input class="register-input" id="username" name="User" type="text" autocomplete="username" placeholder="Your player name" aria-describedby="username-error" required />
+                            <span class="field-error" id="username-error" aria-live="polite" data-validation-for="User"></span>
                         </div>
-                    </div>
-
-                    <div class="register-field field-full">
-                        <label for="email">Email address <span aria-hidden="true">*</span></label>
-                        <input class="register-input" id="email" name="Email" type="email" autocomplete="email" placeholder="you@example.com" aria-describedby="email-error" required />
-                        <span class="field-error" id="email-error" aria-live="polite" data-validation-for="Email"></span>
+                        <div class="register-field">
+                            <label for="email">Email address <span aria-hidden="true">*</span></label>
+                            <input class="register-input" id="email" name="Email" type="email" autocomplete="email" placeholder="you@example.com" aria-describedby="email-error" required />
+                            <span class="field-error" id="email-error" aria-live="polite" data-validation-for="Email"></span>
+                            <span class="field-hint">We'll send a confirmation link to this address.</span>
+                        </div>
                     </div>
                 </div>
             </fieldset>
@@ -106,7 +79,7 @@
             </fieldset>
 
             <fieldset class="register-fieldset">
-                <legend><span>03</span> Profile preferences</legend>
+                <legend><span>03</span> Date of birth</legend>
                 <div class="register-grid">
                     <div class="register-field">
                         <label for="birthday">Date of birth <span aria-hidden="true">*</span></label>
@@ -114,42 +87,51 @@
                         <span class="field-error" id="birthday-error" aria-live="polite" data-validation-for="Birthday"></span>
                     </div>
 
-                    <div class="register-field">
-                        <label for="avatar">Profile avatar <span aria-hidden="true">*</span></label>
-                        <input class="register-input register-file" id="avatar" name="Avatar" type="file" accept=".png,.jpg,.jpeg,image/png,image/jpeg" aria-describedby="avatar-hint avatar-error" required />
-                        <span class="field-hint" id="avatar-hint">PNG or JPG image · up to 5 MB</span>
-                        <span class="field-error" id="avatar-error" aria-live="polite" data-validation-for="Avatar"></span>
+                    <p class="field-hint birthday-note">Your date of birth is private and will not appear on your public profile.</p>
+                </div>
+            </fieldset>
+
+            <fieldset class="register-fieldset">
+                <legend><span>04</span> Preferences</legend>
+                <div class="register-preferences">
+                    <div class="register-field color-preference">
+                        <label for="username-color">Username color</label>
+                        <div class="color-input-wrap">
+                            <input id="username-color" name="UsernameColor" type="color" value="#ffffff" title="Choose a username color" />
+                            <span>Pick the color shown beside your name.</span>
+                        </div>
                     </div>
 
-                    <div class="register-field">
-                        <label for="time-zone">Time zone <span aria-hidden="true">*</span></label>
-                        <select class="register-input" id="time-zone" name="TimeZoneId" aria-describedby="time-zone-error" required>
-                            @foreach (var timeZone in _timeZones)
-                            {
-                                <option value="@timeZone.Id" selected="@(timeZone.Id == DefaultTimeZoneId)">@timeZone.Name</option>
-                            }
-                        </select>
-                        <span class="field-error" id="time-zone-error" aria-live="polite" data-validation-for="TimeZoneId"></span>
-                    </div>
-
-                    <div class="register-field">
-                        <label for="email-visibility">Email visibility <span aria-hidden="true">*</span></label>
-                        <select class="register-input" id="email-visibility" name="EmailVisibilityId" aria-describedby="email-visibility-hint email-visibility-error" required>
-                            @foreach (var visibility in _emailVisibilities)
-                            {
-                                <option value="@visibility.Id" selected="@(visibility.Id == DefaultEmailVisibilityId)">@visibility.Name</option>
-                            }
-                        </select>
-                        <span class="field-hint" id="email-visibility-hint">Choose who can see your email address.</span>
-                        <span class="field-error" id="email-visibility-error" aria-live="polite" data-validation-for="EmailVisibilityId"></span>
+                    <div class="preference-selectors">
+                        <div class="register-field">
+                            <label for="email-visibility">Email visibility <span aria-hidden="true">*</span></label>
+                            <select class="register-input" id="email-visibility" name="EmailVisibilityId" aria-describedby="email-visibility-hint email-visibility-error" required>
+                                @foreach (var visibility in _emailVisibilities)
+                                {
+                                    <option value="@visibility.Id" selected="@(visibility.Id == DefaultEmailVisibilityId)">@visibility.Name</option>
+                                }
+                            </select>
+                            <span class="field-hint" id="email-visibility-hint">Choose who can see your email address.</span>
+                            <span class="field-error" id="email-visibility-error" aria-live="polite" data-validation-for="EmailVisibilityId"></span>
+                        </div>
+                        <div class="register-field">
+                            <label for="time-zone">Time zone <span aria-hidden="true">*</span></label>
+                            <select class="register-input" id="time-zone" name="TimeZoneId" aria-describedby="time-zone-error" required>
+                                @foreach (var timeZone in _timeZones)
+                                {
+                                    <option value="@timeZone.Id" selected="@(timeZone.Id == DefaultTimeZoneId)">@timeZone.Name</option>
+                                }
+                            </select>
+                            <span class="field-error" id="time-zone-error" aria-live="polite" data-validation-for="TimeZoneId"></span>
+                        </div>
                     </div>
                 </div>
             </fieldset>
 
+            <p class="required-note"><span aria-hidden="true">*</span> Required fields</p>
             <button class="register-submit action-button action-button-primary" type="submit" disabled="@(_saving || _timeZones.Count == 0 || _emailVisibilities.Count == 0)">
                 <span>@(_saving ? "Creating account…" : "Create account")</span><ActionArrow />
             </button>
-            <p class="required-note"><span aria-hidden="true">*</span> Required fields</p>
         </form>
     </section>
 </div>

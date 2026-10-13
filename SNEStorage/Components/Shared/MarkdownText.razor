@@ -1,0 +1,5 @@
+<div class="markdown-content @(Compact ? "markdown-compact" : null)">
+    <div class="markdown-fallback" hidden="@_ready">@Text</div>
+    @* JavaScript owns only the contents of this leaf; Blazor owns its visibility. *@
+    <div class="markdown-rendered" @ref="_content" hidden="@(!_ready)"></div>
+</div>

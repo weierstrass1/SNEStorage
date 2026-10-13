@@ -90,6 +90,7 @@
                                     <label for="resource-description">Description <span aria-hidden="true">*</span></label>
                                     <InputTextArea class="resource-input" id="resource-description" name="Description" @bind-Value="_form.Description" rows="4" placeholder="Describe what the resource does, how to use it, and any requirements." minlength="10" maxlength="10000" required />
                                     <p class="resource-help">10–10,000 characters. Include installation or usage instructions where needed.</p>
+                                    <MarkdownHelp />
                                 </div>
                                 <div class="resource-field">
                                     <SearchableVideogamePicker @bind-Value="_form.VideogameId" />
@@ -111,7 +112,7 @@
                                         <dl class="resource-visibility-help">
                                             <dt>Public</dt><dd>Appears in the resource library.</dd>
                                             <dt>Unlisted</dt><dd>Accessible through its direct link.</dd>
-                                            <dt>Private</dt><dd>Accessible to its submitter, authors, moderators, and admins.</dd>
+                                            <dt>Private</dt><dd>Accessible to the resource submitter, authors, anyone who submitted a version, moderators, and admins. Private resources cannot be dependencies.</dd>
                                         </dl>
                                     </details>
                                 </div>
@@ -155,6 +156,7 @@
                                     <label for="resource-changelog">Release notes <span aria-hidden="true">*</span></label>
                                     <InputTextArea class="resource-input" id="resource-changelog" name="ChangeLog" @bind-Value="_form.ChangeLog" rows="4" placeholder="Add notes about this first release." minlength="10" maxlength="10000" required />
                                     <p class="resource-help">10–10,000 characters.</p>
+                                    <MarkdownHelp />
                                 </div>
                             </div>
                             <ResourceQualityRequest @bind-Value="_form.SealOfQualityRequested" />

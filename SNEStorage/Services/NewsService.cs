@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using OneOf;
+using SNEStorage.Discord;
 using SNEStorage.DTOs;
 using SNEStorage.Models;
 using SNEStorage.Services.Interfaces;
@@ -27,7 +28,8 @@ public enum NewsServiceResult
 }
 public class NewsService(SnestorageContext context,
     DBHelperService dbHelperService,
-    AccountService accountService) :
+    AccountService accountService,
+    DiscordService discordService) :
     IFullGet<New, NewsServiceResult, NewsFilterDTO, NewsSorting, NewsReadDTO>,
     IEditSingle<long, NewsEditDTO, New, NewsServiceResult>,
     ICreate<NewsCreateDTO, New, NewsServiceResult>
@@ -37,7 +39,7 @@ public class NewsService(SnestorageContext context,
     private readonly SnestorageContext _context = context;
     private readonly DBHelperService _dbHelperService = dbHelperService;
     private readonly AccountService _accountService = accountService;
-
+    private readonly DiscordService _discordService = discordService;
     public async Task<OneOf<List<NewsReadDTO>, NewsServiceResult>> FullGet(
         NewsFilterDTO filter, NewsSorting sort, int maxAmount = 10,
         int page = 0, CancellationToken ct = default)
@@ -58,6 +60,24 @@ public class NewsService(SnestorageContext context,
             (_, _) => NewsServiceResult.Success,
             filter, sort, paginationRequest, _dbHelperService,
             NewsServiceResult.DBError, ct);
+    }
+    public async Task<OneOf<NewsReadDTO, NewsServiceResult>> Get(long newsId, 
+        CancellationToken ct = default)
+    {
+        var result = await _dbHelperService.TryFunction(
+            cancel => GetSelect(
+                    _context.News
+                        .AsNoTracking()
+                        .Where(news => news.Id == newsId))
+                .SingleOrDefaultAsync(cancel),
+            NewsServiceResult.DBError,
+            ct: ct);
+
+        if (!result.TryPickT0(out var news, out var error))
+            return error;
+
+        return news is null ?
+            NewsServiceResult.NewNotFound : news;
     }
     public IQueryable<New> GetFilter(IQueryable<New> query, NewsFilterDTO filter) => query;
     public IQueryable<NewsReadDTO> GetSelect(IQueryable<New> query)
@@ -165,7 +185,7 @@ public class NewsService(SnestorageContext context,
         if (string.IsNullOrWhiteSpace(userId))
             return NewsServiceResult.Unauthorized;
 
-        var news = new New
+        New news = new()
         {
             Id = 0,
             PosterUserId = userId,
@@ -176,7 +196,13 @@ public class NewsService(SnestorageContext context,
 
         _context.News.Add(news);
 
-        return await _dbHelperService.TrySyncContext(news,
+        var res = await _dbHelperService.TrySyncContext(news,
             NewsServiceResult.DBError, ct);
+        if (!res.TryPickT0(out var newItem, out var error))
+            return error;
+        await _discordService.NotifyBotAsync(
+            new DiscordBotEventDTO(Guid.NewGuid(), DiscordBotEventTypes.NewsPublished,
+                newItem.Id.ToString(), DateTimeOffset.UtcNow));
+        return newItem;
     }
 }

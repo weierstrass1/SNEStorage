@@ -25,7 +25,15 @@ public class LoginController(AccountController accountController) : Controller
                 Uri.EscapeDataString(destination));
         }
 
-        HttpContext.Session.SetString("Token", response.Value.Token);
+        HttpContext.Response.Cookies.Append("__Host-SNEStorage.Auth", response.Value.Token,
+            new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Lax,
+                Path = "/",
+                Expires = new DateTimeOffset(response.Value.ExpireTime)
+            });
         return LocalRedirect(destination);
     }
     [HttpPost("logout")]

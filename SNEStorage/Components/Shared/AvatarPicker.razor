@@ -1,0 +1,48 @@
+<div class="avatar-picker" id="@PickerId">
+    <button class="avatar-photo-button" type="button" data-avatar-choose disabled="@Busy"
+            aria-label="Choose or adjust your profile avatar" aria-haspopup="dialog" aria-describedby="@(InputId + "-hint " + InputId + "-error")">
+        <span class="avatar-preview-frame">
+            <img class="avatar-preview" data-avatar-preview src="@InitialAvatarUrl" alt="" width="96" height="96" hidden="@string.IsNullOrWhiteSpace(InitialAvatarUrl)" />
+            <svg class="avatar-placeholder" data-avatar-placeholder hidden="@(!string.IsNullOrWhiteSpace(InitialAvatarUrl))" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M4 21v-2a8 8 0 0 1 16 0v2" /></svg>
+            <span class="avatar-photo-overlay" aria-hidden="true">Change</span>
+        </span>
+        <span class="avatar-camera-badge" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m5 6 2-3h10l2 3h2v14H3V6Z" /><circle cx="12" cy="12" r="4" /></svg></span>
+    </button>
+    <span class="avatar-caption" data-avatar-caption>Profile photo @if (Required) { <span aria-hidden="true">*</span> }</span>
+    <span class="visually-hidden" id="@(InputId + "-hint")">Click your photo to choose an image or adjust its crop. PNG or JPG, up to 5 MB.</span>
+    @if (!Required)
+    {
+        <button class="avatar-text-button" type="button" data-avatar-clear disabled="@Busy" hidden>Undo change</button>
+    }
+    <input class="visually-hidden" id="@InputId" name="@FieldName" type="file" accept=".png,.jpg,.jpeg,image/png,image/jpeg" aria-describedby="@(InputId + "-hint " + InputId + "-error")" required="@Required" tabindex="-1" @onchange="AvatarSelectionChanged" />
+    <p class="avatar-error" data-avatar-error role="alert" hidden></p>
+    <span class="avatar-error" id="@(InputId + "-error")" aria-live="polite" data-validation-for="@FieldName"></span>
+
+    <dialog class="avatar-dialog" data-avatar-dialog aria-labelledby="@(PickerId + "-title")" aria-describedby="@(PickerId + "-instructions")">
+        <header class="avatar-dialog-heading">
+            <div><p>YOUR PROFILE PICTURE</p><h2 id="@(PickerId + "-title")">Make it yours</h2></div>
+            <button class="avatar-close" type="button" data-avatar-cancel aria-label="Cancel avatar changes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg></button>
+        </header>
+        <p class="avatar-instructions" id="@(PickerId + "-instructions")">Drag to reposition. Use the slider, mouse wheel, or pinch to zoom.</p>
+        <button class="avatar-text-button avatar-replace" type="button" data-avatar-replace disabled="@Busy">Choose another image</button>
+        <div data-avatar-loading><BoxLoader Label="Preparing image…" Compact="true" /></div>
+        <div class="avatar-crop-stage" data-avatar-stage tabindex="0" role="group" aria-label="Avatar crop. Use arrow keys to reposition the image." hidden>
+            <div class="avatar-crop-container" data-avatar-cropper></div>
+            <span class="avatar-crop-mask" aria-hidden="true"></span>
+        </div>
+        <div class="avatar-zoom" data-avatar-zoom-controls hidden>
+            <label for="@(PickerId + "-zoom")">Zoom</label>
+            <input id="@(PickerId + "-zoom")" data-avatar-zoom type="range" min=".1" max="4" step=".01" value="1" />
+            <output data-avatar-zoom-value for="@(PickerId + "-zoom")">100%</output>
+        </div>
+        <p class="avatar-crop-note">Zoom out to show more of your image. Any uncovered area stays transparent.</p>
+        <p class="avatar-error" data-avatar-crop-error role="alert" hidden></p>
+        <footer class="avatar-dialog-actions">
+            <button class="action-button" type="button" data-avatar-reset disabled>Reset</button>
+            <div>
+                <button class="action-button" type="button" data-avatar-cancel>Cancel</button>
+                <button class="action-button action-button-primary" type="button" data-avatar-apply disabled>Use this avatar</button>
+            </div>
+        </footer>
+    </dialog>
+</div>

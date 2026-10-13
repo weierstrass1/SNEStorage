@@ -1,95 +1,131 @@
 ﻿using OneOf;
+using SNEStorage.DTOs;
 using SNEStorage.Models;
+using System.Runtime.CompilerServices;
 
 namespace SNEStorage.Services;
-public class DBHelperService(SnestorageContext context)
+
+public class DBHelperService(
+    SnestorageContext context,
+    ILogger<DBHelperService> logger)
 {
     private readonly SnestorageContext _context = context;
-    public async Task<OneOf<T1,T2>> TrySyncContext<T1, T2>(T1 res, T2 error, CancellationToken ct = default)
+    private readonly ILogger<DBHelperService> _logger = logger;
+    public async Task<OneOf<T, ServiceResultContext>> TryFunction<T>(
+        Func<CancellationToken, Task<T>> function, ServiceResult? failure = null,
+        Func<Task>? errorCallback = null, [CallerFilePath] string filePath = "", 
+        [CallerMemberName] string methodName = "", [CallerLineNumber] int line = 0,
+        CancellationToken ct = default)
     {
         try
         {
-            await _context.SaveChangesAsync(ct);
-            return res;
+            return await function(ct);
         }
-        catch
+        catch (Exception exception)
         {
-            _context.ChangeTracker.Clear();
-            return error;
+            await RunErrorCallback(errorCallback, filePath, methodName, line);
+
+            return CreateFailure(failure ?? ServiceResult.DBError, exception, filePath, 
+                methodName, line, ct);
         }
     }
-    public async Task<bool> TrySyncContext(CancellationToken ct = default)
+    public OneOf<T, ServiceResultContext> TryFunction<T>(Func<T> function, ServiceResult? failure = null,
+        [CallerFilePath] string filePath = "", [CallerMemberName] string methodName = "", 
+        [CallerLineNumber] int line = 0)
     {
         try
         {
-            await _context.SaveChangesAsync(ct);
-            return true;
+            return function();
         }
-        catch
+        catch (Exception exception)
         {
-            _context.ChangeTracker.Clear();
-            return false;
+            CancellationToken ct = exception is OperationCanceledException cancellation ?
+                    cancellation.CancellationToken : default;
+
+            return CreateFailure(failure ?? ServiceResult.DBError, exception, filePath, 
+                methodName, line, ct);
         }
     }
-    public async Task<OneOf<T1, T2>> TryFunction<T1, T2>(Func<CancellationToken, Task<T1>> func, T2 error, Func<Task>? ErrorCallback = null, CancellationToken ct = default)
+    public async Task<ServiceResultContext> TryFunction(
+        Func<CancellationToken, Task> function, ServiceResult? failure = null,
+        Func<Task>? errorCallback = null, [CallerFilePath] string filePath = "",
+        [CallerMemberName] string methodName = "", [CallerLineNumber] int line = 0, 
+        CancellationToken ct = default)
     {
+        var result = await TryFunction(
+            async cancel =>
+            {
+                await function(cancel);
+                return true;
+            },
+            failure, errorCallback, filePath, methodName, line, ct);
+
+        return result.TryPickT0(out _, out var error) ?
+            ServiceResult.Success.Return(
+                _logger, null, filePath, methodName, line) : error;
+    }
+    public Task<OneOf<T, ServiceResultContext>> TrySyncContext<T>(T success,
+        CancellationToken ct = default, [CallerFilePath] string filePath = "",
+        [CallerMemberName] string methodName = "", [CallerLineNumber] int line = 0)
+    {
+        return TryFunction(
+            async cancel =>
+            {
+                await _context.SaveChangesAsync(cancel);
+                return success;
+            },
+            ServiceResult.DBError, ClearChangeTracker, filePath, methodName, line, ct);
+    }
+    public async Task<ServiceResultContext> TrySyncContext(CancellationToken ct = default,
+        [CallerFilePath] string filePath = "", [CallerMemberName] string methodName = "", 
+        [CallerLineNumber] int line = 0)
+    {
+        var result = await TrySyncContext(true, ct, filePath, methodName, line);
+
+        return result.TryPickT0(out _, out var error) ?
+            ServiceResult.Success.Return(_logger, null, filePath, methodName, line) : error;
+    }
+
+    private ServiceResultContext CreateFailure(ServiceResult failure, Exception exception,
+        string filePath, string methodName, int line, CancellationToken ct)
+    {
+        ServiceResult result = exception switch
+        {
+            OperationCanceledException when ct.IsCancellationRequested =>
+                ServiceResult.RequestCancelled,
+            OperationCanceledException =>
+                ServiceResult.CancellationTokenError,
+            _ => failure
+        };
+
+        return result.Return(_logger, exception, methodName, filePath, line);
+    }
+    private async Task RunErrorCallback(Func<Task>? errorCallback, string filePath,
+        string methodName, int line)
+    {
+        if (errorCallback is null)
+            return;
+
         try
         {
-            return await func(ct);
+            await errorCallback();
         }
-        catch
+        catch (Exception exception)
         {
-            if(ErrorCallback != null)
-                await ErrorCallback();
-            return error;
+            ServiceResult.Error.Return(_logger, exception, methodName, filePath, line);
         }
     }
-    public T? TryFunction<T>(Func<T> func)
+    private Task ClearChangeTracker()
     {
-        try
-        {
-            return func();
-        }
-        catch
-        {
-            return default;
-        }
-    }
-    public async Task<T1?> TryFunction<T1>(Func<CancellationToken, Task<T1>> func, 
-        Func<Task>? ErrorCallback = null, CancellationToken ct = default)
-    {
-        try
-        {
-            return await func(ct);
-        }
-        catch
-        {
-            if (ErrorCallback != null)
-                await ErrorCallback();
-            return default;
-        }
-    }
-    public async Task<bool> TryFunction(Func<CancellationToken, Task> func,
-        Func<Task>? ErrorCallback = null, CancellationToken ct = default)
-    {
-        try
-        {
-            await func(ct);
-            return true;
-        }
-        catch
-        {
-            if (ErrorCallback != null)
-                await ErrorCallback();
-            return false;
-        }
+        _context.ChangeTracker.Clear();
+        return Task.CompletedTask;
     }
     public string? GetEditString(string? newValue, string? oldValue)
     {
         if (newValue is null)
             return oldValue;
-        if (string.IsNullOrWhiteSpace(newValue))
-            return "";
-        return newValue;
+
+        return string.IsNullOrWhiteSpace(newValue) ?
+            "" : newValue;
     }
 }

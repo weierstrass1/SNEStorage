@@ -1,52 +1,27 @@
 ﻿using MediaInfo;
 using MediaInfo.Analysis;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OneOf;
 using SharpCompress.Archives;
 using SharpCompress.Common;
 using SharpCompress.Readers;
 using SkiaSharp;
+using SNEStorage.DTOs;
 using SNEStorage.Models;
 using System.Text.Json;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace SNEStorage.Services;
+
 public enum FileContext
 {
     Avatar,
     Previews,
     Resource
 }
-public enum FileServiceResult
-{
-    Success,
-    InvalidFileForContext,
-    FileCreationError,
-    CancellationTokenError,
-    ImageSurpassFramesLimit,
-    InvalidImageSize,
-    InvalidImageNumberOfFrames,
-    InvalidImage,
-    FormReadingError,
-    InvalidMime,
-    MimeMismatch,
-    CacheError,
-    BatchError,
-    DBError,
-    UpdateBatchError,
-    InvalidVideo,
-    InvalidFile,
-    EmptyFile,
-    MediaSizeSurpassTheLimit,
-    CompressedFileSizeSurpassTheLimit,
-    FileSizeSurpassTheLimit,
-    AvatarSizeSurpassTheLimit
-}
-public class FileService(SnestorageContext context,
-    CacheService cacheService,
-    DBHelperService dbHelperService,
-    IWebHostEnvironment environment)
+
+public class FileService(SnestorageContext context, CacheService cacheService,
+    DBHelperService dbHelperService, IWebHostEnvironment environment,
+    ILogger<FileService> logger)
 {
     public const long MAX_FILE_SIZE = 250 * 1024 * 1024;
     public const long MAX_COMPRESSED_FILE_SIZE = 250 * 1024 * 1024;
@@ -60,390 +35,454 @@ public class FileService(SnestorageContext context,
     private readonly CacheService _cacheService = cacheService;
     private readonly DBHelperService _dbHelperService = dbHelperService;
     private readonly IWebHostEnvironment _environment = environment;
+    private readonly ILogger<FileService> _logger = logger;
     private static readonly IMediaInfoAnalyzer _mediaAnalyzer = MediaInfoAnalyzer.CreateDefault();
-    public async Task<string?> BeginBatch(CancellationToken ct)
+
+    public Task<OneOf<string, ServiceResultContext>> BeginBatch(CancellationToken ct)
     {
-        try
+        return _dbHelperService.TryFunction(async cancel =>
         {
-            string phisicalPath = GenerateBatchPath();
-            Directory.CreateDirectory(Path.GetDirectoryName(phisicalPath)!);
-            await System.IO.File.WriteAllTextAsync(phisicalPath, "[]", ct);
-            return phisicalPath;
-        }
-        catch
+            string physicalPath = GenerateBatchPath();
+            Directory.CreateDirectory(Path.GetDirectoryName(physicalPath)!);
+            await System.IO.File.WriteAllTextAsync(physicalPath, "[]", cancel);
+            return physicalPath;
+        }, ServiceResult.BatchCreationError, ct: ct);
+    }
+
+    public Task<OneOf<List<Models.File>, ServiceResultContext>> PrepareDeletion(
+        IEnumerable<long> fileIds, CancellationToken ct = default)
+    {
+        return _dbHelperService.TryFunction(async cancel =>
         {
-            return null;
-        }
+            var files = await _context.Files.AsNoTracking()
+                .Where(file => fileIds.Contains(file.Id))
+                .ToListAsync(cancel);
+
+            _context.Files.RemoveRange(files);
+            return files;
+        }, ServiceResult.DBError, ct: ct);
     }
-    public async Task<List<Models.File>> PrepareDeletion(IEnumerable<long> fileIds, CancellationToken ct = default)
+
+    public ServiceResultContext FinishDeletion(IEnumerable<Models.File> files)
     {
-        var files = await _context
-            .Files
-            .AsNoTracking()
-            .Where(f => fileIds.Contains(f.Id))
-            .ToListAsync(ct);
-        _context.Files.RemoveRange(files);
-        return files;
-    }
-    public bool FinishDeletion(IEnumerable<Models.File> files)
-    {
-        bool allDeleted = true;
+        ServiceResultContext? firstError = null;
 
         foreach (var file in files)
         {
-            bool deleted = _dbHelperService.TryFunction(() =>
+            var result = _dbHelperService.TryFunction(() =>
             {
-                var path = Path.Combine(
-                    _environment.ContentRootPath, file.URL);
-
+                string path = Path.Combine(_environment.ContentRootPath, file.URL);
                 System.IO.File.Delete(path);
                 return true;
-            });
+            }, ServiceResult.FileDeletionError);
 
-            allDeleted &= deleted;
+            if (!result.TryPickT0(out _, out var error) && firstError is null)
+                firstError = error;
         }
 
-        return allDeleted;
+        return firstError is null ? ServiceResult.Success.Return(_logger) : firstError;
     }
-    public async Task<OneOf<Models.File, FileServiceResult>> PrepareFile(FileContext context, IFormFile fileRequest, string destinationPath, string batchPath, CancellationToken ct)
+
+    public async Task<OneOf<Models.File, ServiceResultContext>> PrepareFile(
+        FileContext context, IFormFile fileRequest, string destinationPath,
+        string batchPath, CancellationToken ct)
     {
-        if(!ValidateContext(context, fileRequest))
+        if (!ValidateContext(context, fileRequest))
         {
             await BatchRollback(batchPath, ct);
-            return FileServiceResult.InvalidFileForContext;
+            return ServiceResult.InvalidFileForContext.Return(_logger);
         }
-        var res = await ValidateFile(fileRequest, ct);
-        if (res != FileServiceResult.Success)
+
+        var validation = await ValidateFile(fileRequest, ct);
+
+        if (validation.Result != ServiceResult.Success)
         {
             await BatchRollback(batchPath, ct);
-            return res;
+            return validation;
         }
 
-        string phisicalPath = Path.Combine(_environment.ContentRootPath, destinationPath);
+        string physicalPath = Path.Combine(_environment.ContentRootPath, destinationPath);
+        var updateResult = await UpdateBatch(physicalPath, batchPath, ct);
 
-        if (!await UpdateBatch(phisicalPath, batchPath, ct))
+        if (updateResult.Result != ServiceResult.Success)
         {
             await BatchRollback(batchPath, ct);
-            return FileServiceResult.UpdateBatchError;
+            return updateResult;
         }
 
-        try
+        var creationResult = await _dbHelperService.TryFunction(async cancel =>
         {
-            Directory.CreateDirectory(Path.GetDirectoryName(phisicalPath)!);
-            await using var stream = System.IO.File.Create(phisicalPath);
-            await fileRequest.CopyToAsync(stream, ct);
-        }
-        catch
+            Directory.CreateDirectory(Path.GetDirectoryName(physicalPath)!);
+            await using var stream = System.IO.File.Create(physicalPath);
+            await fileRequest.CopyToAsync(stream, cancel);
+        }, ServiceResult.FileCreationError,
+        async () => { await BatchRollback(batchPath, ct); }, ct: ct);
+
+        if (creationResult.Result != ServiceResult.Success)
+            return creationResult;
+
+        var fileTypesResult = await _cacheService.GetAllFileTypesByMime(ct);
+
+        if (!fileTypesResult.TryPickT0(out var fileTypes, out var cacheError))
         {
             await BatchRollback(batchPath, ct);
-            return FileServiceResult.FileCreationError;
+            return cacheError;
         }
 
-        var alltypes = await _cacheService.GetAllFileTypesByMime(ct);
+        string mime = fileRequest.ContentType.Trim().ToLowerInvariant();
 
-        if (alltypes == null)
+        if (!fileTypes.TryGetValue(mime, out var type))
         {
             await BatchRollback(batchPath, ct);
-            return FileServiceResult.CacheError;
+            return ServiceResult.InvalidMime.Return(_logger);
         }
-
-        var type = alltypes[fileRequest.ContentType.ToLowerInvariant().Trim()];
 
         var file = new Models.File
         {
             URL = destinationPath.Replace('\\', '/'),
-            FileTypeId = type.Id,
+            FileTypeId = type.Id
         };
 
-        _context.Files.Add(file);
+        var trackingResult = _dbHelperService.TryFunction(() =>
+        {
+            _context.Files.Add(file);
+            return file;
+        }, ServiceResult.DBError);
 
-        return file;
+        if (!trackingResult.TryPickT0(out var trackedFile, out var trackingError))
+        {
+            await BatchRollback(batchPath, ct);
+            return trackingError;
+        }
+
+        return trackedFile;
     }
-    public void BatchComplete(string batchPath)
+
+    public ServiceResultContext BatchComplete(string batchPath)
     {
-        try
+        var result = _dbHelperService.TryFunction(() =>
         {
             if (System.IO.File.Exists(batchPath))
                 System.IO.File.Delete(batchPath);
-        }
-        catch
-        {
 
-        }
+            return true;
+        }, ServiceResult.BatchError);
+
+        return result.TryPickT0(out _, out var error) ?
+            ServiceResult.Success.Return(_logger) : error;
     }
-    public async Task BatchRollback(string batchPath, CancellationToken ct)
+
+    public Task<ServiceResultContext> BatchRollback(string batchPath, CancellationToken ct)
     {
-        try
+        return _dbHelperService.TryFunction(async cancel =>
         {
             _context.ChangeTracker.Clear();
-            string batchContent = await System.IO.File.ReadAllTextAsync(batchPath, ct);
-            var batchList = JsonSerializer.Deserialize<List<string>>(batchContent);
-            List<string> files = [.. batchList!
-            .Select(f => f.Trim())
-            .Where(f => System.IO.File.Exists(f))];
-            foreach (var file in files)
-            {
-                System.IO.File.Delete(file);
-            }
-            System.IO.File.Delete(batchPath);
-        }
-        catch
-        {
 
-        }
+            string batchContent = await System.IO.File.ReadAllTextAsync(batchPath, cancel);
+            var batchList = JsonSerializer.Deserialize<List<string>>(batchContent) ?? [];
+
+            var files = batchList.Select(file => file.Trim())
+                .Where(System.IO.File.Exists)
+                .ToList();
+
+            foreach (string file in files)
+                System.IO.File.Delete(file);
+
+            System.IO.File.Delete(batchPath);
+        }, ServiceResult.BatchError, ct: ct);
     }
+
     public bool ValidateContext(FileContext context, IFormFile form)
     {
         string contentType = form.ContentType?.Trim().ToLowerInvariant() ?? "";
+
         if (string.IsNullOrWhiteSpace(contentType))
             return false;
+
         return context switch
         {
-            FileContext.Avatar => contentType.StartsWith("image/", StringComparison.Ordinal),
-            FileContext.Previews => contentType.StartsWith("image/", StringComparison.Ordinal) ||
-                                contentType.StartsWith("video/", StringComparison.Ordinal),
-            FileContext.Resource => contentType.StartsWith("application/", StringComparison.Ordinal),
-            _ => false,
+            FileContext.Avatar =>
+                contentType.StartsWith("image/", StringComparison.Ordinal),
+
+            FileContext.Previews =>
+                contentType.StartsWith("image/", StringComparison.Ordinal) ||
+                contentType.StartsWith("video/", StringComparison.Ordinal),
+
+            FileContext.Resource =>
+                contentType.StartsWith("application/", StringComparison.Ordinal),
+
+            _ => false
         };
     }
-    public async Task<FileServiceResult> ValidateFile(IFormFile form, CancellationToken ct = default)
+
+    public async Task<ServiceResultContext> ValidateFile(
+        IFormFile form, CancellationToken ct = default)
     {
         if (form.Length <= 0)
-            return FileServiceResult.EmptyFile;
-        if (form.Length > MAX_FILE_SIZE)
-            return FileServiceResult.FileSizeSurpassTheLimit;
+            return ServiceResult.EmptyFile.Return(_logger);
 
-        string? expectedMime = await GetExpectedMime(form, ct);
-        if (expectedMime is null)
-            return FileServiceResult.CacheError;
+        if (form.Length > MAX_FILE_SIZE)
+            return ServiceResult.FileSizeSurpassTheLimit.Return(_logger);
+
+        var expectedMimeResult = await GetExpectedMime(form, ct);
+
+        if (!expectedMimeResult.TryPickT0(out var expectedMime, out var mimeError))
+            return mimeError;
+
         if (string.IsNullOrWhiteSpace(expectedMime))
-            return FileServiceResult.InvalidMime;
+            return ServiceResult.InvalidMime.Return(_logger);
 
         bool isImage = expectedMime.StartsWith("image/", StringComparison.Ordinal);
         bool isVideo = expectedMime.StartsWith("video/", StringComparison.Ordinal);
 
         if ((isImage || isVideo) && form.Length > MAX_MEDIA_FILE_SIZE)
-            return FileServiceResult.MediaSizeSurpassTheLimit;
+            return ServiceResult.MediaSizeSurpassTheLimit.Return(_logger);
 
-        using var stream = form.OpenReadStream();
-        if (!stream.CanRead || !stream.CanSeek || stream.Length != form.Length)
-            return FileServiceResult.FormReadingError;
+        var streamResult = _dbHelperService.TryFunction(
+            form.OpenReadStream, ServiceResult.FormReadingError);
 
+        if (!streamResult.TryPickT0(out var stream, out var streamError))
+            return streamError;
 
-        Func<Stream, Task<OneOf<string, FileServiceResult>>> validateFunc = isImage ?
-            async s => InspectImage(s, ct) :
-            isVideo ?
-                async s => await InspectVideo(s, ct) :
-                async s => InspectArchive(s, ct);
+        using (stream)
+        {
+            if (!stream.CanRead || !stream.CanSeek || stream.Length != form.Length)
+                return ServiceResult.FormReadingError.Return(_logger);
 
-        var res = await validateFunc(stream);
-        if (res.TryPickT1(out var error, out string? detectedMime))
-            return error;
+            OneOf<string, ServiceResultContext> inspectionResult;
 
-        if (detectedMime is null || !MimeEquals(detectedMime, expectedMime))
-            return FileServiceResult.MimeMismatch;
+            if (isImage)
+                inspectionResult = InspectImage(stream, ct);
+            else if (isVideo)
+                inspectionResult = await InspectVideo(stream, ct);
+            else
+                inspectionResult = InspectArchive(stream, ct);
 
-        return FileServiceResult.Success;
+            if (!inspectionResult.TryPickT0(out var detectedMime, out var inspectionError))
+                return inspectionError;
+
+            if (!MimeEquals(detectedMime, expectedMime))
+                return ServiceResult.MimeMismatch.Return(_logger);
+        }
+
+        return ServiceResult.Success.Return(_logger);
     }
-    public async Task<OneOf<T1, T2>> TrySyncContextWithFiles<T1, T2>(string batchPath, T1 res, T2 error, CancellationToken ct = default)
+
+    public async Task<OneOf<T, ServiceResultContext>> TrySyncContextWithFiles<T>(
+        string batchPath, T success, CancellationToken ct = default)
     {
-        try
+        var result = await _dbHelperService.TryFunction(async cancel =>
         {
-            await _context.SaveChangesAsync(ct);
-            BatchComplete(batchPath);
-            return res;
-        }
-        catch
-        {
-            await BatchRollback(batchPath, ct);
-            return error;
-        }
+            await _context.SaveChangesAsync(cancel);
+            return success;
+        }, ServiceResult.DBError,
+        async () => { await BatchRollback(batchPath, ct); }, ct: ct);
+
+        if (result.IsT0)
+            _ = BatchComplete(batchPath);
+
+        return result;
     }
-    public async Task<bool> TrySyncContextWithFiles(string batchPath, CancellationToken ct = default)
+
+    public async Task<ServiceResultContext> TrySyncContextWithFiles(
+        string batchPath, CancellationToken ct = default)
     {
-        try
-        {
-            await _context.SaveChangesAsync(ct);
-            BatchComplete(batchPath);
-            return true;
-        }
-        catch
-        {
-            await BatchRollback(batchPath, ct);
-            return false;
-        }
+        var result = await TrySyncContextWithFiles(batchPath, true, ct);
+
+        return result.TryPickT0(out _, out var error) ?
+            ServiceResult.Success.Return(_logger) : error;
     }
-    private async Task<string?> GetExpectedMime(IFormFile form, CancellationToken ct = default)
+
+    private async Task<OneOf<string, ServiceResultContext>> GetExpectedMime(
+        IFormFile form, CancellationToken ct = default)
     {
-        var filetypes = await _cacheService.GetAllFileTypesByMime(ct);
-        if (filetypes == null)
-            return null;
+        var fileTypesResult = await _cacheService.GetAllFileTypesByMime(ct);
 
-        string mime = form.ContentType.ToLowerInvariant().Trim();
+        if (!fileTypesResult.TryPickT0(out var fileTypes, out var cacheError))
+            return cacheError;
 
-        return filetypes.ContainsKey(mime) ?
-            mime : "";
-    }
-    private static OneOf<string, FileServiceResult> InspectImage(Stream stream, CancellationToken ct = default)
-    {
-        if (ct.IsCancellationRequested)
-            return FileServiceResult.CancellationTokenError;
-
-        using var codec = SKCodec.Create(stream);
-        if (codec is null)
-            return FileServiceResult.InvalidImage;
-
-        string? mime = codec.EncodedFormat switch
-        {
-            SKEncodedImageFormat.Png => "image/png",
-            SKEncodedImageFormat.Jpeg => "image/jpeg",
-            SKEncodedImageFormat.Gif => "image/gif",
-            SKEncodedImageFormat.Webp => "image/webp",
-            SKEncodedImageFormat.Avif => "image/avif",
-            _ => null
-        };
-
-        if (mime is null)
-            return FileServiceResult.InvalidMime;
-
-        if (codec.FrameCount < 0)
-            return FileServiceResult.InvalidImageNumberOfFrames;
-
-        var source = codec.Info;
-        if (source.Width <= 0 || source.Height <= 0 || (long)source.Width * source.Height > MAX_IMAGE_PIXELS)
-            return FileServiceResult.InvalidImageSize;
-
-        if (codec.FrameCount > MAX_IMAGE_FRAMES)
-            return FileServiceResult.ImageSurpassFramesLimit;
-
-        var info = new SKImageInfo(
-            source.Width, source.Height,
-            SKColorType.Rgba8888, SKAlphaType.Premul);
-
-        if (ct.IsCancellationRequested)
-            return FileServiceResult.CancellationTokenError;
-
-        using var bitmap = new SKBitmap(info);
-        if (bitmap.GetPixels() == IntPtr.Zero)
-            return FileServiceResult.InvalidImageSize;
-
-        int frameCount = Math.Max(1, codec.FrameCount);
-
-        for (int frame = 0; frame < frameCount; frame++)
-        {
-            if (ct.IsCancellationRequested)
-                return FileServiceResult.CancellationTokenError;
-
-            bitmap.Erase(SKColors.Transparent);
-
-            var options = new SKCodecOptions(frame) { PriorFrame = -1 };
-            var result = codec.GetPixels(
-                info, bitmap.GetPixels(), bitmap.RowBytes, options);
-
-            if (result != SKCodecResult.Success)
-                return FileServiceResult.InvalidImageNumberOfFrames;
-        }
-
-        return mime;
+        string mime = form.ContentType?.Trim().ToLowerInvariant() ?? "";
+        return fileTypes.ContainsKey(mime) ? mime : "";
     }
 
-    private async Task<OneOf<string, FileServiceResult>> InspectVideo(
+    private OneOf<string, ServiceResultContext> InspectImage(
         Stream stream, CancellationToken ct = default)
     {
-        if (ct.IsCancellationRequested)
-            return FileServiceResult.CancellationTokenError;
+        var result = _dbHelperService.TryFunction<
+            OneOf<string, ServiceResultContext>>(() =>
+            {
+                if (ct.IsCancellationRequested)
+                    return ServiceResult.RequestCancelled.Return(_logger);
 
-        var media = await _dbHelperService.TryFunction(
-            async cancel => await _mediaAnalyzer.AnalyzeAsync(stream, true, cancel),
-            ct: ct);
-        if (media == null)
-            return ct.IsCancellationRequested ?
-                FileServiceResult.CancellationTokenError :
-                FileServiceResult.InvalidVideo;
+                using var codec = SKCodec.Create(stream);
 
-        if (!media.Success || !media.HasVideo || !media.VideoStreams.Any())
-            return FileServiceResult.InvalidVideo;
+                if (codec is null)
+                    return ServiceResult.InvalidImage.Return(_logger);
 
-        if (media.VideoStreams.Any(video =>
-            video.Width <= 0 || video.Height <= 0))
-            return FileServiceResult.InvalidVideo;
+                string? mime = codec.EncodedFormat switch
+                {
+                    SKEncodedImageFormat.Png => "image/png",
+                    SKEncodedImageFormat.Jpeg => "image/jpeg",
+                    SKEncodedImageFormat.Gif => "image/gif",
+                    SKEncodedImageFormat.Webp => "image/webp",
+                    SKEncodedImageFormat.Avif => "image/avif",
+                    _ => null
+                };
 
-        string? mime = media.General.Format switch
-        {
-            "MPEG-4" => "video/mp4",
-            "WebM" => "video/webm",
-            "Ogg" => "video/ogg",
-            _ => null
-        };
+                if (mime is null)
+                    return ServiceResult.InvalidMime.Return(_logger);
 
-        if (mime is null)
-            return FileServiceResult.InvalidMime;
+                if (codec.FrameCount < 0)
+                    return ServiceResult.InvalidImageNumberOfFrames.Return(_logger);
 
-        return mime;
+                var source = codec.Info;
+
+                if (source.Width <= 0 || source.Height <= 0 ||
+                    (long)source.Width * source.Height > MAX_IMAGE_PIXELS)
+                    return ServiceResult.InvalidImageSize.Return(_logger);
+
+                if (codec.FrameCount > MAX_IMAGE_FRAMES)
+                    return ServiceResult.ImageSurpassFramesLimit.Return(_logger);
+
+                var info = new SKImageInfo(source.Width, source.Height,
+                    SKColorType.Rgba8888, SKAlphaType.Premul);
+
+                if (ct.IsCancellationRequested)
+                    return ServiceResult.RequestCancelled.Return(_logger);
+
+                using var bitmap = new SKBitmap(info);
+
+                if (bitmap.GetPixels() == IntPtr.Zero)
+                    return ServiceResult.InvalidImageSize.Return(_logger);
+
+                int frameCount = Math.Max(1, codec.FrameCount);
+
+                for (int frame = 0; frame < frameCount; frame++)
+                {
+                    if (ct.IsCancellationRequested)
+                        return ServiceResult.RequestCancelled.Return(_logger);
+
+                    bitmap.Erase(SKColors.Transparent);
+
+                    var options = new SKCodecOptions(frame) { PriorFrame = -1 };
+                    var codecResult = codec.GetPixels(
+                        info, bitmap.GetPixels(), bitmap.RowBytes, options);
+
+                    if (codecResult != SKCodecResult.Success)
+                        return ServiceResult.InvalidImageNumberOfFrames.Return(_logger);
+                }
+
+                return mime;
+            }, ServiceResult.InvalidImage);
+
+        return result.TryPickT0(out var inspection, out var error) ? inspection : error;
     }
 
-    private OneOf<string, FileServiceResult> InspectArchive(Stream stream, CancellationToken ct = default)
+    private async Task<OneOf<string, ServiceResultContext>> InspectVideo(
+        Stream stream, CancellationToken ct = default)
     {
-        if (ct.IsCancellationRequested)
-            return FileServiceResult.CancellationTokenError;
-
-        if (!stream.CanRead || !stream.CanSeek)
-            return FileServiceResult.FormReadingError;
-
-        if (stream.Length == 0)
-            return FileServiceResult.EmptyFile;
-
-        if (!ArchiveFactory.IsArchive(stream, out var archiveType))
-            return FileServiceResult.InvalidFile;
-
-        string? mime = archiveType switch
-        {
-            ArchiveType.Zip => "application/zip",
-            ArchiveType.Rar => "application/vnd.rar",
-            ArchiveType.SevenZip => "application/x-7z-compressed",
-            ArchiveType.Tar => "application/x-tar",
-            ArchiveType.GZip => "application/gzip",
-            _ => null
-        };
-
-        if (mime is null)
-            return FileServiceResult.InvalidMime;
-
-        if (ct.IsCancellationRequested)
-            return FileServiceResult.CancellationTokenError;
-
-        stream.Position = 0;
-        using var archive = _dbHelperService.TryFunction(
-            () => ArchiveFactory.OpenArchive(stream, new ReaderOptions
+        var result = await _dbHelperService.TryFunction<
+            OneOf<string, ServiceResultContext>>(async cancel =>
             {
-                LeaveStreamOpen = true,
-                LookForHeader = false
-            }));
+                if (cancel.IsCancellationRequested)
+                    return ServiceResult.RequestCancelled.Return(_logger);
 
-        if (archive == null)
-            return FileServiceResult.FormReadingError;
+                var media = await _mediaAnalyzer.AnalyzeAsync(stream, true, cancel);
 
-        if (archive.Type != archiveType)
-            return FileServiceResult.InvalidFile;
+                if (!media.Success || !media.HasVideo || !media.VideoStreams.Any())
+                    return ServiceResult.InvalidVideo.Return(_logger);
 
-        var entries = _dbHelperService.TryFunction(() => archive.Entries
-             .Take(MAX_ARCHIVE_ENTRIES + 1)
-             .TakeWhile(_ => !ct.IsCancellationRequested)
-             .ToArray());
+                if (media.VideoStreams.Any(video => video.Width <= 0 || video.Height <= 0))
+                    return ServiceResult.InvalidVideo.Return(_logger);
 
-        if (ct.IsCancellationRequested)
-            return FileServiceResult.CancellationTokenError;
+                string? mime = media.General.Format switch
+                {
+                    "MPEG-4" => "video/mp4",
+                    "WebM" => "video/webm",
+                    "Ogg" => "video/ogg",
+                    _ => null
+                };
 
-        if (entries is null)
-            return FileServiceResult.InvalidFile;
+                return mime is null ?
+                    ServiceResult.InvalidMime.Return(_logger) : mime;
+            }, ServiceResult.InvalidVideo, ct: ct);
 
-        if (entries.Length > MAX_ARCHIVE_ENTRIES ||
-            entries.Any(entry => entry.IsEncrypted || !entry.IsComplete ||
-                entry.IsSplitAfter))
-            return FileServiceResult.InvalidFile;
+        return result.TryPickT0(out var inspection, out var error) ? inspection : error;
+    }
 
-        return entries.Any(entry => !entry.IsDirectory) ?
-            mime : FileServiceResult.InvalidFile;
+    private OneOf<string, ServiceResultContext> InspectArchive(
+        Stream stream, CancellationToken ct = default)
+    {
+        var result = _dbHelperService.TryFunction<
+            OneOf<string, ServiceResultContext>>(() =>
+            {
+                if (ct.IsCancellationRequested)
+                    return ServiceResult.RequestCancelled.Return(_logger);
+
+                if (!stream.CanRead || !stream.CanSeek)
+                    return ServiceResult.FormReadingError.Return(_logger);
+
+                if (stream.Length == 0)
+                    return ServiceResult.EmptyFile.Return(_logger);
+
+                if (!ArchiveFactory.IsArchive(stream, out var archiveType))
+                    return ServiceResult.InvalidFile.Return(_logger);
+
+                string? mime = archiveType switch
+                {
+                    ArchiveType.Zip => "application/zip",
+                    ArchiveType.Rar => "application/vnd.rar",
+                    ArchiveType.SevenZip => "application/x-7z-compressed",
+                    ArchiveType.Tar => "application/x-tar",
+                    ArchiveType.GZip => "application/gzip",
+                    _ => null
+                };
+
+                if (mime is null)
+                    return ServiceResult.InvalidMime.Return(_logger);
+
+                if (ct.IsCancellationRequested)
+                    return ServiceResult.RequestCancelled.Return(_logger);
+
+                stream.Position = 0;
+
+                var archiveResult = _dbHelperService.TryFunction(() =>
+                    ArchiveFactory.OpenArchive(stream, new ReaderOptions
+                    {
+                        LeaveStreamOpen = true,
+                        LookForHeader = false
+                    }), ServiceResult.FormReadingError);
+
+                if (!archiveResult.TryPickT0(out var archive, out var archiveError))
+                    return archiveError;
+
+                using (archive)
+                {
+                    if (archive.Type != archiveType)
+                        return ServiceResult.InvalidFile.Return(_logger);
+
+                    var entriesResult = _dbHelperService.TryFunction(() =>
+                        archive.Entries.Take(MAX_ARCHIVE_ENTRIES + 1)
+                            .TakeWhile(_ => !ct.IsCancellationRequested)
+                            .ToArray(), ServiceResult.InvalidFile);
+
+                    if (ct.IsCancellationRequested)
+                        return ServiceResult.RequestCancelled.Return(_logger);
+
+                    if (!entriesResult.TryPickT0(out var entries, out var entriesError))
+                        return entriesError;
+
+                    if (entries.Length > MAX_ARCHIVE_ENTRIES ||
+                        entries.Any(entry => entry.IsEncrypted || !entry.IsComplete ||
+                            entry.IsSplitAfter))
+                        return ServiceResult.InvalidFile.Return(_logger);
+
+                    return entries.Any(entry => !entry.IsDirectory) ?
+                        mime : ServiceResult.InvalidFile.Return(_logger);
+                }
+            }, ServiceResult.InvalidFile);
+
+        return result.TryPickT0(out var inspection, out var error) ? inspection : error;
     }
     private static bool MimeEquals(string first, string second)
     {
@@ -456,34 +495,34 @@ public class FileService(SnestorageContext context,
                 var value => value
             };
         }
-
         return Canonicalize(first) == Canonicalize(second);
     }
-    private static async Task<bool> UpdateBatch(string phisicalPath, string batchPath, CancellationToken ct)
+
+    private Task<ServiceResultContext> UpdateBatch(
+        string physicalPath, string batchPath, CancellationToken ct)
     {
-        try
+        return _dbHelperService.TryFunction(async cancel =>
         {
-            string batchContent = await System.IO.File.ReadAllTextAsync(batchPath, ct);
-            var batchList = JsonSerializer.Deserialize<List<string>>(batchContent);
-            batchList!.Add(phisicalPath);
+            string batchContent = await System.IO.File.ReadAllTextAsync(batchPath, cancel);
+            var batchList = JsonSerializer.Deserialize<List<string>>(batchContent) ?? [];
+
+            batchList.Add(physicalPath);
             batchContent = JsonSerializer.Serialize(batchList);
-            await System.IO.File.WriteAllTextAsync(batchPath, batchContent, ct);
-            return true;
-        }
-        catch
-        {
-            return false;
-        }
+
+            await System.IO.File.WriteAllTextAsync(batchPath, batchContent, cancel);
+        }, ServiceResult.UpdateBatchError, ct: ct);
     }
     private string GenerateBatchPath()
     {
         string path;
+
         do
         {
             path = Path.Combine(_environment.ContentRootPath, "Storage", "Batches",
                 $"{Guid.NewGuid():N}.json");
         }
         while (System.IO.File.Exists(path));
+
         return path;
     }
 }

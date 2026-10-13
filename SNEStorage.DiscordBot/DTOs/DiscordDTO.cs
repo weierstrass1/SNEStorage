@@ -10,4 +10,8 @@ public sealed class DiscordDTO
     public required string BotToken { get; init; }
     public required string ServerConfigPath { get; init; } = "Config/server-config.json";
 }
-public sealed record BotRunMode(bool Setup, bool DryRun);
+public sealed record BotRunMode(
+    bool Setup,
+    bool DryRun,
+    bool PermissionsOnly,
+    bool ForumTagsOnly);

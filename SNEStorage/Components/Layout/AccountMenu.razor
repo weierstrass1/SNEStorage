@@ -1,7 +1,9 @@
 <div class="dropdown account-menu">
     <button class="account-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"
             aria-label="@($"Account options for {Username}")">
-        <img class="account-avatar" src="@DisplayAvatarUrl" alt="" width="36" height="36" @onerror="ShowFallbackAvatar" />
+        <span class="account-avatar-frame" aria-hidden="true">
+            <img class="account-avatar" src="@DisplayAvatarUrl" alt="" width="36" height="36" @onerror="ShowFallbackAvatar" />
+        </span>
         <span class="account-name" title="@Username" style="color: @DisplayUsernameColor">@Username</span>
         <svg class="account-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4" /></svg>
     </button>

@@ -78,26 +78,15 @@
                 </div>
 
                 <div class="profile-edit-avatar-row">
-                    <div class="profile-edit-avatar" style="--profile-accent: @_form.UsernameColor">
-                        <img src="@AvatarPreviewUrl" alt="Avatar preview" />
-                    </div>
+                    <AvatarPicker InputId="profile-avatar-file" FieldName="File" Required="false" Busy="_isSaving"
+                                  InitialAvatarUrl="@AvatarPreviewUrl" SelectionChanged="AvatarChanged" />
                     <div class="profile-edit-avatar-fields">
-                        <label class="profile-edit-label" for="profile-avatar-file">Profile avatar</label>
-                        <InputFile id="profile-avatar-file"
-                                   OnChange="AvatarSelectedAsync"
-                                   accept=".png,.jpg,.jpeg,image/png,image/jpeg"
-                                   class="profile-edit-file" />
-                        <p class="profile-edit-help">PNG or JPG, up to 5 MB. Leave empty to keep your current avatar.</p>
-                        @if (!string.IsNullOrWhiteSpace(_avatarName))
-                        {
-                            <p class="profile-edit-file-name">Selected: @_avatarName</p>
-                            <button class="profile-edit-text-button" type="button" @onclick="RemoveSelectedAvatarAsync">Remove selected image</button>
-                        }
                         <div class="profile-edit-color-row">
                             <label class="profile-edit-label" for="profile-username-color">Username color</label>
                             <InputText id="profile-username-color" type="color" @bind-Value="_form.UsernameColor" class="profile-edit-color" />
                             <span class="profile-edit-color-value">@_form.UsernameColor</span>
                         </div>
+                        <p class="profile-edit-help">Click your photo to change it. Your current avatar stays until you save.</p>
                     </div>
                 </div>
             </section>
@@ -155,12 +144,43 @@
                 </div>
             </section>
 
-            <section class="profile-edit-card" aria-labelledby="profile-links-heading">
+            <section class="profile-edit-card profile-edit-discord-section" aria-labelledby="profile-discord-heading">
                 <div class="profile-edit-section-heading">
                     <span class="profile-edit-index">04</span>
                     <div>
+                        <h2 id="profile-discord-heading">Discord connection</h2>
+                        <p>Link your Discord account with SNEStorage to access the community server.</p>
+                    </div>
+                </div>
+                <div class="profile-edit-discord-card">
+                    @if (!string.IsNullOrWhiteSpace(_profile.DiscordUserId))
+                    {
+                        <div class="profile-edit-discord-details">
+                            <div class="profile-edit-discord-status">
+                                <span class="profile-edit-discord-indicator" aria-hidden="true"></span>
+                                <div><strong>Connected</strong><p>@DiscordDisplayName</p></div>
+                            </div>
+                            <p class="profile-edit-help">This verified account is used to access the SNEStorage Discord server.</p>
+                        </div>
+                        <a class="profile-edit-discord-button action-button" href="/api/discord/link/start" data-enhance-nav="false">Change Discord account <ActionArrow /></a>
+                    }
+                    else
+                    {
+                        <div class="profile-edit-discord-details">
+                            <strong>Not connected</strong>
+                            <p class="profile-edit-discord-copy">Connect Discord to verify your identity and access the community server.</p>
+                        </div>
+                        <a class="profile-edit-discord-button action-button" href="/api/discord/link/start" data-enhance-nav="false">Connect to Discord <ActionArrow /></a>
+                    }
+                </div>
+            </section>
+
+            <section class="profile-edit-card" aria-labelledby="profile-links-heading">
+                <div class="profile-edit-section-heading">
+                    <span class="profile-edit-index">05</span>
+                    <div>
                         <h2 id="profile-links-heading">Social links</h2>
-                        <p>Enter a username or profile link. For Discord, use your username or user profile link, not a server invite. Nintendo Network accepts an ID.</p>
+                        <p>Enter a username or profile link. Nintendo Network accepts an ID.</p>
                     </div>
                 </div>
                 <div class="profile-edit-grid">
@@ -178,11 +198,6 @@
                         <label class="profile-edit-label" for="profile-buymeacoffee">Buy Me a Coffee</label>
                         <InputText id="profile-buymeacoffee" @bind-Value="_form.BuyMeACoffee" class="profile-edit-control" placeholder="username or buymeacoffee.com/username" />
                         @if (SocialLinkError(nameof(EditProfileDTO.BuyMeACoffee)) is { } coffeeError) { <p class="profile-edit-validation">@coffeeError</p> }
-                    </div>
-                    <div class="profile-edit-field">
-                        <label class="profile-edit-label" for="profile-discord">Discord username</label>
-                        <InputText id="profile-discord" @bind-Value="_form.Discord" class="profile-edit-control" placeholder="username or discord.com/users/ID" />
-                        @if (SocialLinkError(nameof(EditProfileDTO.Discord)) is { } discordError) { <p class="profile-edit-validation">@discordError</p> }
                     </div>
                     <div class="profile-edit-field">
                         <label class="profile-edit-label" for="profile-twitter">Twitter / X</label>
@@ -229,7 +244,7 @@
 
             <section class="profile-edit-card profile-edit-locked-card" aria-labelledby="profile-locked-heading">
                 <div class="profile-edit-section-heading">
-                    <span class="profile-edit-index">05</span>
+                    <span class="profile-edit-index">06</span>
                     <div>
                         <h2 id="profile-locked-heading">Managed account details</h2>
                         <p>These details cannot be changed here. Contact a moderator or administrator for updates.</p>

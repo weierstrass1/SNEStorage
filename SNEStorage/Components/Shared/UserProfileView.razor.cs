@@ -31,7 +31,7 @@ public partial class UserProfileView
             CreateSocialField("Patreon", Profile.Patreon),
             CreateSocialField("PayPal", Profile.Paypal),
             CreateSocialField("Buy Me a Coffee", Profile.BuyMeACoffee),
-            CreateSocialField("Discord", Profile.Discord),
+            CreateDiscordSocialField(Profile),
             CreateSocialField("Twitter / X", Profile.Twitter),
             CreateSocialField("Facebook", Profile.Facebook),
             CreateSocialField("YouTube", Profile.Youtube),
@@ -44,6 +44,24 @@ public partial class UserProfileView
         .Where(socialField => socialField is not null)
         .Select(socialField => socialField!)
         .ToArray();
+
+    private static SocialField? CreateDiscordSocialField(UserInfo profile)
+    {
+        if (!string.IsNullOrWhiteSpace(profile.DiscordUserId))
+        {
+            string displayName = string.IsNullOrWhiteSpace(profile.DiscordUsername)
+                ? "Verified Discord account"
+                : $"@{profile.DiscordUsername}";
+
+            return new SocialField(
+                "Discord",
+                SocialProfileLinkRules.GetIconClass("Discord"),
+                displayName,
+                $"https://discord.com/users/{profile.DiscordUserId}");
+        }
+
+        return CreateSocialField("Discord", profile.Discord);
+    }
 
     private static SocialField? CreateSocialField(string name, string? value)
     {

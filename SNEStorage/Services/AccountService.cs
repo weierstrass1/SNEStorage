@@ -3,8 +3,11 @@ using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using OneOf;
+using SNEStorage.Components.Pages;
+using SNEStorage.Discord;
 using SNEStorage.DTOs;
 using SNEStorage.Models;
+using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -26,15 +29,17 @@ public enum AccountServiceResult
     Success,
     Error
 }
-public class AccountService(UserManager<ApplicationUser> userManager,
-                        IWebHostEnvironment environment,
-                      IConfiguration configuration,
-                      SignInManager<ApplicationUser> signInManager,
-                      SnestorageContext context,
-                      FileService fileService,
-                      IHttpContextAccessor httpContextAccessor,
-                      EmailService emailService,
-                      DBHelperService dbHelperService)
+public class AccountService(
+    UserManager<ApplicationUser> userManager,
+    IWebHostEnvironment environment,
+    IConfiguration configuration,
+    SignInManager<ApplicationUser> signInManager,
+    SnestorageContext context,
+    FileService fileService,
+    IHttpContextAccessor httpContextAccessor,
+    EmailService emailService,
+    DBHelperService dbHelperService,
+    DiscordService discordService)
 {
     private readonly UserManager<ApplicationUser> _userManager = userManager;
     private readonly IWebHostEnvironment _environment = environment;
@@ -45,6 +50,7 @@ public class AccountService(UserManager<ApplicationUser> userManager,
     private readonly IHttpContextAccessor _httpContextAccessor = httpContextAccessor;
     private readonly EmailService _emailService = emailService;
     private readonly DBHelperService _dbHelperService = dbHelperService;
+    private readonly DiscordService _discordService = discordService;
     public async Task<AccountServiceResult> ChangePassword(ChangePasswordDTO dto, 
         CancellationToken ct = default)
     {
@@ -219,7 +225,7 @@ public class AccountService(UserManager<ApplicationUser> userManager,
         var result = await _signInManager.PasswordSignInAsync(
             credentials.User!,
             credentials.Password!,
-            isPersistent: false,
+            isPersistent: true,
             lockoutOnFailure: true);
         if (!result.Succeeded) return null;
         return await BuildToken(credentials.User!);
@@ -230,9 +236,19 @@ public class AccountService(UserManager<ApplicationUser> userManager,
         if (context == null)
             return false;
 
-        context.Session.Remove("Token");
+        var res = await _dbHelperService.TryFunction(
+            async cancel => await _signInManager.SignOutAsync());
+        if (!res)
+            return false;
 
-        await _signInManager.SignOutAsync();
+        context.Session.Remove("Token");
+        context.Response.Cookies.Delete("__Host-SNEStorage.Auth",
+            new()
+            {
+                Secure = true,
+                SameSite = SameSiteMode.Lax,
+                Path = "/"
+            });
         return true;
     }
     public async Task<OneOf<UserInfo, AccountServiceResult>> GetUserInfo(CancellationToken cancellationToken)
@@ -247,29 +263,21 @@ public class AccountService(UserManager<ApplicationUser> userManager,
     }
     public async Task<OneOf<UserInfo, AccountServiceResult>> GetUserInfo(string userId, CancellationToken ct)
     {
-        try
-        {
-            var user = await _context.UserInfos
+        var userRes = await _dbHelperService.TryFunction(
+            async cancel => await _context.UserInfos
                 .AsNoTracking()
                 .Include(info => info.TimeZone)
                 .Include(info => info.EmailVisibility)
                 .Include(info => info.Avatar)
                 .Include(info => info.User)
-                .FirstOrDefaultAsync(info => info.UserId == userId, ct);
-            if(user == null)
-                return AccountServiceResult.UserNotFound;
-            user.UserSummary = UserNameDTO.FromUserInfo(user, this);
-            return user;
-        }
-        catch (OperationCanceledException)
-        when (ct.IsCancellationRequested)
-        {
-            return AccountServiceResult.CancelledToken;
-        }
-        catch
-        {
-            return AccountServiceResult.Error;
-        }
+                .FirstOrDefaultAsync(info => info.UserId == userId, cancel),
+            AccountServiceResult.DBError, ct: ct);
+        if (!userRes.TryPickT0(out var user, out var error))
+            return error;
+        if (user == null)
+            return AccountServiceResult.UserNotFound;
+        user.UserSummary = UserNameDTO.FromUserInfo(user, this);
+        return user;
     }
     public async Task<AuthenticationResponse?> RefreshToken()
     {
@@ -297,9 +305,10 @@ public class AccountService(UserManager<ApplicationUser> userManager,
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWTKey"]!));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-        var exp = DateTime.UtcNow.AddMinutes(30);
+        var exp = DateTime.UtcNow.AddDays(90);
 
-        var jwt = new JwtSecurityToken(claims: claims, expires: exp, signingCredentials: creds);
+        var jwt = new JwtSecurityToken(claims: claims, expires: exp, 
+            signingCredentials: creds);
         return new AuthenticationResponse { Token = new JwtSecurityTokenHandler().WriteToken(jwt), ExpireTime = exp };
     }
     public async Task<bool> AddRole(EditRole editRole)
@@ -314,7 +323,11 @@ public class AccountService(UserManager<ApplicationUser> userManager,
         var result = await _userManager
             .AddClaimAsync(user, new Claim(editRole.RoleName, "1"));
 
-        return result.Succeeded;
+        if (!result.Succeeded)
+            return false;
+
+        var stampResult = await _userManager.UpdateSecurityStampAsync(user);
+        return stampResult.Succeeded;
     }
     public async Task<bool> RemoveRole(EditRole editRole)
     {
@@ -330,7 +343,11 @@ public class AccountService(UserManager<ApplicationUser> userManager,
 
         var result = await _userManager.RemoveClaimAsync(user, claim);
 
-        return result.Succeeded;
+        if (!result.Succeeded)
+            return false;
+
+        var stampResult = await _userManager.UpdateSecurityStampAsync(user);
+        return stampResult.Succeeded;
     }
     public async Task<bool> EditUserInfo(EditProfileDTO dto, CancellationToken ct)
     {
@@ -366,6 +383,9 @@ public class AccountService(UserManager<ApplicationUser> userManager,
             info.Avatar = file;
         }
 
+        bool discordColorChanged = dto.UsernameColor is not null &&
+           !string.Equals(dto.UsernameColor, info.UsernameColor, StringComparison.OrdinalIgnoreCase);
+
         info.UsernameColor = dto.UsernameColor ?? info.UsernameColor;
         info.Bio = dto.Bio ?? info.Bio;
         info.Patreon = GetSocialNetwork(dto.Patreon, info.Patreon);
@@ -382,7 +402,7 @@ public class AccountService(UserManager<ApplicationUser> userManager,
         info.NintendoNetwork = GetSocialNetwork(dto.NintendoNetwork, info.NintendoNetwork);
         info.TimeZoneId = dto.TimeZoneId ?? info.TimeZoneId;
         info.EmailVisibilityId = dto.EmailVisibilityId ?? info.EmailVisibilityId;
-
+       
         try
         {
             await _context.SaveChangesAsync(ct);
@@ -397,6 +417,13 @@ public class AccountService(UserManager<ApplicationUser> userManager,
                 _context.ChangeTracker.Clear();
             return false;
         }
+        if (discordColorChanged && !string.IsNullOrWhiteSpace(info.DiscordUserId))
+        {
+            _ = await _discordService.NotifyMemberChangedAsync(
+                info.DiscordUserId,
+                ct);
+        }
+
         if (file == null || previousAvatar == null)
             return true;
 
@@ -419,26 +446,33 @@ public class AccountService(UserManager<ApplicationUser> userManager,
     {
         return _httpContextAccessor.HttpContext!.User.FindFirstValue(ClaimTypes.NameIdentifier);
     }
-    public async Task<AccountServiceResult> ConfirmUser(string userId, string token64)
+    public async Task<AccountServiceResult> ConfirmUser(string userId, string token64,
+        CancellationToken ct)
     {
         var user = await _userManager.FindByIdAsync(userId);
+
         if (user == null)
             return AccountServiceResult.UserNotFound;
-        byte[] tokenbytes;
-        try
-        {
-            tokenbytes = WebEncoders.Base64UrlDecode(token64);
-        }
-        catch
-        {
+
+        bool wasAlreadyConfirmed = user.EmailConfirmed;
+
+        byte[]? tokenbytes = _dbHelperService.TryFunction(
+                () => WebEncoders.Base64UrlDecode(token64));
+
+        if (tokenbytes is null)
             return AccountServiceResult.InvalidToken;
-        }
+
         var token = Encoding.UTF8.GetString(tokenbytes);
         var result = await _userManager.ConfirmEmailAsync(user, token);
 
-        return result.Succeeded ?
-            AccountServiceResult.Success :
-            AccountServiceResult.InvalidToken;
+        if (!result.Succeeded)
+            return AccountServiceResult.InvalidToken;
+
+        if (!wasAlreadyConfirmed)
+            await _discordService.NotifyBotAsync(new(Guid.NewGuid(),
+                DiscordBotEventTypes.UserRegistered, user.Id, DateTimeOffset.UtcNow), ct);
+
+        return AccountServiceResult.Success;
     }
     public bool IsModeratorOrAdmin()
     {

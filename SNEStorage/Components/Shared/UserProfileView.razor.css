@@ -39,7 +39,15 @@
     color: #b8afd6;
 }
 
+.profile-heading-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: .75rem;
+}
+
 .profile-edit-button,
+.profile-discord-link-button,
 .profile-action-link {
     display: inline-flex;
     align-items: center;
@@ -60,11 +68,24 @@
 }
 
 .profile-edit-button:hover,
+.profile-discord-link-button:hover,
 .profile-action-link:hover {
     color: #ffe14d;
     background: #241344;
     box-shadow: 0 0 18px rgba(177, 76, 255, .5);
     text-decoration: none;
+}
+
+.profile-discord-link-button {
+    border-color: #7883ff;
+    background: #3440bb;
+    box-shadow: 0 0 14px rgba(88, 101, 242, .32);
+}
+
+.profile-discord-link-button:hover {
+    color: #fff;
+    background: #4653d6;
+    box-shadow: 0 0 18px rgba(88, 101, 242, .55);
 }
 
 .profile-hero,
@@ -155,25 +176,6 @@
     margin: .55rem 0 0;
     color: #b8afd6;
     overflow-wrap: anywhere;
-}
-
-.profile-level-badge {
-    z-index: 1;
-    display: inline-flex;
-    align-items: center;
-    gap: .4rem;
-    margin-left: auto;
-    padding: .5rem .6rem;
-    border: 1px solid rgba(255, 225, 77, .45);
-    color: #ffe14d;
-    background: rgba(10, 7, 21, .72);
-    font-family: "Press Start 2P", "Courier New", monospace;
-    font-size: .4rem;
-    white-space: nowrap;
-}
-
-.profile-level-badge span {
-    font-size: .8rem;
 }
 
 .profile-content-grid {
@@ -417,12 +419,18 @@ a.profile-social-card:focus-visible {
         flex-direction: column;
     }
 
-    .profile-hero {
-        flex-wrap: wrap;
+    .profile-heading-actions {
+        width: 100%;
+        align-items: stretch;
+        flex-direction: column;
     }
 
-    .profile-level-badge {
-        margin-left: 0;
+    .profile-heading-actions .action-button {
+        width: 100%;
+    }
+
+    .profile-hero {
+        flex-wrap: wrap;
     }
 
     .profile-content-grid {

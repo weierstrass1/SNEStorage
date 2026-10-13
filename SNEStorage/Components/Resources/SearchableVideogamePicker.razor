@@ -3,7 +3,7 @@
     <SummaryContent><span title="@SelectedName">@SelectedName</span></SummaryContent>
     <ChildContent>
     <label class="game-search-label" for="resource-game-search">Search games</label>
-    <input class="game-search" id="resource-game-search" type="search" value="@_search" @oninput="SearchChangedAsync" placeholder="Type at least 2 characters…" autocomplete="off" disabled="@(!_ready)" aria-describedby="resource-game-status" data-videogame-search />
+    <input class="game-search" id="resource-game-search" type="search" @bind="_search" @bind:event="oninput" @bind:after="SearchChangedAsync" placeholder="Type at least 2 characters…" autocomplete="off" disabled="@(!_ready)" aria-describedby="resource-game-status" data-videogame-search />
     <div id="resource-game-status" role="status" aria-live="polite">
         @if (_loading)
         {

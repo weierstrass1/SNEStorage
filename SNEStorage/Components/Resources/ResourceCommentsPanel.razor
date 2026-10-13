@@ -14,6 +14,7 @@
             <InputTextArea id="resource-comment-text" @bind-Value="_draft.Text" @oninput="DraftChanged" rows="3"
                            maxlength="5000" disabled="@Saving" placeholder="Share your feedback about this resource…" />
             <small>Up to 5,000 characters.</small>
+            <MarkdownHelp />
             <div class="composer-actions">
                 <button type="button" @onclick="CancelComment" disabled="@Saving">Cancel</button>
                 <button type="submit" disabled="@(!CanPost || Saving || string.IsNullOrWhiteSpace(_draft.Text))">@(Saving ? "Posting…" : "Post comment")</button>

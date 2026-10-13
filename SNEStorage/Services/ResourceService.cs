@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using OneOf;
+using SNEStorage.Discord;
 using SNEStorage.DTOs;
 using SNEStorage.Models;
 using System.Globalization;
@@ -46,12 +47,14 @@ public enum ResourceServiceResult
     FileDeletionError,
     DBError
 }
-public partial class ResourceService(IWebHostEnvironment environment,
+public partial class ResourceService(
+    IWebHostEnvironment environment,
     SnestorageContext context,
     CacheService cacheService,
     FileService fileService,
     AccountService accountService,
-    DBHelperService dbHelperService)
+    DBHelperService dbHelperService,
+    DiscordService discordService)
 {
     public const int MIN_NAME_SIZE = 2;
     public const int MAX_NAME_SIZE = 100;
@@ -70,6 +73,7 @@ public partial class ResourceService(IWebHostEnvironment environment,
     private readonly FileService _fileService = fileService;
     private readonly AccountService _accountService = accountService;
     private readonly DBHelperService _dbHelperService = dbHelperService;
+    private readonly DiscordService _discordService = discordService;
     public async Task<OneOf<List<ResourceFinderViewDTO>,ResourceServiceResult>> Find(ResourceFinderDTO finder, int maxAmount = 20, int page = 0, CancellationToken ct = default)
     {
         var validation = ValidateFinder(finder);
@@ -876,9 +880,20 @@ public partial class ResourceService(IWebHostEnvironment environment,
 
         _context.Resources.Add(res);
 
-        var result = await _fileService.TrySyncContextWithFiles(batchfile, res, ResourceServiceResult.DBError, ct);
-        return result.IsT0 ?
-            result.AsT0 : result.AsT1;
+        var result = await _fileService.TrySyncContextWithFiles(batchfile, res,
+            ResourceServiceResult.DBError, ct);
+
+        if (!result.IsT0)
+            return result.AsT1;
+
+        Resource createdResource = result.AsT0;
+
+        await _discordService.NotifyBotAsync(new DiscordBotEventDTO(Guid.NewGuid(),
+                DiscordBotEventTypes.ResourceCreated, 
+                createdResource.Id.ToString(CultureInfo.InvariantCulture),
+                DateTimeOffset.UtcNow), ct);
+
+        return createdResource;
     }
 
     private static string GetFullVersion(string? version)

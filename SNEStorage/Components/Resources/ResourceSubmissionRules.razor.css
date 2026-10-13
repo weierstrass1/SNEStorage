@@ -1,9 +1,28 @@
-.submission-rules { margin-bottom: 1.25rem; border: 1px solid #7553a8; border-radius: 5px; background: rgba(27, 15, 48, .92); }
-.submission-rules summary { padding: .95rem 1.1rem; color: #ffe14d; font-size: .93rem; font-weight: 700; cursor: pointer; }
-.submission-rules summary span { margin-left: .75rem; color: #baa9d3; font-size: .82rem; font-weight: 400; }
-.submission-rules summary:focus-visible { outline: 2px solid #ffe14d; outline-offset: 3px; }
-.submission-rules ul { display: grid; gap: .6rem; margin: 0; padding: .25rem 1.35rem 1.2rem 2.4rem; color: #d1c4e6; font-size: .9rem; line-height: 1.6; }
-.full-rules-link { margin: 0; padding: 0 1.35rem 1rem; font-size: .85rem; }
-.full-rules-link a { color: #ddc3ff; }
+.submission-rules { margin-bottom: 1.25rem; border: 1px solid #7553a8; border-radius: 10px; background: rgba(27, 15, 48, var(--ui-surface-alpha)); }
+.submission-rules summary { display: flex; align-items: center; gap: .75rem; padding: .95rem 1.1rem; list-style: none; cursor: pointer; }
+.submission-rules summary::-webkit-details-marker { display: none; }
+.submission-rules-title { color: #eee2ff; font-size: .93rem; font-weight: 700; }
+.submission-rules-hint { color: #baa9d3; font-size: .8rem; }
+.submission-rules-chevron { width: 9px; height: 9px; margin: 0 .2rem 0 auto; border-right: 2px solid #c2a2ee; border-bottom: 2px solid #c2a2ee; transform: rotate(45deg); transition: transform .15s ease; flex-shrink: 0; }
+.submission-rules[open] .submission-rules-chevron { transform: rotate(225deg); }
+.submission-rules[open] summary { border-bottom: 1px solid #7553a855; }
+.submission-rules-body { padding: 1rem 1.1rem; }
+.submission-guideline-sections { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.submission-guideline-section { min-width: 0; }
+.submission-guideline-section:last-child { grid-column: 1 / -1; }
+.submission-guideline-section h2 { margin: 0 0 .75rem; color: #e8d3ff; font: 700 1.05rem/1.4 "Exo 2", sans-serif; }
+.submission-guideline-section ul { display: grid; gap: .8rem; margin: 0; padding: 0 0 0 1.1rem; color: #d1c4e6; font-size: .83rem; line-height: 1.6; }
+.submission-guideline-section li::marker { color: #b68de8; }
+.submission-guideline-section li strong, .submission-guideline-section li span { display: block; }
+.submission-guideline-section li strong { margin-bottom: .12rem; color: #eee4fa; font-weight: 650; }
+.submission-guideline-section .submission-rom-rule { padding: .65rem .75rem; border-left: 3px solid #dfb555; border-radius: 0 6px 6px 0; background: #dfb5550c; }
+.submission-guideline-section .submission-rom-rule strong { color: #ffe4a2; }
+.submission-rules-status { margin: 0 0 .7rem; color: #cbb7e0; font-size: .85rem; }
+.submission-rules-retry { padding: .4rem .7rem; border: 1px solid #9870c6; border-radius: 5px; color: #eee2ff; background: #35204a; font-size: .8rem; }
+.full-rules-link { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem 1rem; margin: 1rem 0 0; padding-top: .8rem; border-top: 1px solid #7553a855; }
+.full-rules-link a { display: inline-flex; align-items: center; gap: .45rem; color: #ddc3ff; font-size: .85rem; font-weight: 650; text-decoration: none; }
 .full-rules-link a:hover { color: #ffe14d; }
-@media (max-width: 575.98px) { .submission-rules summary span { display: block; margin: .25rem 0 0 1rem; } }
+.full-rules-link span { color: #b3a1c7; font-size: .76rem; }
+.submission-rules summary:focus-visible, .full-rules-link a:focus-visible, .submission-rules-retry:focus-visible { outline: 2px solid #ffe14d; outline-offset: 3px; }
+@media (max-width: 650px) { .submission-guideline-sections { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 480px) { .submission-rules summary { flex-wrap: wrap; gap: .3rem .7rem; } .submission-rules-hint { order: 3; width: 100%; } }

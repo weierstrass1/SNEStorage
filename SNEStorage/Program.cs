@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -23,10 +24,12 @@ services.AddOptions<DiscordDTO>()
     .Validate(options =>
         !options.Enabled ||
         (
-            !string.IsNullOrWhiteSpace(options.ApplicationId) &&
-            !string.IsNullOrWhiteSpace(options.GuildId) &&
             !string.IsNullOrWhiteSpace(options.ClientSecret) &&
-            !string.IsNullOrWhiteSpace(options.BotToken)
+            !string.IsNullOrWhiteSpace(options.PublicBaseUrl) &&
+            !string.IsNullOrWhiteSpace(options.BotBaseUrl) &&
+            !string.IsNullOrWhiteSpace(options.OAuthCallbackPath) &&
+            !string.IsNullOrWhiteSpace(options.InviteUrl) &&
+            !string.IsNullOrWhiteSpace(options.BotApiKey)
         ),
         "Discord configuration is incomplete.")
     .ValidateOnStart();
@@ -68,7 +71,8 @@ services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         {
             OnTokenValidated = async context =>
             {
-                var accountService = context.HttpContext.RequestServices
+                var http = context.HttpContext;
+                var accountService = http.RequestServices
                     .GetRequiredService<AccountService>();
 
                 var userId = context.Principal?
@@ -76,9 +80,37 @@ services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 var stamp = context.Principal?
                     .FindFirstValue("security_stamp");
 
-                if (!await accountService.ValidateJwt(userId, stamp,
-                    context.HttpContext.RequestAborted))
+                if (!await accountService.ValidateJwt(
+                    userId, stamp, http.RequestAborted))
+                {
                     context.Fail("Invalid or revoked token.");
+                    return;
+                }
+
+                if (http.Items["BrowserJwt"] is not true ||
+                    context.SecurityToken.ValidTo > DateTime.UtcNow.AddDays(45))
+                    return;
+
+                var username = context.Principal?
+                    .FindFirstValue(ClaimTypes.Name);
+
+                if (string.IsNullOrEmpty(username))
+                    return;
+
+                var response = await accountService.BuildToken(username);
+
+                if (response == null)
+                    return;
+
+                http.Response.Cookies.Append("__Host-SNEStorage.Auth",
+                    response.Token, new CookieOptions
+                    {
+                        HttpOnly = true,
+                        Secure = true,
+                        SameSite = SameSiteMode.Lax,
+                        Path = "/",
+                        Expires = new DateTimeOffset(response.ExpireTime)
+                    });
             }
         };
     });
@@ -126,6 +158,11 @@ services
         })
     .AddEntityFrameworkStores<SnestorageContext>()
     .AddDefaultTokenProviders();
+services.ConfigureApplicationCookie(options =>
+{
+    options.ExpireTimeSpan = TimeSpan.FromDays(90);
+    options.SlidingExpiration = true;
+});
 services.AddHttpContextAccessor();
 services.AddMemoryCache();
 services.AddSingleton<CacheService>();
@@ -139,10 +176,20 @@ services.AddTransient<VideogameService>();
 services.AddTransient<ExternalAuthorService>();
 services.AddTransient<CommentService>();
 services.AddTransient<NewsService>();
+services.AddTransient<DiscordService>();
 services.AddScoped<EmailService>();
 services.AddScoped<DateTimeService>();
 services.AddScoped<DBHelperService>();
 services.AddHttpClient<CaptchaService>(client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(10);
+});
+services.AddHttpClient("Discord", client =>
+{
+    client.BaseAddress = new Uri("https://discord.com/");
+    client.Timeout = TimeSpan.FromSeconds(15);
+});
+services.AddHttpClient("DiscordBot", client =>
 {
     client.Timeout = TimeSpan.FromSeconds(10);
 });
@@ -226,6 +273,11 @@ services.AddRateLimiter(options =>
     };
 });
 
+services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(
+        builder.Configuration["DataProtection:KeyPath"]!))
+    .SetApplicationName("SNEStorage");
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -243,14 +295,17 @@ app.UseRouting();
 app.UseCors();
 app.UseSession();
 
-// Add the session JWT to requests before authentication runs.
 app.Use(async (context, next) =>
 {
-    var token = context.Session.GetString("Token");
-    if (!string.IsNullOrEmpty(token))
+    var token = context.Request.Cookies["__Host-SNEStorage.Auth"];
+
+    if (!string.IsNullOrEmpty(token) &&
+        !context.Request.Headers.ContainsKey("Authorization"))
     {
-        context.Request.Headers.Append("Authorization", "Bearer " + token);
+        context.Request.Headers.Authorization = "Bearer " + token;
+        context.Items["BrowserJwt"] = true;
     }
+
     await next();
 });
 

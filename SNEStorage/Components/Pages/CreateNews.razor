@@ -38,7 +38,8 @@
                     <label for="news-text">Announcement</label>
                     <InputTextArea id="news-text" @bind-Value="_form.Text" rows="12" placeholder="Write your announcement…" required aria-describedby="news-text-hint" />
                     <ValidationMessage For="@(() => _form.Text)" />
-                    <small id="news-text-hint">Use plain text. Line breaks are preserved when your news is published.</small>
+                    <small id="news-text-hint">Markdown is supported. Line breaks are preserved.</small>
+                    <MarkdownHelp />
                 </div>
                 <div class="news-actions">
                     <button class="news-publish action-button action-button-primary" type="submit">@(_saving ? "Publishing…" : "Publish news")</button>

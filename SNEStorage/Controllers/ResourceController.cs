@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using OneOf;
 using SNEStorage.DTOs;
 using SNEStorage.Filters.Attributes;

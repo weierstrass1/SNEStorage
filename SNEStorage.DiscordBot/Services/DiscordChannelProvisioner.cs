@@ -75,6 +75,174 @@ public sealed class DiscordChannelProvisioner(
         return channels;
     }
 
+    public async Task ApplyPermissionsOnlyAsync(
+        SocketGuild guild,
+        DiscordServerSetupConfigDTO configuration,
+        bool dryRun,
+        CancellationToken cancellationToken)
+    {
+        ValidatePermissionProfiles(configuration);
+
+        var configuredRoles = configuration.Roles.ToDictionary(
+            role => role.Key,
+            role => (IRole)(guild.Roles.SingleOrDefault(existing =>
+                string.Equals(existing.Name, role.Name, StringComparison.OrdinalIgnoreCase))
+                ?? throw new InvalidOperationException(
+                    $"Discord role '{role.Name}' does not exist. Run setup first.")),
+            StringComparer.OrdinalIgnoreCase);
+        var roleTargets = BuildRoleTargets(guild, configuration, configuredRoles);
+
+        foreach (var configuredCategory in configuration.Categories)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var category = guild.CategoryChannels.FirstOrDefault(existing =>
+                MatchesConfiguredCategoryName(existing.Name, configuredCategory));
+
+            if (category is null)
+            {
+                logger.LogWarning(
+                    "Skipping missing category {CategoryName} during permissions-only update.",
+                    configuredCategory.Name);
+                continue;
+            }
+
+            var categoryOverwrites = BuildOverwrites(
+                configuration.PermissionProfiles[configuredCategory.PermissionProfile],
+                roleTargets);
+
+            if (dryRun)
+            {
+                logger.LogInformation(
+                    "Would update permissions for category {CategoryName}.",
+                    configuredCategory.Name);
+            }
+            else
+            {
+                logger.LogInformation(
+                    "Updating permissions for category {CategoryName}.",
+                    configuredCategory.Name);
+                await category.ModifyAsync(
+                    properties => properties.PermissionOverwrites = categoryOverwrites,
+                    SetupRequest);
+            }
+
+            foreach (var configuredChannel in configuredCategory.Channels)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                var channel = FindExistingChannel(
+                    guild,
+                    configuredChannel,
+                    category.Id,
+                    []);
+
+                if (channel is null)
+                {
+                    logger.LogWarning(
+                        "Skipping missing channel {CategoryName}/{ChannelName} during " +
+                        "permissions-only update.",
+                        configuredCategory.Name,
+                        configuredChannel.Name);
+                    continue;
+                }
+
+                var permissionProfile = configuredChannel.PermissionProfile
+                    ?? configuredCategory.PermissionProfile;
+                var channelOverwrites = BuildOverwrites(
+                    configuration.PermissionProfiles[permissionProfile],
+                    roleTargets);
+
+                if (dryRun)
+                {
+                    logger.LogInformation(
+                        "Would update permissions for channel {CategoryName}/{ChannelName}.",
+                        configuredCategory.Name,
+                        configuredChannel.Name);
+                }
+                else
+                {
+                    logger.LogInformation(
+                        "Updating permissions for channel {CategoryName}/{ChannelName}.",
+                        configuredCategory.Name,
+                        configuredChannel.Name);
+                    await channel.ModifyAsync(
+                        properties => properties.PermissionOverwrites = channelOverwrites,
+                        SetupRequest);
+                }
+            }
+        }
+    }
+
+    public async Task ApplyForumTagsOnlyAsync(
+        SocketGuild guild,
+        DiscordServerSetupConfigDTO configuration,
+        bool dryRun,
+        CancellationToken cancellationToken)
+    {
+        foreach (var configuredCategory in configuration.Categories)
+        {
+            var category = guild.CategoryChannels.FirstOrDefault(existing =>
+                MatchesConfiguredCategoryName(existing.Name, configuredCategory));
+
+            if (category is null)
+                continue;
+
+            foreach (var configuredChannel in configuredCategory.Channels.Where(channel =>
+                         channel.Type.Equals("FORUM", StringComparison.OrdinalIgnoreCase)))
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                var forum = FindExistingChannel(
+                    guild,
+                    configuredChannel,
+                    category.Id,
+                    []) as IForumChannel;
+
+                if (forum is null)
+                {
+                    logger.LogWarning(
+                        "Skipping missing forum {CategoryName}/{ChannelName} during " +
+                        "forum-tags-only update.",
+                        configuredCategory.Name,
+                        configuredChannel.Name);
+                    continue;
+                }
+
+                var tags = configuredChannel.AvailableTags.Select(tagName =>
+                {
+                    var existingTag = forum.Tags.FirstOrDefault(tag =>
+                        string.Equals(tag.Name, tagName, StringComparison.OrdinalIgnoreCase));
+
+                    return new ForumTagBuilder(
+                        tagName,
+                        existingTag.Id == 0 ? null : existingTag.Id,
+                        false).Build();
+                }).ToArray();
+
+                if (dryRun)
+                {
+                    logger.LogInformation(
+                        "Would update {TagCount} tags for forum {CategoryName}/{ChannelName}.",
+                        tags.Length,
+                        configuredCategory.Name,
+                        configuredChannel.Name);
+                    continue;
+                }
+
+                logger.LogInformation(
+                    "Updating {TagCount} tags for forum {CategoryName}/{ChannelName}.",
+                    tags.Length,
+                    configuredCategory.Name,
+                    configuredChannel.Name);
+
+                await forum.ModifyAsync(
+                    properties => properties.Tags = tags,
+                    SetupRequest);
+            }
+        }
+    }
+
     private async Task<Dictionary<string, ICategoryChannel>> EnsureCategoriesAsync(
         SocketGuild guild,
         DiscordServerSetupConfigDTO configuration,
@@ -133,13 +301,15 @@ public sealed class DiscordChannelProvisioner(
         foreach (var configuredCategory in configuration.Categories)
         {
             var category = categories[configuredCategory.Key];
-            var overwrites = BuildOverwrites(
-                configuration.PermissionProfiles[configuredCategory.PermissionProfile],
-                roleTargets);
 
             foreach (var configuredChannel in configuredCategory.Channels)
             {
                 var reference = $"{configuredCategory.Key}.{configuredChannel.Key}";
+                var permissionProfile = configuredChannel.PermissionProfile
+                    ?? configuredCategory.PermissionProfile;
+                var overwrites = BuildOverwrites(
+                    configuration.PermissionProfiles[permissionProfile],
+                    roleTargets);
 
                 if (configuredChannel.Type.Equals("FORUM", StringComparison.OrdinalIgnoreCase) &&
                     !includeCommunityChannels)
@@ -671,6 +841,27 @@ public sealed class DiscordChannelProvisioner(
 
                 _ = BuildPermissionBits(overwrite.Allow);
                 _ = BuildPermissionBits(overwrite.Deny);
+            }
+        }
+
+        foreach (var category in configuration.Categories)
+        {
+            if (!configuration.PermissionProfiles.ContainsKey(category.PermissionProfile))
+            {
+                throw new InvalidOperationException(
+                    $"Category '{category.Key}' references unknown permission profile " +
+                    $"'{category.PermissionProfile}'.");
+            }
+
+            foreach (var channel in category.Channels.Where(channel =>
+                         !string.IsNullOrWhiteSpace(channel.PermissionProfile)))
+            {
+                if (!configuration.PermissionProfiles.ContainsKey(channel.PermissionProfile!))
+                {
+                    throw new InvalidOperationException(
+                        $"Channel '{category.Key}.{channel.Key}' references unknown permission " +
+                        $"profile '{channel.PermissionProfile}'.");
+                }
             }
         }
     }

@@ -1,7 +1,7 @@
 <div class="latest-resources" aria-busy="@_loading">
     @if (_loading)
     {
-        <div class="latest-status" role="status">Loading latest resources…</div>
+        <BoxLoader Label="Loading latest resources…" />
     }
     else if (_error is not null)
     {
@@ -12,7 +12,11 @@
     }
     else if (_resources.Count == 0)
     {
-        <div class="latest-status">No public resources to show yet.</div>
+        <div class="latest-status latest-empty">
+            <EmptyBoxIllustration />
+            <h3>No resources yet</h3>
+            <p>No public resources to show yet.</p>
+        </div>
     }
     else if (Compact)
     {

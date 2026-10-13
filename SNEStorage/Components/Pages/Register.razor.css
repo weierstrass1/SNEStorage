@@ -1,146 +1,16 @@
 .register-page {
     display: grid;
-    width: min(100%, 1160px);
-    grid-template-columns: minmax(250px, .78fr) minmax(0, 1.22fr);
-    align-items: center;
-    gap: clamp(1.5rem, 4vw, 3.5rem);
+    width: min(100%, 680px);
+    grid-template-columns: minmax(0, 1fr);
     margin: 0 auto;
 }
 
-.register-intro {
-    position: relative;
-    align-self: stretch;
-    padding: 2.3rem 0 1.5rem;
-}
-
-.register-kicker,
 .register-section-kicker,
 .register-fieldset legend {
     font-family: "Press Start 2P", "Courier New", monospace;
     font-size: .49rem;
     line-height: 1.9;
     letter-spacing: .035em;
-}
-
-.register-kicker {
-    margin: 0 0 1rem;
-    color: #ffe14d;
-    text-shadow: 0 0 12px rgba(255, 225, 77, .38);
-}
-
-.register-kicker span {
-    color: #e663ff;
-}
-
-.register-intro h1 {
-    margin: 0;
-    color: #f4f0ff;
-    font-family: "Exo 2", "Segoe UI", sans-serif;
-    font-size: clamp(2.6rem, 5vw, 4.25rem);
-    font-style: italic;
-    font-weight: 900;
-    letter-spacing: -.055em;
-    line-height: .98;
-    text-shadow: 0 0 20px rgba(177, 76, 255, .28);
-}
-
-.register-intro h1 span {
-    display: block;
-    margin-top: .35rem;
-    color: #c8a5ff;
-}
-
-.register-intro-copy {
-    max-width: 28rem;
-    margin: 1rem 0 0;
-    color: #b9afd9;
-    font-size: 1.02rem;
-    line-height: 1.75;
-}
-
-.register-mascot-scene {
-    position: relative;
-    display: grid;
-    min-height: 260px;
-    margin: .8rem 0 .5rem;
-    place-items: center;
-}
-
-.register-mascot {
-    position: relative;
-    z-index: 1;
-    width: min(82%, 300px);
-    max-height: 258px;
-    object-fit: contain;
-    filter: drop-shadow(0 0 20px rgba(177, 76, 255, .4));
-}
-
-.mascot-orbit {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    border: 2px solid rgba(221, 200, 255, .86);
-    border-radius: 50%;
-    box-shadow: 0 0 9px #fff, 0 0 24px rgba(177, 76, 255, .76), inset 0 0 12px rgba(177, 76, 255, .38);
-    pointer-events: none;
-}
-
-.mascot-orbit-one {
-    width: 72%;
-    height: 72%;
-    transform: translate(-50%, -50%) rotate(-22deg);
-}
-
-.mascot-orbit-two {
-    width: 90%;
-    height: 26%;
-    transform: translate(-50%, -50%) rotate(-8deg);
-}
-
-.mascot-spark {
-    position: absolute;
-    z-index: 2;
-    color: #e7d7ff;
-    font-size: 1.2rem;
-    text-shadow: 0 0 12px #b14cff;
-    animation: register-sparkle 2.4s ease-in-out infinite;
-}
-
-.mascot-spark-one {
-    top: 16%;
-    left: 12%;
-}
-
-.mascot-spark-two {
-    right: 10%;
-    bottom: 19%;
-    animation-delay: .8s;
-}
-
-.register-feature-list {
-    display: grid;
-    gap: .7rem;
-    margin-top: .35rem;
-    color: #d0c5ee;
-    font-size: .92rem;
-}
-
-.register-feature-list span {
-    display: flex;
-    align-items: center;
-    gap: .7rem;
-}
-
-.register-feature-list b {
-    display: inline-grid;
-    width: 22px;
-    height: 22px;
-    flex: 0 0 auto;
-    place-items: center;
-    border: 1px solid #7b3ce6;
-    color: #ffe14d;
-    background: #170d38;
-    font-size: .78rem;
 }
 
 .register-card {
@@ -167,7 +37,7 @@
     font-size: .42rem;
 }
 
-.register-card h2 {
+.register-card h1 {
     margin: 0;
     color: #fff;
     font-family: "Exo 2", "Segoe UI", sans-serif;
@@ -220,6 +90,16 @@
     display: grid;
     gap: 1rem;
 }
+
+.birthday-note { align-self: center; margin: 0; }
+.register-identity-row { display: flex; align-items: center; gap: 1.35rem; }
+.register-identity-fields { display: grid; flex: 1; min-width: 0; gap: .9rem; }
+.register-preferences { display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); gap: 1rem; }
+.color-preference { justify-content: center; gap: .8rem; padding: 1rem; border: 1px solid #59408f; border-radius: 9px; background: rgba(27, 14, 44, var(--ui-inset-alpha)); }
+.color-preference .color-input-wrap { align-items: center; line-height: 1.6; }
+.color-preference .color-input-wrap input { flex: 0 0 52px; width: 52px; height: 48px; border-radius: 7px; }
+.preference-selectors { display: grid; min-width: 0; gap: .85rem; }
+@media (max-width: 480px) { .register-identity-row { gap: .85rem; } }
 
 .register-fieldset {
     min-width: 0;
@@ -360,74 +240,8 @@
     text-align: left;
 }
 
-@keyframes register-sparkle {
-    0%, 100% { opacity: .55; transform: scale(.82); }
-    50% { opacity: 1; transform: scale(1.12); }
-}
-
-@media (max-width: 920px) {
-    .register-page {
-        max-width: 720px;
-        grid-template-columns: minmax(0, 1fr);
-        gap: 1.2rem;
-    }
-
-    .register-intro {
-        display: grid;
-        grid-template-columns: minmax(0, 1.3fr) minmax(180px, .7fr);
-        align-items: center;
-        column-gap: 1rem;
-        padding: 1rem 0 0;
-    }
-
-    .register-kicker,
-    .register-intro h1,
-    .register-intro-copy,
-    .register-feature-list {
-        grid-column: 1;
-    }
-
-    .register-intro h1 {
-        font-size: clamp(2.25rem, 6vw, 3.5rem);
-    }
-
-    .register-mascot-scene {
-        grid-column: 2;
-        grid-row: 1 / span 4;
-        min-height: 220px;
-        margin: 0;
-    }
-
-    .register-mascot {
-        max-height: 215px;
-    }
-
-    .register-feature-list {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        margin: 1rem 0 0;
-        font-size: .82rem;
-    }
-}
-
 @media (max-width: 600px) {
-    .register-page {
-        gap: .7rem;
-    }
-
-    .register-intro {
-        grid-template-columns: minmax(0, 1fr);
-    }
-
-    .register-mascot-scene {
-        display: none;
-    }
-
-    .register-feature-list {
-        grid-template-columns: minmax(0, 1fr);
-        gap: .45rem;
-        font-size: .8rem;
-    }
-
+    .register-preferences { grid-template-columns: minmax(0, 1fr); }
     .register-card {
         padding: 1rem;
     }

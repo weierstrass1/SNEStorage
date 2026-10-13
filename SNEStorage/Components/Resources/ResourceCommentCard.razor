@@ -29,7 +29,7 @@
     }
     else
     {
-        <p class="comment-text">@Comment.Text</p>
+        <div class="comment-text"><MarkdownText Text="@Comment.Text" /></div>
         @if (Likes + Dislikes > 0)
         {
             <p class="comment-votes" aria-live="polite">
@@ -76,6 +76,7 @@
             <label for="@($"reply-{Comment.Id}")">Reply to @Username</label>
             <InputTextArea id="@($"reply-{Comment.Id}")" @bind-Value="_reply.Text" @oninput="ReplyChanged" rows="3" maxlength="5000" disabled="@Saving" />
             <small>Up to 5,000 characters.</small>
+            <MarkdownHelp />
             <div class="comment-actions">
                 <button type="submit" disabled="@(Saving || string.IsNullOrWhiteSpace(_reply.Text))">@(Saving ? "Posting…" : "Post reply")</button>
                 <button type="button" @onclick="CloseEditor" disabled="@Saving">Cancel</button>
@@ -88,6 +89,7 @@
             <label for="@($"edit-comment-{Comment.Id}")">Edit comment</label>
             <InputTextArea id="@($"edit-comment-{Comment.Id}")" @bind-Value="_edit.Text" @oninput="EditChanged" rows="3" maxlength="5000" disabled="@Saving" />
             <small>Up to 5,000 characters.</small>
+            <MarkdownHelp />
             <div class="comment-actions">
                 <button type="submit" disabled="@(Saving || string.IsNullOrWhiteSpace(_edit.Text))">Save changes</button>
                 <button type="button" @onclick="CloseEditor" disabled="@Saving">Cancel</button>

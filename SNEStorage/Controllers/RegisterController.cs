@@ -55,8 +55,9 @@ public class RegisterController(AccountController accountController,
     }
     [AllowAnonymous]
     [HttpPost("confirmed/{userId}")]
-    public async Task<IActionResult> Confirmed([FromRoute] string userId, [FromQuery] string token)
+    public async Task<IActionResult> Confirmed([FromRoute] string userId, 
+        [FromQuery] string token, CancellationToken ct = default)
     {
-        return await _accountController.ConfirmUser(userId, token);
+        return await _accountController.ConfirmUser(userId, token, ct);
     }
 }

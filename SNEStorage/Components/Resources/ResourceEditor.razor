@@ -38,7 +38,7 @@ else if (_resource is { } resource)
                     <legend>General information</legend>
                     <div class="editor-fields">
                         <div class="editor-field editor-wide"><label for="edit-resource-name">Resource name</label><InputText id="edit-resource-name" name="Name" class="editor-input" @bind-Value="_form.Name" minlength="2" maxlength="100" required /><small>2–100 characters. Letters, numbers and spaces between words.</small></div>
-                        <div class="editor-field editor-wide"><label for="edit-resource-description">Description</label><InputTextArea id="edit-resource-description" name="Description" class="editor-input" @bind-Value="_form.Description" rows="4" minlength="10" maxlength="10000" required /><small>10–10,000 characters.</small></div>
+                        <div class="editor-field editor-wide"><label for="edit-resource-description">Description</label><InputTextArea id="edit-resource-description" name="Description" class="editor-input" @bind-Value="_form.Description" rows="4" minlength="10" maxlength="10000" required /><small>10–10,000 characters.</small><MarkdownHelp /></div>
                         <div class="editor-field"><SearchableVideogamePicker InitialSelection="InitialGame" @bind-Value="_form.VideogameId" /></div>
                         @if (_options is { } options)
                         {
@@ -94,7 +94,7 @@ else if (_resource is { } resource)
                     <legend>Release details</legend>
                     <div class="editor-fields">
                         <div class="editor-field editor-wide"><ResourceVersionInput InputId="@(FormId + "-version")" @bind-Value="_form.Version" /></div>
-                        <div class="editor-field editor-wide"><label for="edit-release-notes">Release notes</label><InputTextArea id="edit-release-notes" name="ReleaseNotes" class="editor-input" @bind-Value="_form.ChangeLog" rows="7" maxlength="10000" placeholder="Describe the changes in this version." required="@(Mode == ResourceEditorMode.CreateVersion)" /><small>10–10,000 characters when changed.</small></div>
+                        <div class="editor-field editor-wide"><label for="edit-release-notes">Release notes</label><InputTextArea id="edit-release-notes" name="ReleaseNotes" class="editor-input" @bind-Value="_form.ChangeLog" rows="7" maxlength="10000" placeholder="Describe the changes in this version." required="@(Mode == ResourceEditorMode.CreateVersion)" /><small>10–10,000 characters when changed.</small><MarkdownHelp /></div>
                         @if (Mode == ResourceEditorMode.CreateVersion)
                         {
                             <div class="editor-field editor-wide">

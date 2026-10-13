@@ -1,12 +1,23 @@
 <div class="quality-request">
+    <div class="quality-request-heading">
+        <div class="quality-request-seal"><ResourceQualitySeal Size="96" /></div>
+        <div class="quality-request-introduction">
+            <p class="quality-request-kicker">REVIEWED BY SNESTORAGE STAFF</p>
+            <h3><QualityText Text="Seal of Quality" /></h3>
+            <p id="@DescriptionId" class="quality-description">@Description</p>
+        </div>
+    </div>
     <div class="quality-request-copy">
+        <ul class="quality-request-benefits" aria-label="Seal of Quality benefits">
+            <li>Reviewed version</li><li>Golden resource name</li><li>Highlighted listing</li>
+        </ul>
         <label class="quality-check">
             <InputCheckbox name="SealOfQualityRequested" Value="Value" ValueChanged="ValueChanged" ValueExpression="() => Value" aria-describedby="@DescriptionId" />
-            <strong>Request the Seal of Quality</strong>
+            <span><strong>Request the Seal of Quality</strong><span class="quality-check-help">Optional. Staff review this version before awarding the seal.</span></span>
         </label>
-        <p id="@DescriptionId" class="quality-description">@Description</p>
-    </div>
-    <div class="quality-request-seal">
-        <ResourceQualitySeal Size="72" Title="@Description" />
+        <div class="quality-request-footer">
+            <p>Awarded resources must stay public. Editing or deleting sealed resources or versions requires staff permission.</p>
+            <a href="/SealOfQuality" target="_blank" rel="noopener noreferrer" aria-label="Read about Seal of Quality requirements and commitments (opens in a new tab)">Requirements and commitments <ActionArrow /></a>
+        </div>
     </div>
 </div>

@@ -97,6 +97,40 @@ public sealed class DiscordSetupWorker(
                 configuration.Categories.Length,
                 channelCount);
 
+            if (runMode.PermissionsOnly)
+            {
+                await channelProvisioner.ApplyPermissionsOnlyAsync(
+                    guild,
+                    configuration,
+                    runMode.DryRun,
+                    CancellationToken.None);
+
+                logger.LogInformation(
+                    runMode.DryRun
+                        ? "Discord permissions-only dry run completed."
+                        : "Discord permissions-only update completed.");
+
+                _ready.TrySetResult();
+                return;
+            }
+
+            if (runMode.ForumTagsOnly)
+            {
+                await channelProvisioner.ApplyForumTagsOnlyAsync(
+                    guild,
+                    configuration,
+                    runMode.DryRun,
+                    CancellationToken.None);
+
+                logger.LogInformation(
+                    runMode.DryRun
+                        ? "Discord forum-tags-only dry run completed."
+                        : "Discord forum-tags-only update completed.");
+
+                _ready.TrySetResult();
+                return;
+            }
+
             var roles = await roleProvisioner.ApplyAsync(
                 guild,
                 runMode.DryRun,

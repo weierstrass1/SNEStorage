@@ -119,23 +119,6 @@
     gap: 1.25rem;
 }
 
-.profile-edit-avatar {
-    width: 118px;
-    height: 118px;
-    flex: 0 0 118px;
-    overflow: hidden;
-    border: 3px solid var(--profile-accent, #b14cff);
-    border-radius: 8px;
-    background: #080711;
-    box-shadow: 0 0 20px color-mix(in srgb, var(--profile-accent, #b14cff) 32%, transparent);
-}
-
-.profile-edit-avatar img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
 .profile-edit-avatar-fields {
     display: grid;
     min-width: 0;
@@ -146,22 +129,6 @@
     color: #ddd4f6;
     font-size: .88rem;
     font-weight: 700;
-}
-
-.profile-edit-page ::deep .profile-edit-file {
-    width: min(100%, 420px);
-    color: #c9c0df;
-    font-size: .88rem;
-}
-
-.profile-edit-page ::deep .profile-edit-file::file-selector-button {
-    margin-right: .65rem;
-    padding: .5rem .7rem;
-    border: 1px solid #7a45ca;
-    border-radius: 3px;
-    color: #f0e8ff;
-    background: #21123e;
-    cursor: pointer;
 }
 
 .profile-edit-help {
@@ -176,24 +143,6 @@
     color: #ff9baa;
     font-size: .78rem;
     line-height: 1.45;
-}
-
-.profile-edit-file-name {
-    margin: .1rem 0 0;
-    color: #a9f3cf;
-    font-size: .8rem;
-    overflow-wrap: anywhere;
-}
-
-.profile-edit-text-button {
-    width: fit-content;
-    padding: .15rem 0;
-    border: 0;
-    color: #ff91a5;
-    background: transparent;
-    font-size: .8rem;
-    text-decoration: underline;
-    cursor: pointer;
 }
 
 .profile-edit-color-row {
@@ -224,6 +173,76 @@
     min-width: 0;
     flex-direction: column;
     gap: .4rem;
+}
+
+.profile-edit-discord-section {
+    border-color: rgba(120, 131, 255, .55);
+}
+
+.profile-edit-discord-section .profile-edit-section-heading {
+    border-color: rgba(120, 131, 255, .3);
+}
+
+.profile-edit-discord-details {
+    display: grid;
+    min-width: 0;
+    gap: .55rem;
+}
+
+.profile-edit-discord-status p {
+    overflow-wrap: anywhere;
+}
+
+.profile-edit-discord-card {
+    display: flex;
+    min-height: 94px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: .9rem 1rem;
+    border: 1px solid rgba(88, 101, 242, .62);
+    border-radius: 5px;
+    background: linear-gradient(135deg, rgba(88, 101, 242, .15), rgba(18, 13, 38, .9));
+}
+
+.profile-edit-discord-card strong {
+    color: #f2edff;
+    font-size: .92rem;
+}
+
+.profile-edit-discord-status {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+}
+
+.profile-edit-discord-status p,
+.profile-edit-discord-copy {
+    margin: .18rem 0 0;
+    color: #afa7c7;
+    font-size: .8rem;
+    line-height: 1.45;
+}
+
+.profile-edit-discord-indicator {
+    width: 12px;
+    height: 12px;
+    flex: 0 0 12px;
+    border: 2px solid #a9f3cf;
+    border-radius: 50%;
+    background: #38c98b;
+    box-shadow: 0 0 12px rgba(56, 201, 139, .7);
+}
+
+.profile-edit-discord-button {
+    flex: 0 0 auto;
+    border-color: #7883ff;
+    background: #3440bb;
+}
+
+.profile-edit-discord-button:hover {
+    color: #fff;
+    background: #4653d6;
 }
 
 .profile-edit-page ::deep .profile-edit-control {
@@ -365,6 +384,11 @@
 
     .profile-edit-grid {
         grid-template-columns: 1fr;
+    }
+
+    .profile-edit-discord-card {
+        align-items: flex-start;
+        flex-direction: column;
     }
 }
 

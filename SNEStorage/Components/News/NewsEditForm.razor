@@ -27,7 +27,8 @@
                 <label for="@($"edit-news-text-{Item.Id}")">Announcement</label>
                 <InputTextArea id="@($"edit-news-text-{Item.Id}")" @bind-Value="_form.Text" rows="10" required />
                 <ValidationMessage For="@(() => _form.Text)" />
-                <small>Use plain text. Line breaks are preserved.</small>
+                <small>Markdown is supported. Line breaks are preserved.</small>
+                <MarkdownHelp />
             </div>
             <div class="news-actions">
                 <button class="news-save action-button action-button-primary" type="submit">@(_saving ? "Saving…" : "Save changes")</button>

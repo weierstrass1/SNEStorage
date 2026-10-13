@@ -5,7 +5,7 @@
     }
     @if (_initializing || _loading)
     {
-        <div class="news-status" role="status">@(_items.Count == 0 ? "Loading news…" : "Loading more news…")</div>
+        <BoxLoader Label="@(_items.Count == 0 ? "Loading news…" : "Loading more news…")" Compact="@(_items.Count > 0)" />
     }
     else if (_error is not null)
     {
@@ -16,7 +16,11 @@
     }
     else if (_items.Count == 0)
     {
-        <div class="news-status">No news yet. Check back soon for updates!</div>
+        <div class="news-status news-empty">
+            <EmptyBoxIllustration />
+            <h3>No news yet</h3>
+            <p>Check back soon for updates!</p>
+        </div>
     }
     else if (Infinite)
     {

@@ -9,7 +9,17 @@
         </div>
         @if (IsOwnProfile)
         {
-            <NavLink class="profile-edit-button action-button" href="/Profile/Edit">Edit profile <ActionArrow /></NavLink>
+            <div class="profile-heading-actions">
+                @if (Profile is not null && string.IsNullOrWhiteSpace(Profile.DiscordUserId))
+                {
+                    <a class="profile-discord-link-button action-button"
+                       href="/api/discord/link/start"
+                       data-enhance-nav="false">
+                        Connect to Discord <ActionArrow />
+                    </a>
+                }
+                <NavLink class="profile-edit-button action-button" href="/Profile/Edit">Edit profile <ActionArrow /></NavLink>
+            </div>
         }
     </header>
 
@@ -31,7 +41,6 @@
                     <p class="profile-email">@Profile.UserSummary.Email</p>
                 }
             </div>
-            <span class="profile-level-badge"><span aria-hidden="true">★</span> PLAYER 1</span>
         </section>
 
         <div class="profile-content-grid">

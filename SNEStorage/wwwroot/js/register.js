@@ -96,8 +96,9 @@ function validOption(control) {
 
 function focusInvalidField(form) {
     const invalid = form.querySelector('[aria-invalid="true"]');
-    invalid?.focus({ preventScroll: true });
-    invalid?.scrollIntoView({ block: "center", behavior: "auto" });
+    const target = invalid?.name === "Avatar" ? invalid.closest(".avatar-picker")?.querySelector("[data-avatar-choose]") : invalid;
+    target?.focus({ preventScroll: true });
+    target?.scrollIntoView({ block: "center", behavior: "auto" });
 }
 
 export async function submitRegistration(formId) {

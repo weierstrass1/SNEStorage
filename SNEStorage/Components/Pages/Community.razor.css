@@ -3,19 +3,43 @@
 .community-kicker { margin: 0 0 .9rem; color: #c599f4; font: .55rem/1.8 "Press Start 2P", monospace; letter-spacing: .09em; }
 h1 { margin: 0 0 .85rem; font: 900 clamp(2.4rem, 5vw, 3.8rem)/1.08 "Exo 2", "Segoe UI", sans-serif; letter-spacing: -.04em; }
 .community-introduction { margin: 0; color: #cbb8dd; font-size: 1.03rem; line-height: 1.8; }
+.discord-servers { display: grid; gap: 1.15rem; }
 .discord-panel { position: relative; isolation: isolate; display: grid; grid-template-columns: minmax(160px, .65fr) minmax(0, 1.35fr); align-items: center; gap: clamp(1.5rem, 4vw, 3rem); overflow: hidden; padding: clamp(1.5rem, 4vw, 3rem); border: 1px solid #9b6ed6; border-radius: 18px; background: radial-gradient(ellipse at 0 50%, #644bb955, transparent 65%), linear-gradient(135deg, rgba(45, 25, 76, var(--ui-surface-alpha)), rgba(23, 15, 42, var(--ui-surface-alpha))); box-shadow: 0 16px 45px #05020c55, inset 0 1px #e3c7ff1c; }
 .discord-panel::before { position: absolute; z-index: -1; inset: 0; content: ""; pointer-events: none; opacity: .18; background: repeating-linear-gradient(0deg, #0005 0 1px, transparent 1px 4px); }
 .discord-art { position: relative; display: grid; min-height: 220px; place-items: center; }
-.discord-orbit { position: absolute; width: min(100%, 215px); aspect-ratio: 1; border: 1px solid #b3a2ff77; border-radius: 50%; background: radial-gradient(circle, #8470ed2b, transparent 65%); box-shadow: 0 0 40px #9281ff20, inset 0 0 30px #9281ff18; }
-.discord-icon { position: relative; width: min(65%, 142px); height: auto; color: #c8bbff; filter: drop-shadow(0 0 18px #9080ff60); }
+.discord-server-logo { display: block; width: min(100%, 210px); height: 210px; object-fit: contain; filter: drop-shadow(0 8px 20px #05020c55); }
+.discord-panel-primary { border-color: #bc8bed; }
+.discord-panel-primary .discord-art { background: radial-gradient(circle, #a778ec22, transparent 70%); }
+.discord-panel-secondary { grid-template-columns: 112px minmax(0, 1fr); gap: 1.5rem; padding: 1.5rem 1.8rem; border-color: #674982; box-shadow: inset 0 1px #e3c7ff12; }
+.discord-panel-secondary .discord-art { min-height: 96px; }
+.discord-panel-secondary .discord-server-logo { width: 88px; height: 88px; image-rendering: pixelated; }
+.discord-panel-secondary .discord-copy h2 { font-size: 1.5rem; }
+.discord-panel-secondary .discord-button { background: #39234f; border-color: #8863ac; box-shadow: 0 2px 0 #21132f; }
+.discord-panel-secondary .discord-button:hover { background: #51316d; }
 .discord-copy { min-width: 0; }
 .discord-copy h2 { margin: 0 0 .85rem; color: #f8f0ff; font: 800 clamp(1.6rem, 3vw, 2.1rem)/1.2 "Exo 2", sans-serif; }
 .discord-copy > p { margin: 0 0 1.4rem; color: #d0bfdf; font-size: .97rem; line-height: 1.8; }
+.discord-copy .discord-server-label { margin: 0 0 .65rem; color: #c9a2f3; font-size: .7rem; font-weight: 750; line-height: 1.5; letter-spacing: .08em; text-transform: uppercase; }
+.discord-panel-secondary .discord-server-label { color: #b19cc6; }
 .discord-button { display: inline-flex; min-height: 48px; align-items: center; justify-content: center; gap: .8rem; padding: .8rem 1.25rem; border: 1px solid #b9aaff; border-radius: 7px; color: #fff; background: #6750c7; box-shadow: 0 3px 0 #352068, 0 0 22px #8871ff25; font: 750 .95rem "Exo 2", sans-serif; text-decoration: none; transition: background .15s ease, box-shadow .15s ease; }
 .discord-button:hover { color: #fff; background: #7c60e0; box-shadow: 0 3px 0 #352068, 0 0 28px #8871ff45; }
 .discord-link-note { display: block; margin-top: .85rem; color: #ad99c6; font-size: .73rem; }
 .discord-copy .discord-unavailable { color: #edc3d5; margin: 0; }
 .community-topics { margin-top: 2rem; }
+.community-connection { margin-top: 2rem; }
+.community-connection > h2 { margin: 0 0 .6rem; color: #e8d7fb; font: 750 1.5rem/1.3 "Exo 2", sans-serif; }
+.connection-introduction { max-width: 780px; margin: 0 0 1.2rem; color: #cbb8dd; font-size: .94rem; line-height: 1.75; }
+.connection-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.connection-card { min-width: 0; padding: 1.5rem; border: 1px solid #7854a2; border-radius: 12px; background: linear-gradient(145deg, rgba(48, 29, 76, var(--ui-surface-alpha)), rgba(26, 16, 42, var(--ui-surface-alpha))); }
+.connection-card h3 { margin: 0 0 1.3rem; color: #eee0ff; font: 750 1.2rem/1.35 "Exo 2", sans-serif; }
+.connection-steps { margin: 0; padding-left: 1.65rem; }
+.connection-steps li { padding-left: .4rem; color: #cbb8dd; font-size: .9rem; line-height: 1.75; }
+.connection-steps li + li { margin-top: 1rem; }
+.connection-steps li::marker { color: #d3a9ff; font-weight: 800; }
+.connection-steps p { margin: 0; }
+.connection-step-link { display: inline-flex; align-items: center; gap: .45rem; margin-top: .5rem; color: #e6c8ff; font-size: .85rem; font-weight: 750; text-decoration: underline; text-underline-offset: 3px; }
+.connection-step-link:hover { color: #ffe14d; }
+.connection-step-link ::deep .action-arrow { width: 1rem; height: 1rem; }
 .community-topics > h2 { margin: 0 0 1rem; color: #e8d7fb; font: 750 1.25rem "Exo 2", sans-serif; }
 .topic-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
 .topic-card { min-width: 0; padding: 1.3rem; border: 1px solid #5e3d7e; border-radius: 10px; background: rgba(26, 16, 42, var(--ui-surface-alpha)); }
@@ -30,17 +54,19 @@ h1 { margin: 0 0 .85rem; font: 900 clamp(2.4rem, 5vw, 3.8rem)/1.08 "Exo 2", "Seg
 .community-status p { margin: 0 0 .8rem; }
 .community-status button { padding: .6rem 1rem; border: 1px solid #b58adb; border-radius: 5px; color: #f6efff; background: #41235f; }
 a:focus-visible, button:focus-visible { outline: 2px solid #ffe14d; outline-offset: 4px; }
-@media (max-width: 800px) { .topic-grid { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 800px) { .topic-grid, .connection-grid { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 600px) {
     .discord-panel { grid-template-columns: minmax(0, 1fr); gap: 1rem; text-align: center; }
     .discord-art { min-height: 150px; }
-    .discord-orbit { width: 150px; }
-    .discord-icon { width: 98px; }
+    .discord-server-logo { width: 155px; height: 155px; }
     .discord-button { width: 100%; }
+    .discord-panel-secondary { grid-template-columns: 64px minmax(0, 1fr); gap: 1rem; padding: 1.2rem; text-align: left; }
+    .discord-panel-secondary .discord-art { align-self: start; min-height: 64px; }
+    .discord-panel-secondary .discord-server-logo { width: 64px; height: 64px; }
 }
 @media (prefers-reduced-motion: reduce) { .discord-button { transition: none; } }
 @media (forced-colors: active) {
-    .discord-panel, .topic-card, .community-guidelines { background: Canvas; border-color: CanvasText; }
-    .discord-icon { color: CanvasText; filter: none; }
+    .discord-panel, .topic-card, .community-guidelines, .connection-card { background: Canvas; border-color: CanvasText; }
+    .discord-server-logo { filter: none; }
     .discord-button { background: ButtonFace; color: ButtonText; border-color: ButtonText; box-shadow: none; }
 }

@@ -20,7 +20,7 @@
                 {
                     <p class="release-updated">Updated <time datetime="@updatedAt.ToString("O")">@updatedAt.ToString("MMM d, yyyy", DisplayCulture)</time></p>
                 }
-                <p class="release-notes">@(string.IsNullOrWhiteSpace(version.ChangeLog) ? "No release notes were provided." : version.ChangeLog)</p>
+                <div class="release-notes"><MarkdownText Text="@(string.IsNullOrWhiteSpace(version.ChangeLog) ? "No release notes were provided." : version.ChangeLog)" /></div>
                 <div class="release-footer">
                     <span>@version.Downloads.ToString("N0", DisplayCulture) downloads</span>
                     <div class="release-actions">

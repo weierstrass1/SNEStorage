@@ -13,6 +13,7 @@ public sealed class DiscordChannelConfigDTO
     public required string Key { get; init; }
     public required string Name { get; init; }
     public required string Type { get; init; }
+    public string? PermissionProfile { get; init; }
     public string[] PreviousNames { get; init; } = [];
 
     public string? Topic { get; init; }

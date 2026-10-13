@@ -20,7 +20,7 @@
     <div id="library-filter-panel" hidden="@(!_filtersOpen)">
         @if (_filtersOpen)
         {
-            @if (_optionsLoading) { <p class="library-status" role="status">Loading filter choices…</p> }
+            @if (_optionsLoading) { <BoxLoader Label="Loading filter choices…" Compact="true" /> }
             @if (_optionsError is not null) { <p role="alert">@_optionsError <button type="button" class="text-button" @onclick="LoadOptionsAsync">Try again</button></p> }
             <ResourceListFilters @key="_draft" State="_draft" Types="_types" CategoryOptions="_categories" OnApply="ApplyFiltersAsync" OnReset="ResetFiltersAsync" Error="@_filterError" Disabled="@(_module is null)" />
         }
@@ -33,7 +33,7 @@
     <div id="library-results" class="results" aria-busy="@_loading">
         @if (_loading)
         {
-            <div class="library-loading" role="status"><span class="loading-pixel" aria-hidden="true"></span>Loading resources…</div>
+            <div class="library-loading"><BoxLoader Label="Loading resources…" /></div>
         }
         else if (_error is not null && _resources.Count == 0)
         {
@@ -41,7 +41,12 @@
         }
         else if (_resources.Count == 0)
         {
-            <div class="library-empty"><span aria-hidden="true">□</span><h2>No resources found</h2><p>Try different filters or share something with the community.</p><button type="button" @onclick="ResetFiltersAsync">Reset filters</button></div>
+            <div class="library-empty">
+                <EmptyBoxIllustration />
+                <h2>No resources found</h2>
+                <p>Try different filters or share something with the community.</p>
+                <button type="button" @onclick="ResetFiltersAsync">Reset filters</button>
+            </div>
         }
         else
         {
@@ -53,7 +58,7 @@
                 </table>
             </div>
             <div @ref="_sentinel" class="load-sentinel">
-                @if (_loadingMore) { <p class="library-status" role="status">Loading more resources…</p> }
+                @if (_loadingMore) { <BoxLoader Label="Loading more resources…" Compact="true" /> }
                 else if (_error is not null) { <p role="alert">@_error <button class="text-button" type="button" @onclick="LoadMoreAsync">Try again</button></p> }
                 else if (CanLoadMore) { <button class="load-more" type="button" @onclick="LoadMoreAsync">Load more resources</button> }
             </div>

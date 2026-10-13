@@ -48,6 +48,14 @@ public class NewsController(NewsService newsService) : Controller
         return res.TryPickT0(out var news, out var error) ?
             Ok(news.Id) : GetActionResult(error);
     }
+    [EnableRateLimiting("reads")]
+    [HttpGet("{newsId:long}")]
+    [AllowAnonymous]
+    public async Task<ActionResult<NewsReadDTO>> Get([FromRoute] long newsId, 
+        CancellationToken ct = default)
+    {
+        return GetActionResult(await _newsService.Get(newsId, ct));
+    }
     private ObjectResult GetActionResult(NewsServiceResult result)
     {
         string res = $"{GetType().Name}-{result}";

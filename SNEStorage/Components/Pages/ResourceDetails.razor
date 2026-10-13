@@ -143,7 +143,7 @@ else if (_resource is { } resource)
                     }
                 </dl>
                 <h3>Description</h3>
-                <p class="detail-description">@(string.IsNullOrWhiteSpace(resource.Description) ? "No description has been provided." : resource.Description)</p>
+                <div class="detail-description"><MarkdownText Text="@(string.IsNullOrWhiteSpace(resource.Description) ? "No description has been provided." : resource.Description)" /></div>
                 <section class="detail-download-section" aria-label="Download latest version">
                     <div>
                         <h2>Latest version</h2>

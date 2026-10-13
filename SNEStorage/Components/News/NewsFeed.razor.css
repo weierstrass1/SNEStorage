@@ -1,6 +1,8 @@
 .news-feed { display: flex; flex-direction: column; gap: 1rem; min-width: 0; }
 .news-status { padding: 1.5rem 1rem; border: 1px solid #593777; border-radius: 12px; color: #cbb7df; background: rgba(26, 16, 41, var(--ui-surface-alpha)); text-align: center; }
 .news-status p { margin: 0 0 1rem; }
+.news-empty h3 { margin: 0; color: #f0ddff; font: 800 1.25rem/1.4 "Exo 2", sans-serif; }
+.news-empty p { margin: .5rem 0 0; color: #bca7d0; font-size: .9rem; }
 .news-status button, .load-more { align-self: center; padding: .6rem 1rem; border: 1px solid #9565bf; border-radius: 7px; color: #ecddff; background: #39214f; font-weight: 700; }
 .news-status button:hover, .load-more:hover { background: #502f6d; border-color: #c29aeb; }
 button:focus-visible { outline: 2px solid #ffe14d; outline-offset: 3px; }

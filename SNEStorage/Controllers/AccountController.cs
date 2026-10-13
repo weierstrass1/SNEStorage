@@ -101,14 +101,18 @@ public class AccountController(AccountService accountService,
         var res = await _accountService.RequestEmailConfirmation(email, ct);
         return GetActionResult(res);
     }
-    internal async Task<IActionResult> ConfirmUser(string userId, string token)
+    internal async Task<ActionResult> ConfirmUser(string userId, string token, 
+        CancellationToken ct)
     {
-        return await _accountService.ConfirmUser(userId, token) switch
-        {
-            AccountServiceResult.UserNotFound => NotFound(),
-            AccountServiceResult.InvalidToken => BadRequest(),
-            _ => Ok(),
-        };
+        var res = await _accountService.ConfirmUser(userId, token, ct);
+        return GetActionResult(res);
+    }
+    [NonAction]
+    public ActionResult<T> GetActionResult<T>(OneOf<T,AccountServiceResult> result)
+    {
+        return result.TryPickT0(out var item, out var error) ?
+            Ok(item) :
+            GetActionResult(error);
     }
     [NonAction]
     public ObjectResult GetActionResult(AccountServiceResult result)
