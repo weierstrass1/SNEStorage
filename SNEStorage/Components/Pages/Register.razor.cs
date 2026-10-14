@@ -86,7 +86,7 @@ public partial class Register : IAsyncDisposable
 
     private async Task InitializeFormAsync()
     {
-        _module ??= await JavaScript.InvokeAsync<IJSObjectReference>("import", _lifetime.Token, "./js/register.js?v=9");
+        _module ??= await JavaScript.InvokeAsync<IJSObjectReference>("import", _lifetime.Token, "./js/register.js?v=10");
         if (_disposed) return;
         await _module.InvokeVoidAsync("initializeRegistration", _lifetime.Token, FormId, new
         {

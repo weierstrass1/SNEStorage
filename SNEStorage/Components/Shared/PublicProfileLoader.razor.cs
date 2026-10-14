@@ -48,7 +48,7 @@ public partial class PublicProfileLoader : IAsyncDisposable
         var userId = UserId;
         try
         {
-            _module ??= await JavaScript.InvokeAsync<IJSObjectReference>("import", _lifetime.Token, "./js/profile.js?v=11");
+            _module ??= await JavaScript.InvokeAsync<IJSObjectReference>("import", _lifetime.Token, "./js/profile.js?v=12");
             if (_disposed || generation != _generation) return;
             var json = await _module.InvokeAsync<string>("getProfile", _lifetime.Token,
                 $"/api/profile/{Uri.EscapeDataString(userId)}", _requestKey, false);

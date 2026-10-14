@@ -1,3 +1,5 @@
+import { audioKind, nativeAudioTypes, inspectSpc, inspectBrr } from "./audio-formats.js?v=1";
+
 // Keep these browser limits aligned with FileService. Files never leave the browser here.
 export const uploadLimits = Object.freeze({
     mediaBytes: 5 * 1024 * 1024,
@@ -19,7 +21,7 @@ const inspections = new WeakMap();
 function extension(file) { return file.name.split(".").pop().toLowerCase(); }
 
 export function basicUploadError(file, context) {
-    if (!file) return context === "archive" ? "Choose a resource archive." : "Choose an image or video.";
+    if (!file) return context === "archive" ? "Choose a resource archive." : "Choose a preview file.";
     if (!file.size) return "This file is empty. Choose another file.";
     const maxBytes = context === "archive" ? uploadLimits.archiveBytes : uploadLimits.mediaBytes;
     if (file.size > maxBytes) return context === "archive"
@@ -28,10 +30,14 @@ export function basicUploadError(file, context) {
     const ext = extension(file);
     if (context === "archive") return archiveExtensions.has(ext) ? ""
         : "Choose a ZIP, RAR, 7Z, TAR, GZ or TAR.GZ archive.";
-    const mime = imageTypes.get(ext) ?? (context === "preview" ? videoTypes.get(ext) : null);
+    const sound = context === "preview" ? audioKind(file.name, file.type) : null;
+    const mime = imageTypes.get(ext) ?? (context === "preview" ?
+        sound === "spc" ? "audio/x-spc" : sound === "brr" ? "audio/x-brr" :
+        nativeAudioTypes.get(ext) ?? videoTypes.get(ext) : null);
+    const expectedMime = ext === "ogg" && file.type === "video/ogg" ? "video/ogg" : mime;
     if (!mime) return context === "avatar" ? "Choose a PNG, JPG, GIF, WebP or AVIF image."
-        : "Choose a PNG, JPG, GIF, WebP, AVIF, MP4, WebM or OGV preview.";
-    if (file.type.trim().toLowerCase() !== mime) return "The file's reported format does not match its extension. Choose another file.";
+        : "Choose an image, video, MP3, WAV, OGG, Opus, FLAC, M4A, AAC, WebA, SPC or BRR preview.";
+    if (file.type.trim().toLowerCase() !== expectedMime) return "The file's reported format does not match its extension. Choose another file.";
     return "";
 }
 
@@ -40,7 +46,7 @@ export async function validateUpload(file, context) {
     if (basicError || context === "archive") return basicError;
     // File objects are immutable. Reuse the same local inspection at selection and submit.
     if (!inspections.has(file)) inspections.set(file, inspectMedia(file).catch(() =>
-        "This file could not be read. Choose a complete, valid image or video."));
+        "This file could not be read. Choose a complete, valid preview."));
     return inspections.get(file);
 }
 
@@ -53,6 +59,13 @@ function dimensionsError(width, height, gif = false) {
 }
 
 async function inspectMedia(file) {
+    const sound = audioKind(file.name, file.type);
+    if (sound === "spc" || sound === "brr") {
+        const bytes = new Uint8Array(await file.arrayBuffer());
+        try { sound === "spc" ? inspectSpc(bytes) : inspectBrr(bytes); return ""; }
+        catch (error) { return error.message; }
+    }
+    if (sound === "audio") return inspectAudio(file);
     if (videoTypes.has(extension(file))) return inspectVideo(file);
     const bytes = new Uint8Array(await file.arrayBuffer());
     const info = imageInfo(bytes, file.type);
@@ -189,6 +202,15 @@ function inspectVideo(file) {
         : "This video has invalid dimensions. Choose another video.");
 }
 
+function inspectAudio(file) {
+    const audio = document.createElement("audio");
+    // Codec support varies. The server still validates formats this browser cannot inspect.
+    if (!audio.canPlayType(file.type)) return "";
+    audio.preload = "metadata";
+    return readMedia(file, audio, "loadedmetadata", () => Number.isFinite(audio.duration) && audio.duration > 0 ? ""
+        : "This audio file has no playable duration. Choose another sound preview.");
+}
+
 function readMedia(file, media, event, inspect) {
     return new Promise(resolve => {
         const url = URL.createObjectURL(file);
@@ -200,14 +222,14 @@ function readMedia(file, media, event, inspect) {
             clearTimeout(timer);
             media.removeEventListener(event, loaded);
             media.onload = media.onloadedmetadata = media.onerror = null;
-            if (media instanceof HTMLVideoElement) media.pause();
+            if (media instanceof HTMLMediaElement) media.pause();
             media.removeAttribute("src");
-            if (media instanceof HTMLVideoElement) media.load();
+            if (media instanceof HTMLMediaElement) media.load();
             URL.revokeObjectURL(url);
             resolve(message);
         };
         media.addEventListener(event, loaded, { once: true });
-        media.onerror = () => finish("This file could not be opened. Choose a complete, valid image or video.");
+        media.onerror = () => finish("This file could not be opened. Choose a complete, valid preview.");
         timer = setTimeout(() => finish("Checking this file took too long. Select it again or choose another file."), 10000);
         media.src = url;
     });

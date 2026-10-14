@@ -12,13 +12,13 @@ namespace SNEStorage.Controllers;
 
 [ApiController]
 [Route("api/resource")]
-public class ResourceController(SnestorageContext context, CacheService cacheService,
-    ResourceService resourceService, IWebHostEnvironment Environment) : Controller
+public class ResourceController(CacheService cacheService, ResourceService resourceService,
+    ResourceCommunityService communityService, ResourceVersionService versionService) : Controller
 {
-    private readonly SnestorageContext _context = context;
     private readonly CacheService _cacheService = cacheService;
     private readonly ResourceService _resourceService = resourceService;
-    private readonly IWebHostEnvironment _environment = Environment;
+    private readonly ResourceCommunityService _communityService = communityService;
+    private readonly ResourceVersionService _versionService = versionService;
     [EnableRateLimiting("reads")]
     [HttpGet("find")]
     public async Task<ActionResult<List<ResourceFinderViewDTO>>> Find([FromQuery] ResourceFinderDTO dto,
@@ -34,7 +34,7 @@ public class ResourceController(SnestorageContext context, CacheService cacheSer
     public async Task<ActionResult<ResourceComments>> AddComment([FromRoute] long resourceId,
         [FromForm, StringLength(5000)] string commentText, CancellationToken ct)
     {
-        var res = await _resourceService.AddComment(resourceId, commentText, ct);
+        var res = await _communityService.AddComment(resourceId, commentText, ct);
         return this.GetActionResult(res);
     }
     [EnableRateLimiting("votes")]
@@ -43,7 +43,7 @@ public class ResourceController(SnestorageContext context, CacheService cacheSer
     [RequireCaptcha("resource_addOrEditScore", CaptchaPolicy.After10TriesInShortTime)]
     public async Task<ActionResult<ScoreUsers>> AddOrEditScore([FromRoute] long resourceId, [FromRoute] long value, CancellationToken ct)
     {
-        var res = await _resourceService.AddOrEditScore(resourceId, value, ct);
+        var res = await _communityService.AddOrEditScore(resourceId, value, ct);
         return this.GetActionResult(res);
     }
 
@@ -118,7 +118,7 @@ public class ResourceController(SnestorageContext context, CacheService cacheSer
     public async Task<ActionResult> EditVersion([FromRoute] long resourceId, [FromRoute] long versionId,
         [FromForm] ResourceVersionEditDTO dto, CancellationToken ct = default)
     {
-        var res = await _resourceService.EditVersion(resourceId, versionId, dto, ct: ct);
+        var res = await _versionService.EditVersion(resourceId, versionId, dto, ct: ct);
         return this.GetActionResult(res);
     }
     [EnableRateLimiting("reads")]
@@ -133,14 +133,14 @@ public class ResourceController(SnestorageContext context, CacheService cacheSer
     public async Task<ActionResult<Models.File>> GetFile([FromRoute] long resourceId,
         [FromRoute] long resourceFileId, CancellationToken ct = default)
     {
-        var res = await _resourceService.GetFile(resourceId, resourceFileId, ct: ct);
+        var res = await _versionService.GetFile(resourceId, resourceFileId, ct: ct);
         return this.GetActionResult(res);
     }
     [EnableRateLimiting("reads")]
     [HttpGet("{resourceId}/file/{resourceFileId}/download")]
     public async Task<ActionResult> Download([FromRoute] long resourceId, [FromRoute] long resourceFileId, CancellationToken ct = default)
     {
-        var res = await _resourceService.Download(resourceId, resourceFileId, ct);
+        var res = await _versionService.Download(resourceId, resourceFileId, ct);
         if (res.TryPickT0(out var file, out var error))
             return PhysicalFile(file.Item1, file.Item2, Path.GetFileName(file.Item1), true);
         return this.GetActionResult(error);
@@ -173,7 +173,7 @@ public class ResourceController(SnestorageContext context, CacheService cacheSer
     public async Task<ActionResult<ResourceVersion>> CreateVersion([FromRoute] long resourceId,
         [FromForm] ResourceVersionCreateDTO dto, CancellationToken ct)
     {
-        var result = await _resourceService.AddVersion(resourceId, dto, ct);
+        var result = await _versionService.AddVersion(resourceId, dto, ct);
         return this.GetActionResult(result);
     }
     [EnableRateLimiting("reads")]
@@ -215,7 +215,7 @@ public class ResourceController(SnestorageContext context, CacheService cacheSer
     [HttpGet("{resourceId:long}/versions")]
     public async Task<ActionResult<List<ResourceVersion>>> GetVersions([FromRoute] long resourceId, CancellationToken ct = default)
     {
-        var result = await _resourceService.GetResourceAllVersion(resourceId, ct);
+        var result = await _versionService.GetResourceAllVersion(resourceId, ct);
         return this.GetActionResult(result);
     }
 
@@ -223,7 +223,7 @@ public class ResourceController(SnestorageContext context, CacheService cacheSer
     [HttpGet("{resourceId:long}/versions/latest")]
     public async Task<ActionResult<ResourceVersion>> GetLatestVersion([FromRoute] long resourceId, CancellationToken ct = default)
     {
-        var result = await _resourceService.GetResourceLastVersion(resourceId, ct);
+        var result = await _versionService.GetResourceLastVersion(resourceId, ct);
         return this.GetActionResult(result);
     }
 
@@ -231,7 +231,7 @@ public class ResourceController(SnestorageContext context, CacheService cacheSer
     [HttpGet("{resourceId:long}/rating")]
     public async Task<ActionResult<RatingReadDto>> GetRating([FromRoute] long resourceId, CancellationToken ct = default)
     {
-        var result = await _resourceService.GetRating(resourceId, ct);
+        var result = await _communityService.GetRating(resourceId, ct);
         return this.GetActionResult(result);
     }
 }

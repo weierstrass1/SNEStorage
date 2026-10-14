@@ -22,7 +22,7 @@ public partial class ResourcePreviewPicker : IAsyncDisposable
         if (!firstRender || _disposed) return;
         try
         {
-            var module = await JavaScript.InvokeAsync<IJSObjectReference>("import", "./js/resource-previews.js?v=3");
+            var module = await JavaScript.InvokeAsync<IJSObjectReference>("import", "./js/resource-previews.js?v=4");
             if (_disposed) { await module.DisposeAsync(); return; }
             _module = module;
             _ready = true;
@@ -85,5 +85,6 @@ public partial class ResourcePreviewPicker : IAsyncDisposable
         public long Size { get; set; }
         public string Url { get; set; } = string.Empty;
         public bool Video { get; set; }
+        public string Kind { get; set; } = string.Empty;
     }
 }

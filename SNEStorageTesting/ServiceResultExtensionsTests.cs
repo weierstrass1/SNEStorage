@@ -12,6 +12,7 @@ public class ServiceResultExtensionsTests
         { ServiceResult.Invalid, typeof(BadRequestObjectResult), 400, ServiceResultTypes.Invalid },
         { ServiceResult.Unauthorized, typeof(UnauthorizedObjectResult), 401, ServiceResultTypes.Unauthorized },
         { ServiceResult.Forbidden, typeof(ObjectResult), 403, ServiceResultTypes.Unauthorized },
+        { ServiceResult.AccountLockedOut, typeof(ObjectResult), 403, ServiceResultTypes.AccountLockedOut },
         { ServiceResult.ResourceNotFound, typeof(NotFoundObjectResult), 404, ServiceResultTypes.ResourceNotFound },
         { ServiceResult.VersionAlreadyExists, typeof(ConflictObjectResult), 409, ServiceResultTypes.VersionAlreadyExists },
         { ServiceResult.FileSizeSurpassTheLimit, typeof(ObjectResult), 413, ServiceResultTypes.FileSizeSurpassTheLimit },
@@ -20,7 +21,7 @@ public class ServiceResultExtensionsTests
         { ServiceResult.OAuthTokenExchangeError, typeof(ObjectResult), 502, ServiceResultTypes.OAuthTokenExchangeError },
         { ServiceResult.Unavailable, typeof(ObjectResult), 503, ServiceResultTypes.Unavailable },
         { ServiceResult.DBError, typeof(ObjectResult), 500, ServiceResultTypes.DBError },
-        { ServiceResult.UnsupportedEvent, typeof(ObjectResult), 500, ServiceResultTypes.UnsupportedEvent }
+        { ServiceResult.UnsupportedEvent, typeof(ObjectResult), 501, ServiceResultTypes.UnsupportedEvent }
     };
 
     [Theory(DisplayName = "ServiceResult errors map to the documented HTTP status and response code")]

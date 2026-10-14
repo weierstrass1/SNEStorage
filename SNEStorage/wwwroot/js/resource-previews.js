@@ -1,4 +1,5 @@
-import { validateUpload, uploadLimits } from "./upload-validation.js?v=1";
+import { validateUpload, uploadLimits } from "./upload-validation.js?v=2";
+import { audioKind, normalizeAudioFile } from "./audio-formats.js?v=1";
 
 const selections = new Map();
 const maxCount = uploadLimits.previews;
@@ -6,7 +7,7 @@ const maxBytes = uploadLimits.mediaBytes;
 
 function result(items, errors = []) {
     return { items: items.map(item => ({ id: item.id, name: item.file.name,
-        size: item.file.size, url: item.url, video: item.video })), errors };
+        size: item.file.size, url: item.url, video: item.video, kind: item.kind })), errors };
 }
 
 export async function addPreviews(inputId, capacity = maxCount) {
@@ -23,7 +24,8 @@ export async function addPreviews(inputId, capacity = maxCount) {
     const errors = [];
     selection.pending++;
     try {
-        for (const file of files) {
+        for (const original of files) {
+            const file = normalizeAudioFile(original);
             if (items.length >= Math.min(maxCount, capacity)) {
                 errors.push(`${file.name}: a resource can have up to 20 previews. Remove an existing or new preview first.`);
                 continue;
@@ -34,7 +36,8 @@ export async function addPreviews(inputId, capacity = maxCount) {
             else if (items.some(item => item.file.name === file.name && item.file.size === file.size &&
                 item.file.lastModified === file.lastModified)) errors.push(`${file.name}: this file is already selected.`);
             else if (items.length >= Math.min(maxCount, capacity)) errors.push(`${file.name}: a resource can have up to 20 previews.`);
-            else items.push({ id: crypto.randomUUID(), file, url: URL.createObjectURL(file), video: file.type.startsWith("video/") });
+            else items.push({ id: crypto.randomUUID(), file, url: URL.createObjectURL(file),
+                video: file.type.startsWith("video/"), kind: audioKind(file.name, file.type) ?? "" });
         }
     } finally {
         selection.pending--;

@@ -10,6 +10,8 @@
 .media-play-icon { display: grid; width: 52px; height: 52px; place-items: center; padding-left: 3px; border: 2px solid #ffe14d; border-radius: 50%; color: #ffe14d; font-size: 1.2rem; }
 .media-play small { color: #baa5d4; font-size: .7rem; }
 .media-carousel.is-video-playing { width: 640px; }
+.media-carousel.is-sound { width: 420px; }
+.is-sound .media-stage { display: block; height: auto; min-height: 224px; }
 .is-video-playing .media-stage { height: auto; min-height: 224px; aspect-ratio: 16 / 9; }
 .media-video { display: block; width: 100%; height: 100%; max-height: min(60vh, 480px); object-fit: contain; }
 .media-controls { display: flex; align-items: center; justify-content: space-between; gap: .4rem; padding: .6rem; border-top: 1px solid #58347a; }

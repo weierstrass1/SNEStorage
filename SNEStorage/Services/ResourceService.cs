@@ -7,29 +7,31 @@ using System.Text.RegularExpressions;
 
 namespace SNEStorage.Services;
 
-public partial class ResourceService(IWebHostEnvironment environment, SnestorageContext context,
-    CacheService cacheService, FileService fileService, AccountService accountService,
-    DBHelperService dbHelperService, DiscordService discordService, ILogger<ResourceService> logger)
+public partial class ResourceService(SnestorageContext context, CacheService cacheService,
+    FileService fileService, AccountService accountService, DBHelperService dbHelperService,
+    DiscordService discordService, ResourceAccessService accessService,
+    ResourceVersionService versionService, ILogger<ResourceService> logger)
 {
     public const int MIN_NAME_SIZE = 2;
     public const int MAX_NAME_SIZE = 100;
     public const int MIN_DESCRIPTION_SIZE = 10;
     public const int MAX_DESCRIPTION_SIZE = 10000;
     public const int MAX_AMOUNT_OF_ELEMENTS = 50;
-    public const int MAX_VERSION_SIZE = 25;
     public const int MAX_AMOUNT_LIKE_LIMIT = 20;
     public const long FILE_MAX_SIZE = 250 * 1024 * 1024;
     public const long PREVIEW_MAX_SIZE = 5 * 1024 * 1024;
     public const int MAX_AMOUNT_OF_PREVIEWS = 20;
     public const int MAX_AMOUNT_PER_PAGE = 50;
-    private readonly IWebHostEnvironment _environment = environment;
     private readonly SnestorageContext _context = context;
     private readonly CacheService _cacheService = cacheService;
     private readonly FileService _fileService = fileService;
     private readonly AccountService _accountService = accountService;
     private readonly DBHelperService _dbHelperService = dbHelperService;
     private readonly DiscordService _discordService = discordService;
+    private readonly ResourceAccessService _accessService = accessService;
+    private readonly ResourceVersionService _versionService = versionService;
     private readonly ILogger<ResourceService> _logger = logger;
+
     public async Task<OneOf<List<ResourceFinderViewDTO>, ServiceResultContext>> Find(
         ResourceFinderDTO finder, int maxAmount = 20, int page = 0, CancellationToken ct = default)
     {
@@ -97,107 +99,7 @@ public partial class ResourceService(IWebHostEnvironment environment, Snestorage
             cancel => query.OrderBy(v => v.Name).Take(maxAmount).ToListAsync(cancel),
             ServiceResult.DBError, ct: ct);
     }
-    public async Task<OneOf<ResourceComments, ServiceResultContext>> AddComment(
-        long resourceId, string commentText, CancellationToken ct = default)
-    {
-        if (string.IsNullOrWhiteSpace(commentText))
-            return ServiceResult.EmptyComment.Return(_logger);
-        string? userId = _accountService.GetUserID();
-        if (userId == null)
-            return ServiceResult.Forbidden.Return(_logger);
-        var resUser = await _dbHelperService.TryFunction(
-            cancel => _context.Users
-                .Include(u => u.UserInfo)
-                    .ThenInclude(u => u!.Avatar)
-                .FirstOrDefaultAsync(r => r.Id == userId, cancel),
-            ServiceResult.DBError, ct: ct);
-        if (!resUser.TryPickT0(out var user, out var error))
-            return error;
-        if (user == null)
-            return ServiceResult.Forbidden.Return(_logger);
 
-        var res = await _dbHelperService.TryFunction(
-                    cancel => _context.Resources
-                        .Include(r => r.ResourcesAuthors)
-                        .Include(r => r.ResourceVersions)
-                        .FirstOrDefaultAsync(r => r.Id == resourceId, cancel),
-                    ServiceResult.DBError, ct: ct);
-        if (!res.TryPickT0(out var resource, out error))
-            return error;
-        if (resource == null)
-            return ServiceResult.ResourceNotFound.Return(_logger);
-
-        if (resource.VisibilityId == 3 &&
-            !_accountService.IsModeratorOrAdmin() &&
-            resource.SubmitterId != userId &&
-            !resource.ResourcesAuthors.Any(ra => ra.UserId == userId) &&
-            !resource.ResourceVersions.Any(r => r.SubmitterUserId == userId))
-            return ServiceResult.Forbidden.Return(_logger);
-
-        ResourceComments rc = new()
-        {
-            Id = 0,
-            ResourceId = resourceId,
-            Comment = new()
-            {
-                Id = 0,
-                Score = new Score(),
-                UserId = userId,
-                User = user,
-                Text = commentText,
-                PublishDate = DateTime.UtcNow
-            }
-        };
-
-        rc.Comment.UserSummary = UserNameDTO.FromApplicationUser(user);
-
-        _context.ResourcesComments.Add(rc);
-
-        return await _dbHelperService.TrySyncContext(rc, ct: ct);
-    }
-    public async Task<OneOf<ScoreUsers, ServiceResultContext>> AddOrEditScore(
-        long resourceId, long value, CancellationToken ct = default)
-    {
-        if (value is < 1 or > 5)
-            return ServiceResult.InvalidScore.Return(_logger);
-
-        var userId = _accountService.GetUserID();
-        if (userId == null)
-            return ServiceResult.Forbidden.Return(_logger);
-
-        var accessRes = await GetAccess(resourceId, ct);
-        if (!accessRes.TryPickT0(out var access, out var error))
-            return error;
-        if (access.VisibilityId == 3)
-            return ServiceResult.CantAddScoreToPrivateResource.Return(_logger);
-        if (access.IsContributor)
-            return ServiceResult.CantScoreSelfResource.Return(_logger);
-
-        var voteRes = await _dbHelperService.TryFunction(
-            cancel => _context.ScoresUsers.AsTracking()
-                .FirstOrDefaultAsync(
-                    s => s.ScoreId == access.ScoreId && s.UserId == userId,
-                    cancel),
-            ServiceResult.DBError, ct: ct);
-
-        if (!voteRes.TryPickT0(out var vote, out error))
-            return error;
-
-        if (vote == null)
-        {
-            vote = new ScoreUsers 
-            { 
-                Id = 0, 
-                ScoreId = access.ScoreId, 
-                UserId = userId, 
-                Value = value
-            };
-            _context.ScoresUsers.Add(vote);
-        }
-
-        vote.Value = value;
-        return await _dbHelperService.TrySyncContext(vote, ct: ct);
-    }
     public async Task<ServiceResultContext> Edit(long resourceId, ResourceEditDTO dto, CancellationToken ct = default)
     {
         if (dto.Name != null)
@@ -227,9 +129,9 @@ public partial class ResourceService(IWebHostEnvironment environment, Snestorage
         }
         if (dto.Previews.Any(pr => pr.Length > PREVIEW_MAX_SIZE))
             return ServiceResult.PreviewSizeSurpassTheLimit.Return(_logger);
-        var access = CheckEditAccess(await GetAccess(resourceId, ct));
-        if (access.Result != ServiceResult.Success)
-            return access;
+        var accessResult = await _accessService.GetEditAccess(resourceId, ct);
+        if (!accessResult.TryPickT0(out _, out var accessError))
+            return accessError;
 
         var res = await _dbHelperService.TryFunction(
             cancel => _context.Resources
@@ -257,9 +159,7 @@ public partial class ResourceService(IWebHostEnvironment environment, Snestorage
         if (string.IsNullOrWhiteSpace(userId))
             return ServiceResult.UserNotFoundBadRequest.Return(_logger);
 
-        var name = SanitizeFolderName(dto.Name);
-
-        var mainFolder = GetMainResourceFolder(resource);
+        string mainFolder = ResourcePathHelper.GetMainResourceFolder(resource);
         var batchResult = await _fileService.BeginBatch(ct);
         if (!batchResult.TryPickT0(out var batchfile, out var batchError))
             return batchError;
@@ -423,123 +323,14 @@ public partial class ResourceService(IWebHostEnvironment environment, Snestorage
         _ = _fileService.FinishDeletion(files);
         return ServiceResult.Success.Return(_logger);
     }
-    public async Task<OneOf<ResourceVersion, ServiceResultContext>> AddVersion(
-        long resourceId, ResourceVersionCreateDTO dto, CancellationToken ct = default)
-    {
-        if (dto.File.Length > FILE_MAX_SIZE)
-            return ServiceResult.FileSizeSurpassTheLimit.Return(_logger);
-        string? userId = _accountService.GetUserID();
-        if (userId == null)
-            return ServiceResult.Forbidden.Return(_logger);
 
-        dto.Version = dto.Version.ToLower().Trim();
-
-        var versionValidation = await ValidateVersion(resourceId, null, dto.Version, ct);
-        if (!versionValidation.TryPickT0(out bool validVersion, out var validationError))
-            return validationError;
-        if (!validVersion)
-            return ServiceResult.InvalidVersion.Return(_logger);
-
-        dto.ReleaseNotes = dto.ReleaseNotes.Trim();
-
-        if (dto.ReleaseNotes.Length < MIN_DESCRIPTION_SIZE || dto.ReleaseNotes.Length > MAX_DESCRIPTION_SIZE)
-            return ServiceResult.InvalidReleaseNote.Return(_logger);
-
-        var res = await _dbHelperService.TryFunction(cancel => _context.Resources
-            .Include(r => r.ResourceVersions)
-                .ThenInclude(r => r.File)
-            .Include(r => r.ResourcesAuthors)
-            .FirstOrDefaultAsync(r => r.Id == resourceId, cancel),
-            ServiceResult.DBError, ct: ct);
-        var check = CheckResourceIsEditable(res);
-        if (check.Result != ServiceResult.Success)
-            return check;
-
-        var resource = res.AsT0!;
-        if (resource.ResourceVersions.Any(v => v.Version == dto.Version))
-            return ServiceResult.VersionAlreadyExists.Return(_logger);
-
-        var batchResult = await _fileService.BeginBatch(ct);
-        if (!batchResult.TryPickT0(out var batchPath, out var batchError))
-            return batchError;
-
-        string mainFolder = GetMainResourceFolder(resource);
-        string versionName = GetFullVersion(dto.Version);
-        string versionFolder = SanitizeFolderName(versionName);
-        string path = GetVersionPath(dto.File.FileName, versionFolder, mainFolder);
-
-        var fileRes = await _fileService.PrepareFile(FileContext.Resource, dto.File, path,
-            batchPath, ct: ct);
-        if (!fileRes.TryPickT0(out var file, out var fileError))
-            return fileError;
-
-        ResourceVersion version = new()
-        {
-            Id = 0,
-            FileId = 0,
-            ResourceId = 0,
-            SubmitterUserId = userId,
-            Resource = resource,
-            CreatedAt = DateTime.UtcNow,
-            File = file,
-            ChangeLog = dto.ReleaseNotes,
-            Version = versionName,
-            SealOfQualityRequested = dto.SealOfQualityRequested
-        };
-
-        _context.ResourceVersions.Add(version);
-
-        return await _fileService.TrySyncContextWithFiles(batchPath, version, ct);
-    }
-    public async Task<ServiceResultContext> EditVersion(long resourceId, long versionId,
-        ResourceVersionEditDTO dto, CancellationToken ct = default)
-    {
-        var res = await _dbHelperService.TryFunction(cancel => _context.Resources
-            .Include(r => r.ResourceVersions)
-            .Include(r => r.ResourcesAuthors)
-            .FirstOrDefaultAsync(r => r.Id == resourceId, cancel),
-            ServiceResult.DBError, ct: ct);
-        var check = CheckResourceIsEditable(res);
-        if (check.Result != ServiceResult.Success)
-            return check;
-
-        if (dto.Version != null)
-        {
-            dto.Version = dto.Version.ToLower().Trim();
-
-            var validation = await ValidateVersion(resourceId, versionId, dto.Version, ct);
-            if (!validation.TryPickT0(out bool validVersion, out var validationError))
-                return validationError;
-            if (!validVersion)
-                return ServiceResult.InvalidVersion.Return(_logger);
-        }
-        if (dto.ReleaseNotes != null)
-        {
-            dto.ReleaseNotes = dto.ReleaseNotes.Trim();
-            if (dto.ReleaseNotes.Length < MIN_DESCRIPTION_SIZE || dto.ReleaseNotes.Length > MAX_DESCRIPTION_SIZE)
-                return ServiceResult.InvalidReleaseNote.Return(_logger);
-        }
-
-        var version = res.AsT0!.ResourceVersions.FirstOrDefault(v => v.Id == versionId);
-        if (version == null)
-            return ServiceResult.VersionNotFound.Return(_logger);
-        version.ChangeLog = _dbHelperService.GetEditString(dto.ReleaseNotes, version.ChangeLog);
-        version.Version = _dbHelperService.GetEditString(dto.Version, version.Version);
-        version.UpdatedAt = DateTime.UtcNow;
-        version.AlreadyModerated = false;
-        version.SealOfQualityRequested = version.SealOfQuality ||
-            (dto.SealOfQualityRequested ?? version.SealOfQualityRequested);
-
-        return await _dbHelperService.TrySyncContext(ct: ct);
-    }
     public async Task<OneOf<ResourceReadDTO, ServiceResultContext>> Get(long resourceId, CancellationToken ct = default)
     {
-        var accessResult = await GetAccess(resourceId, ct);
-        var access = CheckViewAccess(accessResult);
-        if (access.Result != ServiceResult.Success)
-            return access;
+        var accessResult = await _accessService.GetViewAccess(resourceId, ct);
+        if (!accessResult.TryPickT0(out var access, out var accessError))
+            return accessError;
 
-        bool canEdit = accessResult.AsT0.IsContributor;
+        bool canEdit = access.IsContributor;
 
         var result = await _dbHelperService.TryFunction(
             cancel => _context.Resources
@@ -598,64 +389,7 @@ public partial class ResourceService(IWebHostEnvironment environment, Snestorage
 
         return ItemOrError(result);
     }
-    public async Task<OneOf<Models.File, ServiceResultContext>> GetFile(long resourceId,
-        long resourceFileId, bool prepareDownload = false, CancellationToken ct = default)
-    {
-        var access = CheckViewAccess(await GetAccess(resourceId, ct));
-        if (access.Result != ServiceResult.Success)
-            return access;
 
-        IQueryable<Models.File> query = _context.Files
-            .AsNoTracking()
-            .Where(file =>
-                file.Id == resourceFileId &&
-                (_context.ResourceVersions.Any(version =>
-                    version.ResourceId == resourceId && version.FileId == file.Id) ||
-                _context.ResourcePreviews.Any(preview =>
-                        preview.ResourceId == resourceId && preview.FileId == file.Id)));
-
-        if (prepareDownload)
-            query = query.Include(file => file.FileType);
-
-        var result = await _dbHelperService.TryFunction(
-            cancel => query.FirstOrDefaultAsync(cancel),
-            ServiceResult.DBError,
-            ct: ct);
-
-        return ItemOrError(result, ServiceResult.FileNotFound);
-    }
-    public async Task<OneOf<(string, string), ServiceResultContext>> Download(long resourceId,
-        long resourceFileId, CancellationToken ct = default)
-    {
-        var result = await GetFile(resourceId, resourceFileId, true, ct);
-
-        if (!result.TryPickT0(out var file, out var error))
-            return error;
-
-        var physicalPath = Path.Combine(
-            _environment.ContentRootPath,
-            file.URL);
-
-        if (!System.IO.File.Exists(physicalPath))
-            return ServiceResult.FileNotFound.Return(_logger);
-
-        var updateResult = await _dbHelperService.TryFunction(
-                async cancel => await _context.ResourceVersions
-                    .Where(version => version.ResourceId == resourceId &&
-                        version.FileId == resourceFileId)
-                    .ExecuteUpdateAsync(setters => setters
-                        .SetProperty(version => version.Downloads,
-                            version => version.Downloads + 1),
-                        cancel),
-                ServiceResult.DBError, ct: ct);
-
-        if (updateResult.TryPickT1(out var updateError, out _))
-            return updateError;
-
-        var mime = file.FileType?.Value ?? "application/octet-stream";
-
-        return (physicalPath, mime);
-    }
     public async Task<OneOf<Resource, ServiceResultContext>> Create(ResourceCreateDTO dto, CancellationToken ct = default)
     {
         dto.Name = dto.Name.Trim();
@@ -693,17 +427,11 @@ public partial class ResourceService(IWebHostEnvironment environment, Snestorage
         if (string.IsNullOrWhiteSpace(userId))
             return ServiceResult.UserNotFoundBadRequest.Return(_logger);
 
-        dto.Version = dto.Version.ToLower().Trim();
+        var versionValidation = await _versionService.ValidateInitialVersion(dto, ct);
+        if (versionValidation.Result != ServiceResult.Success)
+            return versionValidation;
 
-        var versionValidation = await ValidateVersion(null, null, dto.Version, ct);
-        if (!versionValidation.TryPickT0(out bool validVersion, out var validationError))
-            return validationError;
-        if (!validVersion)
-            return ServiceResult.InvalidVersion.Return(_logger);
-
-        var name = SanitizeFolderName(dto.Name);
-        string version = GetFullVersion(dto.Version);
-        string versionFolder = SanitizeFolderName(version);
+        string name = ResourcePathHelper.SanitizeFolderName(dto.Name);
 
         var mainFolder = Path.Combine("Storage", "Resources",
             $"{Guid.NewGuid():N}_{name}");
@@ -711,14 +439,14 @@ public partial class ResourceService(IWebHostEnvironment environment, Snestorage
         if (!batchResult.TryPickT0(out var batchfile, out var batchError))
             return batchError;
 
-        var mainFileRes = await GetMainFile(dto, versionFolder, mainFolder, batchfile, ct);
-        if (!mainFileRes.TryPickT0(out var file, out var mainFileError))
-            return mainFileError;
+        var versionResult = await _versionService.PrepareInitialVersion(
+            dto, userId, mainFolder, batchfile, ct);
+        if (!versionResult.TryPickT0(out var resourceVersion, out var versionError))
+            return versionError;
 
         var prevResult = await GetPreviews(dto.Previews, mainFolder, batchfile, ct);
         if (!prevResult.TryPickT0(out var resourcePreviews, out var previewError))
             return previewError;
-        ResourceVersion resourceVersion = GetVersion(dto, userId, version, file);
 
         var tagRes = await GetTags(dto.Tags, ct);
         if (!tagRes.TryPickT0(out var tags, out var tagError))
@@ -811,42 +539,6 @@ public partial class ResourceService(IWebHostEnvironment environment, Snestorage
         return createdResource;
     }
 
-    private static string GetFullVersion(string? version)
-    {
-        return string.IsNullOrWhiteSpace(version) ?
-                     "1.0.0" :
-                     version.Trim();
-    }
-
-    private Task<OneOf<Models.File, ServiceResultContext>> GetMainFile(ResourceCreateDTO dto,
-        string versionFolder, string mainFolder, string batchfile, CancellationToken ct)
-    {
-        string mainFilePath = GetVersionPath(dto.File.FileName, versionFolder, mainFolder);
-        return _fileService.PrepareFile(FileContext.Resource, dto.File,
-            mainFilePath, batchfile, ct: ct);
-    }
-
-    private static string GetVersionPath(string filename, string versionFolder, string mainFolder)
-    {
-        return Path.Combine(mainFolder, $"{Guid.NewGuid():N}_{versionFolder}",
-                    Path.GetFileName(filename));
-    }
-
-    private ServiceResultContext CheckResourceIsEditable(OneOf<Resource?, ServiceResultContext> result)
-    {
-        if (!result.TryPickT0(out var resource, out var error))
-            return error;
-        if (resource == null)
-            return ServiceResult.ResourceNotFound.Return(_logger);
-        string? userId = _accountService.GetUserID();
-        if (userId == null)
-            return ServiceResult.UserNotFoundBadRequest.Return(_logger);
-        if (resource.SubmitterId == userId ||
-            resource.ResourceVersions.Any(v => v.SubmitterUserId == userId) ||
-            resource.ResourcesAuthors.Any(ra => ra.UserId == userId))
-            return ServiceResult.Success.Return(_logger);
-        return ServiceResult.Forbidden.Return(_logger);
-    }
     private async Task<OneOf<List<ResourcePreview>, ServiceResultContext>> GetPreviews(
         IFormFile[] formFiles, string mainFolder, string batchPath, CancellationToken ct)
     {
@@ -856,7 +548,7 @@ public partial class ResourceService(IWebHostEnvironment environment, Snestorage
         {
             var previewPath = Path.Combine(mainFolder, $"Previews",
                 $"{Guid.NewGuid():N}{Path.GetFileName(preview.FileName)}");
-            var previewFileRes = await _fileService.PrepareFile(FileContext.Previews, 
+            var previewFileRes = await _fileService.PrepareFile(FileContext.Previews,
                 preview, previewPath, batchPath, ct: ct);
             if (!previewFileRes.TryPickT0(out var previewFile, out var error))
                 return error;
@@ -871,22 +563,6 @@ public partial class ResourceService(IWebHostEnvironment environment, Snestorage
                 File = pr
             })];
         return resourcePreviews;
-    }
-
-    private static ResourceVersion GetVersion(ResourceCreateDTO dto, string userId, string version, Models.File file)
-    {
-        return new()
-        {
-            Id = 0,
-            ResourceId = 0,
-            FileId = 0,
-            Version = version,
-            ChangeLog = dto.ChangeLog,
-            File = file,
-            CreatedAt = DateTime.UtcNow,
-            SubmitterUserId = userId,
-            SealOfQualityRequested = dto.SealOfQualityRequested
-        };
     }
 
     private static List<ResourceExternalDependency> GetExternalDependencies(ExternalDependencyDTO[] dtos)
@@ -913,7 +589,7 @@ public partial class ResourceService(IWebHostEnvironment environment, Snestorage
         if (!tRes.TryPickT0(out var cachedTypes, out var cacheError))
             return cacheError;
 
-        foreach (var typeid in typeIds)
+        foreach (var typeid in typeIds.Distinct())
         {
             cachedTypes.TryGetValue(typeid, out var type);
 
@@ -1060,230 +736,110 @@ public partial class ResourceService(IWebHostEnvironment environment, Snestorage
 
         return tags;
     }
-    private static string GetMainResourceFolder(Resource resource)
-    {
-        return string.Join('/', resource.ResourceVersions.First().File!.URL.Split('/')[..3]);
-    }
-    private static string SanitizeFolderName(string? name)
-    {
-        var sanitized = _sanitizeFolderRegex2().Replace(name ?? "", "_");
 
-        sanitized = sanitized.Trim().TrimEnd(' ', '.');
-
-        if (sanitized.Length == 0)
-            return "folder";
-
-        if (_sanitizeFolderRegex().IsMatch(sanitized))
-            sanitized = "_" + sanitized;
-
-        return sanitized;
-    }
     public async Task<OneOf<List<ResourceDependencyViewDTO>, ServiceResultContext>>
         GetResourceAllDependencies(long resourceId, CancellationToken ct)
     {
-        var access = CheckViewAccess(await GetAccess(resourceId, ct));
-        if (access.Result != ServiceResult.Success)
-            return access;
+        var accessResult = await _accessService.GetViewAccess(resourceId, ct);
+        if (!accessResult.TryPickT0(out _, out var accessError))
+            return accessError;
 
         var res = await _dbHelperService.TryFunction(
             cancel => _context.ResourceDependencies
-            .AsNoTracking()
-            .Where(r => r.ResourceId == resourceId)
-            .OrderByDescending(v => v.DependencyResource!.Name)
-            .ThenBy(v => v.Id)
-            .Select(r => new ResourceDependencyViewDTO(r.Id, r.
-                DependencyResourceId,
-                r.DependencyResource!.Name))
-            .ToListAsync(cancel),
+                .AsNoTracking()
+                .Where(resource => resource.ResourceId == resourceId)
+                .OrderByDescending(resource => resource.DependencyResource!.Name)
+                .ThenBy(resource => resource.Id)
+                .Select(resource => new ResourceDependencyViewDTO(resource.Id,
+                    resource.DependencyResourceId, resource.DependencyResource!.Name))
+                .ToListAsync(cancel),
             ServiceResult.DBError, ct: ct);
         return res;
     }
     public async Task<OneOf<List<ResourceExternalDependency>, ServiceResultContext>>
         GetResourceAllExternalDependencies(long resourceId, CancellationToken ct)
     {
-        var access = CheckViewAccess(await GetAccess(resourceId, ct));
-        if (access.Result != ServiceResult.Success)
-            return access;
+        var accessResult = await _accessService.GetViewAccess(resourceId, ct);
+        if (!accessResult.TryPickT0(out _, out var accessError))
+            return accessError;
 
         var res = await _dbHelperService.TryFunction(
             cancel => _context.ResourceExternalDependencies
-            .AsNoTracking()
-            .Where(r => r.ResourceId == resourceId)
-            .OrderByDescending(v => v.DependencyName)
-            .ThenBy(v => v.Id)
-            .ToListAsync(cancel),
+                .AsNoTracking()
+                .Where(resource => resource.ResourceId == resourceId)
+                .OrderByDescending(resource => resource.DependencyName)
+                .ThenBy(resource => resource.Id)
+                .ToListAsync(cancel),
             ServiceResult.DBError, ct: ct);
         return res;
     }
     public async Task<OneOf<List<ResourceExternalAuthor>, ServiceResultContext>>
         GetResourceAllExternalAuthors(long resourceId, CancellationToken ct)
     {
-        var access = CheckViewAccess(await GetAccess(resourceId, ct));
-        if (access.Result != ServiceResult.Success)
-            return access;
+        var accessResult = await _accessService.GetViewAccess(resourceId, ct);
+        if (!accessResult.TryPickT0(out _, out var accessError))
+            return accessError;
 
         var res = await _dbHelperService.TryFunction(
             cancel => _context.ResourcesExternalAuthors
-            .AsNoTracking()
-            .Where(r => r.ResourceId == resourceId)
-            .OrderByDescending(v => v.Author)
-            .ThenBy(v => v.Id)
-            .ToListAsync(cancel),
+                .AsNoTracking()
+                .Where(author => author.ResourceId == resourceId)
+                .OrderByDescending(author => author.Author)
+                .ThenBy(author => author.Id)
+                .ToListAsync(cancel),
             ServiceResult.DBError, ct: ct);
         return res;
     }
     public async Task<OneOf<List<ResourceAuthorDTO>, ServiceResultContext>> GetResourceAllAuthors(long resourceId, CancellationToken ct)
     {
-        var access = CheckViewAccess(await GetAccess(resourceId, ct));
-        if (access.Result != ServiceResult.Success)
-            return access;
+        var accessResult = await _accessService.GetViewAccess(resourceId, ct);
+        if (!accessResult.TryPickT0(out _, out var accessError))
+            return accessError;
 
         var res = await _dbHelperService.TryFunction(
             cancel => _context.ResourcesAuthors
-            .AsNoTracking()
-            .Where(r => r.ResourceId == resourceId)
-            .Select(r => new ResourceAuthorDTO
-            {
-                Id = r.Id,
-                UserSummary = new UserNameDTO
+                .AsNoTracking()
+                .Where(author => author.ResourceId == resourceId)
+                .Select(author => new ResourceAuthorDTO
                 {
-                    Id = r.UserId,
-                    Username = r.User!.UserName!,
-                    UsernameColor = r.User.UserInfo!.UsernameColor,
-                    Avatar = new FileResponse
+                    Id = author.Id,
+                    UserSummary = new UserNameDTO
                     {
-                        Id = r.User.UserInfo.Avatar!.Id,
-                        FileTypeId = r.User.UserInfo.Avatar.FileTypeId,
-                        URL = r.User.UserInfo.Avatar.URL,
+                        Id = author.UserId,
+                        Username = author.User!.UserName!,
+                        UsernameColor = author.User.UserInfo!.UsernameColor,
+                        Avatar = new FileResponse
+                        {
+                            Id = author.User.UserInfo.Avatar!.Id,
+                            FileTypeId = author.User.UserInfo.Avatar.FileTypeId,
+                            URL = author.User.UserInfo.Avatar.URL
+                        }
                     }
-                }
-            })
-            .OrderByDescending(v => v.UserSummary.Username)
-            .ThenBy(v => v.Id)
-            .ToListAsync(cancel),
+                })
+                .OrderByDescending(author => author.UserSummary.Username)
+                .ThenBy(author => author.Id)
+                .ToListAsync(cancel),
             ServiceResult.DBError, ct: ct);
         return res;
     }
-    public async Task<OneOf<List<ResourceVersion>, ServiceResultContext>> GetResourceAllVersion(long resourceId, CancellationToken ct)
-    {
-        var access = CheckViewAccess(await GetAccess(resourceId, ct));
-        if (access.Result != ServiceResult.Success)
-            return access;
 
-        var res = await _dbHelperService.TryFunction(
-            cancel => _context.ResourceVersions
-            .AsNoTracking()
-            .Where(r => r.ResourceId == resourceId)
-            .Include(r => r.File)
-            .OrderByDescending(v => v.CreatedAt)
-            .ThenByDescending(v => v.Id)
-            .ToListAsync(cancel),
-            ServiceResult.DBError, ct: ct);
-        return res;
-    }
     public async Task<OneOf<List<ResourcePreview>, ServiceResultContext>> GetResourceAllPreviews(long resourceId, CancellationToken ct)
     {
-        var access = CheckViewAccess(await GetAccess(resourceId, ct));
-        if (access.Result != ServiceResult.Success)
-            return access;
+        var accessResult = await _accessService.GetViewAccess(resourceId, ct);
+        if (!accessResult.TryPickT0(out _, out var accessError))
+            return accessError;
 
         var res = await _dbHelperService.TryFunction(
             cancel => _context.ResourcePreviews
-            .AsNoTracking()
-            .Where(r => r.ResourceId == resourceId)
-            .Include(r => r.File)
-            .OrderBy(v => v.Id)
-            .ToListAsync(cancel),
+                .AsNoTracking()
+                .Where(preview => preview.ResourceId == resourceId)
+                .Include(preview => preview.File)
+                .OrderBy(preview => preview.Id)
+                .ToListAsync(cancel),
             ServiceResult.DBError, ct: ct);
         return res;
     }
-    public async Task<OneOf<ResourceVersion, ServiceResultContext>> GetResourceLastVersion(long resourceId, CancellationToken ct)
-    {
-        var access = CheckViewAccess(await GetAccess(resourceId, ct));
-        if (access.Result != ServiceResult.Success)
-            return access;
 
-        var res = await _dbHelperService.TryFunction(
-            cancel => _context.ResourceVersions
-            .AsNoTracking()
-            .Include(r => r.File)
-            .Where(r => r.ResourceId == resourceId)
-            .OrderByDescending(v => v.CreatedAt)
-            .ThenByDescending(v => v.Id)
-            .Take(1)
-            .FirstOrDefaultAsync(cancel),
-            ServiceResult.DBError, ct: ct);
-        return ItemOrError(res, ServiceResult.VersionNotFound);
-    }
-    public async Task<OneOf<RatingReadDto, ServiceResultContext>> GetRating(long resourceId, CancellationToken ct)
-    {
-        var access = CheckViewAccess(await GetAccess(resourceId, ct));
-        if (access.Result != ServiceResult.Success)
-            return access;
-
-        var userId = _accountService.GetUserID();
-        var res = await _dbHelperService.TryFunction(
-            cancel => _context.Resources.AsNoTracking()
-            .Where(r => r.Id == resourceId)
-            .Select(r => new RatingReadDto(
-                r.Score!.ScoresUsers.Average(v => (double?)v.Value) ?? 0.0,
-                r.Score.ScoresUsers.Count(),
-                r.Score.ScoresUsers
-                    .Where(v => userId != null && v.UserId == userId)
-                    .Select(v => (long?)v.Value)
-                    .FirstOrDefault()))
-            .FirstOrDefaultAsync(cancel),
-            ServiceResult.DBError, ct: ct);
-        if (!res.TryPickT0(out var dto, out var error))
-            return error;
-        return dto != null ? dto : ServiceResult.ResourceNotFound.Return(_logger);
-    }
-    private async Task<OneOf<ResourceAccessRow, ServiceResultContext>> GetAccess(long resourceId, CancellationToken ct)
-    {
-        var userId = _accountService.GetUserID();
-        var res = await _dbHelperService.TryFunction(
-            cancel => _context.Resources
-                .AsNoTracking()
-                .Where(r => r.Id == resourceId)
-                .Select(r => new ResourceAccessRow(
-                    r.Id, r.ScoreId, r.VisibilityId,
-                    userId != null && (
-                        r.SubmitterId == userId ||
-                        r.ResourcesAuthors.Any(a => a.UserId == userId) ||
-                        r.ResourceVersions.Any(v => v.SubmitterUserId == userId))))
-                .FirstOrDefaultAsync(cancel),
-            ServiceResult.DBError, ct: ct);
-
-        if (!res.TryPickT0(out var access, out var error))
-            return error;
-
-        return access is null ? ServiceResult.ResourceNotFound.Return(_logger) : access;
-    }
-    private ServiceResultContext CheckViewAccess(
-        OneOf<ResourceAccessRow, ServiceResultContext> accessResult)
-    {
-        if (!accessResult.TryPickT0(out var access, out var error))
-            return error;
-        if (access.VisibilityId != 3 || _accountService.IsModeratorOrAdmin())
-            return ServiceResult.Success.Return(_logger);
-        if (_accountService.GetUserID() is null)
-            return ServiceResult.UserNotFoundUnauthorized.Return(_logger);
-        return access.IsContributor ?
-            ServiceResult.Success.Return(_logger) :
-            ServiceResult.Forbidden.Return(_logger);
-    }
-
-    private ServiceResultContext CheckEditAccess(
-        OneOf<ResourceAccessRow, ServiceResultContext> accessResult)
-    {
-        if (!accessResult.TryPickT0(out var access, out var error))
-            return error;
-        if (_accountService.GetUserID() is null)
-            return ServiceResult.UserNotFoundBadRequest.Return(_logger);
-        return access.IsContributor ?
-            ServiceResult.Success.Return(_logger) :
-            ServiceResult.Forbidden.Return(_logger);
-    }
     private OneOf<T, ServiceResultContext> ItemOrError<T>(
         OneOf<T?, ServiceResultContext> item,
         ServiceResult? notFoundError = null) where T : class
@@ -1293,6 +849,7 @@ public partial class ResourceService(IWebHostEnvironment environment, Snestorage
         return i != null ? i :
             (notFoundError ?? ServiceResult.ResourceNotFound).Return(_logger);
     }
+
     private static IQueryable<Resource> SortFind(IQueryable<Resource> query, ResourceSortingDTO sort)
     {
         var ordered = sort.SortType switch
@@ -1558,79 +1115,7 @@ public partial class ResourceService(IWebHostEnvironment environment, Snestorage
 
         return resources;
     }
-    private async Task<OneOf<bool, ServiceResultContext>> ValidateVersion(long? resourceId,
-        long? versionId, string version, CancellationToken ct = default)
-    {
-        if (version.Length > MAX_VERSION_SIZE || !_version().IsMatch(version))
-            return false;
 
-        if (resourceId == null)
-            return true;
-
-        var versionsResult = await _dbHelperService.TryFunction(
-            cancel => _context.Resources
-                .AsNoTracking()
-                .Where(r => r.Id == resourceId)
-                .Select(r => r.ResourceVersions
-                    .OrderBy(v => v.CreatedAt)
-                    .ThenBy(v => v.Id)
-                    .Select(v => new { v.Id, v.Version })
-                    .ToList())
-                .FirstOrDefaultAsync(cancel), ServiceResult.DBError, ct: ct);
-
-        if (!versionsResult.TryPickT0(out var versions, out var error))
-            return error;
-
-        if (versions == null)
-            return false;
-
-        int position = versions.FindIndex(v => v.Id == versionId);
-
-        if (position < 0)
-            position = versions.Count;
-
-        var proposed = GetVersionOrder(version);
-
-        for (int i = 0; i < versions.Count; i++)
-        {
-            if (i == position)
-                continue;
-
-            var previous = versions[i].Version?.Trim().ToLowerInvariant();
-
-            if (previous == null || !_version().IsMatch(previous))
-                return false;
-
-            int comparison = proposed.CompareTo(GetVersionOrder(previous));
-
-            if (i < position ? comparison <= 0 : comparison >= 0)
-                return false;
-        }
-
-        return true;
-    }
-
-    private static (int Major, int Minor, int Patch, int Stage, int Revision)
-        GetVersionOrder(string version)
-    {
-        var parts = version.Split('-', 2);
-        var numbers = parts[0].Split('.');
-        string[] suffix = parts.Length == 2 ? parts[1].Split('.', 2) : [];
-
-        int stage = suffix.ElementAtOrDefault(0) switch
-        {
-            "alpha" => 0,
-            "beta" => 1,
-            "rc" => 2,
-            _ => 3
-        };
-
-        return (int.Parse(numbers[0], CultureInfo.InvariantCulture),
-            int.Parse(numbers.ElementAtOrDefault(1) ?? "0", CultureInfo.InvariantCulture),
-            int.Parse(numbers.ElementAtOrDefault(2) ?? "0", CultureInfo.InvariantCulture),
-            stage,
-            suffix.Length == 2 ? int.Parse(suffix[1], CultureInfo.InvariantCulture) : -1);
-    }
     private static bool IsValidRepositoryUrl(string value)
     {
         return value.Length <= 2048 && RepositoryUrlRegex().IsMatch(value) &&
@@ -1641,6 +1126,7 @@ public partial class ResourceService(IWebHostEnvironment environment, Snestorage
             !string.IsNullOrWhiteSpace(uri.Host) &&
             string.IsNullOrEmpty(uri.UserInfo);
     }
+
     private static ServiceResult ValidateFinder(ResourceFinderDTO dto)
     {
         if (dto.Sorting is null ||
@@ -1670,14 +1156,10 @@ public partial class ResourceService(IWebHostEnvironment environment, Snestorage
             to is null ||
             from.Value.Date <= to.Value.Date;
     }
-    [GeneratedRegex(@"^(CON|PRN|AUX|NUL|COM[1-9¹²³]|LPT[1-9¹²³])(?:\.|$)", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
-    private static partial Regex _sanitizeFolderRegex();
-    [GeneratedRegex(@"[<>:""/\\|?*\x00-\x1F]")]
-    private static partial Regex _sanitizeFolderRegex2();
-    [GeneratedRegex(@"\A[0-9]{1,4}(?:\.[0-9]{1,4}){0,2}(?:-(?:alpha|beta|rc)(?:\.[0-9]{1,4})?)?\z")]
-    private static partial Regex _version();
+
     [GeneratedRegex(@"\Ahttps?://[^\s<>""\\]+\z", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex RepositoryUrlRegex();
+
     [GeneratedRegex(@"\A[\p{L}\p{Nd}][\p{L}\p{Nd} ]{0,98}[\p{L}\p{Nd}]\z")]
     private static partial Regex ResourceNameRegex();
 }

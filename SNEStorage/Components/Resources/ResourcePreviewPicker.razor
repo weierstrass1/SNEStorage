@@ -1,9 +1,10 @@
 <div class="preview-picker">
     <label class="preview-label" for="@InputId">New preview files</label>
     <p class="preview-help">Up to 20 previews, 5 MB each. Images: up to 4,194,304 pixels. GIFs: up to 229,376 pixels per frame (512 × 448, for example). Animated images: up to 1,800 frames.</p>
-    <InputFile id="@InputId" name="Previews" class="preview-input" multiple accept=".png,.jpg,.jpeg,.gif,.webp,.avif,.mp4,.webm,.ogv,.ogg" OnChange="FilesSelectedAsync" disabled="@(!_ready || _checking || _items.Count >= MaxFiles)" />
+    <InputFile id="@InputId" name="Previews" class="preview-input" multiple accept=".png,.jpg,.jpeg,.gif,.webp,.avif,.mp4,.webm,.ogv,.ogg,.mp3,.wav,.oga,.opus,.flac,.m4a,.aac,.weba,.spc,.brr" OnChange="FilesSelectedAsync" disabled="@(!_ready || _checking || _items.Count >= MaxFiles)" />
     @if (_checking) { <p class="preview-help" role="status">Checking preview files…</p> }
-    <p class="preview-help" role="status" aria-live="polite">@_items.Count / @MaxFiles available new preview slots · PNG, JPG, GIF, WEBP, AVIF, MP4, WEBM, OGV</p>
+    <p class="preview-help" role="status" aria-live="polite">@_items.Count / @MaxFiles available new preview slots · Images, videos, audio, SPC and BRR samples.</p>
+    <p class="preview-help">Audio: MP3, WAV, OGG, Opus, FLAC, M4A, AAC or WebA. You can listen before uploading; nothing plays automatically.</p>
     @if (_items.Count > MaxFiles)
     {
         <p class="preview-errors" role="alert">Too many previews. Remove a new or existing preview before saving.</p>
@@ -24,8 +25,12 @@
             @foreach (var item in _items)
             {
                 <li @key="item.Id" class="preview-item">
-                    <div class="preview-media">
-                        @if (item.Video)
+                    <div class="preview-media @(!string.IsNullOrEmpty(item.Kind) ? "is-sound" : null)">
+                        @if (!string.IsNullOrEmpty(item.Kind))
+                        {
+                            <ResourceAudioPreview SourceUrl="@item.Url" Kind="@item.Kind" FileName="@item.Name" Compact="true" />
+                        }
+                        else if (item.Video)
                         {
                             <video src="@item.Url" controls preload="none" playsinline aria-label="Preview @item.Name">Your browser cannot play this video.</video>
                         }

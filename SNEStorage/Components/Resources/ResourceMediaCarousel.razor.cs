@@ -35,6 +35,10 @@ public partial class ResourceMediaCarousel : IAsyncDisposable
     protected long ActiveFileId => Active is { FileId: > 0 } preview ? preview.FileId : Active?.File?.Id ?? 0;
     protected string? ActiveUrl => _sourceUrl;
     protected PreviewKind Kind => _loadedKind ?? PreviewKind.Other;
+    protected bool IsSound => Kind is PreviewKind.Audio or PreviewKind.Spc or PreviewKind.Brr;
+    protected string SoundKind => Kind.ToString().ToLowerInvariant();
+    protected string PreviewFileName => Active?.File?.URL is { Length: > 0 } path
+        ? Path.GetFileName(path.Replace('\\', '/')) : "Sound preview";
 
     protected override void OnParametersSet()
     {
@@ -85,7 +89,7 @@ public partial class ResourceMediaCarousel : IAsyncDisposable
         try
         {
             if (metadataUrl is null || downloadUrl is null) { _failed = true; return; }
-            _module ??= await JavaScript.InvokeAsync<IJSObjectReference>("import", _lifetime.Token, "./js/resource-media.js?v=3");
+            _module ??= await JavaScript.InvokeAsync<IJSObjectReference>("import", _lifetime.Token, "./js/resource-media.js?v=4");
             if (_disposed || generation != _generation) return;
             // Pass only file metadata already supplied by ResourceController, without navigation graphs.
             var knownFile = Active?.File is { } file ? new
@@ -104,7 +108,9 @@ public partial class ResourceMediaCarousel : IAsyncDisposable
             }
             _loadedKind = response.Kind switch
             {
-                "image" => PreviewKind.Image, "video" => PreviewKind.Video, _ => PreviewKind.Other
+                "image" => PreviewKind.Image, "video" => PreviewKind.Video,
+                "audio" => PreviewKind.Audio, "spc" => PreviewKind.Spc, "brr" => PreviewKind.Brr,
+                _ => PreviewKind.Other
             };
             _sourceUrl = response.Url;
         }
@@ -154,7 +160,7 @@ public partial class ResourceMediaCarousel : IAsyncDisposable
         else if (args.Key == "ArrowRight") Next();
     }
 
-    protected enum PreviewKind { Image, Video, Other }
+    protected enum PreviewKind { Image, Video, Audio, Spc, Brr, Other }
 
     private sealed class PreviewResponse
     {

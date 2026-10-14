@@ -1,4 +1,4 @@
-<section class="media-carousel @(Kind == PreviewKind.Video && _playRequested && !_failed ? "is-video-playing" : null)" aria-label="Resource previews" aria-roledescription="carousel" @onkeydown="HandleKeyDown" tabindex="0">
+<section class="media-carousel @(Kind == PreviewKind.Video && _playRequested && !_failed ? "is-video-playing" : null) @(IsSound ? "is-sound" : null)" aria-label="Resource previews" aria-roledescription="carousel" @onkeydown="HandleKeyDown" tabindex="0">
     @if (Previews.Count == 0)
     {
         <div class="media-empty">
@@ -24,6 +24,10 @@
             else if (Kind == PreviewKind.Image && ActiveUrl is not null)
             {
                 <img class="media-image" src="@ActiveUrl" alt="@($"{ResourceName}, preview {_activeIndex + 1}")" loading="lazy" decoding="async" @onerror="MediaFailed" />
+            }
+            else if (IsSound && ActiveUrl is not null)
+            {
+                <ResourceAudioPreview SourceUrl="@ActiveUrl" Kind="@SoundKind" FileName="@PreviewFileName" Enabled="LoadMedia" />
             }
             else if (Kind == PreviewKind.Video && !_playRequested)
             {

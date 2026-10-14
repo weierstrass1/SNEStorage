@@ -1,6 +1,6 @@
 import { getAccountSession, invalidateAccountSession } from "./account-session.js?v=2";
 import { antiforgeryFetch } from "./antiforgery.js?v=1";
-import { validateUpload } from "./upload-validation.js?v=1";
+import { validateUpload } from "./upload-validation.js?v=2";
 
 const profileRequests = new Map();
 

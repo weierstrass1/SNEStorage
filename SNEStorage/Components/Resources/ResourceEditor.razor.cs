@@ -175,7 +175,7 @@ public partial class ResourceEditor : IAsyncDisposable
         {
             if (_disposed) return;
             if (ResourceId <= 0) { _errorStatus = 404; return; }
-            _module ??= await JavaScript.InvokeAsync<IJSObjectReference>("import", _lifetime.Token, "./js/resource-editor.js?v=17");
+            _module ??= await JavaScript.InvokeAsync<IJSObjectReference>("import", _lifetime.Token, "./js/resource-editor.js?v=18");
             if (_disposed) return;
             var userId = PageAccount?.Profile.UserId;
             if (string.IsNullOrWhiteSpace(userId)) { _errorStatus = 403; return; }

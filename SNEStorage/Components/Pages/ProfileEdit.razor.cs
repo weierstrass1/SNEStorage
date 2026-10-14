@@ -103,7 +103,7 @@ public partial class ProfileEdit : IAsyncDisposable
         }
         try
         {
-            _profileModule = await JavaScript.InvokeAsync<IJSObjectReference>("import", _lifetime.Token, "./js/profile.js?v=11");
+            _profileModule = await JavaScript.InvokeAsync<IJSObjectReference>("import", _lifetime.Token, "./js/profile.js?v=12");
         }
         catch (Exception exception) when (exception is JSDisconnectedException or JSException or OperationCanceledException)
         {

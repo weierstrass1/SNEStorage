@@ -38,6 +38,23 @@ public class DBHelperServiceTests
         Assert.Equal(1, callbackCalls);
     }
 
+    [Fact(DisplayName = "TryFunction preserves caller file, method, and line metadata on failure")]
+    public async Task TryFunction_PreservesCallerMetadata_WhenOperationFails()
+    {
+        await using var database = new TestDatabase();
+
+        var result = await database.DBHelper.TryFunction(
+            _ => Task.FromException<int>(new InvalidOperationException("failure")),
+            filePath: "C:\\source\\ResourceService.cs",
+            methodName: "LoadResource",
+            line: 27);
+
+        Assert.True(result.IsT1);
+        Assert.Equal("C:\\source\\ResourceService.cs", result.AsT1.FilePath);
+        Assert.Equal("LoadResource", result.AsT1.MethodName);
+        Assert.Equal(27, result.AsT1.Line);
+    }
+
     [Fact(DisplayName = "A cleanup failure does not replace the original operation failure")]
     public async Task TryFunction_PreservesOriginalFailure_WhenCallbackAlsoFails()
     {

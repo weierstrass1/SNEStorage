@@ -1,5 +1,5 @@
 import { captchaFetch } from "./captcha.js?v=3";
-import { basicUploadError, validateUpload } from "./upload-validation.js?v=1";
+import { basicUploadError, validateUpload } from "./upload-validation.js?v=2";
 
 const submissions = new Map();
 const validationStates = new Map();

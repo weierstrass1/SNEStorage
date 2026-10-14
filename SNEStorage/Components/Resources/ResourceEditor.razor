@@ -53,7 +53,7 @@ else if (_resource is { } resource)
                 <section id="@PanelId(1)" role="tabpanel" aria-labelledby="@TabId(1)" hidden="@(_activeTab != 1)" tabindex="0" data-editor-panel="1">
                     <fieldset>
                         <legend>Resource previews</legend>
-                        <p class="editor-muted">Keep up to 20 previews in total. New images, GIFs and videos must be no larger than 5 MB each.</p>
+                        <p class="editor-muted">Keep up to 20 previews in total. Images, GIFs, videos, audio, SPC and BRR samples must be no larger than 5 MB each.</p>
                         <ResourceExistingPreviews ResourceId="ResourceId" ResourceName="@resource.Name" Previews="_existingPreviews" @bind-Values="_form.PreviewIDs" LoadMedia="@(_activeTab == 1)" />
                         <div class="editor-divider">
                             <ResourcePreviewPicker InputId="@PreviewInputId" MaxFiles="@(Math.Max(0, 20 - _form.PreviewIDs.Length))" />

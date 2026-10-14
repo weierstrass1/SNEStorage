@@ -1,4 +1,4 @@
-import { validateUpload } from "./upload-validation.js?v=1";
+import { validateUpload } from "./upload-validation.js?v=2";
 
 const pickers = new Map();
 const template = `<cropper-canvas>

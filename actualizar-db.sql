@@ -451,7 +451,7 @@ IF NOT EXISTS (
 )
 BEGIN
     INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
-    VALUES (N'20240913143913_InitialCreate', N'10.0.12');
+    VALUES (N'20240913143913_InitialCreate', N'10.0.13');
 END;
 
 COMMIT;
@@ -553,7 +553,7 @@ IF NOT EXISTS (
 )
 BEGIN
     INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
-    VALUES (N'20240915004027_update14', N'10.0.12');
+    VALUES (N'20240915004027_update14', N'10.0.13');
 END;
 
 COMMIT;
@@ -747,7 +747,7 @@ IF NOT EXISTS (
 )
 BEGIN
     INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
-    VALUES (N'20240915015606_update15', N'10.0.12');
+    VALUES (N'20240915015606_update15', N'10.0.13');
 END;
 
 COMMIT;
@@ -876,7 +876,7 @@ IF NOT EXISTS (
 )
 BEGIN
     INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
-    VALUES (N'20240915022219_update16', N'10.0.12');
+    VALUES (N'20240915022219_update16', N'10.0.13');
 END;
 
 COMMIT;
@@ -1091,7 +1091,7 @@ IF NOT EXISTS (
 )
 BEGIN
     INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
-    VALUES (N'20240915032043_update17', N'10.0.12');
+    VALUES (N'20240915032043_update17', N'10.0.13');
 END;
 
 COMMIT;
@@ -1128,7 +1128,7 @@ IF NOT EXISTS (
 )
 BEGIN
     INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
-    VALUES (N'20240915195326_update18', N'10.0.12');
+    VALUES (N'20240915195326_update18', N'10.0.13');
 END;
 
 COMMIT;
@@ -1149,7 +1149,7 @@ IF NOT EXISTS (
 )
 BEGIN
     INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
-    VALUES (N'20240915220401_update19', N'10.0.12');
+    VALUES (N'20240915220401_update19', N'10.0.13');
 END;
 
 COMMIT;
@@ -1176,7 +1176,7 @@ IF NOT EXISTS (
 )
 BEGIN
     INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
-    VALUES (N'20261001163102_NombreDelCambio', N'10.0.12');
+    VALUES (N'20261001163102_NombreDelCambio', N'10.0.13');
 END;
 
 COMMIT;
@@ -1450,7 +1450,7 @@ IF NOT EXISTS (
 )
 BEGIN
     INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
-    VALUES (N'20261002213817_AddResource', N'10.0.12');
+    VALUES (N'20261002213817_AddResource', N'10.0.13');
 END;
 
 COMMIT;
@@ -1559,7 +1559,7 @@ IF NOT EXISTS (
 )
 BEGIN
     INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
-    VALUES (N'20261002214330_AddResource2', N'10.0.12');
+    VALUES (N'20261002214330_AddResource2', N'10.0.13');
 END;
 
 COMMIT;
@@ -1618,7 +1618,7 @@ IF NOT EXISTS (
 )
 BEGIN
     INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
-    VALUES (N'20261002215958_AddResource3', N'10.0.12');
+    VALUES (N'20261002215958_AddResource3', N'10.0.13');
 END;
 
 COMMIT;
@@ -1691,7 +1691,7 @@ IF NOT EXISTS (
 )
 BEGIN
     INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
-    VALUES (N'20261002224630_AddResource4', N'10.0.12');
+    VALUES (N'20261002224630_AddResource4', N'10.0.13');
 END;
 
 COMMIT;
@@ -1718,7 +1718,7 @@ IF NOT EXISTS (
 )
 BEGIN
     INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
-    VALUES (N'20261002234307_AddResource5', N'10.0.12');
+    VALUES (N'20261002234307_AddResource5', N'10.0.13');
 END;
 
 COMMIT;
@@ -1820,7 +1820,7 @@ IF NOT EXISTS (
 )
 BEGIN
     INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
-    VALUES (N'20261003041418_AddResourceDependencies', N'10.0.12');
+    VALUES (N'20261003041418_AddResourceDependencies', N'10.0.13');
 END;
 
 COMMIT;
@@ -1891,7 +1891,7 @@ IF NOT EXISTS (
 )
 BEGIN
     INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
-    VALUES (N'20261005202325_AddCategories', N'10.0.12');
+    VALUES (N'20261005202325_AddCategories', N'10.0.13');
 END;
 
 COMMIT;
@@ -1904,7 +1904,7 @@ IF NOT EXISTS (
 )
 BEGIN
     INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
-    VALUES (N'20261005202559_AddCategories2', N'10.0.12');
+    VALUES (N'20261005202559_AddCategories2', N'10.0.13');
 END;
 
 COMMIT;
@@ -2323,7 +2323,7 @@ IF NOT EXISTS (
 )
 BEGIN
     INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
-    VALUES (N'20261005204028_fixtexts', N'10.0.12');
+    VALUES (N'20261005204028_fixtexts', N'10.0.13');
 END;
 
 COMMIT;
@@ -2442,7 +2442,7 @@ IF NOT EXISTS (
 )
 BEGIN
     INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
-    VALUES (N'20261006162324_resourceUpdate', N'10.0.12');
+    VALUES (N'20261006162324_resourceUpdate', N'10.0.13');
 END;
 
 COMMIT;
@@ -2509,7 +2509,7 @@ IF NOT EXISTS (
 )
 BEGIN
     INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
-    VALUES (N'20261006235532_resourceUpdate2', N'10.0.12');
+    VALUES (N'20261006235532_resourceUpdate2', N'10.0.13');
 END;
 
 COMMIT;
@@ -2569,7 +2569,7 @@ IF NOT EXISTS (
 )
 BEGIN
     INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
-    VALUES (N'20261007035805_commentUpdate', N'10.0.12');
+    VALUES (N'20261007035805_commentUpdate', N'10.0.13');
 END;
 
 COMMIT;
@@ -2614,7 +2614,7 @@ IF NOT EXISTS (
 )
 BEGIN
     INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
-    VALUES (N'20261007165433_FixCascade', N'10.0.12');
+    VALUES (N'20261007165433_FixCascade', N'10.0.13');
 END;
 
 COMMIT;
@@ -2643,7 +2643,7 @@ IF NOT EXISTS (
 )
 BEGIN
     INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
-    VALUES (N'20261007180902_CommentCardinality', N'10.0.12');
+    VALUES (N'20261007180902_CommentCardinality', N'10.0.13');
 END;
 
 COMMIT;
@@ -2760,7 +2760,7 @@ IF NOT EXISTS (
 )
 BEGIN
     INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
-    VALUES (N'20261011022654_FixLimits', N'10.0.12');
+    VALUES (N'20261011022654_FixLimits', N'10.0.13');
 END;
 
 COMMIT;
@@ -2810,7 +2810,7 @@ IF NOT EXISTS (
 )
 BEGIN
     INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
-    VALUES (N'20261011215745_News', N'10.0.12');
+    VALUES (N'20261011215745_News', N'10.0.13');
 END;
 
 COMMIT;
@@ -2831,7 +2831,7 @@ IF NOT EXISTS (
 )
 BEGIN
     INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
-    VALUES (N'20261012000440_News2', N'10.0.12');
+    VALUES (N'20261012000440_News2', N'10.0.13');
 END;
 
 COMMIT;
@@ -2876,7 +2876,188 @@ IF NOT EXISTS (
 )
 BEGIN
     INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
-    VALUES (N'20261012144558_Discord', N'10.0.12');
+    VALUES (N'20261012144558_Discord', N'10.0.13');
+END;
+
+COMMIT;
+GO
+
+BEGIN TRANSACTION;
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261014155035_AddUniqueCommentLike'
+)
+BEGIN
+    DROP INDEX [IX_like_users_score_id] ON [like_users];
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261014155035_AddUniqueCommentLike'
+)
+BEGIN
+    DECLARE @var55 nvarchar(max);
+    SELECT @var55 = QUOTENAME([d].[name])
+    FROM [sys].[default_constraints] [d]
+    INNER JOIN [sys].[columns] [c] ON [d].[parent_column_id] = [c].[column_id] AND [d].[parent_object_id] = [c].[object_id]
+    WHERE ([d].[parent_object_id] = OBJECT_ID(N'[visibility]') AND [c].[name] = N'name');
+    IF @var55 IS NOT NULL EXEC(N'ALTER TABLE [visibility] DROP CONSTRAINT ' + @var55 + ';');
+    EXEC(N'UPDATE [visibility] SET [name] = N'''' WHERE [name] IS NULL');
+    ALTER TABLE [visibility] ALTER COLUMN [name] nvarchar(100) NOT NULL;
+    ALTER TABLE [visibility] ADD DEFAULT N'' FOR [name];
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261014155035_AddUniqueCommentLike'
+)
+BEGIN
+    DECLARE @var56 nvarchar(max);
+    SELECT @var56 = QUOTENAME([d].[name])
+    FROM [sys].[default_constraints] [d]
+    INNER JOIN [sys].[columns] [c] ON [d].[parent_column_id] = [c].[column_id] AND [d].[parent_object_id] = [c].[object_id]
+    WHERE ([d].[parent_object_id] = OBJECT_ID(N'[resource_type]') AND [c].[name] = N'name');
+    IF @var56 IS NOT NULL EXEC(N'ALTER TABLE [resource_type] DROP CONSTRAINT ' + @var56 + ';');
+    EXEC(N'UPDATE [resource_type] SET [name] = N'''' WHERE [name] IS NULL');
+    ALTER TABLE [resource_type] ALTER COLUMN [name] nvarchar(max) NOT NULL;
+    ALTER TABLE [resource_type] ADD DEFAULT N'' FOR [name];
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261014155035_AddUniqueCommentLike'
+)
+BEGIN
+    CREATE UNIQUE INDEX [IX_like_users_score_id_user_id] ON [like_users] ([score_id], [user_id]);
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261014155035_AddUniqueCommentLike'
+)
+BEGIN
+    INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+    VALUES (N'20261014155035_AddUniqueCommentLike', N'10.0.13');
+END;
+
+COMMIT;
+GO
+
+BEGIN TRANSACTION;
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261014162548_AddScoreCleanupTriggers'
+)
+BEGIN
+    INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+    VALUES (N'20261014162548_AddScoreCleanupTriggers', N'10.0.13');
+END;
+
+COMMIT;
+GO
+
+BEGIN TRANSACTION;
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261014165115_ConfigureScoreCleanupTriggers'
+)
+BEGIN
+    ALTER TABLE [comment] DROP CONSTRAINT [FK_comment_score];
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261014165115_ConfigureScoreCleanupTriggers'
+)
+BEGIN
+    ALTER TABLE [resource] DROP CONSTRAINT [FK_resource_score];
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261014165115_ConfigureScoreCleanupTriggers'
+)
+BEGIN
+    ALTER TABLE [comment] ADD CONSTRAINT [FK_comment_score] FOREIGN KEY ([score_id]) REFERENCES [score] ([id]);
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261014165115_ConfigureScoreCleanupTriggers'
+)
+BEGIN
+    ALTER TABLE [resource] ADD CONSTRAINT [FK_resource_score] FOREIGN KEY ([score_id]) REFERENCES [score] ([id]);
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261014165115_ConfigureScoreCleanupTriggers'
+)
+BEGIN
+    EXEC(N'
+        CREATE OR ALTER TRIGGER [dbo].[TR_comment_delete_score]
+        ON [dbo].[comment]
+        AFTER DELETE
+        AS
+        BEGIN
+            SET NOCOUNT ON;
+
+            IF NOT EXISTS (SELECT 1 FROM deleted)
+                RETURN;
+
+            DELETE s
+            FROM [dbo].[score] AS s
+            INNER JOIN deleted AS d ON d.[score_id] = s.[id]
+            WHERE NOT EXISTS (
+                SELECT 1 FROM [dbo].[comment] AS c
+                WHERE c.[score_id] = s.[id]
+            )
+            AND NOT EXISTS (
+                SELECT 1 FROM [dbo].[resource] AS r
+                WHERE r.[score_id] = s.[id]
+            );
+        END;
+    ');
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261014165115_ConfigureScoreCleanupTriggers'
+)
+BEGIN
+    EXEC(N'
+        CREATE OR ALTER TRIGGER [dbo].[TR_resource_delete_score]
+        ON [dbo].[resource]
+        AFTER DELETE
+        AS
+        BEGIN
+            SET NOCOUNT ON;
+
+            IF NOT EXISTS (SELECT 1 FROM deleted)
+                RETURN;
+
+            DELETE s
+            FROM [dbo].[score] AS s
+            INNER JOIN deleted AS d ON d.[score_id] = s.[id]
+            WHERE NOT EXISTS (
+                SELECT 1 FROM [dbo].[comment] AS c
+                WHERE c.[score_id] = s.[id]
+            )
+            AND NOT EXISTS (
+                SELECT 1 FROM [dbo].[resource] AS r
+                WHERE r.[score_id] = s.[id]
+            );
+        END;
+    ');
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261014165115_ConfigureScoreCleanupTriggers'
+)
+BEGIN
+    INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+    VALUES (N'20261014165115_ConfigureScoreCleanupTriggers', N'10.0.13');
 END;
 
 COMMIT;
