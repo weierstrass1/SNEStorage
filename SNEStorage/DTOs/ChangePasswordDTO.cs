@@ -1,9 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
 namespace SNEStorage.DTOs;
+
 public class ChangePasswordDTO
 {
     [Required]
+    [StringLength(450)]
     public required string UserId { get; set; }
 
     [Required]

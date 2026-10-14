@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
 namespace SNEStorage.DTOs;
+
 public class NewsFilterDTO { }
 public class NewsReadDTO
 {

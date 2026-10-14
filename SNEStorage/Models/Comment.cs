@@ -1,15 +1,21 @@
-﻿using SNEStorage.DTOs;
+﻿using System.ComponentModel.DataAnnotations;
+using SNEStorage.DTOs;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 
 namespace SNEStorage.Models;
+
 public partial class Comment
 {
     public long Id { get; set; }
     public DateTime PublishDate { get; set; }
     public DateTime? UpdatedAt { get; set; }
     public bool Deleted { get; set; } = false;
+    [Required(AllowEmptyStrings = false)]
+    [StringLength(5000)]
     public required string Text { get; set; }
+    [Required(AllowEmptyStrings = true)]
+    [StringLength(450)]
     public required string UserId { get; set; }
     public long ScoreId { get; set; }
     [JsonIgnore]

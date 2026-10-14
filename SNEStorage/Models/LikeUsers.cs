@@ -1,12 +1,16 @@
-﻿using SNEStorage.DTOs;
+﻿using System.ComponentModel.DataAnnotations;
+using SNEStorage.DTOs;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 
 namespace SNEStorage.Models;
+
 public partial class LikeUsers
 {
     public long Id { get; set; }
     public long ScoreId { get; set; }
+    [Required(AllowEmptyStrings = true)]
+    [StringLength(450)]
     public required string UserId { get; set; }
     public bool Value { get; set; }
     [JsonIgnore]

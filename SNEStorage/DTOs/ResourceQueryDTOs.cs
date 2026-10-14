@@ -1,4 +1,5 @@
-﻿namespace SNEStorage.DTOs;
+﻿using System.ComponentModel.DataAnnotations;
+namespace SNEStorage.DTOs;
 
 public enum ResourceSorting
 {
@@ -24,6 +25,7 @@ public sealed class ResourceAuthorDTO
 }
 public sealed class ResourceSortingDTO
 {
+    [EnumDataType(typeof(ResourceSorting))]
     public ResourceSorting SortType { get; set; } = ResourceSorting.CreatedAt;
     public bool SortOrderDescending { get; set; } = true;
 }
@@ -36,7 +38,9 @@ public sealed class ResourceFinderDTO
     public bool CanIncludesSensitiveContent { get; set; } = false;
     public bool? SealOfQuality { get; set; }
     public bool? MustHaveScore { get; set; }
+    [Range(1, 5)]
     public int? ScoreLowerLimit { get; set; }
+    [Range(1, 5)]
     public int? ScoreHigherLimit { get; set; }
     public DateTime? CreatedAtFrom { get; set; }
     public DateTime? CreatedAtTo { get; set; }
@@ -44,6 +48,7 @@ public sealed class ResourceFinderDTO
     public DateTime? VersionCreatedAtTo { get; set; }
     public string? NameLike { get; set; }
     public string? AuthorLike { get; set; }
+    [Required]
     public ResourceSortingDTO Sorting { get; set; } = new();
     public long[] TypeIds { get; set; } = [];
     public long[] CategoryIDs { get; set; } = [];
@@ -97,6 +102,6 @@ public sealed class ResourceReadDTO
     public List<ResourceTypeReadDTO> Types { get; set; } = [];
     public List<ResourceTagReadDTO> Tags { get; set; } = [];
 }
-public sealed record ResourceTypeReadDTO(long Id, long ResourceTypeId, string Name, 
+public sealed record ResourceTypeReadDTO(long Id, long ResourceTypeId, string Name,
     long CategoryId, string CategoryName);
 public sealed record ResourceTagReadDTO(long Id, long TagId, string Name);

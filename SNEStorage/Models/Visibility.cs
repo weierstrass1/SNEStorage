@@ -1,10 +1,13 @@
-﻿namespace SNEStorage.Models;
+﻿using System.ComponentModel.DataAnnotations;
+namespace SNEStorage.Models;
 
 public partial class Visibility
 {
-    public long Id { get; set; }
-    public string? Name { get; set; }
-    public bool ResourceOnly { get; set; }
+    public required long Id { get; set; }
+    [Required(AllowEmptyStrings = false)]
+    [StringLength(100)]
+    public required string Name { get; set; }
+    public required bool ResourceOnly { get; set; }
     public virtual ICollection<UserInfo> UserInfos { get; set; } = [];
     public virtual ICollection<Resource> Resources { get; set; } = [];
 }
