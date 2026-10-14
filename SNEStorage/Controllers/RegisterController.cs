@@ -3,37 +3,38 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SNEStorage.DTOs;
 using SNEStorage.Filters.Attributes;
-using SNEStorage.Models;
 using SNEStorage.Services;
 
 namespace SNEStorage.Controllers;
 
 [ApiController]
 [Route("api/register")]
-public class RegisterController(AccountController accountController,
-    CacheService cacheService) : Controller
+public class RegisterController(AccountService accountService, CacheService cacheService) : Controller
 {
-    private readonly AccountController _accountController = accountController;
+    private readonly AccountService _accountService = accountService;
     private readonly CacheService _cacheService = cacheService;
+
     [HttpGet("options")]
     public async Task<ActionResult<RegistrationOptionsDto>> GetRegistrationOptions(CancellationToken ct)
     {
         var timezones = await _cacheService.GetAllTimeZones(ct);
-        if (timezones == null)
-            return StatusCode(StatusCodes.Status503ServiceUnavailable);
+        if (!timezones.TryPickT0(out var timezoneValues, out var timezoneError))
+            return this.GetActionResult(timezoneError);
+
         var visibilities = await _cacheService.GetAllVisibilities(ct);
-        if (visibilities == null)
-            return StatusCode(StatusCodes.Status503ServiceUnavailable);
+        if (!visibilities.TryPickT0(out var visibilityValues, out var visibilityError))
+            return this.GetActionResult(visibilityError);
+
         RegistrationOptionsDto options = new()
         {
-            TimeZones = [..timezones
+            TimeZones = [..timezoneValues
                 .OrderBy(kvp => kvp.Value.Id)
                 .Select(kvp => new IdNamePair
                 {
                     Id = kvp.Value.Id,
                     Name = kvp.Value.Name
                 })],
-            EmailVisibilities = [..visibilities
+            EmailVisibilities = [..visibilityValues
                 .Where(kvp => !kvp.Value.ResourceOnly)
                 .OrderBy(kvp => kvp.Value.Id)
                 .Select(kvp => new IdNamePair
@@ -51,13 +52,15 @@ public class RegisterController(AccountController accountController,
     [RequireCaptcha("user_register")]
     public async Task<ActionResult<RegisterResponseDTO>> Register([FromForm] RegisterInfo credentials)
     {
-        return await _accountController.Register(credentials);
+        var result = await _accountService.Register(credentials);
+        return this.GetActionResult(result);
     }
     [AllowAnonymous]
     [HttpPost("confirmed/{userId}")]
-    public async Task<IActionResult> Confirmed([FromRoute] string userId, 
+    public async Task<IActionResult> Confirmed([FromRoute] string userId,
         [FromQuery] string token, CancellationToken ct = default)
     {
-        return await _accountController.ConfirmUser(userId, token, ct);
+        var result = await _accountService.ConfirmUser(userId, token, ct);
+        return this.GetActionResult(result);
     }
 }

@@ -4,47 +4,50 @@ using SNEStorage.DTOs;
 using SNEStorage.Models;
 
 namespace SNEStorage.Services;
-public class UserService(SnestorageContext context,
-    DBHelperService dbHelperService)
+
+public class UserService(SnestorageContext context, DBHelperService dbHelperService,
+    ILogger<UserService> logger)
 {
     public const int MAX_AMOUNT_LIMIT = 20;
+
     private readonly SnestorageContext _context = context;
     private readonly DBHelperService _dbHelperService = dbHelperService;
-    public async Task<OneOf<List<UserNameDTO>,GetLikeResult>> GetUserLike(string likeString, int maxAmount = 10, CancellationToken ct = default)
+    private readonly ILogger<UserService> _logger = logger;
+
+    public async Task<OneOf<List<UserNameDTO>, ServiceResultContext>> GetUserLike(
+        string likeString, int maxAmount = 10, CancellationToken ct = default)
     {
         if (maxAmount <= 0)
-            return GetLikeResult.InvalidMaxAmount;
-        if (maxAmount > MAX_AMOUNT_LIMIT)
-            return GetLikeResult.MaxAmountSurpassTheLimit;
+            return ServiceResult.InvalidMaxAmount.Return(_logger);
 
-        var term = likeString?.ToLower().Trim() ?? "";
-        IQueryable<UserInfo> query = _context.UserInfos
-            .AsNoTracking();    
+        if (maxAmount > MAX_AMOUNT_LIMIT)
+            return ServiceResult.MaxAmountSurpassTheLimit.Return(_logger);
+
+        string term = likeString?.ToLower().Trim() ?? "";
+        IQueryable<UserInfo> query = _context.UserInfos.AsNoTracking();
 
         if (!string.IsNullOrWhiteSpace(term) && term.Length >= 2)
         {
-            var escaped = term
-                .Replace(@"\", @"\\")
-                .Replace("%", @"\%")
-                .Replace("_", @"\_")
-                .Replace("[", @"\[");
+            string escaped = term.Replace(@"\", @"\\").Replace("%", @"\%")
+                .Replace("_", @"\_").Replace("[", @"\[");
 
-            var pattern = $"%{escaped}%";
+            string pattern = $"%{escaped}%";
 
-            query = query
-                .Where(v => EF.Functions.Like(v.User!.UserName, pattern, @"\"));
+            query = query.Where(user =>
+                EF.Functions.Like(user.User!.UserName!, pattern, @"\"));
         }
-        return await _dbHelperService.TryFunction(
-            async cancel => await query
-            .OrderBy(v => v.User!.UserName)
+
+        var resultQuery = query.OrderBy(user => user.User!.UserName)
             .Take(maxAmount)
-            .Select(ui => new UserNameDTO
+            .Select(user => new UserNameDTO
             {
-                Id = ui.UserId,
-                Username = ui.User!.UserName!,
-                UsernameColor = ui.UsernameColor
-            })
-            .ToListAsync(cancel),
-            GetLikeResult.DBError, ct: ct);
+                Id = user.UserId,
+                Username = user.User!.UserName!,
+                UsernameColor = user.UsernameColor
+            });
+
+        return await _dbHelperService.TryFunction(
+            cancel => resultQuery.ToListAsync(cancel),
+            ServiceResult.DBError, ct: ct);
     }
 }

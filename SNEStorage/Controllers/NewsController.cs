@@ -1,8 +1,7 @@
-﻿using Microsoft.AspNetCore.RateLimiting;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using OneOf;
+using Microsoft.AspNetCore.RateLimiting;
 using SNEStorage.DTOs;
 using SNEStorage.Services;
 
@@ -17,83 +16,47 @@ public class NewsController(NewsService newsService) : Controller
     [EnableRateLimiting("reads")]
     [HttpGet]
     [AllowAnonymous]
-    public async Task<ActionResult<List<NewsReadDTO>>> FullGet([FromQuery] NewsFilterDTO filter,
-        [FromQuery] NewsSorting sort = NewsSorting.RecentFirst, [FromQuery] int maxAmount = 10,
-        [FromQuery] int page = 0, CancellationToken ct = default)
+    public async Task<ActionResult<List<NewsReadDTO>>> FullGet(
+        [FromQuery] NewsFilterDTO filter,
+        [FromQuery] NewsSorting sort = NewsSorting.RecentFirst,
+        [FromQuery] int maxAmount = 10, [FromQuery] int page = 0,
+        CancellationToken ct = default)
     {
-        var res = await _newsService.FullGet(
-            filter, sort, maxAmount, page, ct);
-
-        return GetActionResult(res);
+        var result = await _newsService.FullGet(filter, sort, maxAmount, page, ct);
+        return this.GetActionResult(result);
     }
+
     [EnableRateLimiting("writes")]
     [HttpPost("create")]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    public async Task<ActionResult<long>> Create([FromBody] NewsCreateDTO dto,
-        CancellationToken ct = default)
+    public async Task<ActionResult<long>> Create(
+        [FromBody] NewsCreateDTO dto, CancellationToken ct = default)
     {
-        var res = await _newsService.Create(dto, ct);
+        var result = await _newsService.Create(dto, ct);
 
-        return res.TryPickT0(out var news, out var error) ?
-            Ok(news.Id) : GetActionResult(error);
+        return result.TryPickT0(out var news, out var error) ?
+            Ok(news.Id) : this.GetActionResult(error);
     }
+
     [EnableRateLimiting("writes")]
     [HttpPut("{newsId:long}/edit")]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    public async Task<ActionResult<long>> Edit([FromRoute] long newsId, [FromBody] NewsEditDTO dto,
+    public async Task<ActionResult<long>> Edit(
+        [FromRoute] long newsId, [FromBody] NewsEditDTO dto,
         CancellationToken ct = default)
     {
-        var res = await _newsService.Edit(newsId, dto, ct);
+        var result = await _newsService.Edit(newsId, dto, ct);
 
-        return res.TryPickT0(out var news, out var error) ?
-            Ok(news.Id) : GetActionResult(error);
+        return result.TryPickT0(out var news, out var error) ?
+            Ok(news.Id) : this.GetActionResult(error);
     }
+
     [EnableRateLimiting("reads")]
     [HttpGet("{newsId:long}")]
     [AllowAnonymous]
-    public async Task<ActionResult<NewsReadDTO>> Get([FromRoute] long newsId, 
-        CancellationToken ct = default)
+    public async Task<ActionResult<NewsReadDTO>> Get(
+        [FromRoute] long newsId, CancellationToken ct = default)
     {
-        return GetActionResult(await _newsService.Get(newsId, ct));
-    }
-    private ObjectResult GetActionResult(NewsServiceResult result)
-    {
-        string res = $"{GetType().Name}-{result}";
-        bool authenticated =
-            HttpContext?.User.Identity?.IsAuthenticated == true;
-
-        return result switch
-        {
-            NewsServiceResult.Success => Ok(res),
-
-            NewsServiceResult.Unauthorized when authenticated =>
-                StatusCode(StatusCodes.Status403Forbidden, res),
-
-            NewsServiceResult.Unauthorized =>
-                Unauthorized(res),
-
-            NewsServiceResult.UserNotFound or
-            NewsServiceResult.NewNotFound =>
-                NotFound(res),
-
-            NewsServiceResult.InvalidTitle or
-            NewsServiceResult.InvalidText or
-            NewsServiceResult.InvalidSort or
-            NewsServiceResult.InvalidMaxAmount or
-            NewsServiceResult.InvalidPage or
-            NewsServiceResult.SkipOutOfRange =>
-                BadRequest(res),
-
-            NewsServiceResult.DBError =>
-                StatusCode(StatusCodes.Status500InternalServerError, res),
-
-            _ => StatusCode(StatusCodes.Status500InternalServerError, res)
-        };
-    }
-    private ActionResult<T> GetActionResult<T>(
-        OneOf<T, NewsServiceResult> result)
-    {
-        return result.TryPickT0(out var entity, out var error) ?
-            Ok(entity) : GetActionResult(error);
+        return this.GetActionResult(await _newsService.Get(newsId, ct));
     }
 }

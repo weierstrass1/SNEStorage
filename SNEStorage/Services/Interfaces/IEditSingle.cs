@@ -1,29 +1,38 @@
 ﻿using OneOf;
+using SNEStorage.DTOs;
 
 namespace SNEStorage.Services.Interfaces;
-public interface IEditSingle<TKey, TEdit, TModel, TResult> 
-    where TResult : Enum
+
+public interface IEditSingle<TKey, TEdit, TModel>
 {
-    public Task<OneOf<TModel, TResult>> Edit(TKey key, TEdit edit, CancellationToken ct = default);
-    public Task<TResult> ValidateEdit(TEdit edit, CancellationToken ct = default);
-    public Task<OneOf<TModel?, TResult>> FindEdit(TKey key, CancellationToken ct = default);
-    public Task<TResult> EditInternal(TModel item, TEdit edit, CancellationToken ct = default);
-    public async Task<OneOf<TModel, TResult>> EditSingle(TKey key, TEdit edit, TResult success, TResult notFound, TResult error, CancellationToken ct = default)
+    public Task<OneOf<TModel, ServiceResultContext>> Edit(
+        TKey key, TEdit edit, CancellationToken ct = default);
+
+    public Task<ServiceResultContext> ValidateEdit(
+        TEdit edit, CancellationToken ct = default);
+
+    public Task<OneOf<TModel, ServiceResultContext>> FindEdit(
+        TKey key, CancellationToken ct = default);
+
+    public Task<ServiceResultContext> EditInternal(
+        TModel item, TEdit edit, CancellationToken ct = default);
+
+    public async Task<OneOf<TModel, ServiceResultContext>> EditSingle(
+        TKey key, TEdit edit, CancellationToken ct = default)
     {
         var validation = await ValidateEdit(edit, ct);
-        if (!validation.Equals(success))
+
+        if (validation.Result != ServiceResult.Success)
             return validation;
 
-        var findRes = await FindEdit(key, ct);
-        if (!findRes.TryPickT0(out var result, out var findError))
+        var findResult = await FindEdit(key, ct);
+
+        if (!findResult.TryPickT0(out var item, out var findError))
             return findError;
 
-        if (result is null)
-            return notFound;
+        var editResult = await EditInternal(item, edit, ct);
 
-        var editRes = await EditInternal(result, edit, ct);;
-
-        return editRes.Equals(success) ?
-            result : editRes;
+        return editResult.Result == ServiceResult.Success ?
+            item : editResult;
     }
 }

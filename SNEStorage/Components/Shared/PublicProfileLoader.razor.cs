@@ -14,6 +14,7 @@ public partial class PublicProfileLoader : IAsyncDisposable
     private UserInfo? _profile;
     private string? _loadedUserId;
     private int? _errorStatus;
+    private string? _errorBody;
     private int _generation;
     private bool _pending, _disposed;
 
@@ -34,6 +35,7 @@ public partial class PublicProfileLoader : IAsyncDisposable
     {
         _profile = null;
         _errorStatus = null;
+        _errorBody = null;
         _generation++;
         _pending = true;
     }
@@ -55,6 +57,7 @@ public partial class PublicProfileLoader : IAsyncDisposable
             if (response is { Status: 200, Cancelled: false })
                 _profile = JsonSerializer.Deserialize<UserInfo>(response.Body, JsonOptions);
             _errorStatus = _profile is not null ? null : response is { Cancelled: true } ? 499 : response?.Status ?? 502;
+            _errorBody = _profile is null ? response?.Body : null;
             if (_profile is null && _errorStatus == 200) _errorStatus = 502;
         }
         catch (Exception exception) when (exception is JSException or JsonException or OperationCanceledException)

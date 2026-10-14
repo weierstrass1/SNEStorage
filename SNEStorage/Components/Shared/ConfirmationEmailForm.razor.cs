@@ -30,7 +30,7 @@ public partial class ConfirmationEmailForm : IAsyncDisposable
                 "resendConfirmation", _lifetime.Token, _requestKey, _form.Email);
             if (_disposed) return;
             _succeeded = response.Status is >= 200 and < 300 &&
-                (ApiErrorPresentation.IsSuccess(response.Body, "account") ||
+                (response.Status == 204 || ApiErrorPresentation.IsSuccess(response.Body, "account") ||
                  ApiErrorPresentation.IsSuccess(response.Body, "email"));
             if (!_succeeded)
                 _error = response.Status is 0 or 408 or 499 or 504 or (>= 200 and < 300)

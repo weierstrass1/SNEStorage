@@ -1,19 +1,13 @@
 ﻿using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;
+using SNEStorage.DTOs;
 using System.Net;
 
 namespace SNEStorage.Services;
-public enum EmailServiceResult
-{
-    Success,
-    TemplateLoadError,
-    EmailConnectionError,
-    UserNotFound
-}
+
 public class EmailService(IWebHostEnvironment webHostEnvironment,
-    DateTimeService dateTimeService, 
-    APIConfig apiConfig,
+    DateTimeService dateTimeService, APIConfig apiConfig,
     DBHelperService dbHelperService)
 {
     private readonly IWebHostEnvironment _webHostEnvironment = webHostEnvironment;
@@ -21,26 +15,30 @@ public class EmailService(IWebHostEnvironment webHostEnvironment,
     private readonly APIConfig _apiConfig = apiConfig;
     private readonly DBHelperService _dbHelperService = dbHelperService;
 
-    public async Task<EmailServiceResult> Confirmation(string username, string userId, string email, string token, CancellationToken ct = default)
+    public async Task<ServiceResultContext> Confirmation(
+        string username, string userId, string email, string token,
+        CancellationToken ct = default)
     {
-        var path = Path.Combine(_webHostEnvironment.ContentRootPath, "EmailTemplates", 
-            "Confirmation.html");
+        string path = Path.Combine(_webHostEnvironment.ContentRootPath,
+            "EmailTemplates", "Confirmation.html");
 
-        var url = $"https://snestorage.dev/Register/Confirmation/" +
+        string url = $"https://snestorage.dev/Register/Confirmation/" +
             $"{Uri.EscapeDataString(userId)}?token={Uri.EscapeDataString(token)}";
 
-        int? year = await _dbHelperService.TryFunction(
-            async cancel => await _dateTimeService.GetYear(userId, cancel), ct: ct);
-        if (year == null)
-            return EmailServiceResult.UserNotFound;
+        var yearResult = await _dateTimeService.GetYear(userId, ct);
 
-        var html = await _dbHelperService.TryFunction(
-            async cancel => await File.ReadAllTextAsync(path, cancel), ct: ct);
-        if (html == null)
-            return EmailServiceResult.TemplateLoadError;
+        if (!yearResult.TryPickT0(out var year, out var yearError))
+            return yearError;
+
+        var htmlResult = await _dbHelperService.TryFunction(
+            cancel => File.ReadAllTextAsync(path, cancel),
+            ServiceResult.TemplateLoadError, ct: ct);
+
+        if (!htmlResult.TryPickT0(out var html, out var templateError))
+            return templateError;
 
         html = html
-            .Replace("{{ConfirmationUrl}}", WebUtility.HtmlEncode(url)) 
+            .Replace("{{ConfirmationUrl}}", WebUtility.HtmlEncode(url))
             .Replace("{{Username}}", WebUtility.HtmlEncode(username))
             .Replace("{{Year}}", year.ToString())
             .Replace("{{SiteUrl}}", WebUtility.HtmlEncode("https://snestorage.dev/"));
@@ -49,31 +47,36 @@ public class EmailService(IWebHostEnvironment webHostEnvironment,
         {
             HtmlBody = html,
             TextBody = $"Hi {username},\n\nConfirm your email:\n{url}\n\n" +
-               "If you didn't create this account, ignore this email."
+                "If you didn't create this account, ignore this email."
         };
 
         return await SendEmail("Confirm your email | SNEStorage",
-            body, new(username, email), ct);
+            body, new MailboxAddress(username, email), ct);
     }
-    public async Task<EmailServiceResult> PasswordReset(string username, string userId,
-        string email, string token, CancellationToken ct = default)
+
+    public async Task<ServiceResultContext> PasswordReset(
+        string username, string userId, string email, string token,
+        CancellationToken ct = default)
     {
-        var path = Path.Combine(_webHostEnvironment.ContentRootPath, "EmailTemplates",
-            "PasswordReset.html");
+        string path = Path.Combine(_webHostEnvironment.ContentRootPath,
+            "EmailTemplates", "PasswordReset.html");
 
-        int? year = await _dbHelperService.TryFunction(
-            async cancel => await _dateTimeService.GetYear(userId, cancel), ct: ct);
-        if (year == null)
-            return EmailServiceResult.UserNotFound;
+        var yearResult = await _dateTimeService.GetYear(userId, ct);
 
-        var siteUrl = "https://snestorage.dev/";
-        var url = $"{siteUrl}Account/ResetPassword/" +
+        if (!yearResult.TryPickT0(out var year, out var yearError))
+            return yearError;
+
+        const string siteUrl = "https://snestorage.dev/";
+
+        string url = $"{siteUrl}Account/ResetPassword/" +
             $"{Uri.EscapeDataString(userId)}?token={Uri.EscapeDataString(token)}";
 
-        var html = await _dbHelperService.TryFunction(
-            async cancel => await File.ReadAllTextAsync(path, cancel), ct: ct);
-        if (html == null)
-            return EmailServiceResult.TemplateLoadError;
+        var htmlResult = await _dbHelperService.TryFunction(
+            cancel => File.ReadAllTextAsync(path, cancel),
+            ServiceResult.TemplateLoadError, ct: ct);
+
+        if (!htmlResult.TryPickT0(out var html, out var templateError))
+            return templateError;
 
         html = html
             .Replace("{{PasswordResetUrl}}", WebUtility.HtmlEncode(url))
@@ -89,38 +92,58 @@ public class EmailService(IWebHostEnvironment webHostEnvironment,
         };
 
         return await SendEmail("Password Change | SNEStorage",
-            body, new(username, email), ct);
+            body, new MailboxAddress(username, email), ct);
     }
-    private async Task<EmailServiceResult> SendEmail(string subject, BodyBuilder body, MailboxAddress To, CancellationToken ct = default)
+
+    private async Task<ServiceResultContext> SendEmail(
+        string subject, BodyBuilder body, MailboxAddress recipient,
+        CancellationToken ct = default)
     {
-        var logoPath = Path.Combine(_webHostEnvironment.ContentRootPath,
+        string logoPath = Path.Combine(_webHostEnvironment.ContentRootPath,
             "EmailTemplates", "assets", "caja.png");
 
-        var logo = _dbHelperService.TryFunction(
-            () => body.LinkedResources.Add(logoPath, ct));
+        var logoResult = _dbHelperService.TryFunction(
+            () => body.LinkedResources.Add(logoPath, ct),
+            ServiceResult.TemplateLoadError);
 
-        if (logo == null)
-            return EmailServiceResult.TemplateLoadError;
+        if (!logoResult.TryPickT0(out var logo, out var logoError))
+            return logoError;
 
         logo.ContentId = "snestorage-logo";
 
         var message = new MimeMessage();
         message.From.Add(new MailboxAddress("SNEStorage", _apiConfig.Email));
-        message.To.Add(To);
+        message.To.Add(recipient);
         message.Subject = subject;
         message.Body = body.ToMessageBody();
-        using var smtp = new SmtpClient();
-        return await _dbHelperService.TryFunction(
-            async cancel =>
-            {
-                await smtp.ConnectAsync(_apiConfig.EmailSMPTP, _apiConfig.EmailPort,
-                    SecureSocketOptions.StartTls, ct);
 
-                await smtp.AuthenticateAsync(_apiConfig.Email, _apiConfig.EmailPassword, ct);
-                await smtp.SendAsync(message, ct);
-                await smtp.DisconnectAsync(true, ct);
-            }, ct: ct) ?
-            EmailServiceResult.Success :
-            EmailServiceResult.EmailConnectionError;
+        using var smtp = new SmtpClient();
+
+        var connectionResult = await _dbHelperService.TryFunction(
+            cancel => smtp.ConnectAsync(_apiConfig.EmailSMPTP, _apiConfig.EmailPort,
+                SecureSocketOptions.StartTls, cancel),
+            ServiceResult.EmailConnectionError, ct: ct);
+
+        if (connectionResult.Result != ServiceResult.Success)
+            return connectionResult;
+
+        var authenticationResult = await _dbHelperService.TryFunction(
+            cancel => smtp.AuthenticateAsync(
+                _apiConfig.Email, _apiConfig.EmailPassword, cancel),
+            ServiceResult.EmailConnectionError, ct: ct);
+
+        if (authenticationResult.Result != ServiceResult.Success)
+            return authenticationResult;
+
+        var sendResult = await _dbHelperService.TryFunction(
+            cancel => smtp.SendAsync(message, cancel),
+            ServiceResult.EmailConnectionError, ct: ct);
+
+        if (!sendResult.TryPickT0(out _, out var sendError))
+            return sendError;
+
+        return await _dbHelperService.TryFunction(
+            cancel => smtp.DisconnectAsync(true, cancel),
+            ServiceResult.EmailConnectionError, ct: ct);
     }
 }

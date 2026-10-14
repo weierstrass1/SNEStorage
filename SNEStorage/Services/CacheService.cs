@@ -28,16 +28,19 @@ public class CacheService(IMemoryCache cache, IServiceScopeFactory factory) : ID
     private delegate Task<OneOf<FrozenDictionary<TKey, TValue>, ServiceResultContext>>
         CacheLoader<TKey, TValue>(AsyncServiceScope scope, DBHelperService helper,
             CancellationToken ct) where TKey : notnull;
+
     public Task<OneOf<Dictionary<long, Models.TimeZone>, ServiceResultContext>>
         GetAllTimeZones(CancellationToken ct = default)
     {
         return Get(CacheKeys.TimeZone, LoadTimeZones, ct);
     }
+
     public Task<OneOf<Dictionary<long, ResourceType>, ServiceResultContext>>
         GetAllTypes(CancellationToken ct = default)
     {
         return Get(CacheKeys.Type, LoadTypes, ct);
     }
+
     public Task<OneOf<Dictionary<long, ResourceCategory>, ServiceResultContext>>
         GetAllCategories(CancellationToken ct = default)
     {
@@ -49,16 +52,19 @@ public class CacheService(IMemoryCache cache, IServiceScopeFactory factory) : ID
     {
         return Get(CacheKeys.Visibility, LoadVisibilities, ct);
     }
+
     public Task<OneOf<Dictionary<string, FileType>, ServiceResultContext>>
         GetAllFileTypesByMime(CancellationToken ct = default)
     {
         return Get(CacheKeys.FileTypeByMime, LoadFileTypesByMime, ct);
     }
+
     public Task<OneOf<Dictionary<long, FileType>, ServiceResultContext>>
         GetAllFileTypes(CancellationToken ct = default)
     {
         return Get(CacheKeys.FileType, LoadFileTypes, ct);
     }
+
     private async Task<OneOf<Dictionary<TKey, TValue>, ServiceResultContext>> Get<TKey, TValue>(
         CacheKeys key, CacheLoader<TKey, TValue> loader, CancellationToken ct = default)
         where TKey : notnull
@@ -70,41 +76,43 @@ public class CacheService(IMemoryCache cache, IServiceScopeFactory factory) : ID
         await using var scope = _factory.CreateAsyncScope();
         var helper = scope.ServiceProvider.GetRequiredService<DBHelperService>();
 
-        var result = await helper.TryFunction<
-            OneOf<Dictionary<TKey, TValue>, ServiceResultContext>>(async cancel =>
-            {
-                await _loadGate.WaitAsync(cancel);
+        var waitResult = await helper.TryFunction(
+            cancel => _loadGate.WaitAsync(cancel),
+            ServiceResult.CacheError, ct: ct);
 
-                try
-                {
-                    if (_cache.TryGetValue(key, out dictionary) && dictionary is not null)
-                        return dictionary.ToDictionary();
+        if (waitResult.Result != ServiceResult.Success)
+            return waitResult;
 
-                    var loadResult = await loader(scope, helper, cancel);
+        try
+        {
+            if (_cache.TryGetValue(key, out dictionary) && dictionary is not null)
+                return dictionary.ToDictionary();
 
-                    if (!loadResult.TryPickT0(out var loadedDictionary, out var loadError))
-                        return loadError;
+            var loadResult = await loader(scope, helper, ct);
 
-                    return loadedDictionary.ToDictionary();
-                }
-                finally
-                {
-                    _loadGate.Release();
-                }
-            }, ServiceResult.CacheError, ct: ct);
+            if (!loadResult.TryPickT0(out var loadedDictionary, out var loadError))
+                return loadError;
 
-        return result.TryPickT0(out var cacheResult, out var cacheError) ?
-            cacheResult : cacheError;
+            return loadedDictionary.ToDictionary();
+        }
+        finally
+        {
+            _loadGate.Release();
+        }
     }
+
     private Task<OneOf<FrozenDictionary<long, ResourceType>, ServiceResultContext>> LoadTypes(
         AsyncServiceScope scope, DBHelperService helper, CancellationToken ct)
     {
         var context = scope.ServiceProvider.GetRequiredService<SnestorageContext>();
 
         return Load(CacheKeys.Type, value => value.Id,
-            context.ResourceTypes.AsNoTracking().Include(type => type.Category).ToListAsync,
+            context.ResourceTypes.AsNoTracking()
+                .Include(type => type.Category)
+                .ToListAsync,
             helper, ct);
     }
+
     private Task<OneOf<FrozenDictionary<long, ResourceCategory>, ServiceResultContext>>
         LoadCategories(AsyncServiceScope scope, DBHelperService helper, CancellationToken ct)
     {
@@ -113,6 +121,7 @@ public class CacheService(IMemoryCache cache, IServiceScopeFactory factory) : ID
         return Load(CacheKeys.Category, value => value.Id,
             context.ResourceCategories.AsNoTracking().ToListAsync, helper, ct);
     }
+
     private Task<OneOf<FrozenDictionary<long, Models.TimeZone>, ServiceResultContext>>
         LoadTimeZones(AsyncServiceScope scope, DBHelperService helper, CancellationToken ct)
     {
@@ -121,6 +130,7 @@ public class CacheService(IMemoryCache cache, IServiceScopeFactory factory) : ID
         return Load(CacheKeys.TimeZone, value => value.Id,
             context.TimeZones.AsNoTracking().ToListAsync, helper, ct);
     }
+
     private Task<OneOf<FrozenDictionary<long, Visibility>, ServiceResultContext>>
         LoadVisibilities(AsyncServiceScope scope, DBHelperService helper, CancellationToken ct)
     {
@@ -129,6 +139,7 @@ public class CacheService(IMemoryCache cache, IServiceScopeFactory factory) : ID
         return Load(CacheKeys.Visibility, value => value.Id,
             context.Visibilities.AsNoTracking().ToListAsync, helper, ct);
     }
+
     private Task<OneOf<FrozenDictionary<string, FileType>, ServiceResultContext>>
         LoadFileTypesByMime(AsyncServiceScope scope, DBHelperService helper, CancellationToken ct)
     {
@@ -137,6 +148,7 @@ public class CacheService(IMemoryCache cache, IServiceScopeFactory factory) : ID
         return Load(CacheKeys.FileTypeByMime, value => value.Value,
             context.FileTypes.AsNoTracking().ToListAsync, helper, ct);
     }
+
     private Task<OneOf<FrozenDictionary<long, FileType>, ServiceResultContext>> LoadFileTypes(
         AsyncServiceScope scope, DBHelperService helper, CancellationToken ct)
     {
@@ -145,21 +157,30 @@ public class CacheService(IMemoryCache cache, IServiceScopeFactory factory) : ID
         return Load(CacheKeys.FileType, value => value.Id,
             context.FileTypes.AsNoTracking().ToListAsync, helper, ct);
     }
-    private Task<OneOf<FrozenDictionary<TKey, TValue>, ServiceResultContext>> Load<TKey, TValue>(
-        CacheKeys cacheKey, Func<TValue, TKey> keySelector,
-        Func<CancellationToken, Task<List<TValue>>> getter,
-        DBHelperService helper, CancellationToken ct = default)
+
+    private async Task<OneOf<FrozenDictionary<TKey, TValue>, ServiceResultContext>>
+        Load<TKey, TValue>(CacheKeys cacheKey, Func<TValue, TKey> keySelector,
+            Func<CancellationToken, Task<List<TValue>>> getter,
+            DBHelperService helper, CancellationToken ct = default)
         where TKey : notnull
     {
-        return helper.TryFunction(async cancel =>
-        {
-            var values = await getter(cancel);
-            var dictionary = values.ToFrozenDictionary(keySelector, value => value);
+        var valuesResult = await helper.TryFunction(
+            getter, ServiceResult.CacheError, ct: ct);
 
-            _cache.Set(cacheKey, dictionary, _lifetime);
-            return dictionary;
-        }, ServiceResult.CacheError, ct: ct);
+        if (!valuesResult.TryPickT0(out var values, out var queryError))
+            return queryError;
+
+        var dictionaryResult = helper.TryFunction(
+            () => values.ToFrozenDictionary(keySelector, value => value),
+            ServiceResult.CacheError);
+
+        if (!dictionaryResult.TryPickT0(out var dictionary, out var dictionaryError))
+            return dictionaryError;
+
+        _cache.Set(cacheKey, dictionary, _lifetime);
+        return dictionary;
     }
+
     public void Dispose()
     {
         _loadGate.Dispose();

@@ -58,7 +58,7 @@ Las rutas de esta tabla son relativas a esa raíz:
 | `SNEStorageTesting/` | Proyecto de tests existente |
 | `docs/` | Propuestas, diagnósticos y documentación |
 
-Tecnología principal: Blazor **Interactive Server**, ASP.NET Core MVC/API, EF Core SQL Server, Identity con ApplicationUser, JWT y resultados `OneOf`. El frontend usa módulos JavaScript y peticiones con cookies del navegador; el backend es la autoridad para permisos y validaciones.
+Tecnología principal: Blazor **Interactive Server**, ASP.NET Core MVC/API, EF Core SQL Server, Identity con ApplicationUser, JWT y resultados `OneOf`. Desde la refactorización del 13 de octubre los servicios usan **ServiceResultTypes, ServiceResult y ServiceResultContext** como resultado común, con ServiceResultExtensions para mapear respuestas HTTP. Los enums anteriores por servicio se eliminaron y EmailController/FileController/GetLikeController ya no existen. El frontend usa módulos JavaScript y peticiones con cookies del navegador; el backend es la autoridad para permisos y validaciones.
 
 Dependencias relevantes: MailKit para correo, SkiaSharp para imágenes, SharpCompress para archivos comprimidos, MediaInfo.Wrapper.Core para inspección de video, y Swagger. Ver versiones actuales en el csproj; no actualizar paquetes sin una razón concreta.
 
@@ -164,7 +164,7 @@ Estos son contratos observados en el código al crear el documento. Revisar las 
 | `POST /api/news/create` | Crear noticia |
 | `PUT /api/news/{newsId}/edit` | Editar noticia |
 
-Los resultados de negocio usan enums y `OneOf`. El estándar acordado para errores serializados es un string **`NombreController-NombreEnum`**, por ejemplo `FileController-InvalidFile`. Evita ambigüedades entre enums con valores numéricos iguales. Los adaptadores del frontend conservan compatibilidad con algunos contratos antiguos; comprobar el mapper real.
+Los resultados de negocio usan **OneOf<T, ServiceResultContext>**, o ServiceResultContext para acciones sin datos. El estándar de errores serializados es **`NombreController-ServiceResultTypes`**, por ejemplo `ResourceController-InvalidFile`. El prefijo identifica el controlador, no el servicio que produjo el fallo: un error de archivo puede venir desde ResourceController, RegisterController o ProfileController. El frontend ya trata esos errores compartidos y respuestas 204; conserva compatibilidad con algunos contratos antiguos. No serializar el OneOf ni el contexto de excepción directamente.
 
 Autorización fallida suele devolver 401/403 según el caso; falta de datos, 404; input inválido, 400; DBError, 500; caché/servicio no disponible, 503; rate limiting, 429. Una cancelación puede mapearse a 499. No interpretar un DBError/timeout como «usuario deslogueado».
 
@@ -239,7 +239,7 @@ FileService tiene validación de contexto (Avatar/Previews/Resource), MIME/alias
 
 El propietario decidió conservar la cascada del avatar en su mapping. Ya hubo un saneamiento manual SQL que eliminó un avatar y afectó UserInfo: **no borrar avatares a mano ni cambiar cascadas sin revisar el grafo y discutirlo**.
 
-DBHelperService centraliza operaciones con resultados/default y registra excepciones en Console.Error. TrySyncContext limpia todo el ChangeTracker al fallar; eso fue deliberado. `T?` genérico sin constraint no garantiza null para un int: default(int) es 0. Para distinguir fallo usar nullable real o OneOf.
+DBHelperService centraliza operaciones con **OneOf<T, ServiceResultContext>** o ServiceResultContext y registra excepciones con ILogger. TrySyncContext limpia todo el ChangeTracker al fallar; eso fue deliberado. Los callbacks de error se esperan y sus fallos también se registran. Las cancelaciones se distinguen según ct. `T?` genérico sin constraint no garantiza null para un int: default(int) es 0; el resultado actual OneOf distingue datos y error.
 
 Rendimiento:
 
@@ -321,13 +321,14 @@ Esta lista es de continuidad, no una certificación de bugs aún presentes:
 4. Mantener limpieza periódica de batches/archivos huérfanos y política de retención/backups.
 5. Retomar protección de borde contra DDoS y bloqueo del acceso directo al origen cuando corresponda.
 6. Revisar permisos, validaciones, índices únicos de votos/relaciones y datos sensibles con el código actual; no asumir que todos los puntos de auditorías antiguas siguen pendientes.
-7. Refactorización completa de AccountService a resultados/helpers: **pospuesta por decisión del propietario** para concentrarse en el release. Ya hay métodos refactorizados y otros que siguen devolviendo bool; no reemplazar todo de golpe.
+7. El propietario **ya refactorizó AccountService y los demás servicios/controladores** al resultado común el 13 de octubre. No retomar la propuesta antigua como una tarea pendiente ni restaurar los bool/enums anteriores. La revisión actual está en `docs/revision-refactor-servicios-controladores-2026-10-13.md`; quedan correcciones de lógica allí descritas.
 8. Teams y panel completo de moderación/reportes siguen fuera del alcance inicial. No generar rutas/contratos ficticios para funciones futuras.
 
-La última compilación de la web realizada el 12 de octubre terminó con **0 errores y 7 advertencias existentes**: nombre de migración fixtexts, nullable destinationPath en AccountService y propiedades sin inicializar en ResourceCategory/MemoryAddressValues. No se ejecutó una nueva compilación ni tests para crear este resumen. No implica que el bot o producción estén libres de fallos.
+La compilación de la web revisada el 13 de octubre terminó con **0 errores y 5 advertencias existentes**: nombre de migración fixtexts y propiedades sin inicializar en ResourceCategory/MemoryAddressValues. El bot también compiló. La solución completa todavía falla por 3 referencias obsoletas del proyecto de tests; no se ejecutaron tests. Ver la revisión de esa fecha para detalles. No implica que producción esté libre de fallos.
 
 ## 15. Documentos útiles y cómo retomar
 
+- `docs/revision-refactor-servicios-controladores-2026-10-13.md`: revisión actual del resultado común, cambios de frontend y hallazgos de lógica ordenados por prioridad. Incluye un problema de ruta del avatar antes de validar el username que debe corregirse primero.
 - `docs/markdown-frontend.md`: integración/saneamiento Markdown.
 - READMEs de Components/Layout, Resources y Community: flujo frontend y archivos. Algunos párrafos antiguos de esos READMEs pueden conservar contratos previos; contrastarlos con controladores/DTOs.
 - `docs/revision-servicios-controladores-2026-10-10.md`: auditoría anterior; revisar puntos contra código actual antes de repetirlos.

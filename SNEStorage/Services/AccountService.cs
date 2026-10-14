@@ -3,32 +3,15 @@ using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using OneOf;
-using SNEStorage.Components.Pages;
 using SNEStorage.Discord;
 using SNEStorage.DTOs;
 using SNEStorage.Models;
-using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
 namespace SNEStorage.Services;
-public enum AccountServiceResult
-{
-    UserNotFound,
-    PasswordChangeError,
-    InvalidEmail,
-    InvalidPassword,
-    InvalidToken,
-    UserAlreadyExists,
-    CancelledToken,
-    AvatarLoadError,
-    UserCreationError,
-    TokenCreationError,
-    DBError,
-    Success,
-    Error
-}
+
 public class AccountService(
     UserManager<ApplicationUser> userManager,
     IWebHostEnvironment environment,
@@ -39,7 +22,8 @@ public class AccountService(
     IHttpContextAccessor httpContextAccessor,
     EmailService emailService,
     DBHelperService dbHelperService,
-    DiscordService discordService)
+    DiscordService discordService,
+    ILogger<AccountService> logger)
 {
     private readonly UserManager<ApplicationUser> _userManager = userManager;
     private readonly IWebHostEnvironment _environment = environment;
@@ -51,130 +35,171 @@ public class AccountService(
     private readonly EmailService _emailService = emailService;
     private readonly DBHelperService _dbHelperService = dbHelperService;
     private readonly DiscordService _discordService = discordService;
-    public async Task<AccountServiceResult> ChangePassword(ChangePasswordDTO dto, 
-        CancellationToken ct = default)
+    private readonly ILogger<AccountService> _logger = logger;
+
+    public async Task<ServiceResultContext> ChangePassword(
+        ChangePasswordDTO dto, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(dto.UserId) ||
             string.IsNullOrWhiteSpace(dto.Token) ||
             string.IsNullOrWhiteSpace(dto.NewPassword) ||
             dto.NewPassword != dto.ConfirmPassword)
-            return AccountServiceResult.InvalidPassword;
+            return ServiceResult.InvalidPassword.Return(_logger);
 
-        var token = _dbHelperService.TryFunction(() => Encoding.UTF8
-            .GetString(WebEncoders.Base64UrlDecode(dto.Token)));
+        var tokenResult = _dbHelperService.TryFunction(
+            () => Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(dto.Token)),
+            ServiceResult.InvalidToken);
+
+        if (!tokenResult.TryPickT0(out var token, out var tokenError))
+            return tokenError;
 
         if (string.IsNullOrEmpty(token))
-            return AccountServiceResult.InvalidToken;
+            return ServiceResult.InvalidToken.Return(_logger);
 
-        var userRes = await _dbHelperService.TryFunction(
-            async _ => await _userManager.FindByIdAsync(dto.UserId),
-            AccountServiceResult.DBError, ct: ct);
+        var userResult = await _dbHelperService.TryFunction(
+            _ => _userManager.FindByIdAsync(dto.UserId),
+            ServiceResult.DBError, ct: ct);
 
-        if (!userRes.TryPickT0(out var user, out var error))
-            return error;
+        if (!userResult.TryPickT0(out var user, out var userError))
+            return userError;
 
-        if (user == null)
-            return AccountServiceResult.UserNotFound;
+        if (user is null)
+            return ServiceResult.UserNotFound.Return(_logger);
 
-        var resetRes = await _dbHelperService.TryFunction(
-            async _ => await _userManager.ResetPasswordAsync(user, token, dto.NewPassword),
-            AccountServiceResult.DBError, ct: ct);
+        var resetResult = await _dbHelperService.TryFunction(
+            _ => _userManager.ResetPasswordAsync(user, token, dto.NewPassword),
+            ServiceResult.DBError, ct: ct);
 
-        if (!resetRes.TryPickT0(out var result, out error))
-            return error;
+        if (!resetResult.TryPickT0(out var result, out var resetError))
+            return resetError;
 
         if (result.Succeeded)
-            return AccountServiceResult.Success;
+            return ServiceResult.Success.Return(_logger);
 
-        return result.Errors.Any(e =>
-            e.Code == nameof(IdentityErrorDescriber.InvalidToken)) ?
-                AccountServiceResult.InvalidToken :
-                AccountServiceResult.PasswordChangeError;
+        return result.Errors.Any(error =>
+            error.Code == nameof(IdentityErrorDescriber.InvalidToken)) ?
+                ServiceResult.InvalidToken.Return(_logger) :
+                ServiceResult.PasswordChangeError.Return(_logger);
     }
-    public async Task<OneOf<AccountServiceResult, EmailServiceResult>> RequestPasswordReset(string email, 
-        CancellationToken ct = default)
+
+    public async Task<ServiceResultContext> RequestPasswordReset(
+        string email, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(email))
-            return AccountServiceResult.InvalidEmail;
+            return ServiceResult.InvalidEmail.Return(_logger);
 
-        var userRes = await _dbHelperService.TryFunction(
-            async _ => await _userManager.FindByEmailAsync(email.Trim()),
-            AccountServiceResult.DBError, ct: ct);
+        var userResult = await _dbHelperService.TryFunction(
+            _ => _userManager.FindByEmailAsync(email.Trim()),
+            ServiceResult.DBError, ct: ct);
 
-        if (!userRes.TryPickT0(out var user, out var error))
-            return error;
+        if (!userResult.TryPickT0(out var user, out var userError))
+            return userError;
 
-        if (user == null)
-            return AccountServiceResult.Success;
+        if (user is null)
+            return ServiceResult.Success.Return(_logger);
 
-        var tokenRes = await _dbHelperService.TryFunction(
-            async _ => await _userManager.GeneratePasswordResetTokenAsync(user),
-            AccountServiceResult.TokenCreationError, ct: ct);
+        var tokenResult = await _dbHelperService.TryFunction(
+            _ => _userManager.GeneratePasswordResetTokenAsync(user),
+            ServiceResult.TokenCreationError, ct: ct);
 
-        if (!tokenRes.TryPickT0(out var token, out error))
-            return error;
+        if (!tokenResult.TryPickT0(out var token, out var tokenError))
+            return tokenError;
 
-        var encodedToken = WebEncoders.Base64UrlEncode(
-            Encoding.UTF8.GetBytes(token));
+        string encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
 
-        var emailResult = await _emailService.PasswordReset(user.UserName!, user.Id, 
-            user.Email!, encodedToken, ct);
-
-        if (emailResult != EmailServiceResult.Success)
-            return emailResult;
-
-        return AccountServiceResult.Success;
-    }
-    public async Task<OneOf<AccountServiceResult, EmailServiceResult>> RequestEmailConfirmation(
-    string email, CancellationToken ct = default)
-    {
-        if (string.IsNullOrWhiteSpace(email))
-            return AccountServiceResult.InvalidEmail;
-
-        var userRes = await _dbHelperService.TryFunction(
-            async _ => await _userManager.FindByEmailAsync(email.Trim()),
-            AccountServiceResult.DBError, ct: ct);
-        if (!userRes.TryPickT0(out var user, out var error))
-            return error;
-        if (user == null || user.EmailConfirmed)
-            return AccountServiceResult.Success;
-
-        var tokenRes = await _dbHelperService.TryFunction(
-            async _ => await _userManager.GenerateEmailConfirmationTokenAsync(user),
-            AccountServiceResult.TokenCreationError, ct: ct);
-        if (!tokenRes.TryPickT0(out var token, out error))
-            return error;
-
-        var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
-        var emailResult = await _emailService.Confirmation(
+        return await _emailService.PasswordReset(
             user.UserName!, user.Id, user.Email!, encodedToken, ct);
-        if (emailResult != EmailServiceResult.Success)
-            return emailResult;
-
-        return AccountServiceResult.Success;
     }
-    public async Task<OneOf<RegisterResponseDTO, AccountServiceResult, FileServiceResult>> Register(RegisterInfo registerInfo, CancellationToken ct = default)
+
+    public async Task<ServiceResultContext> RequestEmailConfirmation(
+        string email, CancellationToken ct = default)
     {
-        var user = new ApplicationUser { UserName = registerInfo.User, Email = registerInfo.Email };
+        if (string.IsNullOrWhiteSpace(email))
+            return ServiceResult.InvalidEmail.Return(_logger);
 
-        var avatar = registerInfo.Avatar;
+        var userResult = await _dbHelperService.TryFunction(
+            _ => _userManager.FindByEmailAsync(email.Trim()),
+            ServiceResult.DBError, ct: ct);
 
-        var path = GetAvatarUrl(avatar.ContentType, user.Id, user.UserName);
-        string? batchPath = await _fileService.BeginBatch(ct);
-        if (batchPath == null)
-            return AccountServiceResult.AvatarLoadError;
-        var res2Res = await _fileService.PrepareFile(FileContext.Avatar, avatar, path, batchPath, ct);
-        if (!res2Res.TryPickT0(out var res2, out var ferror))
-            return ferror;
+        if (!userResult.TryPickT0(out var user, out var userError))
+            return userError;
 
-        await using var transaction = await _context.Database.BeginTransactionAsync(ct);
+        if (user is null || user.EmailConfirmed)
+            return ServiceResult.Success.Return(_logger);
 
-        var result = await _userManager.CreateAsync(user, registerInfo.Password);
-        if (!result.Succeeded)
+        var tokenResult = await _dbHelperService.TryFunction(
+            _ => _userManager.GenerateEmailConfirmationTokenAsync(user),
+            ServiceResult.TokenCreationError, ct: ct);
+
+        if (!tokenResult.TryPickT0(out var token, out var tokenError))
+            return tokenError;
+
+        string encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+
+        return await _emailService.Confirmation(
+            user.UserName!, user.Id, user.Email!, encodedToken, ct);
+    }
+
+    public async Task<OneOf<RegisterResponseDTO, ServiceResultContext>> Register(
+        RegisterInfo registerInfo, CancellationToken ct = default)
+    {
+        var user = new ApplicationUser
         {
-            await transaction.RollbackAsync(ct);
-            await _fileService.BatchRollback(batchPath, ct);
-            return AccountServiceResult.UserCreationError;
+            UserName = registerInfo.User,
+            Email = registerInfo.Email
+        };
+
+        string? avatarPath = GetAvatarUrl(
+            registerInfo.Avatar.ContentType, user.Id, user.UserName);
+
+        if (avatarPath is null)
+            return ServiceResult.InvalidFileForContext.Return(_logger);
+
+        var batchResult = await _fileService.BeginBatch(ct);
+
+        if (!batchResult.TryPickT0(out var batchPath, out var batchError))
+            return batchError;
+
+        var fileResult = await _fileService.PrepareFile(
+            FileContext.Avatar, registerInfo.Avatar, avatarPath, batchPath, ct);
+
+        if (!fileResult.TryPickT0(out var avatar, out var fileError))
+            return fileError;
+
+        var transactionResult = await _dbHelperService.TryFunction(
+            cancel => _context.Database.BeginTransactionAsync(cancel),
+            ServiceResult.DBError, ct: ct);
+
+        if (!transactionResult.TryPickT0(out var transaction, out var transactionError))
+        {
+            _ = await _fileService.BatchRollback(batchPath, CancellationToken.None);
+            return transactionError;
+        }
+
+        await using var transactionScope = transaction;
+
+        var creationResult = await _dbHelperService.TryFunction(
+            _ => _userManager.CreateAsync(user, registerInfo.Password),
+            ServiceResult.DBError, ct: ct);
+
+        if (!creationResult.TryPickT0(out var identityResult, out var creationError))
+        {
+            _ = await _dbHelperService.TryFunction(
+                cancel => transaction.RollbackAsync(cancel),
+                ServiceResult.DBError, ct: CancellationToken.None);
+
+            _ = await _fileService.BatchRollback(batchPath, CancellationToken.None);
+            return creationError;
+        }
+
+        if (!identityResult.Succeeded)
+        {
+            _ = await _dbHelperService.TryFunction(
+                cancel => transaction.RollbackAsync(cancel),
+                ServiceResult.DBError, ct: CancellationToken.None);
+
+            _ = await _fileService.BatchRollback(batchPath, CancellationToken.None);
+            return ServiceResult.UserCreationError.Return(_logger);
         }
 
         var info = new UserInfo
@@ -184,34 +209,57 @@ public class AccountService(
             Birthday = registerInfo.Birthday,
             TimeZoneId = registerInfo.TimeZoneId,
             EmailVisibilityId = registerInfo.EmailVisibilityId,
-            Avatar = res2
+            Avatar = avatar
         };
+
         _context.Add(info);
 
-        try
+        var saveResult = await _dbHelperService.TryFunction(
+            cancel => _context.SaveChangesAsync(cancel),
+            ServiceResult.DBError, ct: ct);
+
+        if (!saveResult.TryPickT0(out _, out var saveError))
         {
-            await _context.SaveChangesAsync(ct);
-            await transaction.CommitAsync(ct);
-            _fileService.BatchComplete(batchPath);
+            _ = await _dbHelperService.TryFunction(
+                cancel => transaction.RollbackAsync(cancel),
+                ServiceResult.DBError, ct: CancellationToken.None);
+
+            _ = await _fileService.BatchRollback(batchPath, CancellationToken.None);
+            return saveError;
         }
-        catch
+
+        var commitResult = await _dbHelperService.TryFunction(
+            cancel => transaction.CommitAsync(cancel),
+            ServiceResult.DBError, ct: ct);
+
+        if (commitResult.Result != ServiceResult.Success)
         {
-            await transaction.RollbackAsync(ct);
-            await _fileService.BatchRollback(batchPath, ct);
-            return AccountServiceResult.DBError;
+            _ = await _dbHelperService.TryFunction(
+                cancel => transaction.RollbackAsync(cancel),
+                ServiceResult.DBError, ct: CancellationToken.None);
+
+            _ = await _fileService.BatchRollback(batchPath, CancellationToken.None);
+            return commitResult;
         }
+
+        _ = _fileService.BatchComplete(batchPath);
 
         bool confirmationEmailSent = false;
-        var confirmationToken = await _dbHelperService.TryFunction(
-            async _ => await _userManager.GenerateEmailConfirmationTokenAsync(user), ct: ct);
 
-        if (!string.IsNullOrWhiteSpace(confirmationToken))
+        var confirmationTokenResult = await _dbHelperService.TryFunction(
+            _ => _userManager.GenerateEmailConfirmationTokenAsync(user),
+            ServiceResult.TokenCreationError, ct: ct);
+
+        if (confirmationTokenResult.TryPickT0(out var confirmationToken, out _) &&
+            !string.IsNullOrWhiteSpace(confirmationToken))
         {
-            var encodedToken = WebEncoders.Base64UrlEncode(
+            string encodedToken = WebEncoders.Base64UrlEncode(
                 Encoding.UTF8.GetBytes(confirmationToken));
+
             var emailResult = await _emailService.Confirmation(
                 user.UserName!, user.Id, user.Email!, encodedToken, ct);
-            confirmationEmailSent = emailResult == EmailServiceResult.Success;
+
+            confirmationEmailSent = emailResult.Result == ServiceResult.Success;
         }
 
         return new RegisterResponseDTO
@@ -220,171 +268,320 @@ public class AccountService(
             ConfirmationEmailSent = confirmationEmailSent
         };
     }
-    public async Task<AuthenticationResponse?> Login(LoginCredentials credentials)
+
+    public async Task<OneOf<AuthenticationResponse, ServiceResultContext>> Login(
+        LoginCredentials credentials)
     {
-        var result = await _signInManager.PasswordSignInAsync(
-            credentials.User!,
-            credentials.Password!,
-            isPersistent: true,
-            lockoutOnFailure: true);
-        if (!result.Succeeded) return null;
-        return await BuildToken(credentials.User!);
+        if (string.IsNullOrWhiteSpace(credentials.User) ||
+            string.IsNullOrWhiteSpace(credentials.Password))
+            return ServiceResult.InvalidPassword.Return(_logger);
+
+        var signInResult = await _dbHelperService.TryFunction(
+            _ => _signInManager.PasswordSignInAsync(
+                credentials.User, credentials.Password,
+                isPersistent: true, lockoutOnFailure: true),
+            ServiceResult.DBError);
+
+        if (!signInResult.TryPickT0(out var result, out var signInError))
+            return signInError;
+
+        if (!result.Succeeded)
+            return ServiceResult.InvalidPassword.Return(_logger);
+
+        return await BuildToken(credentials.User);
     }
-    public async Task<bool> Logout()
+
+    public async Task<ServiceResultContext> Logout()
     {
         var context = _httpContextAccessor.HttpContext;
-        if (context == null)
-            return false;
 
-        var res = await _dbHelperService.TryFunction(
-            async cancel => await _signInManager.SignOutAsync());
-        if (!res)
-            return false;
+        if (context is null)
+            return ServiceResult.Invalid.Return(_logger);
+
+        var signOutResult = await _dbHelperService.TryFunction(
+            _ => _signInManager.SignOutAsync(), ServiceResult.DBError);
+
+        if (signOutResult.Result != ServiceResult.Success)
+            return signOutResult;
 
         context.Session.Remove("Token");
-        context.Response.Cookies.Delete("__Host-SNEStorage.Auth",
-            new()
-            {
-                Secure = true,
-                SameSite = SameSiteMode.Lax,
-                Path = "/"
-            });
-        return true;
+        context.Response.Cookies.Delete("__Host-SNEStorage.Auth", new()
+        {
+            Secure = true,
+            SameSite = SameSiteMode.Lax,
+            Path = "/"
+        });
+
+        return ServiceResult.Success.Return(_logger);
     }
-    public async Task<OneOf<UserInfo, AccountServiceResult>> GetUserInfo(CancellationToken cancellationToken)
+
+    public async Task<OneOf<UserInfo, ServiceResultContext>> GetUserInfo(
+        CancellationToken ct)
     {
-        var userId = _httpContextAccessor.HttpContext?
-            .User.FindFirstValue(ClaimTypes.NameIdentifier);
+        string? userId = GetUserID();
 
         if (string.IsNullOrWhiteSpace(userId))
-            return AccountServiceResult.UserNotFound;
+            return ServiceResult.UserNotFound.Return(_logger);
 
-        return await GetUserInfo(userId, cancellationToken);
+        return await GetUserInfo(userId, ct);
     }
-    public async Task<OneOf<UserInfo, AccountServiceResult>> GetUserInfo(string userId, CancellationToken ct)
+
+    public async Task<OneOf<UserInfo, ServiceResultContext>> GetUserInfo(
+        string userId, CancellationToken ct)
     {
-        var userRes = await _dbHelperService.TryFunction(
-            async cancel => await _context.UserInfos
-                .AsNoTracking()
-                .Include(info => info.TimeZone)
-                .Include(info => info.EmailVisibility)
-                .Include(info => info.Avatar)
-                .Include(info => info.User)
-                .FirstOrDefaultAsync(info => info.UserId == userId, cancel),
-            AccountServiceResult.DBError, ct: ct);
-        if (!userRes.TryPickT0(out var user, out var error))
-            return error;
-        if (user == null)
-            return AccountServiceResult.UserNotFound;
+        var query = _context.UserInfos.AsNoTracking()
+            .Include(info => info.TimeZone)
+            .Include(info => info.EmailVisibility)
+            .Include(info => info.Avatar)
+            .Include(info => info.User)
+            .Where(info => info.UserId == userId);
+
+        var userResult = await _dbHelperService.TryFunction(
+            cancel => query.FirstOrDefaultAsync(cancel),
+            ServiceResult.DBError, ct: ct);
+
+        if (!userResult.TryPickT0(out var user, out var userError))
+            return userError;
+
+        if (user is null)
+            return ServiceResult.UserNotFound.Return(_logger);
+
         user.UserSummary = UserNameDTO.FromUserInfo(user, this);
         return user;
     }
-    public async Task<AuthenticationResponse?> RefreshToken()
+
+    public async Task<OneOf<AuthenticationResponse, ServiceResultContext>> RefreshToken()
     {
-        var user = _httpContextAccessor.HttpContext!.User.FindFirstValue("user");
-        if (string.IsNullOrEmpty(user)) return null;
-        return await BuildToken(user);
+        string? username = _httpContextAccessor.HttpContext?
+            .User.FindFirstValue("user");
+
+        if (string.IsNullOrWhiteSpace(username))
+            return ServiceResult.InvalidToken.Return(_logger);
+
+        return await BuildToken(username);
     }
 
-    public async Task<AuthenticationResponse?> BuildToken(string user)
+    public async Task<OneOf<AuthenticationResponse, ServiceResultContext>> BuildToken(
+        string username)
     {
-        var u = await _userManager.FindByNameAsync(user);
+        if (string.IsNullOrWhiteSpace(username))
+            return ServiceResult.InvalidToken.Return(_logger);
 
-        if (u is null || !await _userManager.IsEmailConfirmedAsync(u))
-            return null;
-        if (string.IsNullOrWhiteSpace(u.SecurityStamp))
-            return null;
+        var userResult = await _dbHelperService.TryFunction(
+            _ => _userManager.FindByNameAsync(username),
+            ServiceResult.DBError);
 
-        var claims = new List<Claim> {
-            new("user", user),
-            new(ClaimTypes.NameIdentifier, u.Id),
-            new(ClaimTypes.Name, u.UserName!),
-            new("security_stamp", u.SecurityStamp)
+        if (!userResult.TryPickT0(out var user, out var userError))
+            return userError;
+
+        if (user is null)
+            return ServiceResult.InvalidToken.Return(_logger);
+
+        var confirmationResult = await _dbHelperService.TryFunction(
+            _ => _userManager.IsEmailConfirmedAsync(user),
+            ServiceResult.DBError);
+
+        if (!confirmationResult.TryPickT0(
+            out bool emailConfirmed, out var confirmationError))
+            return confirmationError;
+
+        if (!emailConfirmed || string.IsNullOrWhiteSpace(user.SecurityStamp))
+            return ServiceResult.InvalidToken.Return(_logger);
+
+        var claimsResult = await _dbHelperService.TryFunction(
+            _ => _userManager.GetClaimsAsync(user),
+            ServiceResult.DBError);
+
+        if (!claimsResult.TryPickT0(out var userClaims, out var claimsError))
+            return claimsError;
+
+        var claims = new List<Claim>
+        {
+            new("user", username),
+            new(ClaimTypes.NameIdentifier, user.Id),
+            new(ClaimTypes.Name, user.UserName!),
+            new("security_stamp", user.SecurityStamp)
         };
-        claims.AddRange(await _userManager.GetClaimsAsync(u));
 
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWTKey"]!));
-        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-        var exp = DateTime.UtcNow.AddDays(90);
+        claims.AddRange(userClaims);
 
-        var jwt = new JwtSecurityToken(claims: claims, expires: exp, 
-            signingCredentials: creds);
-        return new AuthenticationResponse { Token = new JwtSecurityTokenHandler().WriteToken(jwt), ExpireTime = exp };
+        string? jwtKey = _configuration["JWTKey"];
+
+        if (string.IsNullOrWhiteSpace(jwtKey))
+            return ServiceResult.TokenCreationError.Return(_logger);
+
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
+        var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+        DateTime expiration = DateTime.UtcNow.AddDays(90);
+
+        var jwt = new JwtSecurityToken(
+            claims: claims, expires: expiration, signingCredentials: credentials);
+
+        var serializedTokenResult = _dbHelperService.TryFunction(
+            () => new JwtSecurityTokenHandler().WriteToken(jwt),
+            ServiceResult.TokenCreationError);
+
+        if (!serializedTokenResult.TryPickT0(
+            out var serializedToken, out var tokenError))
+            return tokenError;
+
+        return new AuthenticationResponse
+        {
+            Token = serializedToken,
+            ExpireTime = expiration
+        };
     }
-    public async Task<bool> AddRole(EditRole editRole)
+
+    public async Task<ServiceResultContext> AddRole(EditRole editRole)
     {
-        var user = await _userManager.FindByNameAsync(editRole.Username);
-        if (user == null)
-            return false;
-        var claims = await _userManager.GetClaimsAsync(user);
-        if (claims.Any(c => c.Type == editRole.RoleName && c.Value == "1"))
-            return false;
+        var userResult = await _dbHelperService.TryFunction(
+            _ => _userManager.FindByNameAsync(editRole.Username),
+            ServiceResult.DBError);
 
-        var result = await _userManager
-            .AddClaimAsync(user, new Claim(editRole.RoleName, "1"));
+        if (!userResult.TryPickT0(out var user, out var userError))
+            return userError;
 
-        if (!result.Succeeded)
-            return false;
+        if (user is null)
+            return ServiceResult.UserNotFoundBadRequest.Return(_logger);
 
-        var stampResult = await _userManager.UpdateSecurityStampAsync(user);
-        return stampResult.Succeeded;
+        var claimsResult = await _dbHelperService.TryFunction(
+            _ => _userManager.GetClaimsAsync(user),
+            ServiceResult.DBError);
+
+        if (!claimsResult.TryPickT0(out var claims, out var claimsError))
+            return claimsError;
+
+        if (claims.Any(claim =>
+            claim.Type == editRole.RoleName && claim.Value == "1"))
+            return ServiceResult.Invalid.Return(_logger);
+
+        var addResult = await _dbHelperService.TryFunction(
+            _ => _userManager.AddClaimAsync(
+                user, new Claim(editRole.RoleName, "1")),
+            ServiceResult.DBError);
+
+        if (!addResult.TryPickT0(out var identityResult, out var addError))
+            return addError;
+
+        if (!identityResult.Succeeded)
+            return ServiceResult.Invalid.Return(_logger);
+
+        var stampResult = await _dbHelperService.TryFunction(
+            _ => _userManager.UpdateSecurityStampAsync(user),
+            ServiceResult.DBError);
+
+        if (!stampResult.TryPickT0(out identityResult, out var stampError))
+            return stampError;
+
+        return identityResult.Succeeded ?
+            ServiceResult.NoContent.Return(_logger) :
+            ServiceResult.Invalid.Return(_logger);
     }
-    public async Task<bool> RemoveRole(EditRole editRole)
+
+    public async Task<ServiceResultContext> RemoveRole(EditRole editRole)
     {
-        var user = await _userManager.FindByNameAsync(editRole.Username);
-        if (user == null)
-            return false;
-        var claims = await _userManager.GetClaimsAsync(user);
-        var claim = claims
-            .FirstOrDefault(c => c.Type == editRole.RoleName && c.Value == "1");
+        var userResult = await _dbHelperService.TryFunction(
+            _ => _userManager.FindByNameAsync(editRole.Username),
+            ServiceResult.DBError);
+
+        if (!userResult.TryPickT0(out var user, out var userError))
+            return userError;
+
+        if (user is null)
+            return ServiceResult.UserNotFoundBadRequest.Return(_logger);
+
+        var claimsResult = await _dbHelperService.TryFunction(
+            _ => _userManager.GetClaimsAsync(user),
+            ServiceResult.DBError);
+
+        if (!claimsResult.TryPickT0(out var claims, out var claimsError))
+            return claimsError;
+
+        var claim = claims.FirstOrDefault(item =>
+            item.Type == editRole.RoleName && item.Value == "1");
 
         if (claim is null)
-            return false;
+            return ServiceResult.Invalid.Return(_logger);
 
-        var result = await _userManager.RemoveClaimAsync(user, claim);
+        var removeResult = await _dbHelperService.TryFunction(
+            _ => _userManager.RemoveClaimAsync(user, claim),
+            ServiceResult.DBError);
 
-        if (!result.Succeeded)
-            return false;
+        if (!removeResult.TryPickT0(out var identityResult, out var removeError))
+            return removeError;
 
-        var stampResult = await _userManager.UpdateSecurityStampAsync(user);
-        return stampResult.Succeeded;
+        if (!identityResult.Succeeded)
+            return ServiceResult.Invalid.Return(_logger);
+
+        var stampResult = await _dbHelperService.TryFunction(
+            _ => _userManager.UpdateSecurityStampAsync(user),
+            ServiceResult.DBError);
+
+        if (!stampResult.TryPickT0(out identityResult, out var stampError))
+            return stampError;
+
+        return identityResult.Succeeded ?
+            ServiceResult.NoContent.Return(_logger) :
+            ServiceResult.Invalid.Return(_logger);
     }
-    public async Task<bool> EditUserInfo(EditProfileDTO dto, CancellationToken ct)
+
+    public async Task<ServiceResultContext> EditUserInfo(
+        EditProfileDTO dto, CancellationToken ct)
     {
-        var user = _httpContextAccessor.HttpContext!.User.FindFirstValue(ClaimTypes.Name);
-        if (user == null)
-            return false;
+        string? username = _httpContextAccessor.HttpContext?
+            .User.FindFirstValue(ClaimTypes.Name);
+
+        if (string.IsNullOrWhiteSpace(username))
+            return ServiceResult.Invalid.Return(_logger);
+
         string? userId = GetUserID();
-        if (userId == null)
-            return false;
 
-        var info = await _context.UserInfos
-            .Include(ui => ui.Avatar)
-            .FirstOrDefaultAsync(ui => ui.UserId == userId, ct);
+        if (string.IsNullOrWhiteSpace(userId))
+            return ServiceResult.Invalid.Return(_logger);
 
-        if (info == null)
-            return false;
+        var infoQuery = _context.UserInfos
+            .Include(info => info.Avatar)
+            .Where(info => info.UserId == userId);
+
+        var infoResult = await _dbHelperService.TryFunction(
+            cancel => infoQuery.FirstOrDefaultAsync(cancel),
+            ServiceResult.DBError, ct: ct);
+
+        if (!infoResult.TryPickT0(out var info, out var infoError))
+            return infoError;
+
+        if (info is null)
+            return ServiceResult.UserNotFound.Return(_logger);
 
         var previousAvatar = info.Avatar;
-
-        Models.File? file = null;
-
+        Models.File? newAvatar = null;
         string? batchPath = null;
 
-        if (dto.File != null && !string.IsNullOrWhiteSpace(dto.File.FileName))
+        if (dto.File is not null && !string.IsNullOrWhiteSpace(dto.File.FileName))
         {
-            var path = GetAvatarUrl(dto.File.ContentType, userId, user);
-            batchPath = await _fileService.BeginBatch(ct);
-            if (batchPath == null)
-                return false;
-            var fileRes = await _fileService.PrepareFile(FileContext.Avatar, dto.File, path, batchPath, ct);
-            if (!fileRes.TryPickT0(out file, out _))
-                return false;
-            info.Avatar = file;
+            string? avatarPath = GetAvatarUrl(
+                dto.File.ContentType, userId, username);
+
+            if (avatarPath is null)
+                return ServiceResult.InvalidFileForContext.Return(_logger);
+
+            var batchResult = await _fileService.BeginBatch(ct);
+
+            if (!batchResult.TryPickT0(out batchPath, out var batchError))
+                return batchError;
+
+            var fileResult = await _fileService.PrepareFile(
+                FileContext.Avatar, dto.File, avatarPath, batchPath, ct);
+
+            if (!fileResult.TryPickT0(out newAvatar, out var fileError))
+                return fileError;
+
+            info.Avatar = newAvatar;
         }
 
         bool discordColorChanged = dto.UsernameColor is not null &&
-           !string.Equals(dto.UsernameColor, info.UsernameColor, StringComparison.OrdinalIgnoreCase);
+            !string.Equals(dto.UsernameColor, info.UsernameColor,
+                StringComparison.OrdinalIgnoreCase);
 
         info.UsernameColor = dto.UsernameColor ?? info.UsernameColor;
         info.Bio = dto.Bio ?? info.Bio;
@@ -399,124 +596,160 @@ public class AccountService(
         info.Steam = GetSocialNetwork(dto.Steam, info.Steam);
         info.Twitch = GetSocialNetwork(dto.Twitch, info.Twitch);
         info.Github = GetSocialNetwork(dto.Github, info.Github);
-        info.NintendoNetwork = GetSocialNetwork(dto.NintendoNetwork, info.NintendoNetwork);
+        info.NintendoNetwork = GetSocialNetwork(
+            dto.NintendoNetwork, info.NintendoNetwork);
         info.TimeZoneId = dto.TimeZoneId ?? info.TimeZoneId;
         info.EmailVisibilityId = dto.EmailVisibilityId ?? info.EmailVisibilityId;
-       
-        try
-        {
-            await _context.SaveChangesAsync(ct);
-            if (batchPath != null)
-                _fileService.BatchComplete(batchPath);
-        }
-        catch
-        {
-            if (batchPath != null)
-                await _fileService.BatchRollback(batchPath, ct);
-            else
-                _context.ChangeTracker.Clear();
-            return false;
-        }
+
+        ServiceResultContext saveResult;
+
+        if (batchPath is null)
+            saveResult = await _dbHelperService.TrySyncContext(ct: ct);
+        else
+            saveResult = await _fileService.TrySyncContextWithFiles(
+                batchPath, ct: ct);
+
+        if (saveResult.Result != ServiceResult.Success)
+            return saveResult;
+
         if (discordColorChanged && !string.IsNullOrWhiteSpace(info.DiscordUserId))
+            _ = await _discordService.NotifyMemberChangedAsync(info.DiscordUserId, ct);
+
+        if (newAvatar is null || previousAvatar is null)
+            return ServiceResult.Success.Return(_logger);
+
+        var deletionResult = await _dbHelperService.TryFunction(
+            cancel => _context.Files
+                .Where(file => file.Id == previousAvatar.Id)
+                .ExecuteDeleteAsync(cancel),
+            ServiceResult.DBError, ct: ct);
+
+        if (deletionResult.IsT0)
         {
-            _ = await _discordService.NotifyMemberChangedAsync(
-                info.DiscordUserId,
-                ct);
+            string physicalPath = Path.Combine(
+                _environment.ContentRootPath, previousAvatar.URL);
+
+            _ = _dbHelperService.TryFunction(() =>
+            {
+                System.IO.File.Delete(physicalPath);
+                return true;
+            }, ServiceResult.FileDeletionError);
         }
 
-        if (file == null || previousAvatar == null)
-            return true;
-
-        bool cleaned = await _dbHelperService.TryFunction(async cancel =>
-        {
-            await _context.Files
-                .Where(f => f.Id == previousAvatar.Id)
-                .ExecuteDeleteAsync(cancel);
-
-            var physicalPath = Path.Combine(
-                _environment.ContentRootPath,
-                previousAvatar.URL);
-
-            System.IO.File.Delete(physicalPath);
-        }, ct: ct);
-
-        return true;
+        return ServiceResult.Success.Return(_logger);
     }
+
     public string? GetUserID()
     {
-        return _httpContextAccessor.HttpContext!.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        return _httpContextAccessor.HttpContext?
+            .User.FindFirstValue(ClaimTypes.NameIdentifier);
     }
-    public async Task<AccountServiceResult> ConfirmUser(string userId, string token64,
-        CancellationToken ct)
-    {
-        var user = await _userManager.FindByIdAsync(userId);
 
-        if (user == null)
-            return AccountServiceResult.UserNotFound;
+    public async Task<ServiceResultContext> ConfirmUser(
+        string userId, string token64, CancellationToken ct)
+    {
+        var userResult = await _dbHelperService.TryFunction(
+            _ => _userManager.FindByIdAsync(userId),
+            ServiceResult.DBError, ct: ct);
+
+        if (!userResult.TryPickT0(out var user, out var userError))
+            return userError;
+
+        if (user is null)
+            return ServiceResult.UserNotFound.Return(_logger);
 
         bool wasAlreadyConfirmed = user.EmailConfirmed;
 
-        byte[]? tokenbytes = _dbHelperService.TryFunction(
-                () => WebEncoders.Base64UrlDecode(token64));
+        var tokenBytesResult = _dbHelperService.TryFunction(
+            () => WebEncoders.Base64UrlDecode(token64),
+            ServiceResult.InvalidToken);
 
-        if (tokenbytes is null)
-            return AccountServiceResult.InvalidToken;
+        if (!tokenBytesResult.TryPickT0(out var tokenBytes, out var tokenError))
+            return tokenError;
 
-        var token = Encoding.UTF8.GetString(tokenbytes);
-        var result = await _userManager.ConfirmEmailAsync(user, token);
+        string token = Encoding.UTF8.GetString(tokenBytes);
 
-        if (!result.Succeeded)
-            return AccountServiceResult.InvalidToken;
+        var confirmationResult = await _dbHelperService.TryFunction(
+            _ => _userManager.ConfirmEmailAsync(user, token),
+            ServiceResult.DBError, ct: ct);
+
+        if (!confirmationResult.TryPickT0(
+            out var identityResult, out var confirmationError))
+            return confirmationError;
+
+        if (!identityResult.Succeeded)
+            return ServiceResult.InvalidToken.Return(_logger);
 
         if (!wasAlreadyConfirmed)
-            await _discordService.NotifyBotAsync(new(Guid.NewGuid(),
-                DiscordBotEventTypes.UserRegistered, user.Id, DateTimeOffset.UtcNow), ct);
+        {
+            var notification = new DiscordBotEventDTO(
+                Guid.NewGuid(), DiscordBotEventTypes.UserRegistered,
+                user.Id, DateTimeOffset.UtcNow);
 
-        return AccountServiceResult.Success;
+            _ = await _discordService.NotifyBotAsync(notification, ct);
+        }
+
+        return ServiceResult.Success.Return(_logger);
     }
+
     public bool IsModeratorOrAdmin()
     {
         var user = _httpContextAccessor.HttpContext?.User;
 
-        return user?.Identity?.IsAuthenticated == true
-            && (user.HasClaim("Admin", "1")
-                || user.HasClaim("Moderator", "1"));
+        return user?.Identity?.IsAuthenticated == true &&
+            (user.HasClaim("Admin", "1") || user.HasClaim("Moderator", "1"));
     }
-    public async Task<ApplicationUser?> GetUser()
+
+    public async Task<OneOf<ApplicationUser, ServiceResultContext>> GetUser()
     {
         string? userId = GetUserID();
-        if (userId == null)
-            return null;
 
-        return await _dbHelperService.TryFunction(
-            async cancel => await _context.Users.FindAsync([userId], cancel));
+        if (string.IsNullOrWhiteSpace(userId))
+            return ServiceResult.UserNotFound.Return(_logger);
+
+        var userResult = await _dbHelperService.TryFunction(
+            async cancel => await _context.Users.FindAsync([userId], cancel),
+            ServiceResult.DBError);
+
+        if (!userResult.TryPickT0(out var user, out var userError))
+            return userError;
+
+        return user is null ?
+            ServiceResult.UserNotFound.Return(_logger) : user;
     }
-    public async Task<bool> ValidateJwt(string? userId, string? stamp,
-        CancellationToken ct = default)
+
+    public async Task<OneOf<bool, ServiceResultContext>> ValidateJwt(
+        string? userId, string? stamp, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(userId) ||
             string.IsNullOrWhiteSpace(stamp))
             return false;
 
-        var currentStamp = await _dbHelperService.TryFunction(
-            async cancel => await _context.Users
-                .AsNoTracking()
-                .Where(u => u.Id == userId)
-                .Select(u => u.SecurityStamp)
-                .FirstOrDefaultAsync(cancel), ct: ct);
+        var stampQuery = _context.Users.AsNoTracking()
+            .Where(user => user.Id == userId)
+            .Select(user => user.SecurityStamp);
 
-        return currentStamp != null &&
+        var stampResult = await _dbHelperService.TryFunction(
+            cancel => stampQuery.FirstOrDefaultAsync(cancel),
+            ServiceResult.DBError, ct: ct);
+
+        if (!stampResult.TryPickT0(out var currentStamp, out var stampError))
+            return stampError;
+
+        return currentStamp is not null &&
             string.Equals(currentStamp, stamp, StringComparison.Ordinal);
     }
-    private static string? GetSocialNetwork(string? dtoValue, string? defValue)
+
+    private static string? GetSocialNetwork(string? dtoValue, string? defaultValue)
     {
         if (dtoValue is null)
-            return defValue;
-        if(string.IsNullOrWhiteSpace(dtoValue))
-            return null;
-        return dtoValue;
+            return defaultValue;
+
+        return string.IsNullOrWhiteSpace(dtoValue) ? null : dtoValue;
     }
-    private string? GetAvatarUrl(string contentType, string userId, string username)
+
+    private string? GetAvatarUrl(
+        string contentType, string userId, string username)
     {
         string? extension = contentType.Trim().ToLowerInvariant() switch
         {
@@ -532,15 +765,15 @@ public class AccountService(
             return null;
 
         string physicalPath;
+
         do
         {
-            physicalPath = Path.Combine(
-                _environment.WebRootPath, "Content", "Avatars",
+            physicalPath = Path.Combine(_environment.WebRootPath,
+                "Content", "Avatars",
                 $"{Guid.NewGuid():N}_{userId}_{username}{extension}");
         }
         while (System.IO.File.Exists(physicalPath));
 
-        return Path.GetRelativePath(
-            _environment.ContentRootPath, physicalPath);
+        return Path.GetRelativePath(_environment.ContentRootPath, physicalPath);
     }
 }

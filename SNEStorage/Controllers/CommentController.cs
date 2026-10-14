@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using OneOf;
 using SNEStorage.DTOs;
 using SNEStorage.Filters.Attributes;
 using SNEStorage.Models;
@@ -13,18 +12,17 @@ namespace SNEStorage.Controllers;
 
 [ApiController]
 [Route("api/comment")]
-public class CommentController(CommentService commentService,
-    DBHelperService dbHelperService) : Controller
+public class CommentController(CommentService commentService) : Controller
 {
     private readonly CommentService _commentService = commentService;
-    private readonly DBHelperService _dbHelperService = dbHelperService;
+
     [EnableRateLimiting("reads")]
     [HttpGet("{commentId}/userlike")]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<ActionResult<LikeUsers>> GetUserLike([FromRoute] long commentId, CancellationToken ct = default)
     {
         var res = await _commentService.GetUserLike(commentId, ct);
-        return GetActionResult(res);
+        return this.GetActionResult(res);
     }
     [EnableRateLimiting("votes")]
     [HttpPost("{commentId}/like")]
@@ -34,17 +32,17 @@ public class CommentController(CommentService commentService,
         [FromForm] LikeValues value, CancellationToken ct = default)
     {
         var res = await _commentService.AddEditOrDeleteLike(commentId, value, ct);
-        return GetActionResult(res);
+        return this.GetActionResult(res);
     }
     [EnableRateLimiting("reads")]
     [HttpGet("{commentId}/replies")]
     public async Task<ActionResult<List<CommentReadDto>>> GetReplies([FromRoute] long commentId,
         [FromQuery] int maxAmount = 20, [FromQuery] int page = 0,
         [FromQuery] CommentSorting sort = CommentSorting.RecentFirst,
-    CancellationToken ct = default)
+        CancellationToken ct = default)
     {
         var res = await _commentService.GetReplies(commentId, maxAmount, page, sort, ct);
-        return GetActionResult(res);
+        return this.GetActionResult(res);
     }
     [EnableRateLimiting("reads")]
     [HttpGet("resource/{resourceId}")]
@@ -54,16 +52,17 @@ public class CommentController(CommentService commentService,
         CancellationToken ct = default)
     {
         var res = await _commentService.GetResourceComments(resourceId, maxAmount, page, sort, ct);
-        return GetActionResult(res);
+        return this.GetActionResult(res);
     }
     [EnableRateLimiting("comments")]
     [HttpPost("{commentId}/reply")]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [RequireCaptcha("comment_reply", CaptchaPolicy.After5TriesInShortTime)]
-    public async Task<ActionResult<CommentComment>> Reply([FromRoute] long commentId, [FromForm, StringLength(5000)] string commentText, CancellationToken ct = default)
+    public async Task<ActionResult<CommentComment>> Reply([FromRoute] long commentId,
+        [FromForm, StringLength(5000)] string commentText, CancellationToken ct = default)
     {
         var res = await _commentService.AddCommentToComment(commentId, commentText, ct);
-        return GetActionResult(res);
+        return this.GetActionResult(res);
     }
     [EnableRateLimiting("comments")]
     [HttpDelete("{commentId}")]
@@ -71,64 +70,16 @@ public class CommentController(CommentService commentService,
     public async Task<ActionResult> Delete([FromRoute] long commentId, CancellationToken ct = default)
     {
         var res = await _commentService.DeleteComment(commentId, ct);
-        return GetActionResult(res);
+        return this.GetActionResult(res);
     }
     [EnableRateLimiting("comments")]
     [HttpPut("{commentId}")]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [RequireCaptcha("comment_edit", CaptchaPolicy.After5TriesInShortTime)]
-    public async Task<ActionResult> Edit([FromRoute] long commentId, [FromForm, StringLength(5000)] string commentText, CancellationToken ct = default)
+    public async Task<ActionResult> Edit([FromRoute] long commentId,
+        [FromForm, StringLength(5000)] string commentText, CancellationToken ct = default)
     {
         var res = await _commentService.EditComment(commentId, commentText, ct);
-        return GetActionResult(res);
-    }
-    private ObjectResult GetActionResult(CommentServiceResult result)
-    {
-        string res = $"{GetType().Name}-{result}";
-        bool authenticated =
-            HttpContext?.User.Identity?.IsAuthenticated == true;
-
-        return result switch
-        {
-            CommentServiceResult.Success => Ok(res),
-
-            CommentServiceResult.Unauthorized when authenticated =>
-                StatusCode(StatusCodes.Status403Forbidden, res),
-
-            CommentServiceResult.Unauthorized =>
-                Unauthorized(res),
-
-            CommentServiceResult.CommentNotFound or
-            CommentServiceResult.ResourceNotFound or
-            CommentServiceResult.LikeNotFound =>
-                NotFound(res),
-
-            CommentServiceResult.CantLikeYourOwnComment =>
-                StatusCode(StatusCodes.Status403Forbidden, res),
-
-            CommentServiceResult.CantLikeDeletedComment or
-            CommentServiceResult.CantReplyDeletedComment =>
-                Conflict(res),
-
-            CommentServiceResult.UndefinedLike or
-            CommentServiceResult.UndefinedSort or
-            CommentServiceResult.AmountOfCommentsSurpassTheLimit or
-            CommentServiceResult.InvalidAmountOfCommentsPerPage or
-            CommentServiceResult.NegativePage or
-            CommentServiceResult.SkipOutOfRange or
-            CommentServiceResult.EmptyComment =>
-                BadRequest(res),
-
-            CommentServiceResult.DBError =>
-                StatusCode(StatusCodes.Status500InternalServerError, res),
-
-            _ => StatusCode(StatusCodes.Status500InternalServerError, res)
-        };
-    }
-    private ActionResult<T> GetActionResult<T>(OneOf<T, CommentServiceResult> result)
-    {
-        if (result.TryPickT0(out T entity, out var error))
-            return Ok(entity);
-        return GetActionResult(error);
+        return this.GetActionResult(res);
     }
 }

@@ -52,7 +52,7 @@ internal sealed class CommentApiClient(IJSRuntime javascript, ILogger logger) : 
         }
         // A vote removed in another tab already satisfies the requested removal.
         if (value == LikeValues.Remove && response.Status == 404 &&
-            ApiErrorPresentation.Describe(response.Status, response.Body, "comment").Code == nameof(CommentServiceResult.LikeNotFound))
+            ApiErrorPresentation.Describe(response.Status, response.Body, "comment").Code == nameof(ServiceResultTypes.LikeNotFound))
             return new(true);
         if (response.Status is < 200 or >= 300)
             return new(false, Message: ApiErrorPresentation.Describe(response.Status, response.Body, "comment").Message);
@@ -75,7 +75,7 @@ internal sealed class CommentApiClient(IJSRuntime javascript, ILogger logger) : 
         var response = await CallAsync("getCommentVote", comment.Id, _requestKey);
         if (response.Cancelled) return new(false, Cancelled: true);
         if (response.Status == 404 &&
-            ApiErrorPresentation.Describe(response.Status, response.Body, "comment").Code == nameof(CommentServiceResult.LikeNotFound))
+            ApiErrorPresentation.Describe(response.Status, response.Body, "comment").Code == nameof(ServiceResultTypes.LikeNotFound))
             return new(true);
         if (response.Status != 200) return new(false);
         try
@@ -107,7 +107,7 @@ internal sealed class CommentApiClient(IJSRuntime javascript, ILogger logger) : 
                     saved.ParentCommentId == request.CommentId && child.UserId == userId
                     ? new(true, saved) : new(false, Message: uncertain);
             }
-            var success = ApiErrorPresentation.IsSuccess(response.Body, "comment");
+            var success = response.Status == 204 || ApiErrorPresentation.IsSuccess(response.Body, "comment");
             return success ? new(true) : new(false, Message: uncertain);
         }
         catch (JsonException exception)

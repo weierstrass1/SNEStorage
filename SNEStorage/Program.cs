@@ -80,8 +80,8 @@ services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 var stamp = context.Principal?
                     .FindFirstValue("security_stamp");
 
-                if (!await accountService.ValidateJwt(
-                    userId, stamp, http.RequestAborted))
+                var validation = await accountService.ValidateJwt(userId, stamp, http.RequestAborted);
+                if (!validation.TryPickT0(out var valid, out _) || !valid)
                 {
                     context.Fail("Invalid or revoked token.");
                     return;
@@ -97,9 +97,8 @@ services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 if (string.IsNullOrEmpty(username))
                     return;
 
-                var response = await accountService.BuildToken(username);
-
-                if (response == null)
+                var tokenResult = await accountService.BuildToken(username);
+                if (!tokenResult.TryPickT0(out var response, out _))
                     return;
 
                 http.Response.Cookies.Append("__Host-SNEStorage.Auth",

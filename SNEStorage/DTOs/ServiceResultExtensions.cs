@@ -90,10 +90,7 @@ public static class ServiceResultExtensions
         this ControllerBase controller,
         OneOf<T, ServiceResultContext> result)
     {
-        return result.TryPickT0(
-            out var value,
-            out var error)
-                ? controller.Ok(value)
-                : controller.GetActionResult(error);
+        return result.TryPickT0(out var value, out var error) ?
+            controller.Ok(value) : controller.GetActionResult(error);
     }
 }

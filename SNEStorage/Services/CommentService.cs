@@ -4,12 +4,14 @@ using SNEStorage.DTOs;
 using SNEStorage.Models;
 
 namespace SNEStorage.Services;
+
 public enum LikeValues
 {
     Like,
     Dislike,
     Remove
 }
+
 public enum CommentSorting
 {
     RecentFirst,
@@ -21,365 +23,257 @@ public enum CommentSorting
     BestScore,
     WorstScore
 }
-public enum CommentServiceResult
-{
-    Success,
-    CantLikeDeletedComment,
-    CantReplyDeletedComment,
-    CantLikeYourOwnComment,
-    LikeNotFound,
-    UndefinedLike,
-    UndefinedSort,
-    AmountOfCommentsSurpassTheLimit,
-    InvalidAmountOfCommentsPerPage,
-    NegativePage,
-    SkipOutOfRange,
-    ResourceNotFound,
-    Unauthorized,
-    CommentNotFound,
-    EmptyComment,
-    DBError
-}
-public class CommentService(SnestorageContext context,
-    DBHelperService dbHelperService,
-    AccountService accountService)
+
+public class CommentService(SnestorageContext context, DBHelperService dbHelperService,
+    AccountService accountService, ILogger<CommentService> logger)
 {
     public const int MAX_AMOUNT_OF_COMMENTS_PER_PAGE = 200;
+
     private readonly SnestorageContext _context = context;
     private readonly DBHelperService _dbHelperService = dbHelperService;
     private readonly AccountService _accountService = accountService;
-    private static IOrderedQueryable<Comment> SortComments(IQueryable<Comment> query,
-        CommentSorting sort)
+    private readonly ILogger<CommentService> _logger = logger;
+
+    private static IOrderedQueryable<Comment> SortComments(
+        IQueryable<Comment> query, CommentSorting sort)
     {
         var ordered = sort switch
         {
-            CommentSorting.RecentFirst => query
-                .OrderByDescending(c => c.PublishDate),
+            CommentSorting.RecentFirst =>
+                query.OrderByDescending(comment => comment.PublishDate),
 
-            CommentSorting.RecentLast => query
-                .OrderBy(c => c.PublishDate),
+            CommentSorting.RecentLast =>
+                query.OrderBy(comment => comment.PublishDate),
 
-            CommentSorting.MostVoted => query
-                .OrderByDescending(c => c.Score!.LikesUsers.Count())
-                .ThenByDescending(c => c.PublishDate),
+            CommentSorting.MostVoted =>
+                query.OrderByDescending(comment => comment.Score!.LikesUsers.Count())
+                    .ThenByDescending(comment => comment.PublishDate),
 
-            CommentSorting.LessVoted => query
-                .OrderBy(c => c.Score!.LikesUsers.Count())
-                .ThenByDescending(c => c.PublishDate),
+            CommentSorting.LessVoted =>
+                query.OrderBy(comment => comment.Score!.LikesUsers.Count())
+                    .ThenByDescending(comment => comment.PublishDate),
 
-            CommentSorting.MostLiked => query
-                .OrderByDescending(c =>
-                    c.Score!.LikesUsers.Count(v => v.Value))
-                .ThenByDescending(c => c.Score!.LikesUsers.Count())
-                .ThenByDescending(c => c.PublishDate),
+            CommentSorting.MostLiked =>
+                query.OrderByDescending(comment =>
+                        comment.Score!.LikesUsers.Count(vote => vote.Value))
+                    .ThenByDescending(comment => comment.Score!.LikesUsers.Count())
+                    .ThenByDescending(comment => comment.PublishDate),
 
-            CommentSorting.MostDisliked => query
-                .OrderByDescending(c =>
-                    c.Score!.LikesUsers.Count(v => !v.Value))
-                .ThenByDescending(c => c.Score!.LikesUsers.Count())
-                .ThenByDescending(c => c.PublishDate),
+            CommentSorting.MostDisliked =>
+                query.OrderByDescending(comment =>
+                        comment.Score!.LikesUsers.Count(vote => !vote.Value))
+                    .ThenByDescending(comment => comment.Score!.LikesUsers.Count())
+                    .ThenByDescending(comment => comment.PublishDate),
 
-            CommentSorting.BestScore => query
-                .OrderByDescending(c =>
-                    c.Score!.LikesUsers.Average(
-                        v => (double?)(v.Value ? 1 : 0)) ?? 0.0)
-                .ThenByDescending(c => c.Score!.LikesUsers.Count())
-                .ThenByDescending(c => c.PublishDate),
+            CommentSorting.BestScore =>
+                query.OrderByDescending(comment =>
+                        comment.Score!.LikesUsers.Average(
+                            vote => (double?)(vote.Value ? 1 : 0)) ?? 0.0)
+                    .ThenByDescending(comment => comment.Score!.LikesUsers.Count())
+                    .ThenByDescending(comment => comment.PublishDate),
 
-            CommentSorting.WorstScore => query
-                .OrderBy(c =>
-                    c.Score!.LikesUsers.Average(
-                        v => (double?)(v.Value ? 1 : 0)) ?? 0.0)
-                .ThenByDescending(c => c.Score!.LikesUsers.Count())
-                .ThenByDescending(c => c.PublishDate),
+            CommentSorting.WorstScore =>
+                query.OrderBy(comment =>
+                        comment.Score!.LikesUsers.Average(
+                            vote => (double?)(vote.Value ? 1 : 0)) ?? 0.0)
+                    .ThenByDescending(comment => comment.Score!.LikesUsers.Count())
+                    .ThenByDescending(comment => comment.PublishDate),
 
             _ => throw new ArgumentOutOfRangeException(
                 nameof(sort), sort, "Unsupported comment sorting.")
         };
 
-        return ordered.ThenByDescending(c => c.Id);
+        return ordered.ThenByDescending(comment => comment.Id);
     }
-    public async Task<OneOf<LikeUsers, CommentServiceResult>> AddEditOrDeleteLike(long commentId, LikeValues value, CancellationToken ct = default)
+
+    public async Task<OneOf<LikeUsers, ServiceResultContext>> AddEditOrDeleteLike(
+        long commentId, LikeValues value, CancellationToken ct = default)
     {
         if (!Enum.IsDefined(value))
-            return CommentServiceResult.UndefinedLike;
+            return ServiceResult.UndefinedLike.Return(_logger);
 
-        var permission = await CheckResourcePermissionFromComment(commentId, ct);
-        if (!permission.TryPickT0(out var comment, out var error))
-            return error;
+        var permissionResult = await CheckResourcePermissionFromComment(commentId, ct);
+
+        if (!permissionResult.TryPickT0(out var comment, out var permissionError))
+            return permissionError;
 
         string? userId = _accountService.GetUserID();
 
-        if (userId == null)
-            return CommentServiceResult.Unauthorized;
-        if (comment.UserId == userId)
-            return CommentServiceResult.CantLikeYourOwnComment;
-        if (comment.Deleted)
-            return CommentServiceResult.CantLikeDeletedComment;
+        if (string.IsNullOrWhiteSpace(userId))
+            return ServiceResult.Unauthorized.Return(_logger);
 
-        var likeRes = await _dbHelperService.TryFunction(
-            async cancel => await _context.LikesUsers
-                .Include(l => l.Score)
-                    .ThenInclude(l => l!.Comment)
-                .FirstOrDefaultAsync(l => l.UserId == userId &&
-                l.Score != null &&
-                l.Score.Comment != null &&
-                l.Score.Comment.Id == commentId, cancel),
-                CommentServiceResult.DBError, ct: ct);
-        if (!likeRes.TryPickT0(out var like, out error))
-            return error;
+        if (comment.UserId == userId)
+            return ServiceResult.CantLikeYourOwnComment.Return(_logger);
+
+        if (comment.Deleted)
+            return ServiceResult.CantLikeDeletedComment.Return(_logger);
+
+        var likeQuery = _context.LikesUsers
+            .Include(like => like.Score)
+            .ThenInclude(score => score!.Comment)
+            .Where(like => like.UserId == userId &&
+                like.Score != null &&
+                like.Score.Comment != null &&
+                like.Score.Comment.Id == commentId);
+
+        var likeResult = await _dbHelperService.TryFunction(
+            cancel => likeQuery.FirstOrDefaultAsync(cancel),
+            ServiceResult.DBError, ct: ct);
+
+        if (!likeResult.TryPickT0(out var like, out var likeError))
+            return likeError;
 
         if (value == LikeValues.Remove)
         {
-            if (like == null)
-                return CommentServiceResult.LikeNotFound;
+            if (like is null)
+                return ServiceResult.LikeNotFound.Return(_logger);
+
             _context.LikesUsers.Remove(like);
-            return await _dbHelperService.TrySyncContext(like, CommentServiceResult.DBError, ct);
+            return await _dbHelperService.TrySyncContext(like, ct: ct);
         }
-        
-        if(like == null)
+
+        if (like is null)
         {
-            like = new()
+            like = new LikeUsers
             {
                 Id = 0,
                 UserId = userId,
                 ScoreId = comment.ScoreId
             };
+
             _context.LikesUsers.Add(like);
         }
 
         like.Value = value == LikeValues.Like;
-        return await _dbHelperService.TrySyncContext(like, CommentServiceResult.DBError, ct);
-    }
-    public async Task<OneOf<List<CommentReadDto>,CommentServiceResult>> GetReplies(long commentId, int maxAmount = 20, int page = 0, CommentSorting sort = CommentSorting.RecentFirst, CancellationToken ct = default)
-    {
-        if (!GetStart(maxAmount, page, sort).TryPickT0(out var query, out var error))
-            return error;
-
-        CommentServiceResult permission = await CheckResourcePermissionFromCommentId(commentId, ct);
-
-        if (permission != CommentServiceResult.Success)
-            return permission;
-
-        query = query
-            .Where(r => r.Parent != null && r.Parent.ParentCommentId == commentId);
-
-        return await GetEnd(query, maxAmount, page, sort, ct);
-    }
-    private async Task<OneOf<Comment, CommentServiceResult>> CheckResourcePermissionFromComment(long commentId, CancellationToken ct)
-    {
-        var commentRes = await _dbHelperService.TryFunction(
-                    async cancel => await _context.Comments
-                        .AsNoTracking()
-                        .Include(c => c.ResourceComment)
-                        .FirstOrDefaultAsync(c => c.Id == commentId && c.ResourceComment != null, cancel),
-                        CommentServiceResult.DBError, ct: ct);
-        if (!commentRes.TryPickT0(out var comment, out var error))
-            return error;
-        if (comment == null)
-            return CommentServiceResult.CommentNotFound;
-
-        var permission = await
-            CheckResourcePermission(comment.ResourceComment!.ResourceId, ct);
-
-        return permission == CommentServiceResult.Success ?
-            comment :
-            permission;
-    }
-    private async Task<CommentServiceResult> CheckResourcePermissionFromCommentId(long commentId, CancellationToken ct)
-    {
-        var permission = await CheckResourcePermissionFromComment(commentId, ct);
-        return permission.TryPickT0(out _, out var error) ?
-            CommentServiceResult.Success :
-            error;
+        return await _dbHelperService.TrySyncContext(like, ct: ct);
     }
 
-    public async Task<OneOf<List<CommentReadDto>,CommentServiceResult>> GetResourceComments(long resourceId, int maxAmount = 20, int page = 0, CommentSorting sort = CommentSorting.RecentFirst, CancellationToken ct = default)
-    {
-        if (!GetStart(maxAmount, page, sort).TryPickT0(out var query, out var error))
-            return error;
-
-        CommentServiceResult permission = await CheckResourcePermission(resourceId, ct);
-        if(permission != CommentServiceResult.Success)
-            return permission;
-
-        query = query
-                    .Where(r => r.ResourceComment != null &&
-                        r.ResourceComment.ResourceId == resourceId &&
-                        r.Parent == null);
-
-        return await GetEnd(query, maxAmount, page, sort, ct);
-    }
-
-    private async Task<CommentServiceResult> CheckResourcePermission(long resourceId, CancellationToken ct)
-    {
-        var resourceRes = await _dbHelperService.TryFunction(
-            async cancel => await _context.Resources
-                .AsNoTracking()
-                .Include(r => r.ResourceVersions)
-                .Include(r => r.ResourcesAuthors)
-                .FirstOrDefaultAsync(r => r.Id == resourceId, cancel),
-                CommentServiceResult.DBError, ct: ct);
-        if (!resourceRes.TryPickT0(out var resource, out var error))
-            return error;
-        if (resource == null)
-            return CommentServiceResult.ResourceNotFound;
-
-        string? userId = _accountService.GetUserID();
-
-        if (resource.VisibilityId == 3 &&
-            resource.SubmitterId != userId &&
-            !resource.ResourceVersions.Any(r => r.SubmitterUserId == userId) &&
-            !resource.ResourcesAuthors.Any(r => r.UserId == userId) &&
-            !_accountService.IsModeratorOrAdmin())
-            return CommentServiceResult.Unauthorized;
-        return CommentServiceResult.Success;
-    }
-
-    private OneOf<IQueryable<Comment>, CommentServiceResult> GetStart(int maxAmount, int page, CommentSorting sort)
-    {
-        if (maxAmount > MAX_AMOUNT_OF_COMMENTS_PER_PAGE)
-            return CommentServiceResult.AmountOfCommentsSurpassTheLimit;
-        if (!Enum.IsDefined(sort))
-            return CommentServiceResult.UndefinedSort;
-        long skip = (long)maxAmount * page;
-        if (skip > int.MaxValue)
-            return CommentServiceResult.SkipOutOfRange;
-        if (page < 0)
-            return CommentServiceResult.NegativePage;
-        if (maxAmount < 0)
-            return CommentServiceResult.InvalidAmountOfCommentsPerPage;
-
-        IQueryable<Comment> query = _context.Comments
-                    .AsNoTracking();
-        return OneOf<IQueryable<Comment>, CommentServiceResult>.FromT0(query);
-    }
-    private async Task<OneOf<List<CommentReadDto>, CommentServiceResult>> GetEnd(
-        IQueryable<Comment> query,
-        int maxAmount,
-        int page,
-        CommentSorting sort,
+    public async Task<OneOf<List<CommentReadDto>, ServiceResultContext>> GetReplies(
+        long commentId, int maxAmount = 20, int page = 0,
+        CommentSorting sort = CommentSorting.RecentFirst,
         CancellationToken ct = default)
     {
-        string? userId = _accountService.GetUserID();
-        int skip = (int)((long)maxAmount * page);
+        var startResult = GetStart(maxAmount, page, sort);
 
-        // Excluirlos antes de paginar evita páginas con huecos.
-        query = query.Where(c => !c.Deleted || c.Childrens.Any());
+        if (!startResult.TryPickT0(out var query, out var startError))
+            return startError;
 
-        return await _dbHelperService.TryFunction(
-            cancel => SortComments(query, sort)
-                .Skip(skip)
-                .Take(maxAmount)
-                .Select(c => new CommentReadDto
-                {
-                    Id = c.Id,
-                    UserId = c.UserId,
-                    ScoreId = c.ScoreId,
-                    Text = c.Text,
-                    Deleted = c.Deleted,
-                    PublishDate = c.PublishDate,
-                    UpdatedAt = c.UpdatedAt,
+        var permission = await CheckResourcePermissionFromCommentId(commentId, ct);
 
-                    Likes = c.Score!.LikesUsers.Count(v => v.Value),
-                    Dislikes = c.Score!.LikesUsers.Count(v => !v.Value),
-                    HasReplies = c.Childrens.Any(),
+        if (permission.Result != ServiceResult.Success)
+            return permission;
 
-                    MyVote = c.Score!.LikesUsers
-                        .Where(v => userId != null && v.UserId == userId)
-                        .OrderBy(v => v.Id)
-                        .Select(v => (LikeValues?)(v.Value
-                            ? LikeValues.Like
-                            : LikeValues.Dislike))
-                        .FirstOrDefault() ?? LikeValues.Remove,
+        query = query.Where(comment =>
+            comment.Parent != null &&
+            comment.Parent.ParentCommentId == commentId);
 
-                    UserSummary = c.User == null ? null : new UserNameDTO
-                    {
-                        Id = c.UserId,
-                        Username = c.User.UserName!,
-                        UsernameColor = c.User.UserInfo == null
-                            ? null
-                            : c.User.UserInfo.UsernameColor,
-
-                        Avatar = c.User.UserInfo != null &&
-                                 c.User.UserInfo.Avatar != null
-                            ? new FileResponse
-                            {
-                                Id = c.User.UserInfo.Avatar.Id,
-                                URL = c.User.UserInfo.Avatar.URL,
-                                FileTypeId = c.User.UserInfo.Avatar.FileTypeId
-                            }
-                            : null
-                    }
-                })
-                .ToListAsync(cancel),
-            CommentServiceResult.DBError,
-            ct: ct);
+        return await GetEnd(query, maxAmount, page, sort, ct);
     }
-    public async Task<OneOf<LikeUsers, CommentServiceResult>> GetUserLike(long commentId, CancellationToken ct = default)
+
+    public async Task<OneOf<List<CommentReadDto>, ServiceResultContext>>
+        GetResourceComments(long resourceId, int maxAmount = 20, int page = 0,
+            CommentSorting sort = CommentSorting.RecentFirst,
+            CancellationToken ct = default)
+    {
+        var startResult = GetStart(maxAmount, page, sort);
+
+        if (!startResult.TryPickT0(out var query, out var startError))
+            return startError;
+
+        var permission = await CheckResourcePermission(resourceId, ct);
+
+        if (permission.Result != ServiceResult.Success)
+            return permission;
+
+        query = query.Where(comment =>
+            comment.ResourceComment != null &&
+            comment.ResourceComment.ResourceId == resourceId &&
+            comment.Parent == null);
+
+        return await GetEnd(query, maxAmount, page, sort, ct);
+    }
+
+    public async Task<OneOf<LikeUsers, ServiceResultContext>> GetUserLike(
+        long commentId, CancellationToken ct = default)
     {
         string? userId = _accountService.GetUserID();
-        if (userId == null)
-            return CommentServiceResult.Unauthorized;
 
-        var res = await _dbHelperService.TryFunction(
-            async cancel => await _context.LikesUsers
-                .AsNoTracking()
-                .FirstOrDefaultAsync(l => l.UserId == userId &&
-                    l.Score!.Comment != null &&
-                    l.Score.Comment.Id == commentId, cancel), CommentServiceResult.DBError, ct: ct);
-        if (!res.TryPickT0(out var like, out var error))
-            return error;
-        return like != null ?
-            like :
-            CommentServiceResult.LikeNotFound;
+        if (string.IsNullOrWhiteSpace(userId))
+            return ServiceResult.Unauthorized.Return(_logger);
+
+        var likeQuery = _context.LikesUsers.AsNoTracking()
+            .Where(like => like.UserId == userId &&
+                like.Score!.Comment != null &&
+                like.Score.Comment.Id == commentId);
+
+        var likeResult = await _dbHelperService.TryFunction(
+            cancel => likeQuery.FirstOrDefaultAsync(cancel),
+            ServiceResult.DBError, ct: ct);
+
+        if (!likeResult.TryPickT0(out var like, out var likeError))
+            return likeError;
+
+        return like is not null ?
+            like : ServiceResult.LikeNotFound.Return(_logger);
     }
-    public async Task<OneOf<CommentComment, CommentServiceResult>> AddCommentToComment(long commentId, string commentText, CancellationToken ct = default)
+
+    public async Task<OneOf<CommentComment, ServiceResultContext>> AddCommentToComment(
+        long commentId, string commentText, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(commentText))
-            return CommentServiceResult.EmptyComment;
-        var commentRes = await _dbHelperService.TryFunction(
-        async cancel => await _context.Comments
-                .Include(c => c.ResourceComment)
-                        .ThenInclude(c => c!.Resource)
-            .FirstOrDefaultAsync(c => c.Id == commentId, cancel),
-        CommentServiceResult.DBError, ct: ct);
+            return ServiceResult.EmptyComment.Return(_logger);
 
-        if (!commentRes.TryPickT0(out var comment, out var error))
-            return error;
-        if (comment == null)
-            return CommentServiceResult.CommentNotFound;
+        var commentQuery = _context.Comments
+            .Include(comment => comment.ResourceComment)
+            .ThenInclude(resourceComment => resourceComment!.Resource)
+            .Where(comment => comment.Id == commentId);
+
+        var commentResult = await _dbHelperService.TryFunction(
+            cancel => commentQuery.FirstOrDefaultAsync(cancel),
+            ServiceResult.DBError, ct: ct);
+
+        if (!commentResult.TryPickT0(out var comment, out var commentError))
+            return commentError;
+
+        if (comment is null)
+            return ServiceResult.CommentNotFound.Return(_logger);
 
         string? userId = _accountService.GetUserID();
-        if (userId == null)
-            return CommentServiceResult.Unauthorized;
+
+        if (string.IsNullOrWhiteSpace(userId))
+            return ServiceResult.Unauthorized.Return(_logger);
+
         if (comment.Deleted)
-            return CommentServiceResult.CantReplyDeletedComment;
+            return ServiceResult.CantReplyDeletedComment.Return(_logger);
 
         Resource? resource = null;
 
-        if (comment.ResourceComment != null)
+        if (comment.ResourceComment is not null)
         {
             resource = comment.ResourceComment.Resource;
-            var permission = await 
-                CheckResourcePermission(comment.ResourceComment.ResourceId, ct);
 
-            if (permission != CommentServiceResult.Success)
+            var permission = await CheckResourcePermission(
+                comment.ResourceComment.ResourceId, ct);
+
+            if (permission.Result != ServiceResult.Success)
                 return permission;
         }
 
-        var user = await UserNameDTO.FromUser(_accountService);
+        var userResult = await UserNameDTO.FromUser(_accountService);
 
-        if (user == null)
-            return CommentServiceResult.Unauthorized;
+        if (!userResult.TryPickT0(out var user, out var userError))
+        {
+            return userError.Result == ServiceResult.UserNotFound ?
+                ServiceResult.Unauthorized.Return(_logger) : userError;
+        }
 
-        CommentComment cc = new()
+        var commentRelation = new CommentComment
         {
             Id = 0,
             ParentCommentId = commentId,
             ParentComment = comment,
             ChildCommentId = 0,
-            ChildComment = new()
+            ChildComment = new Comment
             {
                 Id = 0,
                 Score = new Score(),
@@ -389,9 +283,10 @@ public class CommentService(SnestorageContext context,
                 UserSummary = user
             }
         };
-        if(resource != null)
+
+        if (resource is not null)
         {
-            cc.ChildComment.ResourceComment = new()
+            commentRelation.ChildComment.ResourceComment = new ResourceComments
             {
                 Id = 0,
                 CommentId = 0,
@@ -400,57 +295,82 @@ public class CommentService(SnestorageContext context,
             };
         }
 
-        comment.Childrens.Add(cc);
-        return await _dbHelperService.TrySyncContext(cc, CommentServiceResult.DBError, ct);
+        comment.Childrens.Add(commentRelation);
+
+        return await _dbHelperService.TrySyncContext(
+            commentRelation, ct: ct);
     }
-    public async Task<CommentServiceResult> EditComment(long commentId, string commentText, CancellationToken ct = default)
+
+    public async Task<ServiceResultContext> EditComment(
+        long commentId, string commentText, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(commentText))
-            return CommentServiceResult.EmptyComment;
-        var commentRes = await _dbHelperService.TryFunction(
-                async cancel => await _context.Comments
-                    .FirstOrDefaultAsync(c => c.Id == commentId, cancel),
-                CommentServiceResult.DBError, ct: ct);
-        if (!commentRes.TryPickT0(out var comment, out var error))
-            return error;
-        if (comment == null)
-            return CommentServiceResult.CommentNotFound;
+            return ServiceResult.EmptyComment.Return(_logger);
+
+        var commentQuery = _context.Comments
+            .Where(comment => comment.Id == commentId);
+
+        var commentResult = await _dbHelperService.TryFunction(
+            cancel => commentQuery.FirstOrDefaultAsync(cancel),
+            ServiceResult.DBError, ct: ct);
+
+        if (!commentResult.TryPickT0(out var comment, out var commentError))
+            return commentError;
+
+        if (comment is null)
+            return ServiceResult.CommentNotFound.Return(_logger);
 
         string? userId = _accountService.GetUserID();
-        bool isModorAdmin = _accountService.IsModeratorOrAdmin();
+        bool isModeratorOrAdmin = _accountService.IsModeratorOrAdmin();
 
-        if (comment.UserId != userId && !isModorAdmin)
-            return CommentServiceResult.Unauthorized;
+        if (comment.UserId != userId && !isModeratorOrAdmin)
+        {
+            if (string.IsNullOrWhiteSpace(userId))
+                return ServiceResult.Unauthorized.Return(_logger);
+
+            return ServiceResult.Forbidden.Return(_logger);
+        }
 
         comment.Text = commentText;
         comment.UpdatedAt = DateTime.UtcNow;
 
-        return await _dbHelperService.TrySyncContext(ct) ?
-            CommentServiceResult.Success :
-            CommentServiceResult.DBError;
+        return await _dbHelperService.TrySyncContext(ct: ct);
     }
-    public async Task<CommentServiceResult> DeleteComment(long commentId, CancellationToken ct = default)
+
+    public async Task<ServiceResultContext> DeleteComment(
+        long commentId, CancellationToken ct = default)
     {
-        var commentRes = await _dbHelperService.TryFunction(
-            async cancel => await _context.Comments
-                .Include(c => c.Childrens)
-                .Include(c => c.Parent)
-                .Include(c => c.ResourceComment)
-                .FirstOrDefaultAsync(c => c.Id == commentId, cancel),
-            CommentServiceResult.DBError, ct: ct);
-        if (!commentRes.TryPickT0(out var comment, out var error))
-            return error;
-        if (comment == null)
-            return CommentServiceResult.CommentNotFound;
+        var commentQuery = _context.Comments
+            .Include(comment => comment.Childrens)
+            .Include(comment => comment.Parent)
+            .Include(comment => comment.ResourceComment)
+            .Where(comment => comment.Id == commentId);
+
+        var commentResult = await _dbHelperService.TryFunction(
+            cancel => commentQuery.FirstOrDefaultAsync(cancel),
+            ServiceResult.DBError, ct: ct);
+
+        if (!commentResult.TryPickT0(out var comment, out var commentError))
+            return commentError;
+
+        if (comment is null)
+            return ServiceResult.CommentNotFound.Return(_logger);
 
         string? userId = _accountService.GetUserID();
-        bool isModorAdmin = _accountService.IsModeratorOrAdmin();
+        bool isModeratorOrAdmin = _accountService.IsModeratorOrAdmin();
 
-        if (comment.UserId != userId && !isModorAdmin)
-            return CommentServiceResult.Unauthorized;
+        if (comment.UserId != userId && !isModeratorOrAdmin)
+        {
+            if (string.IsNullOrWhiteSpace(userId))
+                return ServiceResult.Unauthorized.Return(_logger);
 
-        if (comment!.Childrens.Count <= 0)
+            return ServiceResult.Forbidden.Return(_logger);
+        }
+
+        if (comment.Childrens.Count == 0)
+        {
             _context.Comments.Remove(comment);
+        }
         else
         {
             comment.Deleted = true;
@@ -458,8 +378,163 @@ public class CommentService(SnestorageContext context,
             comment.UpdatedAt = DateTime.UtcNow;
         }
 
-        return await _dbHelperService.TrySyncContext(ct) ?
-            CommentServiceResult.Success :
-            CommentServiceResult.DBError;
+        return await _dbHelperService.TrySyncContext(ct: ct);
+    }
+
+    private async Task<OneOf<Comment, ServiceResultContext>>
+        CheckResourcePermissionFromComment(
+            long commentId, CancellationToken ct)
+    {
+        var commentQuery = _context.Comments.AsNoTracking()
+            .Include(comment => comment.ResourceComment)
+            .Where(comment =>
+                comment.Id == commentId &&
+                comment.ResourceComment != null);
+
+        var commentResult = await _dbHelperService.TryFunction(
+            cancel => commentQuery.FirstOrDefaultAsync(cancel),
+            ServiceResult.DBError, ct: ct);
+
+        if (!commentResult.TryPickT0(out var comment, out var commentError))
+            return commentError;
+
+        if (comment is null)
+            return ServiceResult.CommentNotFound.Return(_logger);
+
+        var permission = await CheckResourcePermission(
+            comment.ResourceComment!.ResourceId, ct);
+
+        return permission.Result == ServiceResult.Success ?
+            comment : permission;
+    }
+
+    private async Task<ServiceResultContext> CheckResourcePermissionFromCommentId(
+        long commentId, CancellationToken ct)
+    {
+        var permission = await CheckResourcePermissionFromComment(commentId, ct);
+
+        return permission.TryPickT0(out _, out var permissionError) ?
+            ServiceResult.Success.Return(_logger) : permissionError;
+    }
+
+    private async Task<ServiceResultContext> CheckResourcePermission(
+        long resourceId, CancellationToken ct)
+    {
+        var resourceQuery = _context.Resources.AsNoTracking()
+            .Include(resource => resource.ResourceVersions)
+            .Include(resource => resource.ResourcesAuthors)
+            .Where(resource => resource.Id == resourceId);
+
+        var resourceResult = await _dbHelperService.TryFunction(
+            cancel => resourceQuery.FirstOrDefaultAsync(cancel),
+            ServiceResult.DBError, ct: ct);
+
+        if (!resourceResult.TryPickT0(out var resource, out var resourceError))
+            return resourceError;
+
+        if (resource is null)
+            return ServiceResult.ResourceNotFound.Return(_logger);
+
+        string? userId = _accountService.GetUserID();
+
+        bool hasPermission = resource.VisibilityId != 3 ||
+            resource.SubmitterId == userId ||
+            resource.ResourceVersions.Any(version =>
+                version.SubmitterUserId == userId) ||
+            resource.ResourcesAuthors.Any(author => author.UserId == userId) ||
+            _accountService.IsModeratorOrAdmin();
+
+        if (hasPermission)
+            return ServiceResult.Success.Return(_logger);
+
+        if (string.IsNullOrWhiteSpace(userId))
+            return ServiceResult.Unauthorized.Return(_logger);
+
+        return ServiceResult.Forbidden.Return(_logger);
+    }
+
+    private OneOf<IQueryable<Comment>, ServiceResultContext> GetStart(
+        int maxAmount, int page, CommentSorting sort)
+    {
+        if (maxAmount > MAX_AMOUNT_OF_COMMENTS_PER_PAGE)
+            return ServiceResult.AmountOfCommentsSurpassTheLimit.Return(_logger);
+
+        if (!Enum.IsDefined(sort))
+            return ServiceResult.UndefinedSort.Return(_logger);
+
+        long skip = (long)maxAmount * page;
+
+        if (skip > int.MaxValue)
+            return ServiceResult.SkipOutOfRange.Return(_logger);
+
+        if (page < 0)
+            return ServiceResult.NegativePage.Return(_logger);
+
+        if (maxAmount < 0)
+            return ServiceResult.InvalidAmountOfCommentsPerPage.Return(_logger);
+
+        return OneOf<IQueryable<Comment>, ServiceResultContext>
+            .FromT0(_context.Comments.AsNoTracking());
+    }
+
+    private async Task<OneOf<List<CommentReadDto>, ServiceResultContext>> GetEnd(
+        IQueryable<Comment> query, int maxAmount, int page,
+        CommentSorting sort, CancellationToken ct = default)
+    {
+        string? userId = _accountService.GetUserID();
+        int skip = (int)((long)maxAmount * page);
+
+        query = query.Where(comment =>
+            !comment.Deleted || comment.Childrens.Any());
+
+        var resultQuery = SortComments(query, sort)
+            .Skip(skip)
+            .Take(maxAmount)
+            .Select(comment => new CommentReadDto
+            {
+                Id = comment.Id,
+                UserId = comment.UserId,
+                ScoreId = comment.ScoreId,
+                Text = comment.Text,
+                Deleted = comment.Deleted,
+                PublishDate = comment.PublishDate,
+                UpdatedAt = comment.UpdatedAt,
+
+                Likes = comment.Score!.LikesUsers.Count(vote => vote.Value),
+                Dislikes = comment.Score!.LikesUsers.Count(vote => !vote.Value),
+                HasReplies = comment.Childrens.Any(),
+
+                MyVote = comment.Score!.LikesUsers
+                    .Where(vote => userId != null && vote.UserId == userId)
+                    .OrderBy(vote => vote.Id)
+                    .Select(vote => (LikeValues?)(vote.Value ?
+                        LikeValues.Like : LikeValues.Dislike))
+                    .FirstOrDefault() ?? LikeValues.Remove,
+
+                UserSummary = comment.User == null ?
+                    null :
+                    new UserNameDTO
+                    {
+                        Id = comment.UserId,
+                        Username = comment.User.UserName!,
+                        UsernameColor = comment.User.UserInfo == null ?
+                            null : comment.User.UserInfo.UsernameColor,
+
+                        Avatar = comment.User.UserInfo != null &&
+                            comment.User.UserInfo.Avatar != null ?
+                                new FileResponse
+                                {
+                                    Id = comment.User.UserInfo.Avatar.Id,
+                                    URL = comment.User.UserInfo.Avatar.URL,
+                                    FileTypeId =
+                                        comment.User.UserInfo.Avatar.FileTypeId
+                                } :
+                                null
+                    }
+            });
+
+        return await _dbHelperService.TryFunction(
+            cancel => resultQuery.ToListAsync(cancel),
+            ServiceResult.DBError, ct: ct);
     }
 }

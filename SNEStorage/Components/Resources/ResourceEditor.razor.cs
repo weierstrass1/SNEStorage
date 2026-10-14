@@ -105,10 +105,10 @@ public partial class ResourceEditor : IAsyncDisposable
                 return;
             }
             if (response.Cancelled) { _message = "The request was interrupted. Your changes have not been confirmed."; return; }
-            if (response.Status is 401 or 403) { _errorStatus = 403; _errorBody = response.Body; return; }
+            if (response.Status is 401 or 403) { _errorStatus = response.Status; _errorBody = response.Body; return; }
             if (response.Status is >= 200 and < 300)
             {
-                if (!ResourceEditorResponse.ConfirmsSave(response.Body, Mode, ResourceId))
+                if (!ResourceEditorResponse.ConfirmsSave(response.Status, response.Body, Mode, ResourceId))
                 {
                     _message = "The server did not confirm the saved changes. Check the resource before submitting again.";
                     return;

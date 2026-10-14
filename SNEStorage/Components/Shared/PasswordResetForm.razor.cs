@@ -54,7 +54,7 @@ public partial class PasswordResetForm : IAsyncDisposable
             var response = await _module.InvokeAsync<PasswordResponse>("submitPassword", _lifetime.Token, _formId, RequestEmail);
             if (_disposed) return;
             _succeeded = response.Status is >= 200 and < 300 &&
-                (ApiErrorPresentation.IsSuccess(response.Body, "account") ||
+                (response.Status == 204 || ApiErrorPresentation.IsSuccess(response.Body, "account") ||
                  ApiErrorPresentation.IsSuccess(response.Body, "email"));
             if (_succeeded)
             {

@@ -3,144 +3,129 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using OneOf;
 using SNEStorage.Discord;
+using SNEStorage.DTOs;
 using SNEStorage.Models;
 using System.Globalization;
 using System.Net;
 
 namespace SNEStorage.Services;
 
-public enum DiscordBotNotificationResult
-{
-    Success,
-    Disabled,
-    InvalidEvent,
-    InvalidConfiguration,
-    Unauthorized,
-    EntityNotFound,
-    Ineligible,
-    UnsupportedEvent,
-    Unavailable
-}
-public enum DiscordServiceResult
-{
-    Success,
-    InvalidUserId,
-    InvalidDiscordUserId,
-    InvalidDiscordUsername,
-    UserNotFound,
-    DiscordAccountNotLinked,
-    EmailNotConfirmed,
-    BannedUser,
-    DiscordAccountLinkedToAnotherUser,
-    DBError,
-    Unauthorized,
-    InvalidOAuthCode,
-    OAuthTokenExchangeError,
-    OAuthUserLookupError,
-}
 public class DiscordService(
     SnestorageContext context,
     DBHelperService dbHelperService,
     IHttpClientFactory httpClientFactory,
-    IOptions<DiscordDTO> discordOptions)
+    IOptions<DiscordDTO> discordOptions,
+    ILogger<DiscordService> logger)
 {
     private readonly SnestorageContext _context = context;
     private readonly DBHelperService _dbHelperService = dbHelperService;
     private readonly IHttpClientFactory _httpClientFactory = httpClientFactory;
     private readonly DiscordDTO _discordOptions = discordOptions.Value;
-    public async Task<OneOf<DiscordMemberStateDTO, DiscordServiceResult>>
-        GetMemberStateAsync(string discordUserId, CancellationToken ct)
+    private readonly ILogger<DiscordService> _logger = logger;
+
+    public async Task<OneOf<DiscordMemberStateDTO, ServiceResultContext>> GetMemberStateAsync(
+        string discordUserId, CancellationToken ct)
     {
         if (!IsValidDiscordUserId(discordUserId))
-            return DiscordServiceResult.InvalidDiscordUserId;
+            return ServiceResult.InvalidDiscordUserId.Return(_logger);
 
-        var now = DateTime.UtcNow;
+        DateTime now = DateTime.UtcNow;
 
-        var memberRes = await _dbHelperService.TryFunction(
-            async cancel => await _context.UserInfos
-            .AsNoTracking()
+        var memberQuery = _context.UserInfos.AsNoTracking()
             .Where(info => info.DiscordUserId == discordUserId)
             .Select(info => new
-                {
-                    info.UserId,
-                    Nickname = info.User!.UserName,
-                    info.UsernameColor,
-                    info.User.EmailConfirmed,
+            {
+                info.UserId,
+                Nickname = info.User!.UserName,
+                info.UsernameColor,
+                info.User.EmailConfirmed,
 
-                    IsBanned = info.User.Bans.Any(ban =>
-                            ban.IsPermanent || ban.ExpireDate > now),
+                IsBanned = info.User.Bans.Any(ban =>
+                    ban.IsPermanent || ban.ExpireDate > now),
 
-                    IsModerator = _context.UserClaims.Any(claim =>
-                            claim.UserId == info.UserId &&
-                            claim.ClaimType == "Moderator" &&
-                            claim.ClaimValue == "1")
-                })
-            .SingleOrDefaultAsync(cancel), 
-            DiscordServiceResult.DBError, ct: ct);
-        if (!memberRes.TryPickT0(out var member, out var error))
-            return error;
+                IsModerator = _context.UserClaims.Any(claim =>
+                    claim.UserId == info.UserId &&
+                    claim.ClaimType == "Moderator" &&
+                    claim.ClaimValue == "1")
+            });
+
+        var memberResult = await _dbHelperService.TryFunction(
+            cancel => memberQuery.SingleOrDefaultAsync(cancel),
+            ServiceResult.DBError, ct: ct);
+
+        if (!memberResult.TryPickT0(out var member, out var queryError))
+            return queryError;
+
         if (member is null)
-            return DiscordServiceResult.DiscordAccountNotLinked;
-        if (!member.EmailConfirmed)
-            return DiscordServiceResult.EmailNotConfirmed;
-        if (member.IsBanned)
-            return DiscordServiceResult.BannedUser;
+            return ServiceResult.DiscordAccountNotLinked.Return(_logger);
 
-        return new DiscordMemberStateDTO(member.UserId, member.Nickname, 
+        if (!member.EmailConfirmed)
+            return ServiceResult.EmailNotConfirmed.Return(_logger);
+
+        if (member.IsBanned)
+            return ServiceResult.BannedUser.Return(_logger);
+
+        return new DiscordMemberStateDTO(member.UserId, member.Nickname,
             NormalizeColor(member.UsernameColor), member.IsModerator, false);
     }
 
-    public async Task<DiscordServiceResult> LinkAccountAsync(string sneStorageUserId, string discordUserId, string discordUsername,
+    public async Task<ServiceResultContext> LinkAccountAsync(
+        string sneStorageUserId, string discordUserId, string discordUsername,
         CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(sneStorageUserId))
-            return DiscordServiceResult.InvalidUserId;
+            return ServiceResult.InvalidUserId.Return(_logger);
 
         if (!IsValidDiscordUserId(discordUserId))
-            return DiscordServiceResult.InvalidDiscordUserId;
+            return ServiceResult.InvalidDiscordUserId.Return(_logger);
+
+        if (string.IsNullOrWhiteSpace(discordUsername))
+            return ServiceResult.InvalidDiscordUsername.Return(_logger);
 
         discordUsername = discordUsername.Trim();
 
         if (discordUsername.Length is < 2 or > 32)
-            return DiscordServiceResult.InvalidDiscordUsername;
+            return ServiceResult.InvalidDiscordUsername.Return(_logger);
 
-        var infoRes = await _dbHelperService.TryFunction(
-            async cancel => await _context.UserInfos
+        var infoQuery = _context.UserInfos
             .Include(userInfo => userInfo.User)
-            .SingleOrDefaultAsync(userInfo => userInfo.UserId == sneStorageUserId, cancel),
-            DiscordServiceResult.DBError, ct: ct);
-        if (!infoRes.TryPickT0(out var info, out var error))
-            return error;
+            .Where(userInfo => userInfo.UserId == sneStorageUserId);
+
+        var infoResult = await _dbHelperService.TryFunction(
+            cancel => infoQuery.SingleOrDefaultAsync(cancel),
+            ServiceResult.DBError, ct: ct);
+
+        if (!infoResult.TryPickT0(out var info, out var infoError))
+            return infoError;
 
         if (info is null)
-            return DiscordServiceResult.UserNotFound;
+            return ServiceResult.UserNotFound.Return(_logger);
 
         if (info.User?.EmailConfirmed != true)
-            return DiscordServiceResult.EmailNotConfirmed;
+            return ServiceResult.EmailNotConfirmed.Return(_logger);
 
-        var alreadyLinkedRes = await _dbHelperService.TryFunction(
-            async cancel => await _context.UserInfos
-            .AsNoTracking()
-            .AnyAsync(
-                userInfo =>
-                    userInfo.DiscordUserId == discordUserId &&
-                    userInfo.UserId != sneStorageUserId,
-                cancel), DiscordServiceResult.DBError, ct: ct);
+        var linkedQuery = _context.UserInfos.AsNoTracking()
+            .Where(userInfo =>
+                userInfo.DiscordUserId == discordUserId &&
+                userInfo.UserId != sneStorageUserId);
 
-        if (!alreadyLinkedRes.TryPickT0(out var alreadyLinked, out error))
-            return error;
+        var linkedResult = await _dbHelperService.TryFunction(
+            cancel => linkedQuery.AnyAsync(cancel),
+            ServiceResult.DBError, ct: ct);
+
+        if (!linkedResult.TryPickT0(out bool alreadyLinked, out var linkedError))
+            return linkedError;
 
         if (alreadyLinked)
-            return DiscordServiceResult.DiscordAccountLinkedToAnotherUser;
+            return ServiceResult.DiscordAccountLinkedToAnotherUser.Return(_logger);
 
         info.DiscordUserId = discordUserId;
         info.DiscordUsername = discordUsername;
         info.DiscordLinkedAt = DateTime.UtcNow;
 
-        return await _dbHelperService.TrySyncContext(ct) ?
-            DiscordServiceResult.Success :
-            DiscordServiceResult.DBError;
+        return await _dbHelperService.TrySyncContext(ct: ct);
     }
+
     public string CreateAuthorizationUrl(string state)
     {
         string redirectUri = GetOAuthRedirectUri();
@@ -154,17 +139,18 @@ public class DiscordService(
             ["state"] = state
         };
 
-        return QueryHelpers.AddQueryString("https://discord.com/oauth2/authorize",
-            parameters);
+        return QueryHelpers.AddQueryString(
+            "https://discord.com/oauth2/authorize", parameters);
     }
-    public async Task<DiscordServiceResult> CompleteAuthorizationAsync(string? sneStorageUserId,
-        string? code, CancellationToken ct)
+
+    public async Task<ServiceResultContext> CompleteAuthorizationAsync(
+        string? sneStorageUserId, string? code, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(sneStorageUserId))
-            return DiscordServiceResult.InvalidUserId;
+            return ServiceResult.InvalidUserId.Return(_logger);
 
         if (string.IsNullOrWhiteSpace(code))
-            return DiscordServiceResult.InvalidOAuthCode;
+            return ServiceResult.InvalidOAuthCode.Return(_logger);
 
         HttpClient client = _httpClientFactory.CreateClient("Discord");
 
@@ -177,73 +163,105 @@ public class DiscordService(
             ["redirect_uri"] = GetOAuthRedirectUri()
         };
 
-        using var tokenResponse = await _dbHelperService.TryFunction(
-            async cancel => await client.PostAsync("api/oauth2/token",
-                new FormUrlEncodedContent(tokenForm), cancel), ct: ct);
+        using var tokenContent = new FormUrlEncodedContent(tokenForm);
 
-        if (tokenResponse is null || !tokenResponse.IsSuccessStatusCode)
-            return DiscordServiceResult.OAuthTokenExchangeError;
+        var tokenResponseResult = await _dbHelperService.TryFunction(
+            cancel => client.PostAsync("api/oauth2/token", tokenContent, cancel),
+            ServiceResult.OAuthTokenExchangeError, ct: ct);
 
-        var token = await _dbHelperService.TryFunction(
-            tokenResponse.Content.ReadFromJsonAsync<DiscordOAuthTokenDTO>, ct: ct);
+        if (!tokenResponseResult.TryPickT0(
+            out var tokenResponse, out var tokenResponseError))
+            return tokenResponseError;
 
-        if (token is null || string.IsNullOrWhiteSpace(token?.AccessToken))
-            return DiscordServiceResult.OAuthTokenExchangeError;
+        using var tokenResponseScope = tokenResponse;
 
-        using HttpRequestMessage userRequest = new(HttpMethod.Get, "api/v10/users/@me");
+        if (!tokenResponse.IsSuccessStatusCode)
+            return ServiceResult.OAuthTokenExchangeError.Return(_logger);
+
+        var tokenResult = await _dbHelperService.TryFunction(
+            cancel => tokenResponse.Content.ReadFromJsonAsync<DiscordOAuthTokenDTO>(
+                cancellationToken: cancel),
+            ServiceResult.OAuthTokenExchangeError, ct: ct);
+
+        if (!tokenResult.TryPickT0(out var token, out var tokenError))
+            return tokenError;
+
+        if (string.IsNullOrWhiteSpace(token?.AccessToken))
+            return ServiceResult.OAuthTokenExchangeError.Return(_logger);
+
+        using var userRequest =
+            new HttpRequestMessage(HttpMethod.Get, "api/v10/users/@me");
 
         userRequest.Headers.Authorization = new("Bearer", token.AccessToken);
 
-        using var userResponse = await _dbHelperService.TryFunction(
-            async cancel => await client.SendAsync(
-            userRequest, cancel), ct: ct);
+        var userResponseResult = await _dbHelperService.TryFunction(
+            cancel => client.SendAsync(userRequest, cancel),
+            ServiceResult.OAuthUserLookupError, ct: ct);
 
-        if (userResponse is null || !userResponse.IsSuccessStatusCode)
-            return DiscordServiceResult.OAuthUserLookupError;
+        if (!userResponseResult.TryPickT0(
+            out var userResponse, out var userResponseError))
+            return userResponseError;
 
-        var discordUser = await _dbHelperService.TryFunction(
-            userResponse.Content.ReadFromJsonAsync<DiscordOAuthUserDTO>, ct: ct);
+        using var userResponseScope = userResponse;
 
-        if (discordUser is null || string.IsNullOrWhiteSpace(discordUser.Id) ||
+        if (!userResponse.IsSuccessStatusCode)
+            return ServiceResult.OAuthUserLookupError.Return(_logger);
+
+        var discordUserResult = await _dbHelperService.TryFunction(
+            cancel => userResponse.Content.ReadFromJsonAsync<DiscordOAuthUserDTO>(
+                cancellationToken: cancel),
+            ServiceResult.OAuthUserLookupError, ct: ct);
+
+        if (!discordUserResult.TryPickT0(
+            out var discordUser, out var discordUserError))
+            return discordUserError;
+
+        if (discordUser is null ||
+            string.IsNullOrWhiteSpace(discordUser.Id) ||
             string.IsNullOrWhiteSpace(discordUser.Username))
-            return DiscordServiceResult.OAuthUserLookupError;
+            return ServiceResult.OAuthUserLookupError.Return(_logger);
 
-        var linkResult = await LinkAccountAsync(sneStorageUserId, discordUser.Id,
-            discordUser.Username, ct);
+        var linkResult = await LinkAccountAsync(
+            sneStorageUserId, discordUser.Id, discordUser.Username, ct);
 
-        if (linkResult != DiscordServiceResult.Success)
+        if (linkResult.Result != ServiceResult.Success)
             return linkResult;
 
-        _ = await NotifyMemberChangedAsync(
-            discordUser.Id,
-            ct);
+        _ = await NotifyMemberChangedAsync(discordUser.Id, ct);
 
-        return DiscordServiceResult.Success;
+        return ServiceResult.Success.Return(_logger);
     }
-    public async Task<DiscordBotNotificationResult> NotifyMemberChangedAsync(
+
+    public Task<ServiceResultContext> NotifyMemberChangedAsync(
         string? discordUserId, CancellationToken ct = default)
     {
-        return await NotifyBotAsync(new (Guid.NewGuid(), DiscordBotEventTypes.MemberChanged,
-                discordUserId ?? string.Empty, DateTimeOffset.UtcNow), ct);
+        var notification = new DiscordBotEventDTO(
+            Guid.NewGuid(),
+            DiscordBotEventTypes.MemberChanged,
+            discordUserId ?? string.Empty,
+            DateTimeOffset.UtcNow);
+
+        return NotifyBotAsync(notification, ct);
     }
-    public async Task<DiscordBotNotificationResult> NotifyBotAsync(DiscordBotEventDTO notification,
-        CancellationToken ct = default)
+
+    public async Task<ServiceResultContext> NotifyBotAsync(
+        DiscordBotEventDTO notification, CancellationToken ct = default)
     {
         if (!_discordOptions.Enabled)
-            return DiscordBotNotificationResult.Disabled;
+            return ServiceResult.Disabled.Return(_logger);
 
         if (notification.EventId == Guid.Empty ||
             string.IsNullOrWhiteSpace(notification.Type) ||
             string.IsNullOrWhiteSpace(notification.EntityId) ||
             notification.OccurredAtUtc == default)
-            return DiscordBotNotificationResult.InvalidEvent;
+            return ServiceResult.InvalidEvent.Return(_logger);
 
         if (string.IsNullOrWhiteSpace(_discordOptions.BotApiKey) ||
             !Uri.TryCreate(
                 _discordOptions.BotBaseUrl.TrimEnd('/') + "/",
                 UriKind.Absolute,
                 out var botBaseUri))
-            return DiscordBotNotificationResult.InvalidConfiguration;
+            return ServiceResult.InvalidConfiguration.Return(_logger);
 
         var endpoint = new Uri(
             botBaseUri,
@@ -254,54 +272,62 @@ public class DiscordService(
             Content = JsonContent.Create(notification)
         };
 
-        request.Headers.TryAddWithoutValidation("X-SNEStorage-Bot-Key", 
-            _discordOptions.BotApiKey);
+        request.Headers.TryAddWithoutValidation("X-SNEStorage-Bot-Key", _discordOptions.BotApiKey);
 
         HttpClient client = _httpClientFactory.CreateClient("DiscordBot");
 
-        using var response = await _dbHelperService.TryFunction(
-            async cancel => await client.SendAsync(request, cancel),
-            ct: ct);
+        var responseResult = await _dbHelperService.TryFunction(
+            cancel => client.SendAsync(request, cancel),
+            ServiceResult.Unavailable, ct: ct);
 
-        if (response is null)
-            return DiscordBotNotificationResult.Unavailable;
+        if (!responseResult.TryPickT0(out var response, out var responseError))
+            return responseError;
+
+        using var responseScope = response;
 
         if (response.IsSuccessStatusCode)
-            return DiscordBotNotificationResult.Success;
+            return ServiceResult.Success.Return(_logger);
 
-        return response.StatusCode switch
+        ServiceResult result = response.StatusCode switch
         {
             HttpStatusCode.BadRequest =>
-                DiscordBotNotificationResult.InvalidEvent,
+                ServiceResult.InvalidEvent,
 
             HttpStatusCode.Unauthorized =>
-                DiscordBotNotificationResult.Unauthorized,
+                ServiceResult.Unauthorized,
 
             HttpStatusCode.NotFound =>
-                DiscordBotNotificationResult.EntityNotFound,
+                ServiceResult.EntityNotFound,
 
             HttpStatusCode.Forbidden =>
-                DiscordBotNotificationResult.Ineligible,
+                ServiceResult.Ineligible,
 
             HttpStatusCode.NotImplemented =>
-                DiscordBotNotificationResult.UnsupportedEvent,
+                ServiceResult.UnsupportedEvent,
 
-            _ => DiscordBotNotificationResult.Unavailable
+            _ =>
+                ServiceResult.Unavailable
         };
+
+        return result.Return(_logger);
     }
+
     private string GetOAuthRedirectUri()
     {
         return $"{_discordOptions.PublicBaseUrl.TrimEnd('/')}/" +
             $"{_discordOptions.OAuthCallbackPath.TrimStart('/')}";
     }
+
     private static bool IsValidDiscordUserId(string value)
     {
-        return ulong.TryParse(value, NumberStyles.None, 
-            CultureInfo.InvariantCulture, out var id) && id > 0;
+        return ulong.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture,
+            out ulong id) && id > 0;
     }
+
     private static string? NormalizeColor(string? color)
     {
-        return color is not { Length: 7 } || color[0] != '#' ||
+        return color is not { Length: 7 } ||
+            color[0] != '#' ||
             !color[1..].All(Uri.IsHexDigit) ?
                 null : color.ToUpperInvariant();
     }

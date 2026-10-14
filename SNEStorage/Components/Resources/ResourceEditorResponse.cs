@@ -5,8 +5,9 @@ namespace SNEStorage.Components.Resources;
 // Presentation/response parsing only. Persistence and authorization belong to the controller.
 internal static class ResourceEditorResponse
 {
-    public static bool ConfirmsSave(string? body, ResourceEditorMode mode, long resourceId)
+    public static bool ConfirmsSave(int status, string? body, ResourceEditorMode mode, long resourceId)
     {
+        if (status == 204 && mode != ResourceEditorMode.CreateVersion) return true;
         if (string.IsNullOrWhiteSpace(body)) return false;
         try
         {

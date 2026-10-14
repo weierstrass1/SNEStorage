@@ -1,5 +1,4 @@
-﻿using MediaInfo;
-using MediaInfo.Analysis;
+﻿using MediaInfo.Analysis;
 using Microsoft.EntityFrameworkCore;
 using OneOf;
 using SharpCompress.Archives;
@@ -38,29 +37,39 @@ public class FileService(SnestorageContext context, CacheService cacheService,
     private readonly ILogger<FileService> _logger = logger;
     private static readonly IMediaInfoAnalyzer _mediaAnalyzer = MediaInfoAnalyzer.CreateDefault();
 
-    public Task<OneOf<string, ServiceResultContext>> BeginBatch(CancellationToken ct)
+    public async Task<OneOf<string, ServiceResultContext>> BeginBatch(CancellationToken ct)
     {
-        return _dbHelperService.TryFunction(async cancel =>
-        {
-            string physicalPath = GenerateBatchPath();
-            Directory.CreateDirectory(Path.GetDirectoryName(physicalPath)!);
-            await System.IO.File.WriteAllTextAsync(physicalPath, "[]", cancel);
-            return physicalPath;
-        }, ServiceResult.BatchCreationError, ct: ct);
+        string physicalPath = GenerateBatchPath();
+
+        var directoryResult = _dbHelperService.TryFunction(
+            () => Directory.CreateDirectory(Path.GetDirectoryName(physicalPath)!),
+            ServiceResult.BatchCreationError);
+
+        if (!directoryResult.TryPickT0(out _, out var directoryError))
+            return directoryError;
+
+        var writeResult = await _dbHelperService.TryFunction(
+            cancel => System.IO.File.WriteAllTextAsync(physicalPath, "[]", cancel),
+            ServiceResult.BatchCreationError, ct: ct);
+
+        return writeResult.Result == ServiceResult.Success ? physicalPath : writeResult;
     }
 
-    public Task<OneOf<List<Models.File>, ServiceResultContext>> PrepareDeletion(
+    public async Task<OneOf<List<Models.File>, ServiceResultContext>> PrepareDeletion(
         IEnumerable<long> fileIds, CancellationToken ct = default)
     {
-        return _dbHelperService.TryFunction(async cancel =>
-        {
-            var files = await _context.Files.AsNoTracking()
-                .Where(file => fileIds.Contains(file.Id))
-                .ToListAsync(cancel);
+        var query = _context.Files.AsNoTracking()
+            .Where(file => fileIds.Contains(file.Id));
 
-            _context.Files.RemoveRange(files);
-            return files;
-        }, ServiceResult.DBError, ct: ct);
+        var filesResult = await _dbHelperService.TryFunction(
+            cancel => query.ToListAsync(cancel),
+            ServiceResult.DBError, ct: ct);
+
+        if (!filesResult.TryPickT0(out var files, out var queryError))
+            return queryError;
+
+        _context.Files.RemoveRange(files);
+        return files;
     }
 
     public ServiceResultContext FinishDeletion(IEnumerable<Models.File> files)
@@ -69,15 +78,16 @@ public class FileService(SnestorageContext context, CacheService cacheService,
 
         foreach (var file in files)
         {
-            var result = _dbHelperService.TryFunction(() =>
+            string path = Path.Combine(_environment.ContentRootPath, file.URL);
+
+            var deletionResult = _dbHelperService.TryFunction(() =>
             {
-                string path = Path.Combine(_environment.ContentRootPath, file.URL);
                 System.IO.File.Delete(path);
                 return true;
             }, ServiceResult.FileDeletionError);
 
-            if (!result.TryPickT0(out _, out var error) && firstError is null)
-                firstError = error;
+            if (!deletionResult.TryPickT0(out _, out var deletionError))
+                firstError ??= deletionError;
         }
 
         return firstError is null ? ServiceResult.Success.Return(_logger) : firstError;
@@ -110,16 +120,45 @@ public class FileService(SnestorageContext context, CacheService cacheService,
             return updateResult;
         }
 
-        var creationResult = await _dbHelperService.TryFunction(async cancel =>
-        {
-            Directory.CreateDirectory(Path.GetDirectoryName(physicalPath)!);
-            await using var stream = System.IO.File.Create(physicalPath);
-            await fileRequest.CopyToAsync(stream, cancel);
-        }, ServiceResult.FileCreationError,
-        async () => { await BatchRollback(batchPath, ct); }, ct: ct);
+        var directoryResult = _dbHelperService.TryFunction(
+            () => Directory.CreateDirectory(Path.GetDirectoryName(physicalPath)!),
+            ServiceResult.FileCreationError);
 
-        if (creationResult.Result != ServiceResult.Success)
-            return creationResult;
+        if (!directoryResult.TryPickT0(out _, out var directoryError))
+        {
+            await BatchRollback(batchPath, ct);
+            return directoryError;
+        }
+
+        var streamResult = _dbHelperService.TryFunction(
+            () => System.IO.File.Create(physicalPath),
+            ServiceResult.FileCreationError);
+
+        if (!streamResult.TryPickT0(out var stream, out var streamError))
+        {
+            await BatchRollback(batchPath, ct);
+            return streamError;
+        }
+
+        var copyResult = await _dbHelperService.TryFunction(
+            cancel => fileRequest.CopyToAsync(stream, cancel),
+            ServiceResult.FileCreationError, ct: ct);
+
+        var disposeResult = await _dbHelperService.TryFunction(
+            async _ => await stream.DisposeAsync(),
+            ServiceResult.FileCreationError);
+
+        if (copyResult.Result != ServiceResult.Success)
+        {
+            await BatchRollback(batchPath, ct);
+            return copyResult;
+        }
+
+        if (disposeResult.Result != ServiceResult.Success)
+        {
+            await BatchRollback(batchPath, ct);
+            return disposeResult;
+        }
 
         var fileTypesResult = await _cacheService.GetAllFileTypesByMime(ct);
 
@@ -143,53 +182,76 @@ public class FileService(SnestorageContext context, CacheService cacheService,
             FileTypeId = type.Id
         };
 
-        var trackingResult = _dbHelperService.TryFunction(() =>
-        {
-            _context.Files.Add(file);
-            return file;
-        }, ServiceResult.DBError);
-
-        if (!trackingResult.TryPickT0(out var trackedFile, out var trackingError))
-        {
-            await BatchRollback(batchPath, ct);
-            return trackingError;
-        }
-
-        return trackedFile;
+        _context.Files.Add(file);
+        return file;
     }
 
     public ServiceResultContext BatchComplete(string batchPath)
     {
-        var result = _dbHelperService.TryFunction(() =>
-        {
-            if (System.IO.File.Exists(batchPath))
-                System.IO.File.Delete(batchPath);
+        if (!System.IO.File.Exists(batchPath))
+            return ServiceResult.Success.Return(_logger);
 
+        var deletionResult = _dbHelperService.TryFunction(() =>
+        {
+            System.IO.File.Delete(batchPath);
             return true;
         }, ServiceResult.BatchError);
 
-        return result.TryPickT0(out _, out var error) ?
-            ServiceResult.Success.Return(_logger) : error;
+        return deletionResult.TryPickT0(out _, out var deletionError) ?
+            ServiceResult.Success.Return(_logger) : deletionError;
     }
 
-    public Task<ServiceResultContext> BatchRollback(string batchPath, CancellationToken ct)
+    public async Task<ServiceResultContext> BatchRollback(
+        string batchPath, CancellationToken ct)
     {
-        return _dbHelperService.TryFunction(async cancel =>
+        _context.ChangeTracker.Clear();
+
+        var contentResult = await _dbHelperService.TryFunction(
+            cancel => System.IO.File.ReadAllTextAsync(batchPath, cancel),
+            ServiceResult.BatchError, ct: ct);
+
+        if (!contentResult.TryPickT0(out var batchContent, out var contentError))
+            return contentError;
+
+        var listResult = _dbHelperService.TryFunction(
+            () => JsonSerializer.Deserialize<List<string>>(batchContent) ?? [],
+            ServiceResult.BatchError);
+
+        if (!listResult.TryPickT0(out var batchList, out var listError))
+            return listError;
+
+        ServiceResultContext? firstError = null;
+
+        var files = batchList
+            .Where(file => !string.IsNullOrWhiteSpace(file))
+            .Select(file => file.Trim())
+            .Where(System.IO.File.Exists);
+
+        foreach (string file in files)
         {
-            _context.ChangeTracker.Clear();
-
-            string batchContent = await System.IO.File.ReadAllTextAsync(batchPath, cancel);
-            var batchList = JsonSerializer.Deserialize<List<string>>(batchContent) ?? [];
-
-            var files = batchList.Select(file => file.Trim())
-                .Where(System.IO.File.Exists)
-                .ToList();
-
-            foreach (string file in files)
+            var deletionResult = _dbHelperService.TryFunction(() =>
+            {
                 System.IO.File.Delete(file);
+                return true;
+            }, ServiceResult.FileDeletionError);
 
-            System.IO.File.Delete(batchPath);
-        }, ServiceResult.BatchError, ct: ct);
+            if (!deletionResult.TryPickT0(out _, out var deletionError))
+                firstError ??= deletionError;
+        }
+
+        if (System.IO.File.Exists(batchPath))
+        {
+            var batchDeletionResult = _dbHelperService.TryFunction(() =>
+            {
+                System.IO.File.Delete(batchPath);
+                return true;
+            }, ServiceResult.BatchError);
+
+            if (!batchDeletionResult.TryPickT0(out _, out var batchDeletionError))
+                firstError ??= batchDeletionError;
+        }
+
+        return firstError is null ? ServiceResult.Success.Return(_logger) : firstError;
     }
 
     public bool ValidateContext(FileContext context, IFormFile form)
@@ -244,26 +306,25 @@ public class FileService(SnestorageContext context, CacheService cacheService,
         if (!streamResult.TryPickT0(out var stream, out var streamError))
             return streamError;
 
-        using (stream)
-        {
-            if (!stream.CanRead || !stream.CanSeek || stream.Length != form.Length)
-                return ServiceResult.FormReadingError.Return(_logger);
+        using var streamScope = stream;
 
-            OneOf<string, ServiceResultContext> inspectionResult;
+        if (!stream.CanRead || !stream.CanSeek || stream.Length != form.Length)
+            return ServiceResult.FormReadingError.Return(_logger);
 
-            if (isImage)
-                inspectionResult = InspectImage(stream, ct);
-            else if (isVideo)
-                inspectionResult = await InspectVideo(stream, ct);
-            else
-                inspectionResult = InspectArchive(stream, ct);
+        OneOf<string, ServiceResultContext> inspectionResult;
 
-            if (!inspectionResult.TryPickT0(out var detectedMime, out var inspectionError))
-                return inspectionError;
+        if (isImage)
+            inspectionResult = InspectImage(stream, ct);
+        else if (isVideo)
+            inspectionResult = await InspectVideo(stream, ct);
+        else
+            inspectionResult = InspectArchive(stream, ct);
 
-            if (!MimeEquals(detectedMime, expectedMime))
-                return ServiceResult.MimeMismatch.Return(_logger);
-        }
+        if (!inspectionResult.TryPickT0(out var detectedMime, out var inspectionError))
+            return inspectionError;
+
+        if (!MimeEquals(detectedMime, expectedMime))
+            return ServiceResult.MimeMismatch.Return(_logger);
 
         return ServiceResult.Success.Return(_logger);
     }
@@ -276,7 +337,7 @@ public class FileService(SnestorageContext context, CacheService cacheService,
             await _context.SaveChangesAsync(cancel);
             return success;
         }, ServiceResult.DBError,
-        async () => { await BatchRollback(batchPath, ct); }, ct: ct);
+        () => BatchRollback(batchPath, CancellationToken.None), ct: ct);
 
         if (result.IsT0)
             _ = BatchComplete(batchPath);
@@ -308,182 +369,190 @@ public class FileService(SnestorageContext context, CacheService cacheService,
     private OneOf<string, ServiceResultContext> InspectImage(
         Stream stream, CancellationToken ct = default)
     {
-        var result = _dbHelperService.TryFunction<
-            OneOf<string, ServiceResultContext>>(() =>
-            {
-                if (ct.IsCancellationRequested)
-                    return ServiceResult.RequestCancelled.Return(_logger);
+        if (ct.IsCancellationRequested)
+            return ServiceResult.RequestCancelled.Return(_logger);
 
-                using var codec = SKCodec.Create(stream);
+        var codecResult = _dbHelperService.TryFunction(
+            () => SKCodec.Create(stream), ServiceResult.InvalidImage);
 
-                if (codec is null)
-                    return ServiceResult.InvalidImage.Return(_logger);
+        if (!codecResult.TryPickT0(out var codec, out var codecError))
+            return codecError;
 
-                string? mime = codec.EncodedFormat switch
-                {
-                    SKEncodedImageFormat.Png => "image/png",
-                    SKEncodedImageFormat.Jpeg => "image/jpeg",
-                    SKEncodedImageFormat.Gif => "image/gif",
-                    SKEncodedImageFormat.Webp => "image/webp",
-                    SKEncodedImageFormat.Avif => "image/avif",
-                    _ => null
-                };
+        if (codec is null)
+            return ServiceResult.InvalidImage.Return(_logger);
 
-                if (mime is null)
-                    return ServiceResult.InvalidMime.Return(_logger);
+        using var codecScope = codec;
 
-                if (codec.FrameCount < 0)
-                    return ServiceResult.InvalidImageNumberOfFrames.Return(_logger);
+        string? mime = codec.EncodedFormat switch
+        {
+            SKEncodedImageFormat.Png => "image/png",
+            SKEncodedImageFormat.Jpeg => "image/jpeg",
+            SKEncodedImageFormat.Gif => "image/gif",
+            SKEncodedImageFormat.Webp => "image/webp",
+            SKEncodedImageFormat.Avif => "image/avif",
+            _ => null
+        };
 
-                var source = codec.Info;
+        if (mime is null)
+            return ServiceResult.InvalidMime.Return(_logger);
 
-                if (source.Width <= 0 || source.Height <= 0 ||
-                    (long)source.Width * source.Height > MAX_IMAGE_PIXELS)
-                    return ServiceResult.InvalidImageSize.Return(_logger);
+        if (codec.FrameCount < 0)
+            return ServiceResult.InvalidImageNumberOfFrames.Return(_logger);
 
-                if (codec.FrameCount > MAX_IMAGE_FRAMES)
-                    return ServiceResult.ImageSurpassFramesLimit.Return(_logger);
+        var source = codec.Info;
 
-                var info = new SKImageInfo(source.Width, source.Height,
-                    SKColorType.Rgba8888, SKAlphaType.Premul);
+        if (source.Width <= 0 || source.Height <= 0 ||
+            (long)source.Width * source.Height > MAX_IMAGE_PIXELS)
+            return ServiceResult.InvalidImageSize.Return(_logger);
 
-                if (ct.IsCancellationRequested)
-                    return ServiceResult.RequestCancelled.Return(_logger);
+        if (codec.FrameCount > MAX_IMAGE_FRAMES)
+            return ServiceResult.ImageSurpassFramesLimit.Return(_logger);
 
-                using var bitmap = new SKBitmap(info);
+        var info = new SKImageInfo(source.Width, source.Height,
+            SKColorType.Rgba8888, SKAlphaType.Premul);
 
-                if (bitmap.GetPixels() == IntPtr.Zero)
-                    return ServiceResult.InvalidImageSize.Return(_logger);
+        if (ct.IsCancellationRequested)
+            return ServiceResult.RequestCancelled.Return(_logger);
 
-                int frameCount = Math.Max(1, codec.FrameCount);
+        using var bitmap = new SKBitmap(info);
+        var pixels = bitmap.GetPixels();
 
-                for (int frame = 0; frame < frameCount; frame++)
-                {
-                    if (ct.IsCancellationRequested)
-                        return ServiceResult.RequestCancelled.Return(_logger);
+        if (pixels == IntPtr.Zero)
+            return ServiceResult.InvalidImageSize.Return(_logger);
 
-                    bitmap.Erase(SKColors.Transparent);
+        int frameCount = Math.Max(1, codec.FrameCount);
 
-                    var options = new SKCodecOptions(frame) { PriorFrame = -1 };
-                    var codecResult = codec.GetPixels(
-                        info, bitmap.GetPixels(), bitmap.RowBytes, options);
+        for (int frame = 0; frame < frameCount; frame++)
+        {
+            if (ct.IsCancellationRequested)
+                return ServiceResult.RequestCancelled.Return(_logger);
 
-                    if (codecResult != SKCodecResult.Success)
-                        return ServiceResult.InvalidImageNumberOfFrames.Return(_logger);
-                }
+            bitmap.Erase(SKColors.Transparent);
 
-                return mime;
-            }, ServiceResult.InvalidImage);
+            var options = new SKCodecOptions(frame) { PriorFrame = -1 };
 
-        return result.TryPickT0(out var inspection, out var error) ? inspection : error;
+            var frameResult = _dbHelperService.TryFunction(
+                () => codec.GetPixels(info, pixels, bitmap.RowBytes, options),
+                ServiceResult.InvalidImageNumberOfFrames);
+
+            if (!frameResult.TryPickT0(out var decodeResult, out var frameError))
+                return frameError;
+
+            if (decodeResult != SKCodecResult.Success)
+                return ServiceResult.InvalidImageNumberOfFrames.Return(_logger);
+        }
+
+        return mime;
     }
 
     private async Task<OneOf<string, ServiceResultContext>> InspectVideo(
         Stream stream, CancellationToken ct = default)
     {
-        var result = await _dbHelperService.TryFunction<
-            OneOf<string, ServiceResultContext>>(async cancel =>
-            {
-                if (cancel.IsCancellationRequested)
-                    return ServiceResult.RequestCancelled.Return(_logger);
+        if (ct.IsCancellationRequested)
+            return ServiceResult.RequestCancelled.Return(_logger);
 
-                var media = await _mediaAnalyzer.AnalyzeAsync(stream, true, cancel);
+        var mediaResult = await _dbHelperService.TryFunction(
+            cancel => _mediaAnalyzer.AnalyzeAsync(stream, true, cancel),
+            ServiceResult.InvalidVideo, ct: ct);
 
-                if (!media.Success || !media.HasVideo || !media.VideoStreams.Any())
-                    return ServiceResult.InvalidVideo.Return(_logger);
+        if (!mediaResult.TryPickT0(out var media, out var mediaError))
+            return mediaError;
 
-                if (media.VideoStreams.Any(video => video.Width <= 0 || video.Height <= 0))
-                    return ServiceResult.InvalidVideo.Return(_logger);
+        if (!media.Success || !media.HasVideo || !media.VideoStreams.Any())
+            return ServiceResult.InvalidVideo.Return(_logger);
 
-                string? mime = media.General.Format switch
-                {
-                    "MPEG-4" => "video/mp4",
-                    "WebM" => "video/webm",
-                    "Ogg" => "video/ogg",
-                    _ => null
-                };
+        if (media.VideoStreams.Any(video => video.Width <= 0 || video.Height <= 0))
+            return ServiceResult.InvalidVideo.Return(_logger);
 
-                return mime is null ?
-                    ServiceResult.InvalidMime.Return(_logger) : mime;
-            }, ServiceResult.InvalidVideo, ct: ct);
+        string? mime = media.General.Format switch
+        {
+            "MPEG-4" => "video/mp4",
+            "WebM" => "video/webm",
+            "Ogg" => "video/ogg",
+            _ => null
+        };
 
-        return result.TryPickT0(out var inspection, out var error) ? inspection : error;
+        return mime is null ? ServiceResult.InvalidMime.Return(_logger) : mime;
     }
 
     private OneOf<string, ServiceResultContext> InspectArchive(
         Stream stream, CancellationToken ct = default)
     {
-        var result = _dbHelperService.TryFunction<
-            OneOf<string, ServiceResultContext>>(() =>
+        if (ct.IsCancellationRequested)
+            return ServiceResult.RequestCancelled.Return(_logger);
+
+        if (!stream.CanRead || !stream.CanSeek)
+            return ServiceResult.FormReadingError.Return(_logger);
+
+        if (stream.Length == 0)
+            return ServiceResult.EmptyFile.Return(_logger);
+
+        var archiveTypeResult = _dbHelperService.TryFunction(() =>
+        {
+            bool isArchive = ArchiveFactory.IsArchive(stream, out var archiveType);
+            return (IsArchive: isArchive, Type: archiveType);
+        }, ServiceResult.InvalidFile);
+
+        if (!archiveTypeResult.TryPickT0(out var archiveInfo, out var archiveTypeError))
+            return archiveTypeError;
+
+        if (!archiveInfo.IsArchive)
+            return ServiceResult.InvalidFile.Return(_logger);
+
+        string? mime = archiveInfo.Type switch
+        {
+            ArchiveType.Zip => "application/zip",
+            ArchiveType.Rar => "application/vnd.rar",
+            ArchiveType.SevenZip => "application/x-7z-compressed",
+            ArchiveType.Tar => "application/x-tar",
+            ArchiveType.GZip => "application/gzip",
+            _ => null
+        };
+
+        if (mime is null)
+            return ServiceResult.InvalidMime.Return(_logger);
+
+        if (ct.IsCancellationRequested)
+            return ServiceResult.RequestCancelled.Return(_logger);
+
+        stream.Position = 0;
+
+        var archiveResult = _dbHelperService.TryFunction(
+            () => ArchiveFactory.OpenArchive(stream, new ReaderOptions
             {
-                if (ct.IsCancellationRequested)
-                    return ServiceResult.RequestCancelled.Return(_logger);
+                LeaveStreamOpen = true,
+                LookForHeader = false
+            }),
+            ServiceResult.FormReadingError);
 
-                if (!stream.CanRead || !stream.CanSeek)
-                    return ServiceResult.FormReadingError.Return(_logger);
+        if (!archiveResult.TryPickT0(out var archive, out var archiveError))
+            return archiveError;
 
-                if (stream.Length == 0)
-                    return ServiceResult.EmptyFile.Return(_logger);
+        using var archiveScope = archive;
 
-                if (!ArchiveFactory.IsArchive(stream, out var archiveType))
-                    return ServiceResult.InvalidFile.Return(_logger);
+        if (archive.Type != archiveInfo.Type)
+            return ServiceResult.InvalidFile.Return(_logger);
 
-                string? mime = archiveType switch
-                {
-                    ArchiveType.Zip => "application/zip",
-                    ArchiveType.Rar => "application/vnd.rar",
-                    ArchiveType.SevenZip => "application/x-7z-compressed",
-                    ArchiveType.Tar => "application/x-tar",
-                    ArchiveType.GZip => "application/gzip",
-                    _ => null
-                };
+        var entriesResult = _dbHelperService.TryFunction(
+            () => archive.Entries.Take(MAX_ARCHIVE_ENTRIES + 1)
+                .TakeWhile(_ => !ct.IsCancellationRequested)
+                .ToArray(),
+            ServiceResult.InvalidFile);
 
-                if (mime is null)
-                    return ServiceResult.InvalidMime.Return(_logger);
+        if (!entriesResult.TryPickT0(out var entries, out var entriesError))
+            return entriesError;
 
-                if (ct.IsCancellationRequested)
-                    return ServiceResult.RequestCancelled.Return(_logger);
+        if (ct.IsCancellationRequested)
+            return ServiceResult.RequestCancelled.Return(_logger);
 
-                stream.Position = 0;
+        if (entries.Length > MAX_ARCHIVE_ENTRIES ||
+            entries.Any(entry => entry.IsEncrypted || !entry.IsComplete || entry.IsSplitAfter))
+            return ServiceResult.InvalidFile.Return(_logger);
 
-                var archiveResult = _dbHelperService.TryFunction(() =>
-                    ArchiveFactory.OpenArchive(stream, new ReaderOptions
-                    {
-                        LeaveStreamOpen = true,
-                        LookForHeader = false
-                    }), ServiceResult.FormReadingError);
-
-                if (!archiveResult.TryPickT0(out var archive, out var archiveError))
-                    return archiveError;
-
-                using (archive)
-                {
-                    if (archive.Type != archiveType)
-                        return ServiceResult.InvalidFile.Return(_logger);
-
-                    var entriesResult = _dbHelperService.TryFunction(() =>
-                        archive.Entries.Take(MAX_ARCHIVE_ENTRIES + 1)
-                            .TakeWhile(_ => !ct.IsCancellationRequested)
-                            .ToArray(), ServiceResult.InvalidFile);
-
-                    if (ct.IsCancellationRequested)
-                        return ServiceResult.RequestCancelled.Return(_logger);
-
-                    if (!entriesResult.TryPickT0(out var entries, out var entriesError))
-                        return entriesError;
-
-                    if (entries.Length > MAX_ARCHIVE_ENTRIES ||
-                        entries.Any(entry => entry.IsEncrypted || !entry.IsComplete ||
-                            entry.IsSplitAfter))
-                        return ServiceResult.InvalidFile.Return(_logger);
-
-                    return entries.Any(entry => !entry.IsDirectory) ?
-                        mime : ServiceResult.InvalidFile.Return(_logger);
-                }
-            }, ServiceResult.InvalidFile);
-
-        return result.TryPickT0(out var inspection, out var error) ? inspection : error;
+        return entries.Any(entry => !entry.IsDirectory) ?
+            mime : ServiceResult.InvalidFile.Return(_logger);
     }
+
     private static bool MimeEquals(string first, string second)
     {
         static string Canonicalize(string mime)
@@ -495,23 +564,36 @@ public class FileService(SnestorageContext context, CacheService cacheService,
                 var value => value
             };
         }
+
         return Canonicalize(first) == Canonicalize(second);
     }
 
-    private Task<ServiceResultContext> UpdateBatch(
+    private async Task<ServiceResultContext> UpdateBatch(
         string physicalPath, string batchPath, CancellationToken ct)
     {
-        return _dbHelperService.TryFunction(async cancel =>
-        {
-            string batchContent = await System.IO.File.ReadAllTextAsync(batchPath, cancel);
-            var batchList = JsonSerializer.Deserialize<List<string>>(batchContent) ?? [];
+        var contentResult = await _dbHelperService.TryFunction(
+            cancel => System.IO.File.ReadAllTextAsync(batchPath, cancel),
+            ServiceResult.UpdateBatchError, ct: ct);
 
-            batchList.Add(physicalPath);
-            batchContent = JsonSerializer.Serialize(batchList);
+        if (!contentResult.TryPickT0(out var batchContent, out var contentError))
+            return contentError;
 
-            await System.IO.File.WriteAllTextAsync(batchPath, batchContent, cancel);
-        }, ServiceResult.UpdateBatchError, ct: ct);
+        var listResult = _dbHelperService.TryFunction(
+            () => JsonSerializer.Deserialize<List<string>>(batchContent) ?? [],
+            ServiceResult.UpdateBatchError);
+
+        if (!listResult.TryPickT0(out var batchList, out var listError))
+            return listError;
+
+        batchList.Add(physicalPath);
+        string serializedBatch = JsonSerializer.Serialize(batchList);
+
+        return await _dbHelperService.TryFunction(
+            cancel => System.IO.File.WriteAllTextAsync(
+                batchPath, serializedBatch, cancel),
+            ServiceResult.UpdateBatchError, ct: ct);
     }
+
     private string GenerateBatchPath()
     {
         string path;

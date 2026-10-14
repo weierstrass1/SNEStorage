@@ -2,61 +2,66 @@
 
 namespace SNEStorage.Services;
 
-public enum CaptchaResult
-{
-    Valid,
-    Invalid,
-    Unavailable
-}
-
-public class CaptchaService(
-    HttpClient httpClient,
-    APIConfig apiConfig,
-    DBHelperService dbHelperService)
+public class CaptchaService(HttpClient httpClient, APIConfig apiConfig,
+    DBHelperService dbHelperService, ILogger<CaptchaService> logger)
 {
     private readonly HttpClient _httpClient = httpClient;
     private readonly APIConfig _apiConfig = apiConfig;
     private readonly DBHelperService _dbHelperService = dbHelperService;
-    public async Task<CaptchaResult> ValidateAsync(
-        string? token,
-        string expectedAction,
-        CancellationToken ct = default)
+    private readonly ILogger<CaptchaService> _logger = logger;
+
+    public async Task<ServiceResultContext> ValidateAsync(
+        string? token, string expectedAction, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(token) || token.Length > 2048)
-            return CaptchaResult.Invalid;
+            return ServiceResult.Invalid.Return(_logger);
 
-        var secret = _apiConfig.TurnstileSecretKey;
-        var allowedHostnames = _apiConfig.TurnstileAllowedHostnames;
+        string secret = _apiConfig.TurnstileSecretKey;
+        string[] allowedHostnames = _apiConfig.TurnstileAllowedHostnames;
 
         if (string.IsNullOrWhiteSpace(secret) || allowedHostnames.Length == 0)
-            return CaptchaResult.Unavailable;
+            return ServiceResult.Unavailable.Return(_logger);
 
-        using var content = new FormUrlEncodedContent(
-            new Dictionary<string, string>
-            {
-                ["secret"] = secret,
-                ["response"] = token
-            });
+        using var content = new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["secret"] = secret,
+            ["response"] = token
+        });
 
-        using var response = await _dbHelperService.TryFunction(
-            async cancel => await _httpClient.PostAsync(
+        var responseResult = await _dbHelperService.TryFunction(
+            cancel => _httpClient.PostAsync(
                 "https://challenges.cloudflare.com/turnstile/v0/siteverify",
-                content,
-                cancel), ct: ct);
-        if(response is null || !response.IsSuccessStatusCode)
-            return CaptchaResult.Unavailable;
+                content, cancel),
+            ServiceResult.Unavailable, ct: ct);
 
-        var result = await _dbHelperService.TryFunction(
-            response.Content
-            .ReadFromJsonAsync<TurnstileResponse>, ct: ct);
+        if (!responseResult.TryPickT0(out var response, out var responseError))
+            return responseError;
 
-        if (result is null)
-            return CaptchaResult.Unavailable;
+        using var responseScope = response;
 
-        bool valid = result.Success &&
-                    string.Equals(result.Action, expectedAction, StringComparison.Ordinal) &&
-                    allowedHostnames.Contains(result.Hostname, StringComparer.OrdinalIgnoreCase);
+        if (!response.IsSuccessStatusCode)
+            return ServiceResult.Unavailable.Return(_logger);
 
-        return valid ? CaptchaResult.Valid : CaptchaResult.Invalid;
+        var verificationResult = await _dbHelperService.TryFunction(
+            cancel => response.Content.ReadFromJsonAsync<TurnstileResponse>(
+                cancellationToken: cancel),
+            ServiceResult.Unavailable, ct: ct);
+
+        if (!verificationResult.TryPickT0(
+            out var verification, out var verificationError))
+            return verificationError;
+
+        if (verification is null)
+            return ServiceResult.Unavailable.Return(_logger);
+
+        bool valid = verification.Success &&
+            string.Equals(verification.Action, expectedAction, StringComparison.Ordinal) &&
+            !string.IsNullOrWhiteSpace(verification.Hostname) &&
+            allowedHostnames.Contains(
+                verification.Hostname, StringComparer.OrdinalIgnoreCase);
+
+        return valid ?
+            ServiceResult.Valid.Return(_logger) :
+            ServiceResult.Invalid.Return(_logger);
     }
 }

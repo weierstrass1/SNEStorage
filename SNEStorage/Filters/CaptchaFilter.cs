@@ -1,8 +1,9 @@
-﻿using System.Security.Claims;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using SNEStorage.DTOs;
 using SNEStorage.Filters.Attributes;
 using SNEStorage.Services;
+using System.Security.Claims;
 
 namespace SNEStorage.Filters;
 
@@ -20,20 +21,21 @@ public class CaptchaFilter(
     private readonly bool _allowFormToken = allowFormToken;
 
     public async Task OnResourceExecutionAsync(
-        ResourceExecutingContext context,
-        ResourceExecutionDelegate next)
+        ResourceExecutingContext context, ResourceExecutionDelegate next)
     {
         var request = context.HttpContext.Request;
         var ct = context.HttpContext.RequestAborted;
         string? token = request.Headers["X-Captcha-Token"].ToString();
 
-        if (string.IsNullOrWhiteSpace(token) && _allowFormToken && request.HasFormContentType)
+        if (string.IsNullOrWhiteSpace(token) &&
+            _allowFormToken && request.HasFormContentType)
         {
             var form = await request.ReadFormAsync(ct);
             token = form["cf-turnstile-response"].ToString();
         }
 
-        var userId = context.HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        string? userId = context.HttpContext.User
+            .FindFirstValue(ClaimTypes.NameIdentifier);
 
         bool conditional = _policy is not CaptchaPolicy.Always;
 
@@ -52,26 +54,38 @@ public class CaptchaFilter(
                 error = "CaptchaRequired",
                 action = _expectedAction
             });
+
             return;
         }
 
-        var result = await _captchaService.ValidateAsync(token, _expectedAction, ct);
-        if (result == CaptchaResult.Valid)
+        var result = await _captchaService.ValidateAsync(
+            token, _expectedAction, ct);
+
+        if (result.Result == ServiceResult.Valid)
         {
             await next();
             return;
         }
 
+        bool invalid = result.Result == ServiceResult.Invalid;
+
         context.Result = new ObjectResult(new
         {
-            error = result == CaptchaResult.Invalid ? 
-                "CaptchaInvalid" : "CaptchaUnavailable",
+            error = invalid ? "CaptchaInvalid" : "CaptchaUnavailable",
             action = _expectedAction
         })
         {
-            StatusCode = result == CaptchaResult.Invalid ?
-                StatusCodes.Status400BadRequest :
-                StatusCodes.Status503ServiceUnavailable
+            StatusCode = result.Result.ActionType switch
+            {
+                ActionResultType.BadRequest =>
+                    StatusCodes.Status400BadRequest,
+
+                ActionResultType.ClientClosedRequest =>
+                    StatusCodes.Status499ClientClosedRequest,
+
+                _ =>
+                    StatusCodes.Status503ServiceUnavailable
+            }
         };
     }
 }

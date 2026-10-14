@@ -1,5 +1,5 @@
 using System.Net;
-using System.Net.Http.Json;
+using System.Text.Json;
 using Microsoft.Extensions.Options;
 using SNEStorage.DiscordBot.DTOs;
 
@@ -65,6 +65,24 @@ public sealed class SNEStorageApiClient(
 
             return new(SNEStorageNewsLookupStatus.Unavailable);
         }
+        catch (JsonException exception)
+        {
+            logger.LogError(
+                exception,
+                "SNEStorage returned invalid news JSON for news {NewsId}.",
+                newsId);
+
+            return new(SNEStorageNewsLookupStatus.InvalidResponse);
+        }
+        catch (NotSupportedException exception)
+        {
+            logger.LogError(
+                exception,
+                "SNEStorage returned an unsupported news payload for news {NewsId}.",
+                newsId);
+
+            return new(SNEStorageNewsLookupStatus.InvalidResponse);
+        }
     }
 
     public async Task<SNEStorageUserLookupResult> GetUserProfileAsync(
@@ -125,6 +143,24 @@ public sealed class SNEStorageApiClient(
                 userId);
 
             return new(SNEStorageUserLookupStatus.Unavailable);
+        }
+        catch (JsonException exception)
+        {
+            logger.LogError(
+                exception,
+                "SNEStorage returned invalid profile JSON for user {SNEStorageUserId}.",
+                userId);
+
+            return new(SNEStorageUserLookupStatus.InvalidResponse);
+        }
+        catch (NotSupportedException exception)
+        {
+            logger.LogError(
+                exception,
+                "SNEStorage returned an unsupported profile payload for user {SNEStorageUserId}.",
+                userId);
+
+            return new(SNEStorageUserLookupStatus.InvalidResponse);
         }
     }
 
@@ -190,6 +226,24 @@ public sealed class SNEStorageApiClient(
                 resourceId);
 
             return new(SNEStorageResourceLookupStatus.Unavailable);
+        }
+        catch (JsonException exception)
+        {
+            logger.LogError(
+                exception,
+                "SNEStorage returned invalid resource JSON for resource {ResourceId}.",
+                resourceId);
+
+            return new(SNEStorageResourceLookupStatus.InvalidResponse);
+        }
+        catch (NotSupportedException exception)
+        {
+            logger.LogError(
+                exception,
+                "SNEStorage returned an unsupported resource payload for resource {ResourceId}.",
+                resourceId);
+
+            return new(SNEStorageResourceLookupStatus.InvalidResponse);
         }
     }
 
@@ -278,6 +332,24 @@ public sealed class SNEStorageApiClient(
                 discordUserId);
 
             return new(SNEStorageMemberLookupStatus.Unavailable);
+        }
+        catch (JsonException exception)
+        {
+            logger.LogError(
+                exception,
+                "SNEStorage returned invalid member JSON for Discord user {DiscordUserId}.",
+                discordUserId);
+
+            return new(SNEStorageMemberLookupStatus.InvalidResponse);
+        }
+        catch (NotSupportedException exception)
+        {
+            logger.LogError(
+                exception,
+                "SNEStorage returned an unsupported member payload for Discord user {DiscordUserId}.",
+                discordUserId);
+
+            return new(SNEStorageMemberLookupStatus.InvalidResponse);
         }
     }
 }

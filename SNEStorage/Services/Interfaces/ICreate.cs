@@ -1,18 +1,27 @@
 ﻿using OneOf;
+using SNEStorage.DTOs;
 
 namespace SNEStorage.Services.Interfaces;
-public interface ICreate<TCreate, TModel, TResult> where TResult : Enum
+
+public interface ICreate<TCreate, TModel>
 {
-    public Task<OneOf<TModel, TResult>> Create(TCreate create, CancellationToken ct = default);
-    public Task<TResult> ValidateCreate(TCreate create, CancellationToken ct = default);
-    public Task<OneOf<TModel, TResult>> CreateInternal(TCreate create, CancellationToken ct = default);
-    public async Task<OneOf<TModel, TResult>> CreateItem(TCreate create, TResult success, CancellationToken ct = default)
+    public Task<OneOf<TModel, ServiceResultContext>> Create(
+        TCreate create, CancellationToken ct = default);
+
+    public Task<ServiceResultContext> ValidateCreate(
+        TCreate create, CancellationToken ct = default);
+
+    public Task<OneOf<TModel, ServiceResultContext>> CreateInternal(
+        TCreate create, CancellationToken ct = default);
+
+    public async Task<OneOf<TModel, ServiceResultContext>> CreateItem(
+        TCreate create, CancellationToken ct = default)
     {
         var validation = await ValidateCreate(create, ct);
-        if (!validation.Equals(success))
+
+        if (validation.Result != ServiceResult.Success)
             return validation;
-        var createRes = await CreateInternal(create, ct);
-        return createRes.TryPickT0(out var item, out var createError) ?
-            item : createError;
+
+        return await CreateInternal(create, ct);
     }
 }

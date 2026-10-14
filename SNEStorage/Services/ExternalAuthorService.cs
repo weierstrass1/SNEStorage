@@ -1,57 +1,52 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using OneOf;
+using SNEStorage.DTOs;
 using SNEStorage.Models;
 
 namespace SNEStorage.Services;
-public enum GetLikeResult
-{
-    Success,
-    DBError,
-    InvalidMaxAmount,
-    MaxAmountSurpassTheLimit
-}
-public class ExternalAuthorService(SnestorageContext context,
-    DBHelperService dbHelperService)
+
+public class ExternalAuthorService(
+    SnestorageContext context,
+    DBHelperService dbHelperService,
+    ILogger<ExternalAuthorService> logger)
 {
     public const int MAX_AMOUNT_LIMIT = 20;
+
     private readonly SnestorageContext _context = context;
     private readonly DBHelperService _dbHelperService = dbHelperService;
-    public async Task<OneOf<List<string>, GetLikeResult>> GetAuthorLike(string likeString, int maxAmount = 10, CancellationToken ct = default)
+    private readonly ILogger<ExternalAuthorService> _logger = logger;
+
+    public async Task<OneOf<List<string>, ServiceResultContext>> GetAuthorLike(
+        string likeString, int maxAmount = 10, CancellationToken ct = default)
     {
         if (maxAmount <= 0)
-            return GetLikeResult.InvalidMaxAmount;
+            return ServiceResult.InvalidMaxAmount.Return(_logger);
+
         if (maxAmount > MAX_AMOUNT_LIMIT)
-            return GetLikeResult.MaxAmountSurpassTheLimit;
+            return ServiceResult.MaxAmountSurpassTheLimit.Return(_logger);
 
-        var term = likeString?.ToLower().Trim() ?? "";
-        var query = _context.ResourcesExternalAuthors.AsNoTracking();
+        string term = likeString?.ToLower().Trim() ?? "";
+        IQueryable<ResourceExternalAuthor> query =
+            _context.ResourcesExternalAuthors.AsNoTracking();
 
-        if (string.IsNullOrWhiteSpace(term) || term.Length < 2)
-            return await _dbHelperService.TryFunction(
-                async cancel => await query
-                    .Select(v => v.Author)
-                    .Distinct()
-                    .Order()
-                    .Take(maxAmount)
-                    .ToListAsync(cancel), 
-                GetLikeResult.DBError, ct:ct);
+        if (!string.IsNullOrWhiteSpace(term) && term.Length >= 2)
+        {
+            string escaped = term.Replace(@"\", @"\\").Replace("%", @"\%")
+                .Replace("_", @"\_").Replace("[", @"\[");
 
-        var escaped = term
-        .Replace(@"\", @"\\")
-        .Replace("%", @"\%")
-        .Replace("_", @"\_")
-        .Replace("[", @"\[");
+            string pattern = $"%{escaped}%";
 
-        var pattern = $"%{escaped}%";
+            query = query.Where(author =>
+                EF.Functions.Like(author.Author, pattern, @"\"));
+        }
+
+        var resultQuery = query.Select(author => author.Author)
+            .Distinct()
+            .Order()
+            .Take(maxAmount);
 
         return await _dbHelperService.TryFunction(
-                async cancel => await query
-                .Where(v => EF.Functions.Like(v.Author, pattern, @"\"))
-                .Select(v => v.Author)
-                .Distinct()
-                .Order()
-                .Take(maxAmount)
-                .ToListAsync(cancel),
-                GetLikeResult.DBError, ct: ct);
+            cancel => resultQuery.ToListAsync(cancel),
+            ServiceResult.DBError, ct: ct);
     }
 }

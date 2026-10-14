@@ -1,7 +1,7 @@
-using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using SNEStorage.DTOs;
 using SNEStorage.Models;
 using SNEStorage.Services;
@@ -11,18 +11,16 @@ namespace SNEStorage.Controllers;
 [ApiController]
 [Route("api/profile")]
 [Authorize]
-public class ProfileController(AccountService accountService,
-    AccountController accountController) : ControllerBase
+public class ProfileController(AccountService accountService) : ControllerBase
 {
     private readonly AccountService _accountService = accountService;
-    private readonly AccountController _accountController = accountController;
     [HttpGet("me")]
     [ProducesResponseType<UserInfo>(StatusCodes.Status200OK)]
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<ActionResult<UserInfo>> GetMyProfile(CancellationToken ct)
     {
         var result = await _accountService.GetUserInfo(ct);
-        return _accountController.GetActionResult(result);
+        return this.GetActionResult(result);
     }
     [AllowAnonymous]
     [HttpGet("{userId}")]
@@ -34,9 +32,8 @@ public class ProfileController(AccountService accountService,
         {
             UserInfo ui = result.AsT0;
             ui.Birthday = DateOnly.MinValue;
-            return Ok(result.AsT0);
         }
-        return _accountController.GetActionResult(result);
+        return this.GetActionResult(result);
     }
     [EnableRateLimiting("uploads")]
     [HttpPut("me/edit")]
@@ -44,6 +41,7 @@ public class ProfileController(AccountService accountService,
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<ActionResult> EditMyProfile([FromForm] EditProfileDTO dto, CancellationToken ct)
     {
-        return await _accountService.EditUserInfo(dto, ct) ? Ok() : BadRequest();
+        var result = await _accountService.EditUserInfo(dto, ct);
+        return this.GetActionResult(result);
     }
 }

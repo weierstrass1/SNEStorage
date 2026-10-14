@@ -12,27 +12,13 @@ public enum NewsSorting
     RecentFirst,
     RecentLast
 }
-public enum NewsServiceResult
-{
-    Success,
-    InvalidText,
-    Unauthorized,
-    UserNotFound,
-    NewNotFound,
-    DBError,
-    InvalidSort,
-    InvalidMaxAmount,
-    InvalidPage,
-    SkipOutOfRange,
-    InvalidTitle
-}
-public class NewsService(SnestorageContext context,
-    DBHelperService dbHelperService,
-    AccountService accountService,
-    DiscordService discordService) :
-    IFullGet<New, NewsServiceResult, NewsFilterDTO, NewsSorting, NewsReadDTO>,
-    IEditSingle<long, NewsEditDTO, New, NewsServiceResult>,
-    ICreate<NewsCreateDTO, New, NewsServiceResult>
+
+public class NewsService(SnestorageContext context, DBHelperService dbHelperService,
+    AccountService accountService, DiscordService discordService,
+    ILogger<NewsService> logger) :
+    IFullGet<New, NewsFilterDTO, NewsSorting, NewsReadDTO>,
+    IEditSingle<long, NewsEditDTO, New>,
+    ICreate<NewsCreateDTO, New>
 {
     public const int MAX_AMOUNT_PER_PAGE = 50;
     public const int MAX_TITLE_LENGTH = 200;
@@ -40,152 +26,161 @@ public class NewsService(SnestorageContext context,
     private readonly DBHelperService _dbHelperService = dbHelperService;
     private readonly AccountService _accountService = accountService;
     private readonly DiscordService _discordService = discordService;
-    public async Task<OneOf<List<NewsReadDTO>, NewsServiceResult>> FullGet(
+    private readonly ILogger<NewsService> _logger = logger;
+
+    public async Task<OneOf<List<NewsReadDTO>, ServiceResultContext>> FullGet(
         NewsFilterDTO filter, NewsSorting sort, int maxAmount = 10,
         int page = 0, CancellationToken ct = default)
     {
-        IFullGet<New, NewsServiceResult, NewsFilterDTO, NewsSorting, NewsReadDTO> fullGet = this;
+        IFullGet<New, NewsFilterDTO, NewsSorting, NewsReadDTO> fullGet = this;
+        PaginationRequest pagination = new(maxAmount, MAX_AMOUNT_PER_PAGE, page);
+        ServiceResult validation = pagination.Validate(sort);
 
-        PaginationRequest<NewsServiceResult> paginationRequest = new()
-        {
-            MaxAmountPerPage = new(maxAmount, MAX_AMOUNT_PER_PAGE,
-                NewsServiceResult.InvalidMaxAmount),
-            Page = new(page, NewsServiceResult.InvalidPage),
-            SkipError = NewsServiceResult.SkipOutOfRange,
-            SortError = NewsServiceResult.InvalidSort,
-            Success = NewsServiceResult.Success
-        };
+        if (validation != ServiceResult.Success)
+            return validation.Return(_logger);
 
-        return await fullGet.FullGetResult(_context.News.AsNoTracking(),
-            (_, _) => NewsServiceResult.Success,
-            filter, sort, paginationRequest, _dbHelperService,
-            NewsServiceResult.DBError, ct);
+        return await fullGet.FullGetResult(_context.News.AsNoTracking(), filter,
+            sort, pagination, _dbHelperService, ct: ct);
     }
-    public async Task<OneOf<NewsReadDTO, NewsServiceResult>> Get(long newsId, 
-        CancellationToken ct = default)
+
+    public async Task<OneOf<NewsReadDTO, ServiceResultContext>> Get(
+        long newsId, CancellationToken ct = default)
     {
+        var query = GetSelect(_context.News.AsNoTracking()
+            .Where(news => news.Id == newsId));
+
         var result = await _dbHelperService.TryFunction(
-            cancel => GetSelect(
-                    _context.News
-                        .AsNoTracking()
-                        .Where(news => news.Id == newsId))
-                .SingleOrDefaultAsync(cancel),
-            NewsServiceResult.DBError,
-            ct: ct);
+            cancel => query.SingleOrDefaultAsync(cancel),
+            ServiceResult.DBError, ct: ct);
 
         if (!result.TryPickT0(out var news, out var error))
             return error;
 
-        return news is null ?
-            NewsServiceResult.NewNotFound : news;
+        return news is null ? ServiceResult.NewNotFound.Return(_logger) : news;
     }
-    public IQueryable<New> GetFilter(IQueryable<New> query, NewsFilterDTO filter) => query;
+
+    public IQueryable<New> GetFilter(
+        IQueryable<New> query, NewsFilterDTO filter) => query;
+
     public IQueryable<NewsReadDTO> GetSelect(IQueryable<New> query)
     {
-        return query.Select(n => new NewsReadDTO
+        return query.Select(news => new NewsReadDTO
         {
-            Id = n.Id,
-            CreatedAt = n.CreatedAt,
-            Title = n.Title,
-            Text = n.Text,
+            Id = news.Id,
+            CreatedAt = news.CreatedAt,
+            Title = news.Title,
+            Text = news.Text,
             UserSummary = new UserNameDTO
             {
-                Id = n.PosterUserId,
-                Username = n.PosterUser!.UserName!,
-                UsernameColor = n.PosterUser.UserInfo!.UsernameColor,
+                Id = news.PosterUserId,
+                Username = news.PosterUser!.UserName!,
+                UsernameColor = news.PosterUser.UserInfo!.UsernameColor,
                 Avatar = new FileResponse
                 {
-                    Id = n.PosterUser.UserInfo.AvatarId,
-                    FileTypeId = n.PosterUser.UserInfo.Avatar!.FileTypeId,
-                    URL = n.PosterUser.UserInfo.Avatar.URL
+                    Id = news.PosterUser.UserInfo.AvatarId,
+                    FileTypeId = news.PosterUser.UserInfo.Avatar!.FileTypeId,
+                    URL = news.PosterUser.UserInfo.Avatar.URL
                 }
             }
         });
     }
+
     public IQueryable<New> GetSort(IQueryable<New> query, NewsSorting sort)
     {
         return sort switch
         {
             NewsSorting.RecentLast => query
-                .OrderBy(n => n.CreatedAt)
-                .ThenBy(n => n.Id),
+                .OrderBy(news => news.CreatedAt)
+                .ThenBy(news => news.Id),
+
             _ => query
-                .OrderByDescending(n => n.CreatedAt)
-                .ThenByDescending(n => n.Id)
+                .OrderByDescending(news => news.CreatedAt)
+                .ThenByDescending(news => news.Id)
         };
     }
-    public async Task<OneOf<New, NewsServiceResult>> Edit(
+
+    public Task<OneOf<New, ServiceResultContext>> Edit(
         long key, NewsEditDTO edit, CancellationToken ct = default)
     {
-        IEditSingle<long, NewsEditDTO, New, NewsServiceResult> editor = this;
-
-        return await editor.EditSingle(key, edit, NewsServiceResult.Success,
-            NewsServiceResult.NewNotFound, NewsServiceResult.DBError, ct);
+        IEditSingle<long, NewsEditDTO, New> editor = this;
+        return editor.EditSingle(key, edit, ct);
     }
-    public Task<NewsServiceResult> ValidateEdit(
+
+    public Task<ServiceResultContext> ValidateEdit(
         NewsEditDTO edit, CancellationToken ct = default)
     {
         if (!_accountService.IsModeratorOrAdmin())
-            return Task.FromResult(NewsServiceResult.Unauthorized);
+            return Task.FromResult(string.IsNullOrWhiteSpace(_accountService.GetUserID()) ?
+                ServiceResult.Unauthorized.Return(_logger) :
+                ServiceResult.Forbidden.Return(_logger));
 
-        if (edit.Title != null &&
+        if (edit.Title is not null &&
             (string.IsNullOrWhiteSpace(edit.Title) ||
             edit.Title.Trim().Length > MAX_TITLE_LENGTH))
-            return Task.FromResult(NewsServiceResult.InvalidTitle);
+            return Task.FromResult(ServiceResult.InvalidTitle.Return(_logger));
 
-        return Task.FromResult(edit.Text != null &&
+        return Task.FromResult(edit.Text is not null &&
             string.IsNullOrWhiteSpace(edit.Text) ?
-            NewsServiceResult.InvalidText : NewsServiceResult.Success);
+                ServiceResult.InvalidText.Return(_logger) :
+                ServiceResult.Success.Return(_logger));
     }
-    public async Task<OneOf<New?, NewsServiceResult>> FindEdit(
+
+    public async Task<OneOf<New, ServiceResultContext>> FindEdit(
         long key, CancellationToken ct = default)
     {
         var found = await _dbHelperService.TryFunction(
-            cancel => _context.News
-                .FirstOrDefaultAsync(news => news.Id == key, cancel),
-            NewsServiceResult.DBError,
-            ct: ct);
+            cancel => _context.News.FirstOrDefaultAsync(
+                news => news.Id == key, cancel),
+            ServiceResult.DBError, ct: ct);
 
-        return found.TryPickT0(out var news, out var error) ?
-            news : error;
+        if (!found.TryPickT0(out var news, out var error))
+            return error;
+
+        return news is null ? ServiceResult.NewNotFound.Return(_logger) : news;
     }
-    public async Task<NewsServiceResult> EditInternal(
+
+    public async Task<ServiceResultContext> EditInternal(
         New item, NewsEditDTO edit, CancellationToken ct = default)
     {
         item.Title = edit.Title?.Trim() ?? item.Title;
         item.Text = edit.Text?.Trim() ?? item.Text;
 
-        return await _dbHelperService.TrySyncContext(ct) ?
-            NewsServiceResult.Success : NewsServiceResult.DBError;
+        return await _dbHelperService.TrySyncContext(ct: ct);
     }
-    public Task<OneOf<New, NewsServiceResult>> Create(
+
+    public Task<OneOf<New, ServiceResultContext>> Create(
         NewsCreateDTO create, CancellationToken ct = default)
     {
-        ICreate<NewsCreateDTO, New, NewsServiceResult> creator = this;
-
-        return creator.CreateItem(create, NewsServiceResult.Success, ct);
+        ICreate<NewsCreateDTO, New> creator = this;
+        return creator.CreateItem(create, ct);
     }
-    public Task<NewsServiceResult> ValidateCreate(
+
+    public Task<ServiceResultContext> ValidateCreate(
         NewsCreateDTO create, CancellationToken ct = default)
     {
         if (!_accountService.IsModeratorOrAdmin())
-            return Task.FromResult(NewsServiceResult.Unauthorized);
+            return Task.FromResult(string.IsNullOrWhiteSpace(_accountService.GetUserID()) ?
+                ServiceResult.Unauthorized.Return(_logger) :
+                ServiceResult.Forbidden.Return(_logger));
 
         if (string.IsNullOrWhiteSpace(create.Title) ||
             create.Title.Trim().Length > MAX_TITLE_LENGTH)
-            return Task.FromResult(NewsServiceResult.InvalidTitle);
+            return Task.FromResult(ServiceResult.InvalidTitle.Return(_logger));
 
         return Task.FromResult(string.IsNullOrWhiteSpace(create.Text) ?
-            NewsServiceResult.InvalidText : NewsServiceResult.Success);
+            ServiceResult.InvalidText.Return(_logger) :
+            ServiceResult.Success.Return(_logger));
     }
-    public async Task<OneOf<New, NewsServiceResult>> CreateInternal(
+
+    public async Task<OneOf<New, ServiceResultContext>> CreateInternal(
         NewsCreateDTO create, CancellationToken ct = default)
     {
-        var userId = _accountService.GetUserID();
-        if (string.IsNullOrWhiteSpace(userId))
-            return NewsServiceResult.Unauthorized;
+        string? userId = _accountService.GetUserID();
 
-        New news = new()
+        if (string.IsNullOrWhiteSpace(userId))
+            return ServiceResult.Unauthorized.Return(_logger);
+
+        var news = new New
         {
             Id = 0,
             PosterUserId = userId,
@@ -196,13 +191,16 @@ public class NewsService(SnestorageContext context,
 
         _context.News.Add(news);
 
-        var res = await _dbHelperService.TrySyncContext(news,
-            NewsServiceResult.DBError, ct);
-        if (!res.TryPickT0(out var newItem, out var error))
-            return error;
-        await _discordService.NotifyBotAsync(
-            new DiscordBotEventDTO(Guid.NewGuid(), DiscordBotEventTypes.NewsPublished,
-                newItem.Id.ToString(), DateTimeOffset.UtcNow));
+        var saveResult = await _dbHelperService.TrySyncContext(news, ct: ct);
+
+        if (!saveResult.TryPickT0(out var newItem, out var saveError))
+            return saveError;
+
+        var notification = new DiscordBotEventDTO(Guid.NewGuid(),
+            DiscordBotEventTypes.NewsPublished, newItem.Id.ToString(),
+            DateTimeOffset.UtcNow);
+
+        _ = await _discordService.NotifyBotAsync(notification, ct);
         return newItem;
     }
 }

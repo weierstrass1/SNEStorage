@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace SNEStorage.DiscordBot.DTOs;
+﻿namespace SNEStorage.DiscordBot.DTOs;
 public sealed class DiscordDTO
 {
     public required string ApplicationId { get; init; }
