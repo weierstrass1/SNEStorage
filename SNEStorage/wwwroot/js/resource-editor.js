@@ -1,5 +1,6 @@
 import { getResource, getResourceOptions, getResourceSection, getResourceAccount, cancelResourceRequest } from "./resource-details.js?v=14";
-import { appendPreviews, previewCount } from "./resource-previews.js?v=2";
+import { appendPreviews, previewCount, validatePreviews } from "./resource-previews.js?v=3";
+import { basicUploadError } from "./upload-validation.js?v=1";
 import { captchaFetch } from "./captcha.js?v=3";
 import { validateVersionInputs } from "./resource-version.js?v=2";
 import { validateResourceTextFields } from "./resource-form-validation.js?v=1";
@@ -7,8 +8,6 @@ import { validateResourceTextFields } from "./resource-form-validation.js?v=1";
 export { getResource, getResourceOptions, getResourceSection, getResourceAccount };
 
 const submissions = new Map();
-const maxArchiveBytes = 250 * 1024 * 1024;
-const archiveExtensions = [".zip", ".rar", ".7z", ".tar", ".gz"];
 const contentFlags = ["IncludesPorn", "IncludesGore", "IncludesPolitics", "IncludesSlurs", "IncludesSensitiveContent"];
 
 document.addEventListener("keydown", event => {
@@ -20,7 +19,7 @@ document.addEventListener("keydown", event => {
     }
 });
 
-function invalidInput(form, mode, previewInputId, original) {
+async function invalidInput(form, mode, previewInputId, original) {
     for (const field of form.elements) {
         if (typeof field.setCustomValidity === "function") field.setCustomValidity("");
     }
@@ -45,13 +44,16 @@ function invalidInput(form, mode, previewInputId, original) {
         if (!form.querySelector("input[name='Types']:checked")) return { validationMessage: "Select at least one resource type.", validationTab: 0 };
         if (form.querySelectorAll("input[name='KeptPreviewIDs']").length + previewCount(previewInputId) > 20)
             return { validationMessage: "Keep up to 20 previews in total. Remove an existing or new preview before saving.", validationTab: 1 };
+        const capacity = Math.max(0, 20 - form.querySelectorAll("input[name='KeptPreviewIDs']").length);
+        const previewError = await validatePreviews(previewInputId, capacity);
+        if (previewError) return { validationMessage: previewError, validationTab: 1 };
     }
     if (mode === "CreateVersion") {
         const file = form.elements.namedItem("File")?.files?.[0];
-        if (!file || file.size === 0 || file.size > maxArchiveBytes ||
-            !archiveExtensions.some(extension => file.name.toLowerCase().endsWith(extension))) {
+        const archiveError = basicUploadError(file, "archive");
+        if (archiveError) {
             form.elements.namedItem("File")?.focus();
-            return { validationMessage: "Choose a nonempty ZIP, RAR, 7Z, TAR, GZ or TAR.GZ archive, no larger than 250 MB." };
+            return { validationMessage: archiveError };
         }
     }
     return null;
@@ -145,7 +147,7 @@ function appendExternalDependencyChanges(data, previous) {
 export async function submitEditor(formId, resourceId, versionId, mode, original, requestKey, previewInputId) {
     const form = document.getElementById(formId);
     if (!(form instanceof HTMLFormElement)) return { status: 0, body: "", cancelled: false, validationMessage: "The form is unavailable. Please reload the page." };
-    const validation = invalidInput(form, mode, previewInputId, original);
+    const validation = await invalidInput(form, mode, previewInputId, original);
     if (validation) return { status: 0, body: "", cancelled: false, ...validation };
 
     const data = new FormData(form);

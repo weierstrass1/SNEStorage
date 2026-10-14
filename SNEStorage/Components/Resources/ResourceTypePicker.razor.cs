@@ -13,13 +13,12 @@ public partial class ResourceTypePicker
     [Parameter] public string Placeholder { get; set; } = "Choose resource types";
 
     private IReadOnlyList<TypeCategory> Categories { get; set; } = [];
-    protected override void OnParametersSet() => Categories = Options
+    protected override void OnParametersSet() => Categories = [.. Options
         .GroupBy(option => option.CategoryId)
         .Select(group => new TypeCategory(group.Key,
             group.Select(option => option.CategoryName).FirstOrDefault(name => !string.IsNullOrWhiteSpace(name)) ?? "Other types",
-            group.OrderBy(option => Regex.IsMatch(option.Name, @"\bOther\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
-                .ThenBy(option => option.Name, StringComparer.OrdinalIgnoreCase).ToArray()))
-        .OrderBy(category => category.Name, StringComparer.OrdinalIgnoreCase).ToArray();
+            [.. group.OrderBy(option => Regex.IsMatch(option.Name, @"\bOther\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)).ThenBy(option => option.Name, StringComparer.OrdinalIgnoreCase)]))
+        .OrderBy(category => category.Name, StringComparer.OrdinalIgnoreCase)];
 
     private int SelectedCount(TypeCategory category) => category.Options.Count(option => Values.Contains(option.Id));
 
@@ -28,7 +27,7 @@ public partial class ResourceTypePicker
         : string.Join(", ", Options.Where(option => Values.Contains(option.Id)).Select(option => option.Name));
 
     protected Task SelectionChangedAsync(long id, ChangeEventArgs args) => ValuesChanged.InvokeAsync(
-        args.Value is true ? Values.Append(id).Distinct().ToArray() : Values.Where(value => value != id).ToArray());
+        args.Value is true ? [.. Values.Append(id).Distinct()] : [.. Values.Where(value => value != id)]);
 
     private sealed record TypeCategory(long Id, string Name, IReadOnlyList<ResourceTypeDTO> Options);
 }

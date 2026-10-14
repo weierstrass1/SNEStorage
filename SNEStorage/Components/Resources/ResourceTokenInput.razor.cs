@@ -38,9 +38,8 @@ public partial class ResourceTokenInput
         await AppendAsync(pending.Split(','));
     }
 
-    protected Task RemoveAsync(string value) => ValuesChanged.InvokeAsync(Values.Where(tag => tag != value).ToArray());
+    protected Task RemoveAsync(string value) => ValuesChanged.InvokeAsync([.. Values.Where(tag => tag != value)]);
 
     private Task AppendAsync(IEnumerable<string> tags) => ValuesChanged.InvokeAsync(
-        Values.Concat(tags.Select(tag => tag.Trim()).Where(tag => tag.Length > 0))
-            .Distinct(StringComparer.OrdinalIgnoreCase).ToArray());
+        [.. Values.Concat(tags.Select(tag => tag.Trim()).Where(tag => tag.Length > 0)).Distinct(StringComparer.OrdinalIgnoreCase)]);
 }

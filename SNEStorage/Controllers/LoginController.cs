@@ -20,9 +20,10 @@ public class LoginController(AccountService accountService) : Controller
     {
         var destination = Url.IsLocalUrl(returnUrl) ? returnUrl! : "/";
         var result = await _accountService.Login(credentials);
-        if (!result.TryPickT0(out var response, out _))
-            return Redirect("/Login?result=invalid&returnUrl=" +
-                Uri.EscapeDataString(destination));
+        if (!result.TryPickT0(out var response, out var error))
+            return Redirect("/Login?result=" +
+                Uri.EscapeDataString(error.Result.Type.ToString()) +
+                "&returnUrl=" + Uri.EscapeDataString(destination));
 
         HttpContext.Response.Cookies.Append("__Host-SNEStorage.Auth", response.Token,
             new CookieOptions

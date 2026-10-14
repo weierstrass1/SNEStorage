@@ -1,7 +1,6 @@
 using Discord;
 using Discord.WebSocket;
 using Microsoft.Extensions.Options;
-using SNEStorage.DiscordBot;
 using SNEStorage.DiscordBot.DTOs;
 using SNEStorage.DiscordBot.Services;
 using System.Security.Cryptography;

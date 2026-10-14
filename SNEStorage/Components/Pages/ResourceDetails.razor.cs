@@ -81,9 +81,9 @@ public partial class ResourceDetails : IAsyncDisposable
         color is not null && HexColorPattern.IsMatch(color) ? color : "#e6d2fb";
     protected static string VersionLabel(ResourceVersion version) => string.IsNullOrWhiteSpace(version.Version) ? "Latest release" : version.Version;
     protected static IReadOnlyList<(string Name, string Url)> MirrorLinks(ResourceExternalDependency dependency) =>
-        new[] { dependency.Mirror1, dependency.Mirror2, dependency.Mirror3, dependency.Mirror4 }
+        [.. new[] { dependency.Mirror1, dependency.Mirror2, dependency.Mirror3, dependency.Mirror4 }
             .Select((url, index) => (Name: $"Mirror {index + 1}", Url: ResourceFileLinks.External(url)))
-            .Where(mirror => mirror.Url is not null).Select(mirror => (mirror.Name, mirror.Url!)).ToArray();
+            .Where(mirror => mirror.Url is not null).Select(mirror => (mirror.Name, mirror.Url!))];
 
     protected override void OnInitialized()
     {

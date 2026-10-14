@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Discord.Net.WebSocket" Version="3.20.1" />
+    <PackageReference Include="Discord.Net.WebSocket" Version="3.20.2" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\discord\server-config.json" Link="Config\server-config.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />

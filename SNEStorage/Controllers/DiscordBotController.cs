@@ -2,7 +2,6 @@
 using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
-using SNEStorage.Discord;
 using SNEStorage.DTOs;
 using SNEStorage.Services;
 

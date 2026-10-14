@@ -29,10 +29,9 @@ public partial class ResourceListFilters
     private static bool? Selection(string value) => value switch { "true" => true, "false" => false, _ => null };
     private string CategoryLabel => State.Finder.CategoryIDs.Length == 0 ? "All categories" :
         string.Join(", ", Categories.Where(c => State.Finder.CategoryIDs.Contains(c.Id)).Select(c => c.Name));
-    protected override void OnParametersSet() => Categories = CategoryOptions
-        .OrderBy(c => c.Name, StringComparer.OrdinalIgnoreCase).ToArray();
+    protected override void OnParametersSet() => Categories = [.. CategoryOptions.OrderBy(c => c.Name, StringComparer.OrdinalIgnoreCase)];
     private void ToggleCategory(long id, ChangeEventArgs args) => State.Finder.CategoryIDs = args.Value is true
-        ? State.Finder.CategoryIDs.Append(id).Distinct().ToArray() : State.Finder.CategoryIDs.Where(value => value != id).ToArray();
+        ? [.. State.Finder.CategoryIDs.Append(id).Distinct()] : [.. State.Finder.CategoryIDs.Where(value => value != id)];
     private void SelectGame(SelectOptionDto game) => State.Game = game;
     private void ClearGame() => State.GameId = null;
     private Task ApplyAsync(EditContext context) => OnApply.InvokeAsync();

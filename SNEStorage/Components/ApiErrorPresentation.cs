@@ -187,7 +187,7 @@ internal static class ApiErrorPresentation
             ServiceResultTypes.FileCreationError => new("The upload could not be saved", "We could not save your files. Please try again later.", error.ToString()),
             ServiceResultTypes.CancellationTokenError => new("The upload was interrupted", "Your submission has not been confirmed. Check its current state before trying again.", error.ToString()),
             ServiceResultTypes.ImageSurpassFramesLimit => new("Too many image frames", "Animated images can contain at most 1,800 frames. Choose a shorter animation.", error.ToString()),
-            ServiceResultTypes.InvalidImageSize => new("Unsupported image dimensions", "Choose an image with valid dimensions and no more than 4,194,304 pixels in total.", error.ToString()),
+            ServiceResultTypes.InvalidImageSize => new("Unsupported image dimensions", "Images can have up to 4,194,304 pixels. GIFs can have up to 229,376 pixels per frame (for example, 512 × 448).", error.ToString()),
             ServiceResultTypes.InvalidImageNumberOfFrames or ServiceResultTypes.InvalidImage => new("The image could not be read", "Choose a complete, valid PNG, JPG, GIF, WebP or AVIF image.", error.ToString()),
             ServiceResultTypes.FormReadingError => new("The file could not be read", "Select the file again and retry the upload.", error.ToString()),
             ServiceResultTypes.InvalidMime => new("Unsupported file format", "Choose a file format supported by this upload.", error.ToString()),

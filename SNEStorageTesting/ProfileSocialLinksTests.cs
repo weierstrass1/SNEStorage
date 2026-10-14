@@ -1,4 +1,3 @@
-using System.Reflection;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -6,7 +5,7 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
-using SNEStorage.Components.Pages;
+using SNEStorage.Components.Shared;
 using SNEStorage.Models;
 
 namespace SNEStorageTesting;
@@ -24,8 +23,6 @@ public class ProfileSocialLinksTests
     [InlineData("Paypal", "http://paypal.me/creator?locale.x=en_US", "https://paypal.me/creator")]
     [InlineData("Paypal", "https://www.paypal.com/paypalme/creator", "https://www.paypal.com/paypalme/creator")]
     [InlineData("BuyMeACoffee", "buymeacoffee.com/creator?utm_source=share", "https://buymeacoffee.com/creator")]
-    [InlineData("Discord", "https://discord.gg/AbC123", "https://discord.gg/AbC123")]
-    [InlineData("Discord", "https://discord.com/invite/AbC123?utm_source=share", "https://discord.com/invite/AbC123")]
     [InlineData("Discord", "https://discord.com/users/123456789012345678", "https://discord.com/users/123456789012345678")]
     [InlineData("Twitter", "@creator", "https://x.com/creator")]
     [InlineData("Twitter", "https://twitter.com/creator?s=21", "https://twitter.com/creator")]
@@ -43,10 +40,10 @@ public class ProfileSocialLinksTests
     [InlineData("Github", "https://github.com/creator-name?tab=repositories", "https://github.com/creator-name")]
     public void SupportedProfileFormatsProduceAbsoluteClickableLinks(string field, string value, string expected)
     {
-        var link = new ProfileFixture(field, value).Links.Single();
+        var (Href, DisplayText) = new ProfileFixture(field, value).Links.Single();
 
-        Assert.Equal(expected, link.Href);
-        Assert.DoesNotContain("Link format needs updating", link.DisplayText);
+        Assert.Equal(expected, Href);
+        Assert.DoesNotContain("Link format needs updating", DisplayText);
     }
 
     [Theory]
@@ -61,6 +58,8 @@ public class ProfileSocialLinksTests
     [InlineData("Paypal", "https://evil.example/creator")]
     [InlineData("BuyMeACoffee", "https://patreon.com/creator")]
     [InlineData("Discord", "https://discord.com/users/not-an-id")]
+    [InlineData("Discord", "https://discord.gg/AbC123")]
+    [InlineData("Discord", "https://discord.com/invite/AbC123?utm_source=share")]
     [InlineData("Twitter", "https://x.com/creator-name")]
     [InlineData("Facebook", "https://facebook.com/profile.php?id=not-an-id")]
     [InlineData("Youtube", "https://youtube.com/watch?v=video")]
@@ -72,19 +71,42 @@ public class ProfileSocialLinksTests
     [InlineData("Patreon", "ftp://patreon.com/creator")]
     public void InvalidLinksCannotBecomeClickable(string field, string value)
     {
-        var link = new ProfileFixture(field, value).Links.Single();
+        var (Href, DisplayText) = new ProfileFixture(field, value).Links.Single();
 
-        Assert.Null(link.Href);
-        Assert.Equal("Link format needs updating", link.DisplayText);
+        Assert.Null(Href);
+        Assert.Equal(field == "Discord" ? "Discord username needs updating" :
+            "Link format needs updating", DisplayText);
     }
 
     [Fact]
     public void NintendoNetworkIsDisplayedAsAnIdWithoutAHyperlink()
     {
-        var link = new ProfileFixture("NintendoNetwork", "player_1").Links.Single();
+        var (Href, DisplayText) = new ProfileFixture("NintendoNetwork", "player_1").Links.Single();
 
-        Assert.Null(link.Href);
-        Assert.Equal("player_1", link.DisplayText);
+        Assert.Null(Href);
+        Assert.Equal("player_1", DisplayText);
+    }
+
+    [Fact]
+    public void DiscordUsernameIsDisplayedWithoutAServerInvite()
+    {
+        var (Href, DisplayText) = new ProfileFixture("Discord", "creator.name").Links.Single();
+
+        Assert.Null(Href);
+        Assert.Equal("@creator.name", DisplayText);
+    }
+
+    [Fact]
+    public void LinkedDiscordAccountUsesItsUserIdAndUsername()
+    {
+        var fixture = new ProfileFixture("Discord", "https://discord.gg/old-invite");
+        fixture.Profile!.DiscordUserId = "123456789012345678";
+        fixture.Profile.DiscordUsername = "creator.name";
+
+        var (Href, DisplayText) = fixture.Links.Single();
+
+        Assert.Equal("https://discord.com/users/123456789012345678", Href);
+        Assert.Equal("@creator.name", DisplayText);
     }
 
     [Theory]
@@ -109,7 +131,15 @@ public class ProfileSocialLinksTests
 
         var html = await renderer.Dispatcher.InvokeAsync(async () =>
         {
-            var component = await renderer.RenderComponentAsync<RenderedProfileFixture>();
+            var component = await renderer.RenderComponentAsync<UserProfileView>(
+                ParameterView.FromDictionary(new Dictionary<string, object?>
+                {
+                    [nameof(UserProfileView.Profile)] = new UserInfo
+                    {
+                        UserId = "test-user",
+                        Patreon = "https://www.patreon.com/c/creator?utm_source=share"
+                    }
+                }));
             return component.ToHtmlString();
         });
 
@@ -120,34 +150,17 @@ public class ProfileSocialLinksTests
     }
 
     // Supply controller response data without a database or an authenticated browser session.
-    private sealed class ProfileFixture : Profile
+    private sealed class ProfileFixture : UserProfileView
     {
         public ProfileFixture(string field, string? value)
         {
             var profile = new UserInfo { UserId = "test-user" };
             typeof(UserInfo).GetProperty(field)!.SetValue(profile, value);
-            typeof(Profile).GetField("_profile", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(this, profile);
+            Profile = profile;
         }
 
         public IReadOnlyList<(string? Href, string DisplayText)> Links =>
-            SocialFields.Select(link => (link.Href, link.DisplayText)).ToArray();
-    }
-
-    private sealed class RenderedProfileFixture : Profile
-    {
-        public RenderedProfileFixture()
-        {
-            var flags = BindingFlags.Instance | BindingFlags.NonPublic;
-            typeof(Profile).GetField("_profile", flags)!.SetValue(this, new UserInfo
-            {
-                UserId = "test-user",
-                Patreon = "https://www.patreon.com/c/creator?utm_source=share"
-            });
-            typeof(Profile).GetField("_isLoading", flags)!.SetValue(this, false);
-            typeof(Profile).GetField("_isAuthenticated", flags)!.SetValue(this, true);
-        }
-
-        protected override Task OnAfterRenderAsync(bool firstRender) => Task.CompletedTask;
+            [.. SocialFields.Select(link => (link.Href, link.DisplayText))];
     }
 
     private sealed class TestNavigationManager : NavigationManager

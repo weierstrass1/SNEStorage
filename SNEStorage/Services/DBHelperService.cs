@@ -98,7 +98,7 @@ public class DBHelperService(
             _ => failure
         };
 
-        return result.Return(_logger, exception, methodName, filePath, line);
+        return result.Return(_logger, exception, filePath, methodName, line);
     }
     private async Task RunErrorCallback(Func<Task>? errorCallback, string filePath,
         string methodName, int line)
@@ -112,7 +112,7 @@ public class DBHelperService(
         }
         catch (Exception exception)
         {
-            ServiceResult.Error.Return(_logger, exception, methodName, filePath, line);
+            ServiceResult.Error.Return(_logger, exception, filePath, methodName, line);
         }
     }
     private Task ClearChangeTracker()

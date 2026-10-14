@@ -258,11 +258,11 @@ internal static class SocialProfileLinkRules
         if (platform == "Patreon" && !EqualsIgnoreCase(segments[0], "user"))
         {
             var profileSegmentCount = segments[0] is "c" or "cw" ? 2 : 1;
-            segments = segments.Take(profileSegmentCount).ToArray();
+            segments = [.. segments.Take(profileSegmentCount)];
         }
         else if (platform == "Twitch")
         {
-            segments = segments.Take(1).ToArray();
+            segments = [.. segments.Take(1)];
         }
 
         return "/" + string.Join('/', segments.Select(segment => Uri.EscapeDataString(segment).Replace("%40", "@")));
@@ -315,10 +315,9 @@ internal static class SocialProfileLinkRules
         return FacebookNumericId.IsMatch(value);
     }
 
-    private static string[] GetPathSegments(Uri uri) => uri.AbsolutePath
+    private static string[] GetPathSegments(Uri uri) => [.. uri.AbsolutePath
         .Split('/', StringSplitOptions.RemoveEmptyEntries)
-        .Select(Uri.UnescapeDataString)
-        .ToArray();
+        .Select(Uri.UnescapeDataString)];
 
     private static bool HasOneHandle(string[] segments, Regex pattern) =>
         segments.Length == 1 && Matches(pattern, segments[0]);

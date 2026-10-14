@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using EFCore.Migrations.CustomSql;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace SNEStorage.Models;
@@ -7,7 +8,8 @@ public partial class Resource
 {
     public static void Build(EntityTypeBuilder<Resource> entity)
     {
-        entity.ToTable("resource");
+        entity.ToTable("resource",
+            table => table.UseSqlOutputClause(false));
 
         entity.HasKey(p => p.Id)
             .HasName("PK_Resource");
@@ -49,7 +51,7 @@ public partial class Resource
             .HasColumnName("score_id");
         entity.HasOne(d => d.Score).WithOne(p => p.Resource)
             .HasForeignKey<Resource>(d => d.ScoreId)
-            .OnDelete(DeleteBehavior.Cascade)
+            .OnDelete(DeleteBehavior.NoAction)
             .HasConstraintName("FK_resource_score");
 
         entity.Property(e => e.VisibilityId)
@@ -73,5 +75,35 @@ public partial class Resource
             .HasForeignKey(d => d.SubmitterId)
             .OnDelete(DeleteBehavior.NoAction)
             .HasConstraintName("FK_resource_submitter");
+
+        entity.HasCustomSql(
+            name: "TR_resource_delete_score",
+            sqlUp: """
+                EXEC(N'
+                    CREATE OR ALTER TRIGGER [dbo].[TR_resource_delete_score]
+                    ON [dbo].[resource]
+                    AFTER DELETE
+                    AS
+                    BEGIN
+                        SET NOCOUNT ON;
+
+                        IF NOT EXISTS (SELECT 1 FROM deleted)
+                            RETURN;
+
+                        DELETE s
+                        FROM [dbo].[score] AS s
+                        INNER JOIN deleted AS d ON d.[score_id] = s.[id]
+                        WHERE NOT EXISTS (
+                            SELECT 1 FROM [dbo].[comment] AS c
+                            WHERE c.[score_id] = s.[id]
+                        )
+                        AND NOT EXISTS (
+                            SELECT 1 FROM [dbo].[resource] AS r
+                            WHERE r.[score_id] = s.[id]
+                        );
+                    END;
+                ');
+                """,
+            sqlDown: "DROP TRIGGER IF EXISTS [dbo].[TR_resource_delete_score];");
     }
 }

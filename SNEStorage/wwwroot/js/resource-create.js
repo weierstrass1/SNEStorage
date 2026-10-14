@@ -1,11 +1,10 @@
-import { appendPreviews } from "./resource-previews.js?v=2";
+import { appendPreviews, validatePreviews } from "./resource-previews.js?v=3";
+import { basicUploadError } from "./upload-validation.js?v=1";
 import { captchaFetch } from "./captcha.js?v=3";
 import { validateVersionInputs } from "./resource-version.js?v=2";
 import { validateResourceTextFields } from "./resource-form-validation.js?v=1";
 
 const uploads = new Map();
-const maxArchiveBytes = 250 * 1024 * 1024;
-const archiveExtensions = [".zip", ".rar", ".7z", ".tar", ".gz"];
 
 async function readResponse(response) {
     if (response.status === 401) window.dispatchEvent(new Event("snestorage-session-rejected"));
@@ -38,7 +37,7 @@ function invalidMessage(field) {
     return `Check ${label} before submitting.`;
 }
 
-export function validateResourceForm(formId) {
+export async function validateResourceForm(formId) {
     const form = document.getElementById(formId);
     if (!(form instanceof HTMLFormElement)) return { valid: false, tab: 0, message: "The form is unavailable." };
     // Check trimmed text as well as native constraints, including values restored by Blazor.
@@ -49,10 +48,10 @@ export function validateResourceForm(formId) {
         tab: Number(invalid.closest("[data-resource-tab-panel]")?.dataset.resourceTabPanel ?? 0),
         message: invalidMessage(invalid) };
     const archive = form.elements.namedItem("File")?.files?.[0];
-    if (!archive || archive.size === 0 || archive.size > maxArchiveBytes ||
-        !archiveExtensions.some(extension => archive.name.toLowerCase().endsWith(extension))) {
-        return { valid: false, tab: 1, message: "Choose a nonempty supported archive, no larger than 250 MB." };
-    }
+    const archiveError = basicUploadError(archive, "archive");
+    if (archiveError) return { valid: false, tab: 1, message: archiveError };
+    const previewError = await validatePreviews("resource-previews");
+    if (previewError) return { valid: false, tab: 2, message: previewError };
     return { valid: true, tab: 0, message: "" };
 }
 
@@ -96,7 +95,7 @@ export async function getCreateOptions() {
 
 export async function submitResource(formId) {
     const form = document.getElementById(formId);
-    if (!(form instanceof HTMLFormElement) || !validateResourceForm(formId).valid) {
+    if (!(form instanceof HTMLFormElement) || !(await validateResourceForm(formId)).valid) {
         return { status: 0, body: "", contentType: "" };
     }
 

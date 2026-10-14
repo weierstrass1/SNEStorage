@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using OneOf;
-using SNEStorage.Discord;
 using SNEStorage.DTOs;
 using SNEStorage.Models;
 using SNEStorage.Services.Interfaces;

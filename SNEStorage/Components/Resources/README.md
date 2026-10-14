@@ -16,6 +16,26 @@ Votes update only after the controller confirms success; the GET remains the sou
 for aggregate counts after refresh. Deleted comments are shown only while HasReplies
 is true. Edit/delete refresh the loaded pages without repeating the mutation.
 
+## Browser upload validation
+
+Avatar selection, registration, profile editing, resource creation/editing and new
+versions use `wwwroot/js/upload-validation.js` before submitting files. Limits
+match FileService: 5 MiB per avatar/preview, 20 total previews (including retained
+previews when editing), 250 MiB per resource archive, 4,194,304 pixels per image,
+229,376 pixels per GIF frame, and 1,800 image frames.
+
+PNG/JPEG/WebP/GIF dimensions and GIF/APNG/WebP frame counts are read locally from
+file headers/blocks. GIF compressed frame data is skipped rather than expanded.
+AVIF dimensions use the browser image decoder; its frame count is checked using
+ImageDecoder when supported. Video metadata is inspected when the browser can
+play its codec. Unsupported codec/frame metadata and complete archive/image
+integrity remain validated by the backend. Temporary object URLs are released.
+
+Invalid previews are not retained, and local validation messages stop requests
+before CAPTCHA. Inspection results are reused for the same immutable File object
+within the browser; no server cache or upload is involved. New JS module URLs are
+versioned so deployments load the changed validators.
+
 ## Resource text validation
 
 Creation and editing share browser validation in resource-form-validation.js:

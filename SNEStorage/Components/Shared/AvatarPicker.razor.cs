@@ -24,7 +24,7 @@ public partial class AvatarPicker : IAsyncDisposable
         if (!firstRender || _disposed) return;
         try
         {
-            _module = await JavaScript.InvokeAsync<IJSObjectReference>("import", "./js/avatar-picker.js?v=3");
+            _module = await JavaScript.InvokeAsync<IJSObjectReference>("import", "./js/avatar-picker.js?v=4");
             if (!_disposed) await _module.InvokeVoidAsync("initializeAvatarPicker", PickerId);
         }
         catch (Exception exception) when (exception is JSDisconnectedException or OperationCanceledException) { }

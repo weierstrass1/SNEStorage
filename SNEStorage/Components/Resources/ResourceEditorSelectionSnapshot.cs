@@ -22,17 +22,16 @@ internal sealed class ResourceEditorSelectionSnapshot
         RepositoryURL = resource.RepositoryURL,
         CurrentUserId = userId,
         Version = version is null ? null : new VersionSelection(version.Version, version.ChangeLog, version.SealOfQualityRequested),
-        Tags = resource.Tags
+        Tags = [.. resource.Tags
             .Where(tag => !string.IsNullOrWhiteSpace(tag.Name))
-            .Select(tag => new TagSelection(tag.Id, tag.Name)).ToArray(),
-        Types = resource.Types
-            .Select(type => new TypeSelection(type.Id, type.ResourceTypeId)).ToArray(),
-        Authors = data.Authors.Select(author => new AuthorSelection(author.Id, author.UserSummary.Id)).ToArray(),
-        ExternalAuthors = data.ExternalAuthors.Select(author => new TagSelection(author.Id, author.Author)).ToArray(),
-        Dependencies = data.Dependencies.Select(dependency => new DependencySelection(dependency.Id, dependency.DependencyResourceId)).ToArray(),
-        ExternalDependencies = data.ExternalDependencies.Select(dependency => new ExternalDependencySelection(
-            dependency.Id, dependency.DependencyName, dependency.DependencyURL, dependency.Mirror1, dependency.Mirror2, dependency.Mirror3, dependency.Mirror4)).ToArray(),
-        PreviewIds = data.Previews.Select(preview => preview.Id).ToArray()
+            .Select(tag => new TagSelection(tag.Id, tag.Name))],
+        Types = [.. resource.Types.Select(type => new TypeSelection(type.Id, type.ResourceTypeId))],
+        Authors = [.. data.Authors.Select(author => new AuthorSelection(author.Id, author.UserSummary.Id))],
+        ExternalAuthors = [.. data.ExternalAuthors.Select(author => new TagSelection(author.Id, author.Author))],
+        Dependencies = [.. data.Dependencies.Select(dependency => new DependencySelection(dependency.Id, dependency.DependencyResourceId))],
+        ExternalDependencies = [.. data.ExternalDependencies.Select(dependency => new ExternalDependencySelection(
+            dependency.Id, dependency.DependencyName, dependency.DependencyURL, dependency.Mirror1, dependency.Mirror2, dependency.Mirror3, dependency.Mirror4))],
+        PreviewIds = [.. data.Previews.Select(preview => preview.Id)]
     };
 
     internal sealed record TagSelection(long Id, string Name);

@@ -57,7 +57,7 @@ public partial class ResourceDependencyPicker : IAsyncDisposable
         await SearchAsync(debounce: true);
     }
     private Task RetryAsync() => SearchAsync(debounce: false);
-    private Task RemoveAsync(long id) => ValuesChanged.InvokeAsync(Values.Where(value => value != id).ToArray());
+    private Task RemoveAsync(long id) => ValuesChanged.InvokeAsync([.. Values.Where(value => value != id)]);
     private async Task AddAsync(SelectOptionDto item)
     {
         var id = item.Id;
@@ -68,7 +68,7 @@ public partial class ResourceDependencyPicker : IAsyncDisposable
         _search = string.Empty;
         _matches = [];
         _loading = false;
-        await ValuesChanged.InvokeAsync(Values.Append(id).ToArray());
+        await ValuesChanged.InvokeAsync([.. Values, id]);
     }
 
     private async Task SearchAsync(bool debounce)
@@ -95,9 +95,9 @@ public partial class ResourceDependencyPicker : IAsyncDisposable
                 _error = ApiErrorPresentation.Describe(response.Status, response.Body, "search").Message;
                 return;
             }
-            _matches = (JsonSerializer.Deserialize<List<SelectOptionDto>>(response.Body, JsonOptions) ?? [])
+            _matches = [.. (JsonSerializer.Deserialize<List<SelectOptionDto>>(response.Body, JsonOptions) ?? [])
                 .Where(item => item.Id > 0 && !string.IsNullOrWhiteSpace(item.Name))
-                .DistinctBy(item => item.Id).Take(MaxResults).ToList();
+                .DistinctBy(item => item.Id).Take(MaxResults)];
         }
         catch (OperationCanceledException) when (token.IsCancellationRequested) { }
         catch (Exception exception) when (exception is JSException or JsonException)

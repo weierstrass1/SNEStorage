@@ -12,6 +12,7 @@ public partial class ResourcePreviewPicker : IAsyncDisposable
     private List<PreviewItem> _items = [];
     private List<string> _errors = [];
     private bool _ready;
+    private bool _checking;
     private bool _disposed;
     [Inject] private IJSRuntime JavaScript { get; set; } = default!;
     [Inject] private ILogger<ResourcePreviewPicker> Logger { get; set; } = default!;
@@ -21,7 +22,7 @@ public partial class ResourcePreviewPicker : IAsyncDisposable
         if (!firstRender || _disposed) return;
         try
         {
-            var module = await JavaScript.InvokeAsync<IJSObjectReference>("import", "./js/resource-previews.js?v=2");
+            var module = await JavaScript.InvokeAsync<IJSObjectReference>("import", "./js/resource-previews.js?v=3");
             if (_disposed) { await module.DisposeAsync(); return; }
             _module = module;
             _ready = true;
@@ -43,6 +44,8 @@ public partial class ResourcePreviewPicker : IAsyncDisposable
     private async Task UpdateAsync(string method, params object[] args)
     {
         if (_module is null || _disposed) return;
+        if (_checking) return;
+        _checking = method == "addPreviews";
         try
         {
             var selection = await _module.InvokeAsync<PreviewSelection>(method, args);
@@ -55,6 +58,7 @@ public partial class ResourcePreviewPicker : IAsyncDisposable
             Logger.LogWarning(exception, "Preview selection failed.");
             _errors = ["The preview selection could not be updated. Please try again."];
         }
+        finally { _checking = false; }
     }
 
     public async ValueTask DisposeAsync()

@@ -9,10 +9,10 @@ public partial class ResourceVersion
 {
     public required long Id { get; set; }
     [StringLength(10000, MinimumLength = 10)]
-    public required string ChangeLog { get; set; }
+    public string? ChangeLog { get; set; }
     [StringLength(25)]
     [RegularExpression(@"(?i)\A[0-9]{1,4}(?:\.[0-9]{1,4}){0,2}(?:-(?:alpha|beta|rc)(?:\.[0-9]{1,4})?)?\z")]
-    public required string Version { get; set; }
+    public string? Version { get; set; }
     public int Downloads { get; set; }
     public required long ResourceId { get; set; }
     public required long FileId { get; set; }

@@ -18,6 +18,11 @@ public static class ServiceResultExtensions
             ActionResultType.Ok =>
                 controller.Ok(value ?? response),
 
+            ActionResultType.NotImplemented =>
+                controller.StatusCode(
+                    StatusCodes.Status501NotImplemented,
+                    response),
+
             ActionResultType.NoContent =>
                 controller.NoContent(),
 

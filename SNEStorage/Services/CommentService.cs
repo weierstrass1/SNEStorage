@@ -109,12 +109,9 @@ public class CommentService(SnestorageContext context, DBHelperService dbHelperS
             return ServiceResult.CantLikeDeletedComment.Return(_logger);
 
         var likeQuery = _context.LikesUsers
-            .Include(like => like.Score)
-            .ThenInclude(score => score!.Comment)
-            .Where(like => like.UserId == userId &&
-                like.Score != null &&
-                like.Score.Comment != null &&
-                like.Score.Comment.Id == commentId);
+            .Where(like =>
+                like.UserId == userId &&
+                like.ScoreId == comment.ScoreId);
 
         var likeResult = await _dbHelperService.TryFunction(
             cancel => likeQuery.FirstOrDefaultAsync(cancel),
@@ -201,10 +198,16 @@ public class CommentService(SnestorageContext context, DBHelperService dbHelperS
         if (string.IsNullOrWhiteSpace(userId))
             return ServiceResult.Unauthorized.Return(_logger);
 
-        var likeQuery = _context.LikesUsers.AsNoTracking()
-            .Where(like => like.UserId == userId &&
-                like.Score!.Comment != null &&
-                like.Score.Comment.Id == commentId);
+        var permission = await CheckResourcePermissionFromComment(commentId, ct);
+
+        if (!permission.TryPickT0(out var comment, out var permissionError))
+            return permissionError;
+
+        var likeQuery = _context.LikesUsers
+            .AsNoTracking()
+            .Where(like =>
+                like.UserId == userId &&
+                like.ScoreId == comment.ScoreId);
 
         var likeResult = await _dbHelperService.TryFunction(
             cancel => likeQuery.FirstOrDefaultAsync(cancel),
@@ -259,7 +262,7 @@ public class CommentService(SnestorageContext context, DBHelperService dbHelperS
                 return permission;
         }
 
-        var userResult = await UserNameDTO.FromUser(_accountService);
+        var userResult = await _accountService.GetUserInfo(ct);
 
         if (!userResult.TryPickT0(out var user, out var userError))
         {
@@ -280,7 +283,7 @@ public class CommentService(SnestorageContext context, DBHelperService dbHelperS
                 UserId = userId,
                 Text = commentText,
                 PublishDate = DateTime.UtcNow,
-                UserSummary = user
+                UserSummary = user.UserSummary
             }
         };
 
@@ -388,8 +391,7 @@ public class CommentService(SnestorageContext context, DBHelperService dbHelperS
         var commentQuery = _context.Comments.AsNoTracking()
             .Include(comment => comment.ResourceComment)
             .Where(comment =>
-                comment.Id == commentId &&
-                comment.ResourceComment != null);
+                comment.Id == commentId);
 
         var commentResult = await _dbHelperService.TryFunction(
             cancel => commentQuery.FirstOrDefaultAsync(cancel),
@@ -401,13 +403,15 @@ public class CommentService(SnestorageContext context, DBHelperService dbHelperS
         if (comment is null)
             return ServiceResult.CommentNotFound.Return(_logger);
 
+        if(comment.ResourceComment == null)
+            return ServiceResult.Invalid.Return(_logger);
+
         var permission = await CheckResourcePermission(
             comment.ResourceComment!.ResourceId, ct);
 
         return permission.Result == ServiceResult.Success ?
             comment : permission;
     }
-
     private async Task<ServiceResultContext> CheckResourcePermissionFromCommentId(
         long commentId, CancellationToken ct)
     {
@@ -416,43 +420,42 @@ public class CommentService(SnestorageContext context, DBHelperService dbHelperS
         return permission.TryPickT0(out _, out var permissionError) ?
             ServiceResult.Success.Return(_logger) : permissionError;
     }
-
     private async Task<ServiceResultContext> CheckResourcePermission(
         long resourceId, CancellationToken ct)
     {
-        var resourceQuery = _context.Resources.AsNoTracking()
-            .Include(resource => resource.ResourceVersions)
-            .Include(resource => resource.ResourcesAuthors)
-            .Where(resource => resource.Id == resourceId);
+        string? userId = _accountService.GetUserID();
+        bool hasUser = !string.IsNullOrWhiteSpace(userId);
+        bool isStaff = _accountService.IsModeratorOrAdmin();
 
-        var resourceResult = await _dbHelperService.TryFunction(
-            cancel => resourceQuery.FirstOrDefaultAsync(cancel),
+        var query = _context.Resources
+            .Where(resource => resource.Id == resourceId)
+            .Select(resource => (bool?)(
+                resource.VisibilityId != 3 ||
+                isStaff ||
+                hasUser && (
+                    resource.SubmitterId == userId ||
+                    resource.ResourcesAuthors.Any(author =>
+                        author.UserId == userId) ||
+                    resource.ResourceVersions.Any(version =>
+                        version.SubmitterUserId == userId))));
+
+        var result = await _dbHelperService.TryFunction(
+            cancel => query.FirstOrDefaultAsync(cancel),
             ServiceResult.DBError, ct: ct);
 
-        if (!resourceResult.TryPickT0(out var resource, out var resourceError))
-            return resourceError;
+        if (!result.TryPickT0(out var hasPermission, out var error))
+            return error;
 
-        if (resource is null)
+        if (hasPermission is null)
             return ServiceResult.ResourceNotFound.Return(_logger);
 
-        string? userId = _accountService.GetUserID();
-
-        bool hasPermission = resource.VisibilityId != 3 ||
-            resource.SubmitterId == userId ||
-            resource.ResourceVersions.Any(version =>
-                version.SubmitterUserId == userId) ||
-            resource.ResourcesAuthors.Any(author => author.UserId == userId) ||
-            _accountService.IsModeratorOrAdmin();
-
-        if (hasPermission)
+        if (hasPermission == true)
             return ServiceResult.Success.Return(_logger);
 
-        if (string.IsNullOrWhiteSpace(userId))
-            return ServiceResult.Unauthorized.Return(_logger);
-
-        return ServiceResult.Forbidden.Return(_logger);
+        return hasUser ?
+            ServiceResult.Forbidden.Return(_logger) :
+            ServiceResult.Unauthorized.Return(_logger);
     }
-
     private OneOf<IQueryable<Comment>, ServiceResultContext> GetStart(
         int maxAmount, int page, CommentSorting sort)
     {

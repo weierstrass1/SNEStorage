@@ -71,6 +71,7 @@ public enum ServiceResultTypes
     AvatarLoadError,
     UserCreationError,
     TokenCreationError,
+    AccountLockedOut,
 
     // Archivos
     FileNotFound,

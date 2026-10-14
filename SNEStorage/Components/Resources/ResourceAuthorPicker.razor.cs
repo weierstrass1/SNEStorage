@@ -41,7 +41,7 @@ public partial class ResourceAuthorPicker : IAsyncDisposable
         // IAmAuthor already credits the submitter; do not send that account a second time.
         if (!External && ExcludedUserId is not null && Values.Contains(ExcludedUserId, Comparer))
         {
-            await ValuesChanged.InvokeAsync(Values.Where(value => value != ExcludedUserId).ToArray());
+            await ValuesChanged.InvokeAsync([.. Values.Where(value => value != ExcludedUserId)]);
         }
     }
 
@@ -88,11 +88,11 @@ public partial class ResourceAuthorPicker : IAsyncDisposable
         if (Values.Contains(choice.Value, Comparer) || (!External && choice.Value == ExcludedUserId)) return;
         if (!External) _usernames[choice.Value] = choice.Name;
         ClearSearch();
-        await ValuesChanged.InvokeAsync(Values.Append(choice.Value).ToArray());
+        await ValuesChanged.InvokeAsync([.. Values, choice.Value]);
     }
 
     private Task RemoveAsync(string value) => ValuesChanged.InvokeAsync(
-        Values.Where(selected => !Comparer.Equals(selected, value)).ToArray());
+        [.. Values.Where(selected => !Comparer.Equals(selected, value))]);
 
     private void ClearSearch()
     {
@@ -136,17 +136,17 @@ public partial class ResourceAuthorPicker : IAsyncDisposable
             if (External)
             {
                 var names = JsonSerializer.Deserialize<List<string?>>(response.Body, JsonOptions) ?? [];
-                _matches = names.Where(name => !string.IsNullOrWhiteSpace(name)).Select(name => name!.Trim())
+                _matches = [.. names.Where(name => !string.IsNullOrWhiteSpace(name)).Select(name => name!.Trim())
                     .Distinct(StringComparer.OrdinalIgnoreCase).Take(MaxResults)
-                    .Select(name => new AuthorChoice(name, name)).ToList();
+                    .Select(name => new AuthorChoice(name, name))];
             }
             else
             {
                 // Consume only the public account fields needed to choose an author.
                 var users = JsonSerializer.Deserialize<List<UserChoice>>(response.Body, JsonOptions) ?? [];
-                _matches = users.Where(user => !string.IsNullOrWhiteSpace(user.Id) && !string.IsNullOrWhiteSpace(user.Username))
+                _matches = [.. users.Where(user => !string.IsNullOrWhiteSpace(user.Id) && !string.IsNullOrWhiteSpace(user.Username))
                     .DistinctBy(user => user.Id, StringComparer.Ordinal).Take(MaxResults)
-                    .Select(user => new AuthorChoice(user.Id, user.Username)).ToList();
+                    .Select(user => new AuthorChoice(user.Id, user.Username))];
             }
         }
         catch (OperationCanceledException) when (token.IsCancellationRequested)

@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using OneOf;
-using SNEStorage.Discord;
 using SNEStorage.DTOs;
 using SNEStorage.Models;
 using System.IdentityModel.Tokens.Jwt;
@@ -283,6 +282,12 @@ public class AccountService(
 
         if (!signInResult.TryPickT0(out var result, out var signInError))
             return signInError;
+
+        if (result.IsLockedOut)
+            return ServiceResult.AccountLockedOut.Return(_logger);
+
+        if (result.IsNotAllowed)
+            return ServiceResult.EmailNotConfirmed.Return(_logger);
 
         if (!result.Succeeded)
             return ServiceResult.InvalidPassword.Return(_logger);

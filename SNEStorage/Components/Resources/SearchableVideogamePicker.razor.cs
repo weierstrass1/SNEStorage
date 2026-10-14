@@ -157,7 +157,7 @@ public partial class SearchableVideogamePicker : IAsyncDisposable
             var choices = JsonSerializer.Deserialize<List<SelectOptionDto>>(response.Body, JsonOptions) ?? [];
             if (term.Length == 0)
             {
-                _defaults = choices.Where(game => game.Id is 1 or 2).OrderBy(game => game.Id).ToList();
+                _defaults = [.. choices.Where(game => game.Id is 1 or 2).OrderBy(game => game.Id)];
                 _matches = _defaults;
                 if (AutoSelectAny && Value is null && _defaults.FirstOrDefault(game => game.Id == 1) is { } anyGame)
                 {

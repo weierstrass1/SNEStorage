@@ -103,7 +103,7 @@ public partial class ProfileEdit : IAsyncDisposable
         }
         try
         {
-            _profileModule = await JavaScript.InvokeAsync<IJSObjectReference>("import", _lifetime.Token, "./js/profile.js?v=10");
+            _profileModule = await JavaScript.InvokeAsync<IJSObjectReference>("import", _lifetime.Token, "./js/profile.js?v=11");
         }
         catch (Exception exception) when (exception is JSDisconnectedException or JSException or OperationCanceledException)
         {
@@ -151,6 +151,12 @@ public partial class ProfileEdit : IAsyncDisposable
             if (_disposed) return;
 
             using var response = JsonDocument.Parse(responseJson);
+            if (response.RootElement.TryGetProperty("validationMessage", out var validationMessage)
+                && !string.IsNullOrWhiteSpace(validationMessage.GetString()))
+            {
+                _feedback = validationMessage.GetString();
+                return;
+            }
             var statusCode = response.RootElement.GetProperty("status").GetInt32();
             var body = response.RootElement.TryGetProperty("body", out var responseBody)
                 && responseBody.ValueKind == JsonValueKind.String ? responseBody.GetString() : null;

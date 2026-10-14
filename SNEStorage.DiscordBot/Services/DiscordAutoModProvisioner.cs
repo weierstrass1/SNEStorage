@@ -198,7 +198,7 @@ public sealed class DiscordAutoModProvisioner(
     private static AutoModRuleActionProperties[] BuildActions(
         IEnumerable<string> configuredActions,
         ulong alertChannelId) =>
-        configuredActions.Select(action => action.ToUpperInvariant() switch
+        [.. configuredActions.Select(action => action.ToUpperInvariant() switch
         {
             "BLOCK_MESSAGE" => new AutoModRuleActionProperties
             {
@@ -210,7 +210,7 @@ public sealed class DiscordAutoModProvisioner(
                 ChannelId = alertChannelId
             },
             _ => throw new InvalidOperationException($"Unknown AutoMod action: {action}.")
-        }).ToArray();
+        })];
 
     private static ulong[] ResolveExemptRoles(
         SocketGuild guild,

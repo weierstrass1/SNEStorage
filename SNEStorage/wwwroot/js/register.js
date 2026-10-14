@@ -1,4 +1,5 @@
 import { captchaFetch } from "./captcha.js?v=3";
+import { basicUploadError, validateUpload } from "./upload-validation.js?v=1";
 
 const submissions = new Map();
 const validationStates = new Map();
@@ -58,6 +59,9 @@ function validateRegistration(state) {
     const username = field("User").value;
     const birthday = field("Birthday");
     const avatar = field("Avatar").files?.[0];
+    let avatarError = avatar ? basicUploadError(avatar, "avatar") : "Choose a PNG or JPG avatar.";
+    if (!avatarError && !/\.(png|jpe?g)$/i.test(avatar.name)) avatarError = "Choose a PNG or JPG image for your avatar.";
+    if (!avatarError && state.avatarInspection?.file === avatar) avatarError = state.avatarInspection.message;
     const messages = {
         User: !username.trim() ? "Enter a username." :
             rules.allowedUsernameCharacters && username.split("").some(character => !rules.allowedUsernameCharacters.includes(character)) ?
@@ -71,11 +75,7 @@ function validateRegistration(state) {
         Birthday: !birthday.value || birthday.validity.badInput ? "Enter a valid date of birth." :
             birthday.validity.rangeOverflow ? "Your date of birth cannot be in the future." :
             birthday.value < "0001-01-01" ? "Enter a valid date of birth." : "",
-        Avatar: !avatar ? "Choose a PNG or JPG avatar." :
-            avatar.size === 0 ? "The avatar image is empty. Choose another image." :
-            avatar.size > 5 * 1024 * 1024 ? "Your avatar image is too large. Choose an image no larger than 5 MB." :
-            !/\.(png|jpe?g)$/i.test(avatar.name) || !["image/png", "image/jpeg"].includes(avatar.type.toLowerCase()) ?
-                "Choose a PNG or JPG image for your avatar." : "",
+        Avatar: avatarError,
         TimeZoneId: validOption(field("TimeZoneId")) ? "" : "Choose a time zone.",
         EmailVisibilityId: validOption(field("EmailVisibilityId")) ? "" : "Choose an email visibility option."
     };
@@ -108,6 +108,13 @@ export async function submitRegistration(formId) {
         return { status: 0, body: "", redirectUrl: "" };
     validation.showAll = true;
     if (!validateRegistration(validation)) {
+        focusInvalidField(form);
+        return { status: 400, body: "", redirectUrl: "", validationFailed: true };
+    }
+    const avatar = form.elements.namedItem("Avatar").files?.[0];
+    const avatarError = await validateUpload(avatar, "avatar");
+    validation.avatarInspection = { file: avatar, message: avatarError };
+    if (avatar !== form.elements.namedItem("Avatar").files?.[0] || !validateRegistration(validation)) {
         focusInvalidField(form);
         return { status: 400, body: "", redirectUrl: "", validationFailed: true };
     }

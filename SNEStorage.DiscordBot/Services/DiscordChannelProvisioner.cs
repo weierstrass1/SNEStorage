@@ -804,7 +804,7 @@ public sealed class DiscordChannelProvisioner(
         IEnumerable<DiscordPermissionOverwriteConfigDTO> configuredOverwrites,
         IReadOnlyDictionary<string, ulong> roleTargets)
     {
-        return configuredOverwrites.Select(configured =>
+        return [.. configuredOverwrites.Select(configured =>
         {
             if (!roleTargets.TryGetValue(configured.Target, out var roleId))
                 throw new InvalidOperationException($"Unknown permission target: {configured.Target}.");
@@ -820,7 +820,7 @@ public sealed class DiscordChannelProvisioner(
                 roleId,
                 PermissionTarget.Role,
                 new OverwritePermissions(allow, deny));
-        }).ToArray();
+        })];
     }
 
     private static void ValidatePermissionProfiles(DiscordServerSetupConfigDTO configuration)

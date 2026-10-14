@@ -2,9 +2,8 @@
 using Discord.WebSocket;
 using Microsoft.Extensions.Options;
 using SNEStorage.DiscordBot.DTOs;
-using SNEStorage.DiscordBot.Services;
 
-namespace SNEStorage.DiscordBot;
+namespace SNEStorage.DiscordBot.Services;
 
 public sealed class DiscordSetupWorker(
     DiscordSocketClient client,

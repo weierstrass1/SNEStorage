@@ -12,9 +12,9 @@ public partial class ResourceExistingPreviews
     [Parameter] public EventCallback<long[]> ValuesChanged { get; set; }
     [Parameter] public bool LoadMedia { get; set; }
 
-    private IReadOnlyList<ResourcePreview> KeptPreviews => Previews.Where(preview => Values.Contains(preview.Id)).ToArray();
+    private IReadOnlyList<ResourcePreview> KeptPreviews => [.. Previews.Where(preview => Values.Contains(preview.Id))];
     private static string FileName(ResourcePreview preview) =>
         preview.File?.URL is { Length: > 0 } path ? Path.GetFileName(path.Replace('\\', '/')) : $"Preview #{preview.Id}";
     private Task ToggleAsync(long id) => ValuesChanged.InvokeAsync(Values.Contains(id)
-        ? Values.Where(value => value != id).ToArray() : Values.Append(id).ToArray());
+        ? [.. Values.Where(value => value != id)] : [.. Values, id]);
 }

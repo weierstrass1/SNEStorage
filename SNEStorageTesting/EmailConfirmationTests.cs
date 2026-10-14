@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Components.Web.HtmlRendering;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.JSInterop;
 using SNEStorage.Components.Pages;
 using SNEStorage.Controllers;
 
@@ -18,7 +19,8 @@ public class EmailConfirmationTests
     public void ConfirmationRequestMatchesTheAnonymousControllerRouteAndBindings()
     {
         var action = typeof(RegisterController).GetMethod(nameof(RegisterController.Confirmed))!;
-        Assert.Equal("/Register/Confirmed/{userId}", action.GetCustomAttribute<HttpPostAttribute>()!.Template);
+        Assert.Equal("api/register", typeof(RegisterController).GetCustomAttribute<Microsoft.AspNetCore.Mvc.RouteAttribute>()!.Template);
+        Assert.Equal("confirmed/{userId}", action.GetCustomAttribute<HttpPostAttribute>()!.Template);
         Assert.NotNull(action.GetCustomAttribute<AllowAnonymousAttribute>());
 
         var userId = action.GetParameters().Single(parameter => parameter.Name == "userId");
@@ -39,7 +41,8 @@ public class EmailConfirmationTests
         await using var page = await RenderedPage.CreateAsync(HttpStatusCode.OK, userId, code);
         await page.StartAsync();
 
-        Assert.Equal(0, page.Handler.RequestCount);
+        Assert.Equal(0, page.Module.RequestCount);
+        Assert.Equal(0, page.JavaScript.ImportCount);
         Assert.Contains("This link is incomplete", await page.HtmlAsync());
         Assert.Null(page.Navigation.LastDestination);
     }
@@ -53,15 +56,16 @@ public class EmailConfirmationTests
         var startedAt = System.Diagnostics.Stopwatch.StartNew();
         await page.StartAsync();
 
-        Assert.Equal(HttpMethod.Post, page.Handler.Method);
-        Assert.Equal("https://snestorage.test/Register/Confirmed/test-user?token=code_with-URL-safe%2Bcharacters%3D", page.Handler.RequestUri!.AbsoluteUri);
+        Assert.Equal("confirmEmail", page.Module.RequestIdentifier);
+        Assert.Equal("./js/email-confirmation.js?v=1", page.JavaScript.ImportPath);
+        Assert.Equal("https://snestorage.test/api/register/confirmed/test-user?token=code_with-URL-safe%2Bcharacters%3D", page.Module.RequestUrl);
         Assert.Contains("Email confirmed!", await page.HtmlAsync());
         Assert.Equal("/Login?emailConfirmed=1", page.Navigation.LastDestination);
         Assert.True(page.Navigation.ForceLoad);
         Assert.True(startedAt.Elapsed >= TimeSpan.FromSeconds(3));
 
         await page.StartAsync(firstRender: false);
-        Assert.Equal(1, page.Handler.RequestCount);
+        Assert.Equal(1, page.Module.RequestCount);
     }
 
     [Theory]
@@ -94,22 +98,13 @@ public class EmailConfirmationTests
         Assert.Null(page.Navigation.LastDestination);
     }
 
-    [Fact]
-    public async Task AnHtmlResponseIsNotTreatedAsConfirmation()
+    // The browser module returns 502 for HTML and 0 for failed/redirected fetches.
+    [Theory]
+    [InlineData(502)]
+    [InlineData(0)]
+    public async Task BrowserRejectedResponsesAreNotTreatedAsConfirmation(int status)
     {
-        await using var page = await RenderedPage.CreateAsync(HttpStatusCode.OK);
-        page.Handler.ContentType = "text/html";
-        await page.StartAsync();
-
-        Assert.Contains("Confirmation unavailable", await page.HtmlAsync());
-        Assert.Null(page.Navigation.LastDestination);
-    }
-
-    [Fact]
-    public async Task AControllerRedirectIsNotTreatedAsConfirmation()
-    {
-        await using var page = await RenderedPage.CreateAsync(HttpStatusCode.OK);
-        page.Handler.FinalUri = new Uri("https://snestorage.test/Login");
+        await using var page = await RenderedPage.CreateAsync((HttpStatusCode)status);
         await page.StartAsync();
 
         Assert.Contains("Confirmation unavailable", await page.HtmlAsync());
@@ -125,10 +120,12 @@ public class EmailConfirmationTests
 
         Assert.Contains("Email confirmed!", await page.HtmlAsync());
         Assert.Null(page.Navigation.LastDestination);
-        await page.Renderer.Dispatcher.InvokeAsync(() => page.Capture.Component!.Dispose());
+        await page.Renderer.Dispatcher.InvokeAsync(async () => await page.Capture.Component!.DisposeAsync());
         await confirmation!;
 
         Assert.Null(page.Navigation.LastDestination);
+        Assert.Equal(page.Module.RequestKey, page.Module.CancelledKey);
+        Assert.True(page.Module.Disposed);
     }
 
     [Fact]
@@ -136,10 +133,11 @@ public class EmailConfirmationTests
     {
         await using var page = await RenderedPage.CreateAsync(HttpStatusCode.ServiceUnavailable);
         await page.StartAsync();
-        page.Handler.Status = HttpStatusCode.BadRequest;
+        page.Module.Status = HttpStatusCode.BadRequest;
         await page.Renderer.Dispatcher.InvokeAsync(() => page.Capture.Component!.RetryConfirmationAsync());
 
-        Assert.Equal(2, page.Handler.RequestCount);
+        Assert.Equal(2, page.Module.RequestCount);
+        Assert.Equal(1, page.JavaScript.ImportCount);
         Assert.Contains("This link could not be verified", await page.HtmlAsync());
         Assert.Null(page.Navigation.LastDestination);
     }
@@ -148,19 +146,20 @@ public class EmailConfirmationTests
     {
         private readonly ServiceProvider _services;
         private HtmlRootComponent _root;
-        public TestHttpHandler Handler { get; }
+        public TestJavaScriptRuntime JavaScript { get; }
+        public TestConfirmationModule Module => JavaScript.Module;
         public TestNavigationManager Navigation { get; } = new();
         public ComponentCapture Capture { get; } = new();
         public HtmlRenderer Renderer { get; }
 
         private RenderedPage(HttpStatusCode status)
         {
-            Handler = new TestHttpHandler { Status = status };
+            JavaScript = new TestJavaScriptRuntime(new TestConfirmationModule { Status = status });
             var services = new ServiceCollection();
             services.AddLogging();
             services.AddSingleton<NavigationManager>(Navigation);
             services.AddSingleton(Capture);
-            services.AddSingleton(new HttpClient(Handler) { BaseAddress = new Uri("https://snestorage.test/api/") });
+            services.AddSingleton<IJSRuntime>(JavaScript);
             _services = services.BuildServiceProvider();
             Renderer = new HtmlRenderer(_services, _services.GetRequiredService<ILoggerFactory>());
         }
@@ -195,30 +194,60 @@ public class EmailConfirmationTests
         public Task RetryConfirmationAsync() => RetryAsync();
     }
 
-    private sealed class TestHttpHandler : HttpMessageHandler
+    private sealed class TestJavaScriptRuntime(TestConfirmationModule module) : IJSRuntime
+    {
+        public TestConfirmationModule Module { get; } = module;
+        public int ImportCount { get; private set; }
+        public string? ImportPath { get; private set; }
+
+        public ValueTask<TValue> InvokeAsync<TValue>(string identifier, object?[]? args) =>
+            InvokeAsync<TValue>(identifier, CancellationToken.None, args);
+
+        public ValueTask<TValue> InvokeAsync<TValue>(string identifier,
+            CancellationToken cancellationToken, object?[]? args)
+        {
+            Assert.Equal("import", identifier);
+            ImportCount++;
+            ImportPath = Assert.IsType<string>(Assert.Single(args!));
+            return ValueTask.FromResult((TValue)(object)Module);
+        }
+    }
+
+    private sealed class TestConfirmationModule : IJSObjectReference
     {
         public HttpStatusCode Status { get; set; }
-        public string? ContentType { get; set; }
-        public Uri? FinalUri { get; set; }
         public int RequestCount { get; private set; }
-        public HttpMethod? Method { get; private set; }
-        public Uri? RequestUri { get; private set; }
+        public string? RequestIdentifier { get; private set; }
+        public string? RequestKey { get; private set; }
+        public string? RequestUrl { get; private set; }
+        public string? CancelledKey { get; private set; }
+        public bool Disposed { get; private set; }
 
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        public ValueTask<TValue> InvokeAsync<TValue>(string identifier, object?[]? args) =>
+            InvokeAsync<TValue>(identifier, CancellationToken.None, args);
+
+        public ValueTask<TValue> InvokeAsync<TValue>(string identifier,
+            CancellationToken cancellationToken, object?[]? args)
         {
+            if (identifier == "cancelConfirmation")
+            {
+                CancelledKey = Assert.IsType<string>(Assert.Single(args!));
+                return ValueTask.FromResult(default(TValue)!);
+            }
+
+            Assert.Equal("confirmEmail", identifier);
+            Assert.Equal(2, args!.Length);
             RequestCount++;
-            Method = request.Method;
-            RequestUri = request.RequestUri;
-            var response = new HttpResponseMessage(Status) { Content = new StringContent(string.Empty), RequestMessage = request };
-            if (ContentType is not null)
-            {
-                response.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(ContentType);
-            }
-            if (FinalUri is not null)
-            {
-                response.RequestMessage = new HttpRequestMessage(HttpMethod.Get, FinalUri);
-            }
-            return Task.FromResult(response);
+            RequestIdentifier = identifier;
+            RequestKey = Assert.IsType<string>(args[0]);
+            RequestUrl = Assert.IsType<string>(args[1]);
+            return ValueTask.FromResult((TValue)(object)(int)Status);
+        }
+
+        public ValueTask DisposeAsync()
+        {
+            Disposed = true;
+            return ValueTask.CompletedTask;
         }
     }
 

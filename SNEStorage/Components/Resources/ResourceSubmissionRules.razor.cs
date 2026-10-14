@@ -13,9 +13,8 @@ public partial class ResourceSubmissionRules
 
     protected override void OnDocumentLoaded(SiteRulesDocument document)
     {
-        _sections = document.Sections
+        _sections = [.. document.Sections
             .Where(section => SectionIds.Contains(section.Id))
-            .OrderBy(section => Array.IndexOf(SectionIds, section.Id))
-            .ToArray();
+            .OrderBy(section => Array.IndexOf(SectionIds, section.Id))];
     }
 }

@@ -462,4 +462,10 @@ public partial class ServiceResult
         Create(
             ServiceResultTypes.UnsupportedEvent,
             ActionResultType.NotImplemented);
+
+    public static ServiceResult AccountLockedOut { get; } =
+    Create(
+        ServiceResultTypes.AccountLockedOut,
+        ActionResultType.Forbidden,
+        LogLevel.Warning);
 }

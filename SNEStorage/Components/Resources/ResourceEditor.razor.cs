@@ -175,7 +175,7 @@ public partial class ResourceEditor : IAsyncDisposable
         {
             if (_disposed) return;
             if (ResourceId <= 0) { _errorStatus = 404; return; }
-            _module ??= await JavaScript.InvokeAsync<IJSObjectReference>("import", _lifetime.Token, "./js/resource-editor.js?v=16");
+            _module ??= await JavaScript.InvokeAsync<IJSObjectReference>("import", _lifetime.Token, "./js/resource-editor.js?v=17");
             if (_disposed) return;
             var userId = PageAccount?.Profile.UserId;
             if (string.IsNullOrWhiteSpace(userId)) { _errorStatus = 403; return; }
@@ -205,29 +205,29 @@ public partial class ResourceEditor : IAsyncDisposable
             _authorNames = _data.Authors.GroupBy(author => author.UserSummary.Id)
                 .ToDictionary(group => group.Key, group => string.IsNullOrWhiteSpace(group.First().UserSummary.Username)
                     ? "Unknown user" : group.First().UserSummary.Username);
-            _dependencyChoices = _data.Dependencies.Select(dependency => new SelectOptionDto
+            _dependencyChoices = [.. _data.Dependencies.Select(dependency => new SelectOptionDto
             {
                 Id = dependency.DependencyResourceId, Name = dependency.Name ?? $"Resource #{dependency.DependencyResourceId}"
-            }).DistinctBy(dependency => dependency.Id).ToArray();
-            _existingPreviews = _data.Previews.ToArray();
+            }).DistinctBy(dependency => dependency.Id)];
+            _existingPreviews = [.. _data.Previews];
             _form = new()
             {
                 Name = _resource.Name, Description = _resource.Description, VideogameId = _resource.Videogame.Id,
                 VisibilityId = _resource.Visibility.Id,
-                Types = _resource.Types.Select(type => type.ResourceTypeId).Distinct().ToArray(),
-                Tags = _resource.Tags.Where(tag => !string.IsNullOrWhiteSpace(tag.Name))
-                    .Select(tag => tag.Name).Distinct(StringComparer.OrdinalIgnoreCase).ToArray(),
+                Types = [.. _resource.Types.Select(type => type.ResourceTypeId).Distinct()],
+                Tags = [.. _resource.Tags.Where(tag => !string.IsNullOrWhiteSpace(tag.Name))
+                    .Select(tag => tag.Name).Distinct(StringComparer.OrdinalIgnoreCase)],
                 IAmAuthor = _data.Authors.Any(author => author.UserSummary.Id == userId),
-                AuthorsIDs = _data.Authors.Select(author => author.UserSummary.Id)
-                    .Where(id => id != userId).Distinct().ToArray(),
-                ExternalAuthors = _data.ExternalAuthors.Select(author => author.Author).Distinct(StringComparer.OrdinalIgnoreCase).ToArray(),
-                DependencyIDs = _data.Dependencies.Select(dependency => dependency.DependencyResourceId).Distinct().ToArray(),
-                PreviewIDs = _existingPreviews.Select(preview => preview.Id).ToArray(),
-                ExternalDependencies = _data.ExternalDependencies.Select(dependency => new ExternalDependencyDTO
+                AuthorsIDs = [.. _data.Authors.Select(author => author.UserSummary.Id)
+                    .Where(id => id != userId).Distinct()],
+                ExternalAuthors = [.. _data.ExternalAuthors.Select(author => author.Author).Distinct(StringComparer.OrdinalIgnoreCase)],
+                DependencyIDs = [.. _data.Dependencies.Select(dependency => dependency.DependencyResourceId).Distinct()],
+                PreviewIDs = [.. _existingPreviews.Select(preview => preview.Id)],
+                ExternalDependencies = [.. _data.ExternalDependencies.Select(dependency => new ExternalDependencyDTO
                 {
                     DependencyName = dependency.DependencyName, DependencyURL = dependency.DependencyURL,
                     Mirror1 = dependency.Mirror1, Mirror2 = dependency.Mirror2, Mirror3 = dependency.Mirror3, Mirror4 = dependency.Mirror4
-                }).ToArray(),
+                })],
                 IncludesPorn = _resource.IncludesPorn, IncludesGore = _resource.IncludesGore,
                 IncludesPolitics = _resource.IncludesPolitics, IncludesSlurs = _resource.IncludesSlurs,
                 IncludesSensitiveContent = _resource.IncludesSensitiveContent,

@@ -21,18 +21,18 @@ public partial class ResourceListRow
     private string RatingWidth => $"width:{(Math.Clamp(Item.Score, 0, 5) * 20).ToString("0.##", CultureInfo.InvariantCulture)}%";
     protected override void OnParametersSet()
     {
-        Authors = Item.AuthorsUserSummary.Select(author => new ResourceListValue($"user-{author.Id}", author.Username,
+        Authors = [.. Item.AuthorsUserSummary.Select(author => new ResourceListValue($"user-{author.Id}", author.Username,
             $"/Profile/{Uri.EscapeDataString(author.Id)}", author.UsernameColor is { } color && HexColor.IsMatch(color) ? color : "#dcc8fa"))
             .Concat(Item.ExternalAuthors.Select(author => new ResourceListValue($"external-{author.Id}", author.Name)))
-            .OrderBy(author => author.Name, StringComparer.OrdinalIgnoreCase).ToArray();
+            .OrderBy(author => author.Name, StringComparer.OrdinalIgnoreCase)];
         Types = Values(Item.Types);
         Categories = Values(Item.Categories);
-        Tags = Item.Tags.DistinctBy(tag => tag.Id).OrderBy(tag => tag.Name, StringComparer.OrdinalIgnoreCase).ToArray();
-        Warnings = new[] { Item.IncludesPorn ? "Sexual content" : null, Item.IncludesGore ? "Gore" : null,
+        Tags = [.. Item.Tags.DistinctBy(tag => tag.Id).OrderBy(tag => tag.Name, StringComparer.OrdinalIgnoreCase)];
+        Warnings = [.. new[] { Item.IncludesPorn ? "Sexual content" : null, Item.IncludesGore ? "Gore" : null,
             Item.IncludesPolitics ? "Politics" : null, Item.IncludesSlurs ? "Slurs" : null,
-            Item.IncludesSensitiveContent ? "Sensitive content" : null }.OfType<string>().ToArray();
+            Item.IncludesSensitiveContent ? "Sensitive content" : null }.OfType<string>()];
     }
-    private static ResourceListValue[] Values(IEnumerable<IdNamePair> values) => values.DistinctBy(value => value.Id)
-        .OrderBy(value => value.Name, StringComparer.OrdinalIgnoreCase).Select(value => new ResourceListValue(value.Id.ToString(), value.Name)).ToArray();
+    private static ResourceListValue[] Values(IEnumerable<IdNamePair> values) => [.. values.DistinctBy(value => value.Id)
+        .OrderBy(value => value.Name, StringComparer.OrdinalIgnoreCase).Select(value => new ResourceListValue(value.Id.ToString(), value.Name))];
     private static string Date(DateTime value) => value.ToString("MMM d, yyyy", CultureInfo.InvariantCulture);
 }

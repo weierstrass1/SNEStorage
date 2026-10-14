@@ -1,7 +1,8 @@
 <div class="preview-picker">
     <label class="preview-label" for="@InputId">New preview files</label>
-    <p class="preview-help">Add images, GIFs, or videos to show your resource in action. Up to 20 files, 5 MB each.</p>
-    <InputFile id="@InputId" name="Previews" class="preview-input" multiple accept=".png,.jpg,.jpeg,.gif,.webp,.avif,.mp4,.webm,.ogv" OnChange="FilesSelectedAsync" disabled="@(!_ready || _items.Count >= MaxFiles)" />
+    <p class="preview-help">Up to 20 previews, 5 MB each. Images: up to 4,194,304 pixels. GIFs: up to 229,376 pixels per frame (512 × 448, for example). Animated images: up to 1,800 frames.</p>
+    <InputFile id="@InputId" name="Previews" class="preview-input" multiple accept=".png,.jpg,.jpeg,.gif,.webp,.avif,.mp4,.webm,.ogv,.ogg" OnChange="FilesSelectedAsync" disabled="@(!_ready || _checking || _items.Count >= MaxFiles)" />
+    @if (_checking) { <p class="preview-help" role="status">Checking preview files…</p> }
     <p class="preview-help" role="status" aria-live="polite">@_items.Count / @MaxFiles available new preview slots · PNG, JPG, GIF, WEBP, AVIF, MP4, WEBM, OGV</p>
     @if (_items.Count > MaxFiles)
     {

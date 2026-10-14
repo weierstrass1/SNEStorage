@@ -1,3 +1,4 @@
+using EFCore.Migrations.CustomSql;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.DataProtection;
@@ -6,9 +7,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using SNEStorage.Components;
-using SNEStorage.Discord;
+using SNEStorage.DTOs;
 using SNEStorage.Models;
 using SNEStorage.Services;
 using System.Globalization;
@@ -51,7 +52,9 @@ services.AddScoped(sp => new HttpClient
 });
 services.AddDbContext<SnestorageContext>(options =>
 {
-    options.UseSqlServer(builder.Configuration.GetConnectionString("SNEStorageContext"));
+    options
+        .UseSqlServer(builder.Configuration.GetConnectionString("SNEStorageContext"))
+        .UseCustomSql(custom => custom.UseSqlServer());
 });
 services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -160,19 +163,9 @@ services.AddSwaggerGen(c =>
         BearerFormat = "JWT",
         In = ParameterLocation.Header
     });
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    c.AddSecurityRequirement(document => new OpenApiSecurityRequirement
     {
-        {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
-            Array.Empty<string>()
-        }
+        [new OpenApiSecuritySchemeReference("Bearer", document)] = []
     });
 });
 services

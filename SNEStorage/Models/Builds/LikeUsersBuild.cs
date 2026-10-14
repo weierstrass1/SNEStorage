@@ -8,6 +8,9 @@ public partial class LikeUsers
     {
         entity.ToTable("like_users");
 
+        entity.HasIndex(like => new { like.ScoreId, like.UserId })
+            .IsUnique();
+
         entity.HasKey(p => p.Id)
             .HasName("PK_like_users");
         entity.Property(e => e.Id)

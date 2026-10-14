@@ -22,6 +22,7 @@ public class FileService(SnestorageContext context, CacheService cacheService,
     DBHelperService dbHelperService, IWebHostEnvironment environment,
     ILogger<FileService> logger)
 {
+    public const long MAX_GIF_FRAME_PIXELS = 229376;
     public const long MAX_FILE_SIZE = 250 * 1024 * 1024;
     public const long MAX_COMPRESSED_FILE_SIZE = 250 * 1024 * 1024;
     public const long MAX_MEDIA_FILE_SIZE = 5 * 1024 * 1024;
@@ -400,8 +401,10 @@ public class FileService(SnestorageContext context, CacheService cacheService,
 
         var source = codec.Info;
 
+        long maxPixels = mime == "image/gif" ? MAX_GIF_FRAME_PIXELS : MAX_IMAGE_PIXELS;
+
         if (source.Width <= 0 || source.Height <= 0 ||
-            (long)source.Width * source.Height > MAX_IMAGE_PIXELS)
+            (long)source.Width * source.Height > maxPixels)
             return ServiceResult.InvalidImageSize.Return(_logger);
 
         if (codec.FrameCount > MAX_IMAGE_FRAMES)

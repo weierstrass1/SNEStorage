@@ -9,7 +9,7 @@
         <span class="avatar-camera-badge" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m5 6 2-3h10l2 3h2v14H3V6Z" /><circle cx="12" cy="12" r="4" /></svg></span>
     </button>
     <span class="avatar-caption" data-avatar-caption>Profile photo @if (Required) { <span aria-hidden="true">*</span> }</span>
-    <span class="visually-hidden" id="@(InputId + "-hint")">Click your photo to choose an image or adjust its crop. PNG or JPG, up to 5 MB.</span>
+    <span class="visually-hidden" id="@(InputId + "-hint")">Click your photo to choose an image or adjust its crop. PNG or JPG, up to 5 MB and 4,194,304 pixels.</span>
     @if (!Required)
     {
         <button class="avatar-text-button" type="button" data-avatar-clear disabled="@Busy" hidden>Undo change</button>

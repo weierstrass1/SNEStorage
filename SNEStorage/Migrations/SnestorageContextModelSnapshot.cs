@@ -243,11 +243,13 @@ namespace SNEStorage.Migrations
 
                     b.Property<string>("Reasons")
                         .IsRequired()
+                        .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)")
                         .HasColumnName("reasons");
 
                     b.Property<string>("UserId")
                         .IsRequired()
+                        .HasMaxLength(450)
                         .HasColumnType("nvarchar(450)")
                         .HasColumnName("user_id");
 
@@ -281,6 +283,7 @@ namespace SNEStorage.Migrations
 
                     b.Property<string>("Text")
                         .IsRequired()
+                        .HasMaxLength(5000)
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("text");
 
@@ -289,6 +292,7 @@ namespace SNEStorage.Migrations
 
                     b.Property<string>("UserId")
                         .IsRequired()
+                        .HasMaxLength(450)
                         .HasColumnType("nvarchar(450)")
                         .HasColumnName("user_id");
 
@@ -301,6 +305,11 @@ namespace SNEStorage.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("comment", (string)null);
+
+                    b
+                        .HasAnnotation("CustomSql:Raw:TR_comment_delete_score:Down", "DROP TRIGGER IF EXISTS [dbo].[TR_comment_delete_score];")
+                        .HasAnnotation("CustomSql:Raw:TR_comment_delete_score:Up", "EXEC(N'\r\n    CREATE OR ALTER TRIGGER [dbo].[TR_comment_delete_score]\r\n    ON [dbo].[comment]\r\n    AFTER DELETE\r\n    AS\r\n    BEGIN\r\n        SET NOCOUNT ON;\r\n\r\n        IF NOT EXISTS (SELECT 1 FROM deleted)\r\n            RETURN;\r\n\r\n        DELETE s\r\n        FROM [dbo].[score] AS s\r\n        INNER JOIN deleted AS d ON d.[score_id] = s.[id]\r\n        WHERE NOT EXISTS (\r\n            SELECT 1 FROM [dbo].[comment] AS c\r\n            WHERE c.[score_id] = s.[id]\r\n        )\r\n        AND NOT EXISTS (\r\n            SELECT 1 FROM [dbo].[resource] AS r\r\n            WHERE r.[score_id] = s.[id]\r\n        );\r\n    END;\r\n');")
+                        .HasAnnotation("SqlServer:UseSqlOutputClause", false);
                 });
 
             modelBuilder.Entity("SNEStorage.Models.CommentComment", b =>
@@ -367,11 +376,13 @@ namespace SNEStorage.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
+                        .HasMaxLength(10)
                         .HasColumnType("varchar(10)")
                         .HasColumnName("name");
 
                     b.Property<string>("Value")
                         .IsRequired()
+                        .HasMaxLength(50)
                         .HasColumnType("varchar(50)")
                         .HasColumnName("value");
 
@@ -400,6 +411,7 @@ namespace SNEStorage.Migrations
 
                     b.Property<string>("UserId")
                         .IsRequired()
+                        .HasMaxLength(450)
                         .HasColumnType("nvarchar(450)")
                         .HasColumnName("user_id");
 
@@ -428,6 +440,7 @@ namespace SNEStorage.Migrations
 
                     b.Property<string>("UserId")
                         .IsRequired()
+                        .HasMaxLength(450)
                         .HasColumnType("nvarchar(450)")
                         .HasColumnName("user_id");
 
@@ -438,9 +451,10 @@ namespace SNEStorage.Migrations
                     b.HasKey("Id")
                         .HasName("PK_like_users");
 
-                    b.HasIndex("ScoreId");
-
                     b.HasIndex("UserId");
+
+                    b.HasIndex("ScoreId", "UserId")
+                        .IsUnique();
 
                     b.ToTable("like_users", (string)null);
                 });
@@ -456,6 +470,7 @@ namespace SNEStorage.Migrations
 
                     b.Property<string>("Address")
                         .IsRequired()
+                        .HasMaxLength(15)
                         .HasColumnType("nvarchar(15)")
                         .HasColumnName("address");
 
@@ -474,6 +489,7 @@ namespace SNEStorage.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
+                        .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)")
                         .HasColumnName("name");
 
@@ -565,6 +581,7 @@ namespace SNEStorage.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
+                        .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)")
                         .HasColumnName("name");
 
@@ -620,6 +637,7 @@ namespace SNEStorage.Migrations
 
                     b.Property<string>("PosterUserId")
                         .IsRequired()
+                        .HasMaxLength(450)
                         .HasColumnType("nvarchar(450)")
                         .HasColumnName("poster_user_id");
 
@@ -681,6 +699,7 @@ namespace SNEStorage.Migrations
 
                     b.Property<string>("Description")
                         .IsRequired()
+                        .HasMaxLength(10000)
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("description");
 
@@ -709,10 +728,12 @@ namespace SNEStorage.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
+                        .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)")
                         .HasColumnName("name");
 
                     b.Property<string>("RepositoryURL")
+                        .HasMaxLength(2048)
                         .HasColumnType("nvarchar(2048)")
                         .HasColumnName("repository_url");
 
@@ -722,6 +743,7 @@ namespace SNEStorage.Migrations
 
                     b.Property<string>("SubmitterId")
                         .IsRequired()
+                        .HasMaxLength(450)
                         .HasColumnType("nvarchar(450)")
                         .HasColumnName("submitter_id");
 
@@ -752,6 +774,11 @@ namespace SNEStorage.Migrations
                     b.HasIndex("VisibilityId");
 
                     b.ToTable("resource", (string)null);
+
+                    b
+                        .HasAnnotation("CustomSql:Raw:TR_resource_delete_score:Down", "DROP TRIGGER IF EXISTS [dbo].[TR_resource_delete_score];")
+                        .HasAnnotation("CustomSql:Raw:TR_resource_delete_score:Up", "EXEC(N'\r\n    CREATE OR ALTER TRIGGER [dbo].[TR_resource_delete_score]\r\n    ON [dbo].[resource]\r\n    AFTER DELETE\r\n    AS\r\n    BEGIN\r\n        SET NOCOUNT ON;\r\n\r\n        IF NOT EXISTS (SELECT 1 FROM deleted)\r\n            RETURN;\r\n\r\n        DELETE s\r\n        FROM [dbo].[score] AS s\r\n        INNER JOIN deleted AS d ON d.[score_id] = s.[id]\r\n        WHERE NOT EXISTS (\r\n            SELECT 1 FROM [dbo].[comment] AS c\r\n            WHERE c.[score_id] = s.[id]\r\n        )\r\n        AND NOT EXISTS (\r\n            SELECT 1 FROM [dbo].[resource] AS r\r\n            WHERE r.[score_id] = s.[id]\r\n        );\r\n    END;\r\n');")
+                        .HasAnnotation("SqlServer:UseSqlOutputClause", false);
                 });
 
             modelBuilder.Entity("SNEStorage.Models.ResourceAuthors", b =>
@@ -769,6 +796,7 @@ namespace SNEStorage.Migrations
 
                     b.Property<string>("UserId")
                         .IsRequired()
+                        .HasMaxLength(450)
                         .HasColumnType("nvarchar(450)")
                         .HasColumnName("user_id");
 
@@ -792,6 +820,7 @@ namespace SNEStorage.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
+                        .HasMaxLength(20)
                         .HasColumnType("varchar(20)")
                         .HasColumnName("name");
 
@@ -866,6 +895,7 @@ namespace SNEStorage.Migrations
 
                     b.Property<string>("Author")
                         .IsRequired()
+                        .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)")
                         .HasColumnName("author");
 
@@ -891,27 +921,33 @@ namespace SNEStorage.Migrations
 
                     b.Property<string>("DependencyName")
                         .IsRequired()
+                        .HasMaxLength(100)
                         .HasColumnType("varchar(100)")
                         .HasColumnName("dependency_name");
 
                     b.Property<string>("DependencyURL")
                         .IsRequired()
+                        .HasMaxLength(255)
                         .HasColumnType("varchar(255)")
                         .HasColumnName("dependency_url");
 
                     b.Property<string>("Mirror1")
+                        .HasMaxLength(255)
                         .HasColumnType("varchar(255)")
                         .HasColumnName("mirror_1");
 
                     b.Property<string>("Mirror2")
+                        .HasMaxLength(255)
                         .HasColumnType("varchar(255)")
                         .HasColumnName("mirror_2");
 
                     b.Property<string>("Mirror3")
+                        .HasMaxLength(255)
                         .HasColumnType("varchar(255)")
                         .HasColumnName("mirror_3");
 
                     b.Property<string>("Mirror4")
+                        .HasMaxLength(255)
                         .HasColumnType("varchar(255)")
                         .HasColumnName("mirror_4");
 
@@ -1075,6 +1111,7 @@ namespace SNEStorage.Migrations
                         .HasColumnName("category_id");
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("name");
 
@@ -1099,6 +1136,7 @@ namespace SNEStorage.Migrations
                         .HasColumnName("already_moderated");
 
                     b.Property<string>("ChangeLog")
+                        .HasMaxLength(10000)
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("change_log");
 
@@ -1183,6 +1221,7 @@ namespace SNEStorage.Migrations
 
                     b.Property<string>("UserId")
                         .IsRequired()
+                        .HasMaxLength(450)
                         .HasColumnType("nvarchar(450)")
                         .HasColumnName("user_id");
 
@@ -1260,6 +1299,7 @@ namespace SNEStorage.Migrations
 
                     b.Property<string>("UserId")
                         .IsRequired()
+                        .HasMaxLength(450)
                         .HasColumnType("nvarchar(450)")
                         .HasColumnName("user_id");
 
@@ -1284,6 +1324,7 @@ namespace SNEStorage.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
+                        .HasMaxLength(10)
                         .HasColumnType("nvarchar(10)")
                         .HasColumnName("name");
 
@@ -1319,10 +1360,12 @@ namespace SNEStorage.Migrations
                         .HasColumnName("birthday");
 
                     b.Property<string>("BuyMeACoffee")
+                        .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)")
                         .HasColumnName("buy_me_a_coffee");
 
                     b.Property<string>("Discord")
+                        .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)")
                         .HasColumnName("discord");
 
@@ -1331,10 +1374,12 @@ namespace SNEStorage.Migrations
                         .HasColumnName("discord_linked_at");
 
                     b.Property<string>("DiscordUserId")
+                        .HasMaxLength(20)
                         .HasColumnType("varchar(20)")
                         .HasColumnName("discord_user_id");
 
                     b.Property<string>("DiscordUsername")
+                        .HasMaxLength(32)
                         .HasColumnType("nvarchar(32)")
                         .HasColumnName("discord_username");
 
@@ -1343,30 +1388,37 @@ namespace SNEStorage.Migrations
                         .HasColumnName("email_visibility_id");
 
                     b.Property<string>("Facebook")
+                        .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)")
                         .HasColumnName("facebook");
 
                     b.Property<string>("Github")
+                        .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)")
                         .HasColumnName("github");
 
                     b.Property<string>("Instagram")
+                        .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)")
                         .HasColumnName("instagram");
 
                     b.Property<string>("NintendoNetwork")
+                        .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)")
                         .HasColumnName("nintendo_network");
 
                     b.Property<string>("Patreon")
+                        .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)")
                         .HasColumnName("patreon");
 
                     b.Property<string>("Paypal")
+                        .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)")
                         .HasColumnName("paypal");
 
                     b.Property<string>("Steam")
+                        .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)")
                         .HasColumnName("steam");
 
@@ -1375,27 +1427,33 @@ namespace SNEStorage.Migrations
                         .HasColumnName("time_zone_id");
 
                     b.Property<string>("Title")
+                        .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)")
                         .HasColumnName("title");
 
                     b.Property<string>("Twitch")
+                        .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)")
                         .HasColumnName("twitch");
 
                     b.Property<string>("Twitter")
+                        .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)")
                         .HasColumnName("twitter");
 
                     b.Property<string>("UserId")
                         .IsRequired()
+                        .HasMaxLength(450)
                         .HasColumnType("nvarchar(450)")
                         .HasColumnName("user_id");
 
                     b.Property<string>("UsernameColor")
+                        .HasMaxLength(7)
                         .HasColumnType("nvarchar(7)")
                         .HasColumnName("username_color");
 
                     b.Property<string>("Youtube")
+                        .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)")
                         .HasColumnName("youtube");
 
@@ -1457,6 +1515,8 @@ namespace SNEStorage.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
                     b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)")
                         .HasColumnName("name");
 
@@ -1538,7 +1598,7 @@ namespace SNEStorage.Migrations
                     b.HasOne("SNEStorage.Models.Score", "Score")
                         .WithOne("Comment")
                         .HasForeignKey("SNEStorage.Models.Comment", "ScoreId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired()
                         .HasConstraintName("FK_comment_score");
 
@@ -1725,7 +1785,7 @@ namespace SNEStorage.Migrations
                     b.HasOne("SNEStorage.Models.Score", "Score")
                         .WithOne("Resource")
                         .HasForeignKey("SNEStorage.Models.Resource", "ScoreId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired()
                         .HasConstraintName("FK_resource_score");
 

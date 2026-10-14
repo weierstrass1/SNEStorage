@@ -42,9 +42,9 @@ public partial class ResourceCommentList : IAsyncDisposable
     [Inject] private IJSRuntime JavaScript { get; set; } = default!;
     [Inject] private ILogger<ResourceCommentList> Logger { get; set; } = default!;
 
-    protected IReadOnlyList<CommentReadDto> VisibleComments => _recentComments.Concat(_comments)
+    protected IReadOnlyList<CommentReadDto> VisibleComments => [.. _recentComments.Concat(_comments)
         .DistinctBy(c => c.Id).Where(c => !Ancestors.Contains(c.Id) &&
-            (!c.Deleted || c.HasReplies)).ToArray();
+            (!c.Deleted || c.HasReplies))];
     protected bool IsRecentlyPosted(long id) => _recentComments.Any(c => c.Id == id);
 
     protected override void OnParametersSet()
@@ -123,7 +123,7 @@ public partial class ResourceCommentList : IAsyncDisposable
             if (!hasNext) break;
         }
         // Keep the existing feed visible while requesting the next page, and merge by ID.
-        _comments = (append ? _comments.Concat(fetched) : fetched).DistinctBy(c => c.Id).ToList();
+        _comments = [.. (append ? _comments.Concat(fetched) : fetched).DistinctBy(c => c.Id)];
         _recentComments.RemoveAll(c => _comments.Any(loaded => loaded.Id == c.Id));
         _page = lastPage;
         _hasNext = hasNext;

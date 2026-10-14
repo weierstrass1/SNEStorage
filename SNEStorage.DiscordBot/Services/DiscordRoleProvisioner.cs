@@ -1,10 +1,9 @@
 ﻿using Discord;
 using Discord.WebSocket;
 using SNEStorage.DiscordBot.DTOs;
-using SNEStorage.DiscordBot.Services;
 using System.Globalization;
 
-namespace SNEStorage.DiscordBot;
+namespace SNEStorage.DiscordBot.Services;
 
 public sealed class DiscordRoleProvisioner(
     DiscordServerConfigLoader configLoader,

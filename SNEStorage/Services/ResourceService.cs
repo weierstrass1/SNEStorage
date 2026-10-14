@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using OneOf;
-using SNEStorage.Discord;
 using SNEStorage.DTOs;
 using SNEStorage.Models;
 using System.Globalization;
@@ -186,7 +185,13 @@ public partial class ResourceService(IWebHostEnvironment environment, Snestorage
 
         if (vote == null)
         {
-            vote = new ScoreUsers { ScoreId = access.ScoreId, UserId = userId };
+            vote = new ScoreUsers 
+            { 
+                Id = 0, 
+                ScoreId = access.ScoreId, 
+                UserId = userId, 
+                Value = value
+            };
             _context.ScoresUsers.Add(vote);
         }
 
@@ -475,6 +480,7 @@ public partial class ResourceService(IWebHostEnvironment environment, Snestorage
             ResourceId = 0,
             SubmitterUserId = userId,
             Resource = resource,
+            CreatedAt = DateTime.UtcNow,
             File = file,
             ChangeLog = dto.ReleaseNotes,
             Version = versionName,

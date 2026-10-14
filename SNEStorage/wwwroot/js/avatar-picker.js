@@ -1,5 +1,6 @@
+import { validateUpload } from "./upload-validation.js?v=1";
+
 const pickers = new Map();
-const maxImageSize = 5 * 1024 * 1024;
 const template = `<cropper-canvas>
     <cropper-image initial-fit="cover" translatable scalable></cropper-image>
     <cropper-handle action="move" plain></cropper-handle>
@@ -20,13 +21,14 @@ export function initializeAvatarPicker(id) {
         initialAvatarUrl: find("preview").getAttribute("src"),
         listeners: new AbortController(), generation: 0, committed: null, source: null,
         candidate: null, sourceUrl: null, previewUrl: null, cropper: null, image: null,
-        baseline: 1, internalChange: false, disposed: false
+        baseline: 1, internalChange: false, disposed: false, selectionGeneration: 0
     };
     pickers.set(id, state);
     const on = (element, event, handler) => element.addEventListener(event, handler, { signal: state.listeners.signal });
     on(state.choose, "click", () => state.committed ? openEditor(state, state.source) : state.input.click());
     on(find("replace"), "click", () => state.input.click());
     if (state.clear) on(state.clear, "click", () => {
+        state.selectionGeneration++;
         state.committed = state.source = state.savedTransform = null;
         if (state.previewUrl) URL.revokeObjectURL(state.previewUrl);
         state.previewUrl = null;
@@ -39,17 +41,17 @@ export function initializeAvatarPicker(id) {
         setInputFile(state, null);
         state.choose.focus({ preventScroll: true });
     });
-    on(state.input, "change", event => {
+    on(state.input, "change", async event => {
         if (state.internalChange) return;
         // The original file must not become the submitted avatar until its crop is confirmed.
         event.stopImmediatePropagation();
         const file = state.input.files?.[0];
         setInputFile(state, state.committed);
         if (!file) return;
-        const message = file.size === 0 ? "This image is empty. Choose another image." :
-            file.size > maxImageSize ? "Your image is too large. Choose a PNG or JPG no larger than 5 MB." :
-            !/\.(png|jpe?g)$/i.test(file.name) || !["image/png", "image/jpeg"].includes(file.type.toLowerCase()) ?
-                "Choose a PNG or JPG image." : "";
+        const generation = ++state.selectionGeneration;
+        const message = !/\.(png|jpe?g)$/i.test(file.name) ? "Choose a PNG or JPG image."
+            : await validateUpload(file, "avatar");
+        if (state.disposed || generation !== state.selectionGeneration) return;
         showMessage(state.error, message);
         if (!message) openEditor(state, file);
     });
@@ -137,6 +139,13 @@ async function applyCrop(state) {
         if (state.disposed || generation !== state.generation) return;
         if (!blob) throw new Error("Image export failed");
         const file = new File([blob], "avatar.png", { type: "image/png" });
+        const message = await validateUpload(file, "avatar");
+        if (state.disposed || generation !== state.generation) return;
+        if (message) {
+            showMessage(state.cropError, message);
+            state.apply.disabled = state.reset.disabled = false;
+            return;
+        }
         state.savedTransform = state.image.$getTransform();
         state.source = state.candidate;
         state.committed = file;

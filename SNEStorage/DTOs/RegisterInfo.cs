@@ -17,6 +17,9 @@ public class RegisterInfo
     [Compare(nameof(Password), ErrorMessage = "Passwords do not match.")]
     [Display(Name = "Repeat Password")]
     public required string PasswordRepeat { get; set; }
+    [Required]
+    [StringLength(7)]
+    [RegularExpression(@"\A#[0-9A-Fa-f]{6}\z")]
     [Display(Name = "Username Color")]
     public required string UsernameColor { get; set; }
     public required DateOnly Birthday { get; set; }

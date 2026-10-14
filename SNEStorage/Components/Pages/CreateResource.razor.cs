@@ -107,7 +107,7 @@ public partial class CreateResource : IAsyncDisposable
 
         try
         {
-            var module = await JavaScript.InvokeAsync<IJSObjectReference>("import", "./js/resource-create.js?v=12");
+            var module = await JavaScript.InvokeAsync<IJSObjectReference>("import", "./js/resource-create.js?v=13");
             if (_disposed)
             {
                 await module.DisposeAsync();

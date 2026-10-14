@@ -17,9 +17,9 @@ public partial class ResourceSummaryCard
 
     protected override void OnParametersSet()
     {
-        Authors = Item.AuthorsUserSummary.Select(author => new ResourceListValue($"user-{author.Id}", author.Username,
+        Authors = [.. Item.AuthorsUserSummary.Select(author => new ResourceListValue($"user-{author.Id}", author.Username,
             $"/Profile/{Uri.EscapeDataString(author.Id)}", author.UsernameColor is { } color && HexColor.IsMatch(color) ? color : "#dcc8fa"))
             .Concat(Item.ExternalAuthors.Select(author => new ResourceListValue($"external-{author.Id}", author.Name)))
-            .OrderBy(author => author.Name, StringComparer.OrdinalIgnoreCase).ToArray();
+            .OrderBy(author => author.Name, StringComparer.OrdinalIgnoreCase)];
     }
 }

@@ -11,7 +11,7 @@ public partial class Comment
     public DateTime PublishDate { get; set; }
     public DateTime? UpdatedAt { get; set; }
     public bool Deleted { get; set; } = false;
-    [Required(AllowEmptyStrings = false)]
+    [Required(AllowEmptyStrings = true)]
     [StringLength(5000)]
     public required string Text { get; set; }
     [Required(AllowEmptyStrings = true)]
