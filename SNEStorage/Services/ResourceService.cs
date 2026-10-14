@@ -463,7 +463,8 @@ public partial class ResourceService(IWebHostEnvironment environment, Snestorage
         string versionFolder = SanitizeFolderName(versionName);
         string path = GetVersionPath(dto.File.FileName, versionFolder, mainFolder);
 
-        var fileRes = await _fileService.PrepareFile(FileContext.Resource, dto.File, path, batchPath, ct);
+        var fileRes = await _fileService.PrepareFile(FileContext.Resource, dto.File, path,
+            batchPath, ct: ct);
         if (!fileRes.TryPickT0(out var file, out var fileError))
             return fileError;
 
@@ -816,7 +817,7 @@ public partial class ResourceService(IWebHostEnvironment environment, Snestorage
     {
         string mainFilePath = GetVersionPath(dto.File.FileName, versionFolder, mainFolder);
         return _fileService.PrepareFile(FileContext.Resource, dto.File,
-            mainFilePath, batchfile, ct);
+            mainFilePath, batchfile, ct: ct);
     }
 
     private static string GetVersionPath(string filename, string versionFolder, string mainFolder)
@@ -849,7 +850,8 @@ public partial class ResourceService(IWebHostEnvironment environment, Snestorage
         {
             var previewPath = Path.Combine(mainFolder, $"Previews",
                 $"{Guid.NewGuid():N}{Path.GetFileName(preview.FileName)}");
-            var previewFileRes = await _fileService.PrepareFile(FileContext.Previews, preview, previewPath, batchPath, ct);
+            var previewFileRes = await _fileService.PrepareFile(FileContext.Previews, 
+                preview, previewPath, batchPath, ct: ct);
             if (!previewFileRes.TryPickT0(out var previewFile, out var error))
                 return error;
             previews.Add(previewFile);

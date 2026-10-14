@@ -95,7 +95,7 @@ public class FileService(SnestorageContext context, CacheService cacheService,
 
     public async Task<OneOf<Models.File, ServiceResultContext>> PrepareFile(
         FileContext context, IFormFile fileRequest, string destinationPath,
-        string batchPath, CancellationToken ct)
+        string batchPath, CancellationToken ct = default)
     {
         if (!ValidateContext(context, fileRequest))
         {
@@ -112,7 +112,8 @@ public class FileService(SnestorageContext context, CacheService cacheService,
         }
 
         string physicalPath = Path.Combine(_environment.ContentRootPath, destinationPath);
-        var updateResult = await UpdateBatch(physicalPath, batchPath, ct);
+
+            var updateResult = await UpdateBatch(physicalPath, batchPath, ct);
 
         if (updateResult.Result != ServiceResult.Success)
         {
@@ -130,11 +131,9 @@ public class FileService(SnestorageContext context, CacheService cacheService,
             return directoryError;
         }
 
-        var streamResult = _dbHelperService.TryFunction(
-            () => System.IO.File.Create(physicalPath),
-            ServiceResult.FileCreationError);
-
-        if (!streamResult.TryPickT0(out var stream, out var streamError))
+        var streamRes = _dbHelperService.TryFunction(
+            () => new FileStream(physicalPath, FileMode.Create, FileAccess.Write));
+        if (!streamRes.TryPickT0(out var stream, out var streamError))
         {
             await BatchRollback(batchPath, ct);
             return streamError;
@@ -146,7 +145,7 @@ public class FileService(SnestorageContext context, CacheService cacheService,
 
         var disposeResult = await _dbHelperService.TryFunction(
             async _ => await stream.DisposeAsync(),
-            ServiceResult.FileCreationError);
+            ServiceResult.FileCreationError, ct: ct);
 
         if (copyResult.Result != ServiceResult.Success)
         {
@@ -340,7 +339,7 @@ public class FileService(SnestorageContext context, CacheService cacheService,
         () => BatchRollback(batchPath, CancellationToken.None), ct: ct);
 
         if (result.IsT0)
-            _ = BatchComplete(batchPath);
+            BatchComplete(batchPath);
 
         return result;
     }

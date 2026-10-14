@@ -80,8 +80,19 @@ services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 var stamp = context.Principal?
                     .FindFirstValue("security_stamp");
 
-                var validation = await accountService.ValidateJwt(userId, stamp, http.RequestAborted);
-                if (!validation.TryPickT0(out var valid, out _) || !valid)
+                var validation = await accountService.ValidateJwt(
+                    userId, stamp, http.RequestAborted);
+
+                if (!validation.TryPickT0(out var valid, out var error))
+                {
+                    http.Items["JwtValidationError"] =
+                        $"AccountController-{error.Result.Type}";
+
+                    context.Fail("Account validation unavailable.");
+                    return;
+                }
+
+                if (!valid)
                 {
                     context.Fail("Invalid or revoked token.");
                     return;
@@ -110,6 +121,24 @@ services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                         Path = "/",
                         Expires = new DateTimeOffset(response.ExpireTime)
                     });
+            },
+            OnChallenge = async context =>
+            {
+                var http = context.HttpContext;
+
+                if (http.Items["JwtValidationError"] is not string error)
+                    return;
+
+                context.HandleResponse();
+
+                if (http.RequestAborted.IsCancellationRequested)
+                    return;
+
+                http.Response.StatusCode =
+                    StatusCodes.Status503ServiceUnavailable;
+
+                await http.Response.WriteAsJsonAsync(
+                    error, cancellationToken: http.RequestAborted);
             }
         };
     });
@@ -224,10 +253,10 @@ services.AddRateLimiter(options =>
         ("uploads", 10, 10)
     ];
 
-    foreach (var limit in limits)
-        options.AddPolicy(limit.Name, context =>
+    foreach (var (Name, Amount, Minutes) in limits)
+        options.AddPolicy(Name, context =>
         {
-            string? userId = limit.Name is "login" or "register" or "password-email" or "reads" ?
+            string? userId = Name is "login" or "register" or "password-email" or "reads" ?
                 null : context.User.FindFirstValue(ClaimTypes.NameIdentifier);
             string key = userId != null ? $"user:{userId}" :
                 $"ip:{context.Connection.RemoteIpAddress?.ToString() ?? "unknown"}";
@@ -235,8 +264,8 @@ services.AddRateLimiter(options =>
             return RateLimitPartition.GetSlidingWindowLimiter(key, _ =>
                 new SlidingWindowRateLimiterOptions
                 {
-                    PermitLimit = limit.Amount,
-                    Window = TimeSpan.FromMinutes(limit.Minutes),
+                    PermitLimit = Amount,
+                    Window = TimeSpan.FromMinutes(Minutes),
                     SegmentsPerWindow = 6,
                     QueueLimit = 0,
                     AutoReplenishment = true
@@ -257,7 +286,7 @@ services.AddRateLimiter(options =>
     {
         var response = context.HttpContext.Response;
         if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
-            response.Headers["Retry-After"] = Math.Max(1, (int)Math.Ceiling(retryAfter.TotalSeconds))
+            response.Headers.RetryAfter = Math.Max(1, (int)Math.Ceiling(retryAfter.TotalSeconds))
                 .ToString(CultureInfo.InvariantCulture);
 
         // Native form navigation: show the existing Login view instead of raw JSON.

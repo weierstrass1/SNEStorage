@@ -274,10 +274,10 @@ internal static class ApiErrorPresentation
             if (document.RootElement.ValueKind != JsonValueKind.Object ||
                 !document.RootElement.TryGetProperty("errors", out var errors) ||
                 errors.ValueKind != JsonValueKind.Object) return [];
-            return errors.EnumerateObject().Where(field => field.Value.ValueKind == JsonValueKind.Array)
+            return [.. errors.EnumerateObject().Where(field => field.Value.ValueKind == JsonValueKind.Array)
                 .SelectMany(field => field.Value.EnumerateArray())
                 .Where(value => value.ValueKind == JsonValueKind.String)
-                .Select(value => value.GetString()!).Distinct().ToArray();
+                .Select(value => value.GetString()!).Distinct()];
         }
         catch (JsonException) { return []; }
     }

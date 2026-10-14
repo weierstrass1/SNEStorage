@@ -149,8 +149,7 @@ public class AccountService(
             Email = registerInfo.Email
         };
 
-        string? avatarPath = GetAvatarUrl(
-            registerInfo.Avatar.ContentType, user.Id, user.UserName);
+        string? avatarPath = GetAvatarUrl(registerInfo.Avatar.ContentType, user.Id);
 
         if (avatarPath is null)
             return ServiceResult.InvalidFileForContext.Return(_logger);
@@ -161,7 +160,7 @@ public class AccountService(
             return batchError;
 
         var fileResult = await _fileService.PrepareFile(
-            FileContext.Avatar, registerInfo.Avatar, avatarPath, batchPath, ct);
+            FileContext.Avatar, registerInfo.Avatar, avatarPath, batchPath, ct: ct);
 
         if (!fileResult.TryPickT0(out var avatar, out var fileError))
             return fileError;
@@ -525,8 +524,8 @@ public class AccountService(
             ServiceResult.Invalid.Return(_logger);
     }
 
-    public async Task<ServiceResultContext> EditUserInfo(
-        EditProfileDTO dto, CancellationToken ct)
+    public async Task<ServiceResultContext> EditUserInfo(EditProfileDTO dto, 
+        CancellationToken ct)
     {
         string? username = _httpContextAccessor.HttpContext?
             .User.FindFirstValue(ClaimTypes.Name);
@@ -540,7 +539,6 @@ public class AccountService(
             return ServiceResult.Invalid.Return(_logger);
 
         var infoQuery = _context.UserInfos
-            .Include(info => info.Avatar)
             .Where(info => info.UserId == userId);
 
         var infoResult = await _dbHelperService.TryFunction(
@@ -553,17 +551,17 @@ public class AccountService(
         if (info is null)
             return ServiceResult.UserNotFound.Return(_logger);
 
-        var previousAvatar = info.Avatar;
+        var previousAvatarId = info.AvatarId;
         Models.File? newAvatar = null;
         string? batchPath = null;
+        List<Models.File>? deletedAvatar = null;
 
         if (dto.File is not null && !string.IsNullOrWhiteSpace(dto.File.FileName))
         {
-            string? avatarPath = GetAvatarUrl(
-                dto.File.ContentType, userId, username);
+            string? avatarPath = GetAvatarUrl(dto.File.ContentType, userId);
 
             if (avatarPath is null)
-                return ServiceResult.InvalidFileForContext.Return(_logger);
+                return ServiceResult.InvalidMime.Return(_logger);
 
             var batchResult = await _fileService.BeginBatch(ct);
 
@@ -571,12 +569,20 @@ public class AccountService(
                 return batchError;
 
             var fileResult = await _fileService.PrepareFile(
-                FileContext.Avatar, dto.File, avatarPath, batchPath, ct);
+                FileContext.Avatar, dto.File, avatarPath, batchPath, ct: ct);
 
             if (!fileResult.TryPickT0(out newAvatar, out var fileError))
                 return fileError;
 
             info.Avatar = newAvatar;
+            _context.ChangeTracker.DetectChanges();
+
+            var deletionResult = await _fileService.PrepareDeletion([previousAvatarId], ct);
+            if(!deletionResult.TryPickT0(out deletedAvatar, out var deletionError))
+            {
+                await _fileService.BatchRollback(batchPath, CancellationToken.None);
+                return deletionError;
+            }
         }
 
         bool discordColorChanged = dto.UsernameColor is not null &&
@@ -601,40 +607,18 @@ public class AccountService(
         info.TimeZoneId = dto.TimeZoneId ?? info.TimeZoneId;
         info.EmailVisibilityId = dto.EmailVisibilityId ?? info.EmailVisibilityId;
 
-        ServiceResultContext saveResult;
-
-        if (batchPath is null)
-            saveResult = await _dbHelperService.TrySyncContext(ct: ct);
-        else
-            saveResult = await _fileService.TrySyncContextWithFiles(
-                batchPath, ct: ct);
+        ServiceResultContext saveResult = batchPath is null ?
+            await _dbHelperService.TrySyncContext(ct: ct) :
+            await _fileService.TrySyncContextWithFiles(batchPath, ct: ct);
 
         if (saveResult.Result != ServiceResult.Success)
             return saveResult;
 
+        if (deletedAvatar != null)
+            _fileService.FinishDeletion(deletedAvatar);
+
         if (discordColorChanged && !string.IsNullOrWhiteSpace(info.DiscordUserId))
-            _ = await _discordService.NotifyMemberChangedAsync(info.DiscordUserId, ct);
-
-        if (newAvatar is null || previousAvatar is null)
-            return ServiceResult.Success.Return(_logger);
-
-        var deletionResult = await _dbHelperService.TryFunction(
-            cancel => _context.Files
-                .Where(file => file.Id == previousAvatar.Id)
-                .ExecuteDeleteAsync(cancel),
-            ServiceResult.DBError, ct: ct);
-
-        if (deletionResult.IsT0)
-        {
-            string physicalPath = Path.Combine(
-                _environment.ContentRootPath, previousAvatar.URL);
-
-            _ = _dbHelperService.TryFunction(() =>
-            {
-                System.IO.File.Delete(physicalPath);
-                return true;
-            }, ServiceResult.FileDeletionError);
-        }
+            await _discordService.NotifyMemberChangedAsync(info.DiscordUserId, ct);
 
         return ServiceResult.Success.Return(_logger);
     }
@@ -748,8 +732,7 @@ public class AccountService(
         return string.IsNullOrWhiteSpace(dtoValue) ? null : dtoValue;
     }
 
-    private string? GetAvatarUrl(
-        string contentType, string userId, string username)
+    private string? GetAvatarUrl(string contentType, string userId)
     {
         string? extension = contentType.Trim().ToLowerInvariant() switch
         {
@@ -770,7 +753,7 @@ public class AccountService(
         {
             physicalPath = Path.Combine(_environment.WebRootPath,
                 "Content", "Avatars",
-                $"{Guid.NewGuid():N}_{userId}_{username}{extension}");
+                $"{Guid.NewGuid():N}_{userId}_{extension}");
         }
         while (System.IO.File.Exists(physicalPath));
 

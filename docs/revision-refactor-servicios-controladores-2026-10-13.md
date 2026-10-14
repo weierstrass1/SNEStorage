@@ -119,24 +119,13 @@ puede reemplazarlo.
 El TryPickT0 indicado inicialmente arregla la compilación y falla de forma cerrada;
 esta distinción adicional evita confundir una indisponibilidad con un logout.
 
-### 3. La búsqueda de autores externos ignora la visibilidad
+### 3. Descartado: sugerencias compartidas de autores externos
 
-**Clase/método:** ExternalAuthorService.GetAuthorLike.
-
-**Ubicación:** [query inicial](D:/Users/pndia/Documents/GitHub/SNEStorage/SNEStorage/Services/ExternalAuthorService.cs:32).
-
-El endpoint es público y consulta todas las filas de ResourceExternalAuthor. Puede
-mostrar nombres que solo estén asociados a recursos privados a alguien que no
-puede ver esos recursos. El filtro de ResourceService.GetResourceLike no protege
-esta consulta independiente.
-
-**Propuesta:** filtrar por acceso al Resource antes de Select/Distinct. Si las
-sugerencias deben ser exclusivamente públicas, basta con permitir las visibilidades
-pública/no listada. Si se incluyen privadas propias o del staff, aplicar las mismas
-condiciones de submitter/autores/versiones que en GetResourceLike.
-
-No hace falta añadir Includes para esas condiciones: pueden expresarse con
-Where/Any y traducirse a SQL.
+El 14 de octubre de 2026, el propietario confirmó que las sugerencias de autores
+externos deben compartirse entre todos los recursos, incluidos los privados.
+La reutilización de nombres es el comportamiento deseado. Se acepta que un nombre
+pueda aparecer aunque solo esté asociado a recursos privados; no se publica el
+recurso ni su contenido mediante esta búsqueda. Este punto no requiere corrección.
 
 ## P2 — Prioridad media
 
