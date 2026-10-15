@@ -2,17 +2,25 @@
 using OneOf;
 using SNEStorage.DTOs;
 using SNEStorage.Models;
+using SNEStorage.Services.QueryComponents;
 
 namespace SNEStorage.Services;
 
-public class ResourceCommunityService(SnestorageContext context, AccountService accountService,
-    ResourceAccessService accessService, DBHelperService dbHelperService,
+public class ResourceCommunityService(SnestorageContext context,
+    AccountService accountService, ResourceAccessService accessService,
+    DBHelperService dbHelperService,
+    GetFirstOrErrorQueryOperation<ApplicationUser> getUser,
+    GetFirstOrDefaultQueryOperation<ScoreUsers> getVote,
+    GetFirstOrErrorQueryOperation<RatingReadDto> getRating,
     ILogger<ResourceCommunityService> logger)
 {
     private readonly SnestorageContext _context = context;
     private readonly AccountService _accountService = accountService;
     private readonly ResourceAccessService _accessService = accessService;
     private readonly DBHelperService _dbHelperService = dbHelperService;
+    private readonly GetFirstOrErrorQueryOperation<ApplicationUser> _getUser = getUser;
+    private readonly GetFirstOrDefaultQueryOperation<ScoreUsers> _getVote = getVote;
+    private readonly GetFirstOrErrorQueryOperation<RatingReadDto> _getRating = getRating;
     private readonly ILogger<ResourceCommunityService> _logger = logger;
 
     public async Task<OneOf<ResourceComments, ServiceResultContext>> AddComment(
@@ -25,18 +33,16 @@ public class ResourceCommunityService(SnestorageContext context, AccountService 
         if (userId is null)
             return ServiceResult.Forbidden.Return(_logger);
 
-        var userResult = await _dbHelperService.TryFunction(
-            cancel => _context.Users
-                .Include(user => user.UserInfo)
-                    .ThenInclude(info => info!.Avatar)
-                .FirstOrDefaultAsync(user => user.Id == userId, cancel),
-            ServiceResult.DBError, ct: ct);
+        var userQuery = _context.Users
+            .Include(user => user.UserInfo)
+                .ThenInclude(info => info!.Avatar)
+            .Where(user => user.Id == userId);
+
+        var userResult = await _getUser.Execute(
+            userQuery, ServiceResult.Forbidden, ct: ct);
 
         if (!userResult.TryPickT0(out var user, out var userError))
             return userError;
-
-        if (user is null)
-            return ServiceResult.Forbidden.Return(_logger);
 
         var accessResult = await _accessService.GetViewAccess(resourceId, ct);
         if (!accessResult.TryPickT0(out _, out var accessError))
@@ -83,10 +89,10 @@ public class ResourceCommunityService(SnestorageContext context, AccountService 
         if (access.IsContributor)
             return ServiceResult.CantScoreSelfResource.Return(_logger);
 
-        var voteResult = await _dbHelperService.TryFunction(
-            cancel => _context.ScoresUsers.AsTracking()
-                .FirstOrDefaultAsync(score => score.ScoreId == access.ScoreId &&
-                    score.UserId == userId, cancel), ServiceResult.DBError, ct: ct);
+        var voteQuery = _context.ScoresUsers.AsTracking()
+            .Where(score => score.ScoreId == access.ScoreId &&
+                score.UserId == userId);
+        var voteResult = await _getVote.Execute(voteQuery, ct: ct);
 
         if (!voteResult.TryPickT0(out var vote, out var voteError))
             return voteError;
@@ -116,21 +122,19 @@ public class ResourceCommunityService(SnestorageContext context, AccountService 
             return accessError;
 
         string? userId = _accountService.GetUserID();
-        var result = await _dbHelperService.TryFunction(
-            cancel => _context.Resources.AsNoTracking()
-                .Where(resource => resource.Id == resourceId)
-                .Select(resource => new RatingReadDto(
-                    resource.Score!.ScoresUsers.Average(score => (double?)score.Value) ?? 0.0,
-                    resource.Score.ScoresUsers.Count(),
-                    resource.Score.ScoresUsers
-                        .Where(score => userId != null && score.UserId == userId)
-                        .Select(score => (long?)score.Value)
-                        .FirstOrDefault()))
-                .FirstOrDefaultAsync(cancel), ServiceResult.DBError, ct: ct);
 
-        if (!result.TryPickT0(out var rating, out var error))
-            return error;
+        var query = _context.Resources.AsNoTracking()
+            .Where(resource => resource.Id == resourceId)
+            .Select(resource => new RatingReadDto(
+                resource.Score!.ScoresUsers
+                    .Average(score => (double?)score.Value) ?? 0.0,
+                resource.Score.ScoresUsers.Count(),
+                resource.Score.ScoresUsers
+                    .Where(score => userId != null && score.UserId == userId)
+                    .Select(score => (long?)score.Value)
+                    .FirstOrDefault()));
 
-        return rating is not null ? rating : ServiceResult.ResourceNotFound.Return(_logger);
+        return await _getRating.Execute(
+            query, ServiceResult.ResourceNotFound, ct: ct);
     }
 }

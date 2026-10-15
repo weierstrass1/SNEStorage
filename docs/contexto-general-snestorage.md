@@ -1,6 +1,6 @@
 # SNEStorage: contexto para continuar el proyecto
 
-**Última actualización: 13 de octubre de 2026.**
+**Última actualización: 15 de octubre de 2026.**
 
 Este documento resume el producto, los acuerdos de trabajo y el estado del proyecto. Está pensado para adjuntarlo a otra conversación. La información combina decisiones del propietario, trabajo realizado en conversaciones anteriores y lectura del código actual; no constituye una auditoría completa ni una comprobación del despliegue.
 
@@ -76,6 +76,7 @@ Dependencias relevantes: MailKit para correo, SkiaSharp para imágenes, SharpCom
 | `/Resource/{id}/Versions/{versionId}/Edit` | Edición de versión |
 | `/News` y `/News/Create` | Lista de noticias y creación |
 | `/News/{id}` | Noticia completa, pública; edición para mods/admins |
+| `/Tools/ApplyPatches` | Aplicador público de BPS/IPS, completamente local en el navegador |
 | `/Login` y `/Register` | Login y registro |
 | `/Register/CheckEmail` | Instrucciones para confirmar el correo |
 | `/Register/Confirmation` | Confirmación; admite variante con UserId y usa query `token` |
@@ -91,6 +92,10 @@ Dependencias relevantes: MailKit para correo, SkiaSharp para imágenes, SharpCom
 El header tiene el logo arriba a la izquierda y controles de cuenta a la derecha. El menú principal está en una barra **lateral derecha**, empieza debajo del header y se puede minimizar. En móvil es un drawer. No volver a sobrecargar la barra superior con navegación ni añadir un botón Home al menú lateral.
 
 La cuenta muestra avatar con margen, username en su color y un menú con perfil/logout. Deslogueado se muestran login/registro. Durante la comprobación inicial se reserva espacio con un placeholder neutral; no se debe mostrar brevemente una identidad antigua.
+
+### Aplicador de parches
+
+`/Tools/ApplyPatches` aplica BPS/IPS a ROMs `.sfc`/`.smc` usando JavaScript y un Web Worker. Los archivos se leen únicamente en el navegador, sin `InputFile`, endpoints de subida ni persistencia en DB. Es un motor compatible independiente; no ejecuta `flips.exe`. Valida estructura SNES, límites, estructura del parche y los CRC que BPS proporciona. IPS no permite verificar el juego/revisión base. Ver `docs/rom-patcher-2026-10-15.md` para límites, cabeceras y comprobaciones pendientes.
 
 ## 5. Recursos y versiones
 

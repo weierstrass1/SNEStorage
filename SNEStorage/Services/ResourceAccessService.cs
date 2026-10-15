@@ -2,36 +2,35 @@
 using OneOf;
 using SNEStorage.DTOs;
 using SNEStorage.Models;
+using SNEStorage.Services.QueryComponents;
 
 namespace SNEStorage.Services;
 
-public class ResourceAccessService(SnestorageContext context, AccountService accountService,
-    DBHelperService dbHelperService, ILogger<ResourceAccessService> logger)
+public class ResourceAccessService(SnestorageContext context,
+    AccountService accountService,
+    GetFirstOrErrorQueryOperation<ResourceAccessRow> getFirst,
+    ILogger<ResourceAccessService> logger)
 {
     private readonly SnestorageContext _context = context;
     private readonly AccountService _accountService = accountService;
-    private readonly DBHelperService _dbHelperService = dbHelperService;
+    private readonly GetFirstOrErrorQueryOperation<ResourceAccessRow> _getFirst = getFirst;
     private readonly ILogger<ResourceAccessService> _logger = logger;
 
-    public async Task<OneOf<ResourceAccessRow, ServiceResultContext>> GetAccess(
+    public Task<OneOf<ResourceAccessRow, ServiceResultContext>> GetAccess(
         long resourceId, CancellationToken ct = default)
     {
         string? userId = _accountService.GetUserID();
 
-        var result = await _dbHelperService.TryFunction(
-            cancel => _context.Resources.AsNoTracking()
-                .Where(resource => resource.Id == resourceId)
-                .Select(resource => new ResourceAccessRow(resource.Id, resource.ScoreId,
-                    resource.VisibilityId, userId != null &&
-                    (resource.SubmitterId == userId ||
-                    resource.ResourcesAuthors.Any(author => author.UserId == userId) ||
-                    resource.ResourceVersions.Any(version => version.SubmitterUserId == userId))))
-                .FirstOrDefaultAsync(cancel), ServiceResult.DBError, ct: ct);
+        var query = _context.Resources.AsNoTracking()
+            .Where(resource => resource.Id == resourceId)
+            .Select(resource => new ResourceAccessRow(resource.Id, resource.ScoreId,
+                resource.VisibilityId, userId != null &&
+                (resource.SubmitterId == userId ||
+                resource.ResourcesAuthors.Any(author => author.UserId == userId) ||
+                resource.ResourceVersions.Any(version =>
+                    version.SubmitterUserId == userId))));
 
-        if (!result.TryPickT0(out var access, out var error))
-            return error;
-
-        return access is null ? ServiceResult.ResourceNotFound.Return(_logger) : access;
+        return _getFirst.Execute(query, ServiceResult.ResourceNotFound, ct: ct);
     }
 
     public async Task<OneOf<ResourceAccessRow, ServiceResultContext>> GetViewAccess(

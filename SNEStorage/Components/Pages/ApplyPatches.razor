@@ -1,0 +1,66 @@
+@page "/Tools/ApplyPatches"
+
+<PageTitle>Apply BPS/IPS Patches | SNEStorage</PageTitle>
+
+<div class="patch-page">
+    <header class="patch-heading">
+        <p class="patch-kicker">SNESTORAGE TOOLS</p>
+        <h1>Apply BPS/IPS Patches</h1>
+        <p>Choose your SNES ROM and a patch. Download the patched ROM in a few simple steps.</p>
+        <span class="patch-local"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v12H4zM8 20h8M12 16v4M9 10l2 2 4-4" /></svg> Entirely in your browser. Your files are never uploaded.</span>
+    </header>
+
+    @* Native inputs deliberately have no Blazor bindings or InputFile streams.
+       File bytes remain in the browser and are passed only to a local worker. *@
+    <section class="patch-tool" id="@_patcherId" aria-label="SNES patcher" aria-busy="false">
+        <div class="patch-choices">
+            <label class="patch-file"><span class="patch-step">1</span><strong>Original SNES ROM</strong><small>Uncompressed .sfc or .smc · up to 32 MB</small><input data-patcher-rom type="file" accept=".sfc,.smc" /></label>
+            <label class="patch-file"><span class="patch-step">2</span><strong>BPS or IPS patch</strong><small>Extract the .bps or .ips file first · up to 64 MB</small><input data-patcher-patch type="file" accept=".bps,.ips" /></label>
+        </div>
+
+        <dl class="patch-rom-info" data-patcher-info hidden>
+            <div><dt>ROM title</dt><dd data-patcher-title></dd></div>
+            <div><dt>Mapping</dt><dd data-patcher-mapping></dd></div>
+            <div><dt>Copier header</dt><dd data-patcher-copier></dd></div>
+            <div><dt>ROM CRC32</dt><dd data-patcher-crc></dd></div>
+        </dl>
+        <p class="patch-warning" data-patcher-warning hidden>The internal SNES checksum does not match. Hacks and homebrew may leave it outdated; BPS compatibility is checked separately.</p>
+
+        <details class="patch-options">
+            <summary>Copier-header options</summary>
+            <label>512-byte copier header<select data-patcher-header>
+                <option value="auto">Automatic — verify BPS; keep IPS ROM as selected</option>
+                <option value="keep">Keep the ROM as selected</option>
+                <option value="remove">Remove a 512-byte copier header</option>
+                <option value="add">Add a blank 512-byte copier header</option>
+            </select></label>
+            <p>This is separate from the SNES internal header. For IPS, follow the patch author's header instructions.</p>
+        </details>
+
+        <p class="patch-note" data-patcher-note></p>
+        <p class="patch-error" data-patcher-error role="alert" hidden></p>
+        <div class="patch-actions">
+            <button type="button" class="patch-apply action-button action-button-primary" data-patcher-apply disabled>Apply patch &amp; download <ActionArrow /></button>
+            <button type="button" class="action-button" data-patcher-cancel hidden>Cancel</button>
+        </div>
+        <p class="patch-status" data-patcher-status role="status" aria-live="polite">Choose a ROM and its patch to begin.</p>
+        <p class="patch-error" data-patcher-unavailable>@(_initializationError ?? "The patcher is starting. JavaScript and browser workers are required.")</p>
+
+        <div class="patch-result" data-patcher-result hidden>
+            <strong>Your patched ROM is ready</strong>
+            <p>If the download did not start, use the button below.</p>
+            <small data-patcher-output></small>
+            <a class="action-button" data-patcher-download data-enhance-nav="false" download>Download patched ROM</a>
+        </div>
+    </section>
+
+    <aside class="patch-help">
+        <h2>Before you patch</h2>
+        <ul>
+            <li>Use the exact game, region and revision requested by the patch author.</li>
+            <li>BPS checks the patch, original ROM and result with CRC32. IPS has no base-ROM checksum.</li>
+            <li>Your original file stays untouched. ROM checks recognize SNES structure; they do not run the game.</li>
+        </ul>
+        <p>Compatible with BPS/IPS patches used by <a href="https://github.com/Alcaro/Flips" target="_blank" rel="noopener noreferrer">Floating IPS (FLIPS)</a>. This page uses a browser patcher, not the Windows executable.</p>
+    </aside>
+</div>

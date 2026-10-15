@@ -1,0 +1,44 @@
+.patch-page { max-width: 920px; margin-inline: auto; min-width: 0; }
+.patch-heading { margin-bottom: 1.5rem; }
+.patch-kicker { margin: 0 0 .5rem; color: #ba94e8; font: 700 .65rem/1.8 "Press Start 2P", monospace; letter-spacing: .07em; }
+.patch-heading h1 { margin: .5rem 0 .75rem; color: #f1e5ff; font: 900 clamp(1.75rem, 4vw, 2.65rem)/1.2 "Exo 2", sans-serif; }
+.patch-heading > p:not(.patch-kicker) { color: #cbb7df; line-height: 1.65; }
+.patch-local { display: inline-flex; align-items: center; gap: .55rem; color: #b5e6c9; font-size: .85rem; }
+.patch-local svg { width: 23px; height: 23px; flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.patch-tool { padding: clamp(1rem, 3vw, 1.75rem); border: 1px solid #745098; border-radius: 14px; background: linear-gradient(135deg, rgba(34, 18, 49, var(--ui-surface-alpha)), rgba(17, 11, 30, var(--ui-surface-alpha))); box-shadow: 0 12px 32px #0002; }
+.patch-choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.patch-file { position: relative; display: grid; align-content: start; gap: .55rem; min-width: 0; padding: 1rem; border: 1px dashed #8f62b6; border-radius: 10px; background: rgba(17, 10, 30, var(--ui-inset-alpha)); cursor: pointer; }
+.patch-file:hover, .patch-file:focus-within { border-color: #c99af2; background: #b66cf00b; }
+.patch-step { display: grid; width: 29px; height: 29px; place-items: center; border: 1px solid #9564c3; border-radius: 8px; color: #f0dfff; background: #3b2059; font-weight: 800; }
+.patch-file strong { color: #eee0fc; font-size: 1rem; }
+.patch-file small { color: #bfa8d5; font-size: .75rem; line-height: 1.5; }
+.patch-file input { width: 100%; min-width: 0; margin-top: .35rem; color: #e0ccee; font: inherit; font-size: .8rem; }
+.patch-file input::file-selector-button { margin-right: .55rem; padding: .4rem .55rem; border: 1px solid #9464b9; border-radius: 5px; color: #e8d4f7; background: #311a49; cursor: pointer; }
+.patch-file input:focus-visible, select:focus-visible, .patch-result a:focus-visible, summary:focus-visible { outline: 2px solid #ffe14d; outline-offset: 3px; }
+.patch-rom-info { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .8rem 1.25rem; margin: 1.25rem 0 0; padding: 1rem; border: 1px solid #654282; border-radius: 8px; background: #a66cdd08; }
+.patch-rom-info div { min-width: 0; }
+.patch-rom-info dt { margin-bottom: .2rem; color: #baa0cf; font-size: .7rem; }
+.patch-rom-info dd { margin: 0; color: #e0d1ef; overflow-wrap: anywhere; font-size: .85rem; }
+.patch-options { margin-top: 1.2rem; border-bottom: 1px solid #604079; padding-bottom: .9rem; }
+.patch-options summary { width: fit-content; color: #d9b7f1; font-size: .85rem; cursor: pointer; }
+.patch-options label { display: grid; gap: .45rem; margin-top: 1rem; color: #cbb7dc; font-size: .8rem; }
+.patch-options select { width: 100%; min-width: 0; padding: .6rem; border: 1px solid #7e559e; border-radius: 5px; color: #ecd9fa; background: #21132f; font: inherit; }
+.patch-options p, .patch-note, .patch-warning { font-size: .8rem; line-height: 1.6; }
+.patch-options p { margin: .6rem 0 0; color: #baa4cb; }
+.patch-note { margin: 1rem 0; color: #d0bedf; }
+.patch-note:empty { display: none; }
+.patch-warning { margin: .8rem 0; padding: .75rem; border: 1px solid #a88a4655; border-radius: 6px; color: #ecd39c; background: #a57b180b; }
+.patch-error { margin: 1rem 0; padding: .8rem; border: 1px solid #a5517680; border-radius: 6px; color: #ffbdce; background: #a3294b0c; font-size: .85rem; line-height: 1.6; }
+.patch-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; margin-top: 1.25rem; }
+.patch-status { margin: .85rem 0 0; color: #c1a9d4; font-size: .8rem; line-height: 1.6; }
+.patch-result { display: grid; justify-items: start; gap: .55rem; margin-top: 1.25rem; padding: 1rem; border: 1px solid #6aaa8299; border-radius: 8px; color: #b4edca; background: #5585660b; }
+.patch-result p { margin: 0; color: #c8ded0; font-size: .8rem; }
+.patch-result small { color: #aac8b5; font: .75rem/1.6 Consolas, monospace; overflow-wrap: anywhere; }
+.patch-result a { margin-top: .4rem; max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+.patch-tool [hidden] { display: none !important; }
+.patch-help { margin-top: 1.5rem; padding: 0 .25rem; color: #baa6ce; font-size: .82rem; line-height: 1.7; }
+.patch-help h2 { color: #decbef; font: 750 1rem/1.5 "Exo 2", sans-serif; }
+.patch-help ul { padding-left: 1.25rem; }
+.patch-help li + li { margin-top: .35rem; }
+.patch-help a { color: #caa1ed; }
+@media (max-width: 600px) { .patch-choices { grid-template-columns: 1fr; } .patch-rom-info { gap: .8rem; } .patch-apply { width: 100%; } }

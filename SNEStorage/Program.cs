@@ -212,6 +212,8 @@ services.AddScoped(typeof(GetByPropertyQueryOperation<,>));
 services.AddScoped(typeof(GetLikeByNameQueryOperation<>));
 services.AddScoped(typeof(GetLikeBySelectorQueryOperation<,>));
 services.AddScoped(typeof(PaginatedListQueryOperation<,>));
+services.AddScoped(typeof(GetFirstOrDefaultQueryOperation<>));
+services.AddScoped(typeof(GetListQueryOperation<>));
 services.AddHttpClient<CaptchaService>(client =>
 {
     client.Timeout = TimeSpan.FromSeconds(10);

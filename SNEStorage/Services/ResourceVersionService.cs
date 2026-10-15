@@ -2,6 +2,7 @@
 using OneOf;
 using SNEStorage.DTOs;
 using SNEStorage.Models;
+using SNEStorage.Services.QueryComponents;
 using System.Globalization;
 using System.Text.RegularExpressions;
 
@@ -10,18 +11,27 @@ namespace SNEStorage.Services;
 public partial class ResourceVersionService(IWebHostEnvironment environment,
     SnestorageContext context, FileService fileService, AccountService accountService,
     ResourceAccessService accessService, DBHelperService dbHelperService,
+    GetFirstOrErrorQueryOperation<Resource> getResource,
+    GetFirstOrErrorQueryOperation<Models.File> getFile,
+    GetListQueryOperation<ResourceVersion> getVersions,
+    GetFirstOrErrorQueryOperation<ResourceVersion> getVersion,
     ILogger<ResourceVersionService> logger)
 {
     private const int MIN_DESCRIPTION_SIZE = 10;
     private const int MAX_DESCRIPTION_SIZE = 10000;
     private const int MAX_VERSION_SIZE = 25;
     private const long FILE_MAX_SIZE = 250 * 1024 * 1024;
+
     private readonly IWebHostEnvironment _environment = environment;
     private readonly SnestorageContext _context = context;
     private readonly FileService _fileService = fileService;
     private readonly AccountService _accountService = accountService;
     private readonly ResourceAccessService _accessService = accessService;
     private readonly DBHelperService _dbHelperService = dbHelperService;
+    private readonly GetFirstOrErrorQueryOperation<Resource> _getResource = getResource;
+    private readonly GetFirstOrErrorQueryOperation<Models.File> _getFile = getFile;
+    private readonly GetListQueryOperation<ResourceVersion> _getVersions = getVersions;
+    private readonly GetFirstOrErrorQueryOperation<ResourceVersion> _getVersion = getVersion;
     private readonly ILogger<ResourceVersionService> _logger = logger;
 
     public async Task<OneOf<ResourceVersion, ServiceResultContext>> AddVersion(
@@ -53,18 +63,16 @@ public partial class ResourceVersionService(IWebHostEnvironment environment,
         if (!accessResult.TryPickT0(out _, out var accessError))
             return accessError;
 
-        var resourceResult = await _dbHelperService.TryFunction(
-            cancel => _context.Resources
-                .Include(resource => resource.ResourceVersions)
-                    .ThenInclude(version => version.File)
-                .FirstOrDefaultAsync(resource => resource.Id == resourceId, cancel),
-            ServiceResult.DBError, ct: ct);
+        var resourceQuery = _context.Resources
+            .Include(resource => resource.ResourceVersions)
+                .ThenInclude(version => version.File)
+            .Where(resource => resource.Id == resourceId);
+
+        var resourceResult = await _getResource.Execute(
+            resourceQuery, ServiceResult.ResourceNotFound, ct: ct);
 
         if (!resourceResult.TryPickT0(out var resource, out var resourceError))
             return resourceError;
-
-        if (resource is null)
-            return ServiceResult.ResourceNotFound.Return(_logger);
 
         if (resource.ResourceVersions.Any(version => version.Version == dto.Version))
             return ServiceResult.VersionAlreadyExists.Return(_logger);
@@ -109,17 +117,15 @@ public partial class ResourceVersionService(IWebHostEnvironment environment,
         if (!accessResult.TryPickT0(out _, out var accessError))
             return accessError;
 
-        var resourceResult = await _dbHelperService.TryFunction(
-            cancel => _context.Resources
-                .Include(resource => resource.ResourceVersions)
-                .FirstOrDefaultAsync(resource => resource.Id == resourceId, cancel),
-            ServiceResult.DBError, ct: ct);
+        var resourceQuery = _context.Resources
+            .Include(resource => resource.ResourceVersions)
+            .Where(resource => resource.Id == resourceId);
+
+        var resourceResult = await _getResource.Execute(
+            resourceQuery, ServiceResult.ResourceNotFound, ct: ct);
 
         if (!resourceResult.TryPickT0(out var resource, out var resourceError))
             return resourceError;
-
-        if (resource is null)
-            return ServiceResult.ResourceNotFound.Return(_logger);
 
         if (dto.Version is not null)
         {
@@ -142,12 +148,16 @@ public partial class ResourceVersionService(IWebHostEnvironment environment,
                 return ServiceResult.InvalidReleaseNote.Return(_logger);
         }
 
-        var version = resource.ResourceVersions.FirstOrDefault(version => version.Id == versionId);
+        var version = resource.ResourceVersions
+            .FirstOrDefault(version => version.Id == versionId);
+
         if (version is null)
             return ServiceResult.VersionNotFound.Return(_logger);
 
-        version.ChangeLog = _dbHelperService.GetEditString(dto.ReleaseNotes, version.ChangeLog);
-        version.Version = _dbHelperService.GetEditString(dto.Version, version.Version);
+        version.ChangeLog = _dbHelperService.GetEditString(
+            dto.ReleaseNotes, version.ChangeLog);
+        version.Version = _dbHelperService.GetEditString(
+            dto.Version, version.Version);
         version.UpdatedAt = DateTime.UtcNow;
         version.AlreadyModerated = false;
         version.SealOfQualityRequested = version.SealOfQuality ||
@@ -156,8 +166,9 @@ public partial class ResourceVersionService(IWebHostEnvironment environment,
         return await _dbHelperService.TrySyncContext(ct: ct);
     }
 
-    public async Task<OneOf<Models.File, ServiceResultContext>> GetFile(long resourceId,
-        long resourceFileId, bool prepareDownload = false, CancellationToken ct = default)
+    public async Task<OneOf<Models.File, ServiceResultContext>> GetFile(
+        long resourceId, long resourceFileId, bool prepareDownload = false,
+        CancellationToken ct = default)
     {
         var accessResult = await _accessService.GetViewAccess(resourceId, ct);
         if (!accessResult.TryPickT0(out _, out var accessError))
@@ -168,23 +179,21 @@ public partial class ResourceVersionService(IWebHostEnvironment environment,
             .Where(file =>
                 file.Id == resourceFileId &&
                 (_context.ResourceVersions.Any(version =>
-                    version.ResourceId == resourceId && version.FileId == file.Id) ||
+                    version.ResourceId == resourceId &&
+                    version.FileId == file.Id) ||
                 _context.ResourcePreviews.Any(preview =>
-                        preview.ResourceId == resourceId && preview.FileId == file.Id)));
+                    preview.ResourceId == resourceId &&
+                    preview.FileId == file.Id)));
 
         if (prepareDownload)
             query = query.Include(file => file.FileType);
 
-        var result = await _dbHelperService.TryFunction(
-            cancel => query.FirstOrDefaultAsync(cancel),
-            ServiceResult.DBError,
-            ct: ct);
-
-        return ItemOrError(result, ServiceResult.FileNotFound);
+        return await _getFile.Execute(
+            query, ServiceResult.FileNotFound, ct: ct);
     }
 
-    public async Task<OneOf<(string, string), ServiceResultContext>> Download(long resourceId,
-        long resourceFileId, CancellationToken ct = default)
+    public async Task<OneOf<(string, string), ServiceResultContext>> Download(
+        long resourceId, long resourceFileId, CancellationToken ct = default)
     {
         var result = await GetFile(resourceId, resourceFileId, true, ct);
 
@@ -197,58 +206,56 @@ public partial class ResourceVersionService(IWebHostEnvironment environment,
             return ServiceResult.FileNotFound.Return(_logger);
 
         var updateResult = await _dbHelperService.TryFunction(
-                async cancel => await _context.ResourceVersions
-                    .Where(version => version.ResourceId == resourceId &&
-                        version.FileId == resourceFileId)
-                    .ExecuteUpdateAsync(setters => setters
-                        .SetProperty(version => version.Downloads,
-                            version => version.Downloads + 1),
-                        cancel),
-                ServiceResult.DBError, ct: ct);
+            async cancel => await _context.ResourceVersions
+                .Where(version => version.ResourceId == resourceId &&
+                    version.FileId == resourceFileId)
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(version => version.Downloads,
+                        version => version.Downloads + 1),
+                    cancel),
+            ServiceResult.DBError, ct: ct);
 
         if (updateResult.TryPickT1(out var updateError, out _))
             return updateError;
 
         var mime = file.FileType?.Value ?? "application/octet-stream";
-
         return (physicalPath, mime);
     }
 
-    public async Task<OneOf<List<ResourceVersion>, ServiceResultContext>> GetResourceAllVersion(long resourceId, CancellationToken ct)
+    public async Task<OneOf<List<ResourceVersion>, ServiceResultContext>>
+        GetResourceAllVersion(long resourceId, CancellationToken ct)
     {
         var accessResult = await _accessService.GetViewAccess(resourceId, ct);
         if (!accessResult.TryPickT0(out _, out var accessError))
             return accessError;
 
-        var res = await _dbHelperService.TryFunction(
-            cancel => _context.ResourceVersions
-                .AsNoTracking()
-                .Where(version => version.ResourceId == resourceId)
-                .Include(version => version.File)
-                .OrderByDescending(version => version.CreatedAt)
-                .ThenByDescending(version => version.Id)
-                .ToListAsync(cancel),
-            ServiceResult.DBError, ct: ct);
-        return res;
+        var query = _context.ResourceVersions
+            .AsNoTracking()
+            .Where(version => version.ResourceId == resourceId)
+            .Include(version => version.File)
+            .OrderByDescending(version => version.CreatedAt)
+            .ThenByDescending(version => version.Id);
+
+        return await _getVersions.Execute(query, ct: ct);
     }
 
-    public async Task<OneOf<ResourceVersion, ServiceResultContext>> GetResourceLastVersion(long resourceId, CancellationToken ct)
+    public async Task<OneOf<ResourceVersion, ServiceResultContext>>
+        GetResourceLastVersion(long resourceId, CancellationToken ct)
     {
         var accessResult = await _accessService.GetViewAccess(resourceId, ct);
         if (!accessResult.TryPickT0(out _, out var accessError))
             return accessError;
 
-        var res = await _dbHelperService.TryFunction(
-            cancel => _context.ResourceVersions
-                .AsNoTracking()
-                .Include(version => version.File)
-                .Where(version => version.ResourceId == resourceId)
-                .OrderByDescending(version => version.CreatedAt)
-                .ThenByDescending(version => version.Id)
-                .Take(1)
-                .FirstOrDefaultAsync(cancel),
-            ServiceResult.DBError, ct: ct);
-        return ItemOrError(res, ServiceResult.VersionNotFound);
+        var query = _context.ResourceVersions
+            .AsNoTracking()
+            .Include(version => version.File)
+            .Where(version => version.ResourceId == resourceId)
+            .OrderByDescending(version => version.CreatedAt)
+            .ThenByDescending(version => version.Id)
+            .Take(1);
+
+        return await _getVersion.Execute(
+            query, ServiceResult.VersionNotFound, ct: ct);
     }
 
     internal async Task<ServiceResultContext> ValidateInitialVersion(
@@ -265,9 +272,9 @@ public partial class ResourceVersionService(IWebHostEnvironment environment,
             ServiceResult.InvalidVersion.Return(_logger);
     }
 
-    internal async Task<OneOf<ResourceVersion, ServiceResultContext>> PrepareInitialVersion(
-        ResourceCreateDTO dto, string userId, string mainFolder, string batchPath,
-        CancellationToken ct = default)
+    internal async Task<OneOf<ResourceVersion, ServiceResultContext>>
+        PrepareInitialVersion(ResourceCreateDTO dto, string userId,
+        string mainFolder, string batchPath, CancellationToken ct = default)
     {
         string version = GetFullVersion(dto.Version);
         string versionFolder = ResourcePathHelper.SanitizeFolderName(version);
@@ -305,20 +312,9 @@ public partial class ResourceVersionService(IWebHostEnvironment environment,
             Path.GetFileName(filename));
     }
 
-    private OneOf<T, ServiceResultContext> ItemOrError<T>(
-        OneOf<T?, ServiceResultContext> item,
-        ServiceResult? notFoundError = null) where T : class
-    {
-        if (!item.TryPickT0(out var value, out var error))
-            return error;
-
-        return value is not null ?
-            value :
-            (notFoundError ?? ServiceResult.ResourceNotFound).Return(_logger);
-    }
-
-    private async Task<OneOf<bool, ServiceResultContext>> ValidateVersion(long? resourceId,
-        long? versionId, string version, CancellationToken ct = default)
+    private async Task<OneOf<bool, ServiceResultContext>> ValidateVersion(
+        long? resourceId, long? versionId, string version,
+        CancellationToken ct = default)
     {
         if (version.Length > MAX_VERSION_SIZE || !_version().IsMatch(version))
             return false;
@@ -329,13 +325,14 @@ public partial class ResourceVersionService(IWebHostEnvironment environment,
         var versionsResult = await _dbHelperService.TryFunction(
             cancel => _context.Resources
                 .AsNoTracking()
-                .Where(r => r.Id == resourceId)
-                .Select(r => r.ResourceVersions
-                    .OrderBy(v => v.CreatedAt)
-                    .ThenBy(v => v.Id)
-                    .Select(v => new { v.Id, v.Version })
+                .Where(resource => resource.Id == resourceId)
+                .Select(resource => resource.ResourceVersions
+                    .OrderBy(version => version.CreatedAt)
+                    .ThenBy(version => version.Id)
+                    .Select(version => new { version.Id, version.Version })
                     .ToList())
-                .FirstOrDefaultAsync(cancel), ServiceResult.DBError, ct: ct);
+                .FirstOrDefaultAsync(cancel),
+            ServiceResult.DBError, ct: ct);
 
         if (!versionsResult.TryPickT0(out var versions, out var error))
             return error;
@@ -343,7 +340,7 @@ public partial class ResourceVersionService(IWebHostEnvironment environment,
         if (versions == null)
             return false;
 
-        int position = versions.FindIndex(v => v.Id == versionId);
+        int position = versions.FindIndex(version => version.Id == versionId);
 
         if (position < 0)
             position = versions.Count;
@@ -385,10 +382,14 @@ public partial class ResourceVersionService(IWebHostEnvironment environment,
         };
 
         return (int.Parse(numbers[0], CultureInfo.InvariantCulture),
-            int.Parse(numbers.ElementAtOrDefault(1) ?? "0", CultureInfo.InvariantCulture),
-            int.Parse(numbers.ElementAtOrDefault(2) ?? "0", CultureInfo.InvariantCulture),
+            int.Parse(numbers.ElementAtOrDefault(1) ?? "0",
+                CultureInfo.InvariantCulture),
+            int.Parse(numbers.ElementAtOrDefault(2) ?? "0",
+                CultureInfo.InvariantCulture),
             stage,
-            suffix.Length == 2 ? int.Parse(suffix[1], CultureInfo.InvariantCulture) : -1);
+            suffix.Length == 2 ?
+                int.Parse(suffix[1], CultureInfo.InvariantCulture) :
+                -1);
     }
 
     [GeneratedRegex(@"\A[0-9]{1,4}(?:\.[0-9]{1,4}){0,2}(?:-(?:alpha|beta|rc)(?:\.[0-9]{1,4})?)?\z")]

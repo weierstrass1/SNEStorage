@@ -37,8 +37,20 @@
 }
 .sidebar-close:focus-visible { outline: 3px solid #ffe14d; outline-offset: 3px; }
 .sidebar-body { overflow-y: auto; padding: .9rem .75rem; }
-.sidebar-caption { margin: 0 .4rem .65rem; color: #ab90cd; font: .5rem/1.8 "Press Start 2P", monospace; letter-spacing: .1em; }
-.site-navigation { display: flex; flex-direction: column; gap: .4rem; }
+.sidebar-caption { margin: 0 .4rem .2rem; color: #ab90cd; font: .5rem/1.8 "Press Start 2P", monospace; letter-spacing: .1em; text-transform: uppercase; }
+.site-navigation { display: flex; flex-direction: column; gap: 1rem; }
+.navigation-group, .navigation-group-links { display: flex; flex-direction: column; gap: .4rem; min-width: 0; }
+.navigation-group + .navigation-group { padding-top: .8rem; border-top: 1px solid #77529a45; }
+.navigation-group-links[hidden] { display: none; }
+.navigation-group-toggle { display: flex; align-items: center; justify-content: space-between; gap: .5rem; width: 100%; padding: .15rem .4rem; border: 0; border-radius: 4px; background: transparent; color: #ab90cd; cursor: pointer; }
+.navigation-group-toggle:hover { color: #e7dcff; background: #a06dd012; }
+.navigation-group-toggle:focus-visible { outline: 2px solid #ffe14d; outline-offset: 3px; }
+.navigation-group-title { font: .5rem/1.8 "Press Start 2P", monospace; letter-spacing: .1em; text-transform: uppercase; }
+.navigation-group-toggle svg { width: 17px; height: 17px; flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.navigation-group-symbol { display: none; }
+.navigation-group-chevron { transition: transform .15s ease; }
+.navigation-group-chevron.is-expanded { transform: rotate(180deg); }
+.site-navigation ::deep .navigation-label { min-width: 0; overflow-wrap: anywhere; }
 /* NavLink renders its own element, so isolated styles must cross its component boundary. */
 .site-navigation ::deep .navigation-button {
     display: inline-flex;
@@ -57,7 +69,7 @@
     font-size: .55rem;
     line-height: 1.8;
     text-decoration: none;
-    white-space: nowrap;
+    white-space: normal;
     transition: border-color .15s ease, background .15s ease, color .15s ease, box-shadow .15s ease;
 }
 
@@ -144,7 +156,11 @@
     .side-navigation.is-minimized .sidebar-heading { justify-content: center; padding-right: .5rem; padding-left: .5rem; }
     .side-navigation.is-minimized .sidebar-title,
     .side-navigation.is-minimized .sidebar-caption,
+    .side-navigation.is-minimized .navigation-group-title,
+    .side-navigation.is-minimized .navigation-group-chevron,
     .side-navigation.is-minimized ::deep .navigation-label { display: none; }
+    .side-navigation.is-minimized .navigation-group-toggle { justify-content: center; min-height: 28px; }
+    .side-navigation.is-minimized .navigation-group-symbol { display: block; }
     .side-navigation.is-minimized .sidebar-minimize svg { transform: rotate(180deg); }
     .side-navigation.is-minimized .sidebar-body { padding-right: .5rem; padding-left: .5rem; }
     .side-navigation.is-minimized ::deep .navigation-button { justify-content: center; padding: .5rem; gap: 0; }
@@ -154,6 +170,7 @@
     .site-navigation ::deep .navigation-button { min-height: 44px; }
 }
 @media (prefers-reduced-motion: reduce) {
+    .navigation-group-chevron { transition: none; }
     .site-navigation ::deep .navigation-button-quality::before { opacity: .65; }
     .site-navigation ::deep .navigation-button {
         transition-duration: .01ms !important;

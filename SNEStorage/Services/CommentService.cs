@@ -2,6 +2,7 @@
 using OneOf;
 using SNEStorage.DTOs;
 using SNEStorage.Models;
+using SNEStorage.Services.QueryComponents;
 
 namespace SNEStorage.Services;
 
@@ -25,13 +26,18 @@ public enum CommentSorting
 }
 
 public class CommentService(SnestorageContext context, DBHelperService dbHelperService,
-    AccountService accountService, ILogger<CommentService> logger)
+    AccountService accountService,
+    GetFirstOrDefaultQueryOperation<LikeUsers> getLike,
+    GetFirstOrErrorQueryOperation<Comment> getComment,
+    ILogger<CommentService> logger)
 {
     public const int MAX_AMOUNT_OF_COMMENTS_PER_PAGE = 200;
 
     private readonly SnestorageContext _context = context;
     private readonly DBHelperService _dbHelperService = dbHelperService;
     private readonly AccountService _accountService = accountService;
+    private readonly GetFirstOrDefaultQueryOperation<LikeUsers> _getLike = getLike;
+    private readonly GetFirstOrErrorQueryOperation<Comment> _getComment = getComment;
     private readonly ILogger<CommentService> _logger = logger;
 
     private static IOrderedQueryable<Comment> SortComments(
@@ -113,9 +119,7 @@ public class CommentService(SnestorageContext context, DBHelperService dbHelperS
                 like.UserId == userId &&
                 like.ScoreId == comment.ScoreId);
 
-        var likeResult = await _dbHelperService.TryFunction(
-            cancel => likeQuery.FirstOrDefaultAsync(cancel),
-            ServiceResult.DBError, ct: ct);
+        var likeResult = await _getLike.Execute(likeQuery, ct: ct);
 
         if (!likeResult.TryPickT0(out var like, out var likeError))
             return likeError;
@@ -209,9 +213,7 @@ public class CommentService(SnestorageContext context, DBHelperService dbHelperS
                 like.UserId == userId &&
                 like.ScoreId == comment.ScoreId);
 
-        var likeResult = await _dbHelperService.TryFunction(
-            cancel => likeQuery.FirstOrDefaultAsync(cancel),
-            ServiceResult.DBError, ct: ct);
+        var likeResult = await _getLike.Execute(likeQuery, ct: ct);
 
         if (!likeResult.TryPickT0(out var like, out var likeError))
             return likeError;
@@ -231,15 +233,11 @@ public class CommentService(SnestorageContext context, DBHelperService dbHelperS
             .ThenInclude(resourceComment => resourceComment!.Resource)
             .Where(comment => comment.Id == commentId);
 
-        var commentResult = await _dbHelperService.TryFunction(
-            cancel => commentQuery.FirstOrDefaultAsync(cancel),
-            ServiceResult.DBError, ct: ct);
+        var commentResult = await _getComment.Execute(
+            commentQuery, ServiceResult.CommentNotFound, ct: ct);
 
         if (!commentResult.TryPickT0(out var comment, out var commentError))
             return commentError;
-
-        if (comment is null)
-            return ServiceResult.CommentNotFound.Return(_logger);
 
         string? userId = _accountService.GetUserID();
 
@@ -313,15 +311,11 @@ public class CommentService(SnestorageContext context, DBHelperService dbHelperS
         var commentQuery = _context.Comments
             .Where(comment => comment.Id == commentId);
 
-        var commentResult = await _dbHelperService.TryFunction(
-            cancel => commentQuery.FirstOrDefaultAsync(cancel),
-            ServiceResult.DBError, ct: ct);
+        var commentResult = await _getComment.Execute(
+            commentQuery, ServiceResult.CommentNotFound, ct: ct);
 
         if (!commentResult.TryPickT0(out var comment, out var commentError))
             return commentError;
-
-        if (comment is null)
-            return ServiceResult.CommentNotFound.Return(_logger);
 
         string? userId = _accountService.GetUserID();
         bool isModeratorOrAdmin = _accountService.IsModeratorOrAdmin();
@@ -349,15 +343,11 @@ public class CommentService(SnestorageContext context, DBHelperService dbHelperS
             .Include(comment => comment.ResourceComment)
             .Where(comment => comment.Id == commentId);
 
-        var commentResult = await _dbHelperService.TryFunction(
-            cancel => commentQuery.FirstOrDefaultAsync(cancel),
-            ServiceResult.DBError, ct: ct);
+        var commentResult = await _getComment.Execute(
+            commentQuery, ServiceResult.CommentNotFound, ct: ct);
 
         if (!commentResult.TryPickT0(out var comment, out var commentError))
             return commentError;
-
-        if (comment is null)
-            return ServiceResult.CommentNotFound.Return(_logger);
 
         string? userId = _accountService.GetUserID();
         bool isModeratorOrAdmin = _accountService.IsModeratorOrAdmin();
@@ -393,17 +383,13 @@ public class CommentService(SnestorageContext context, DBHelperService dbHelperS
             .Where(comment =>
                 comment.Id == commentId);
 
-        var commentResult = await _dbHelperService.TryFunction(
-            cancel => commentQuery.FirstOrDefaultAsync(cancel),
-            ServiceResult.DBError, ct: ct);
+        var commentResult = await _getComment.Execute(
+            commentQuery, ServiceResult.CommentNotFound, ct: ct);
 
         if (!commentResult.TryPickT0(out var comment, out var commentError))
             return commentError;
 
-        if (comment is null)
-            return ServiceResult.CommentNotFound.Return(_logger);
-
-        if(comment.ResourceComment == null)
+        if (comment.ResourceComment == null)
             return ServiceResult.Invalid.Return(_logger);
 
         var permission = await CheckResourcePermission(

@@ -5,6 +5,11 @@ SideNavigation renders site links in a fixed right rail on desktop. Its arrow bu
 minimizes the rail to 72px with labeled icons, or expands it to 232px. MainLayout
 holds only this UI state in its code-behind; it remains while navigating in that layout.
 Mobile navigation always displays full labels in the drawer.
+Links are grouped into Resources, collapsible Info, Community and Tools.
+Info starts collapsed and contains News, About, Rules, Privacy and Seal of Quality;
+News remains visible when Info is collapsed. Community contains Community and Donations.
+The toggle also works in the minimized
+rail, where it uses an information icon. Tools contains Apply IPS/BPS.
 The sticky top bar spans the full viewport width. The rail starts below it using
 --site-header-height as its top offset; only page content and the footer reserve
 the rail width. Both areas use --site-divider-color for their borders.

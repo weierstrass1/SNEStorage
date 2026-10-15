@@ -1,7 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using OneOf;
 using SNEStorage.DTOs;
+using SNEStorage.DTOs.QueryOperations;
 using SNEStorage.Models;
+using SNEStorage.Services.QueryComponents;
 using System.Globalization;
 using System.Text.RegularExpressions;
 
@@ -10,7 +12,12 @@ namespace SNEStorage.Services;
 public partial class ResourceService(SnestorageContext context, CacheService cacheService,
     FileService fileService, AccountService accountService, DBHelperService dbHelperService,
     DiscordService discordService, ResourceAccessService accessService,
-    ResourceVersionService versionService, ILogger<ResourceService> logger)
+    ResourceVersionService versionService,
+    GetLikeBySelectorQueryOperation<Resource, Resource> getResourceLike,
+    GetFirstOrErrorQueryOperation<Resource> getResource,
+    GetFirstOrErrorQueryOperation<ResourceReadDTO> getResourceRead,
+    GetListQueryOperation<ResourcePreview> getPreviewList,
+    ILogger<ResourceService> logger)
 {
     public const int MIN_NAME_SIZE = 2;
     public const int MAX_NAME_SIZE = 100;
@@ -30,6 +37,13 @@ public partial class ResourceService(SnestorageContext context, CacheService cac
     private readonly DiscordService _discordService = discordService;
     private readonly ResourceAccessService _accessService = accessService;
     private readonly ResourceVersionService _versionService = versionService;
+    private readonly GetLikeBySelectorQueryOperation<Resource, Resource>
+        _getResourceLike = getResourceLike;
+    private readonly GetFirstOrErrorQueryOperation<Resource> _getResource = getResource;
+    private readonly GetFirstOrErrorQueryOperation<ResourceReadDTO>
+        _getResourceRead = getResourceRead;
+    private readonly GetListQueryOperation<ResourcePreview>
+        _getPreviewList = getPreviewList;
     private readonly ILogger<ResourceService> _logger = logger;
 
     public async Task<OneOf<List<ResourceFinderViewDTO>, ServiceResultContext>> Find(
@@ -63,41 +77,25 @@ public partial class ResourceService(SnestorageContext context, CacheService cac
 
         return await SelectFind(query, ct);
     }
-    public async Task<OneOf<List<Resource>, ServiceResultContext>> GetResourceLike(
+    public Task<OneOf<List<Resource>, ServiceResultContext>> GetResourceLike(
         string likeString, int maxAmount = 10, CancellationToken ct = default)
     {
-        if (maxAmount <= 0)
-            return ServiceResult.InvalidMaxAmount.Return(_logger);
-        if (maxAmount > MAX_AMOUNT_LIKE_LIMIT)
-            return ServiceResult.MaxAmountSurpassTheLimit.Return(_logger);
-
         bool isStaff = _accountService.IsModeratorOrAdmin();
         string? userId = _accountService.GetUserID();
-        var term = likeString?.ToLower().Trim() ?? "";
-        var query = _context.Resources
-            .AsNoTracking()
-            .Where(r => r.VisibilityId != 3 || isStaff ||
+
+        var query = _context.Resources.AsNoTracking()
+            .Where(resource => resource.VisibilityId != 3 || isStaff ||
                 (userId != null &&
-                (r.SubmitterId == userId ||
-                r.ResourcesAuthors.Any(a => a.UserId == userId) ||
-                r.ResourceVersions.Any(a => a.SubmitterUserId == userId))));
+                (resource.SubmitterId == userId ||
+                resource.ResourcesAuthors.Any(author => author.UserId == userId) ||
+                resource.ResourceVersions.Any(version =>
+                    version.SubmitterUserId == userId))));
 
-        if (!string.IsNullOrWhiteSpace(term) && term.Trim().Length >= 2)
-        {
-            var escaped = term
-                .Replace(@"\", @"\\")
-                .Replace("%", @"\%")
-                .Replace("_", @"\_")
-                .Replace("[", @"\[");
+        var parameter = new GetLikeBySelectorQuery<Resource, Resource>(
+            likeString, maxAmount, MAX_AMOUNT_LIKE_LIMIT,
+            resource => resource.Name, resource => resource);
 
-            var pattern = $"%{escaped}%";
-
-            query = query.Where(v => EF.Functions.Like(v.Name, pattern, @"\"));
-        }
-
-        return await _dbHelperService.TryFunction(
-            cancel => query.OrderBy(v => v.Name).Take(maxAmount).ToListAsync(cancel),
-            ServiceResult.DBError, ct: ct);
+        return _getResourceLike.Execute(query, parameter, ct: ct);
     }
 
     public async Task<ServiceResultContext> Edit(long resourceId, ResourceEditDTO dto, CancellationToken ct = default)
@@ -133,27 +131,25 @@ public partial class ResourceService(SnestorageContext context, CacheService cac
         if (!accessResult.TryPickT0(out _, out var accessError))
             return accessError;
 
-        var res = await _dbHelperService.TryFunction(
-            cancel => _context.Resources
-                .AsTracking()
-                .Where(resource => resource.Id == resourceId)
-                .Include(resource => resource.ResourceVersions)
-                    .ThenInclude(version => version.File)
-                .Include(resource => resource.ResourcePreviews)
-                .Include(resource => resource.ResourcesAuthors)
-                .Include(resource => resource.ResourceExternalAuthors)
-                .Include(resource => resource.ResourceDependencies)
-                .Include(resource => resource.ResourceExternalDependencies)
-                .Include(resource => resource.ResourceResourceTypes)
-                .Include(resource => resource.ResourceTags)
-                .AsSplitQuery()
-                .FirstOrDefaultAsync(cancel),
-            ServiceResult.DBError, ct: ct);
+        var resourceQuery = _context.Resources
+            .AsTracking()
+            .Where(resource => resource.Id == resourceId)
+            .Include(resource => resource.ResourceVersions)
+                .ThenInclude(version => version.File)
+            .Include(resource => resource.ResourcePreviews)
+            .Include(resource => resource.ResourcesAuthors)
+            .Include(resource => resource.ResourceExternalAuthors)
+            .Include(resource => resource.ResourceDependencies)
+            .Include(resource => resource.ResourceExternalDependencies)
+            .Include(resource => resource.ResourceResourceTypes)
+            .Include(resource => resource.ResourceTags)
+            .AsSplitQuery();
 
-        if (!res.TryPickT0(out var resource, out var error))
-            return error;
-        if (resource == null)
-            return ServiceResult.ResourceNotFound.Return(_logger);
+        var resourceResult = await _getResource.Execute(
+            resourceQuery, ServiceResult.ResourceNotFound, ct: ct);
+
+        if (!resourceResult.TryPickT0(out var resource, out var resourceError))
+            return resourceError;
 
         var userId = _accountService.GetUserID();
         if (string.IsNullOrWhiteSpace(userId))
@@ -293,12 +289,12 @@ public partial class ResourceService(SnestorageContext context, CacheService cac
             return ServiceResult.AmountOfElementsSurpassTheLimit.Return(_logger);
         }
 
-        var removeResult = await _dbHelperService.TryFunction(
-            cancel => _context.ResourcePreviews.AsNoTracking()
-                .Where(preview => preview.ResourceId == resourceId &&
-                    prIds.Contains(preview.Id))
-                .ToListAsync(cancel),
-            ServiceResult.DBError, ct: ct);
+        var removePreviewsQuery = _context.ResourcePreviews.AsNoTracking()
+            .Where(preview => preview.ResourceId == resourceId &&
+                prIds.Contains(preview.Id));
+
+        var removeResult = await _getPreviewList.Execute(
+            removePreviewsQuery, ct: ct);
 
         if (!removeResult.TryPickT0(out var removePreviews, out var removeError))
         {
@@ -332,62 +328,59 @@ public partial class ResourceService(SnestorageContext context, CacheService cac
 
         bool canEdit = access.IsContributor;
 
-        var result = await _dbHelperService.TryFunction(
-            cancel => _context.Resources
-                .AsNoTracking()
-                .Where(resource => resource.Id == resourceId)
-                .Select(resource => new ResourceReadDTO
+        var query = _context.Resources
+            .AsNoTracking()
+            .Where(resource => resource.Id == resourceId)
+            .Select(resource => new ResourceReadDTO
+            {
+                Id = resource.Id,
+                Name = resource.Name,
+                Description = resource.Description,
+                CreatedAt = resource.CreatedAt,
+                UpdatedAt = resource.UpdatedAt,
+                RepositoryURL = resource.RepositoryURL,
+                AlreadyModerated = resource.AlreadyModerated,
+                CanEdit = canEdit,
+
+                IncludesPorn = resource.IncludesPorn,
+                IncludesGore = resource.IncludesGore,
+                IncludesPolitics = resource.IncludesPolitics,
+                IncludesSlurs = resource.IncludesSlurs,
+                IncludesSensitiveContent = resource.IncludesSensitiveContent,
+
+                Videogame = new IdNamePair
                 {
-                    Id = resource.Id,
-                    Name = resource.Name,
-                    Description = resource.Description,
-                    CreatedAt = resource.CreatedAt,
-                    UpdatedAt = resource.UpdatedAt,
-                    RepositoryURL = resource.RepositoryURL,
-                    AlreadyModerated = resource.AlreadyModerated,
-                    CanEdit = canEdit,
+                    Id = resource.VideogameId,
+                    Name = resource.Videogame!.Name ?? "Unknown"
+                },
+                Visibility = new IdNamePair
+                {
+                    Id = resource.VisibilityId,
+                    Name = resource.Visibility!.Name ?? "Unknown"
+                },
+                Types = resource.ResourceResourceTypes
+                    .OrderBy(type => type.ResourceType!.Name)
+                    .ThenBy(type => type.Id)
+                    .Select(type => new ResourceTypeReadDTO(
+                        type.Id,
+                        type.ResourceTypeId,
+                        type.ResourceType!.Name ?? "Unknown",
+                        type.ResourceType.CategoryId,
+                        type.ResourceType.Category!.Name))
+                    .ToList(),
+                Tags = resource.ResourceTags
+                    .OrderBy(tag => tag.Tag!.Name)
+                    .ThenBy(tag => tag.Id)
+                    .Select(tag => new ResourceTagReadDTO(
+                        tag.Id,
+                        tag.TagId,
+                        tag.Tag!.Name))
+                    .ToList()
+            })
+            .AsSplitQuery();
 
-                    IncludesPorn = resource.IncludesPorn,
-                    IncludesGore = resource.IncludesGore,
-                    IncludesPolitics = resource.IncludesPolitics,
-                    IncludesSlurs = resource.IncludesSlurs,
-                    IncludesSensitiveContent = resource.IncludesSensitiveContent,
-
-                    Videogame = new IdNamePair
-                    {
-                        Id = resource.VideogameId,
-                        Name = resource.Videogame!.Name ?? "Unknown"
-                    },
-                    Visibility = new IdNamePair
-                    {
-                        Id = resource.VisibilityId,
-                        Name = resource.Visibility!.Name ?? "Unknown"
-                    },
-                    Types = resource.ResourceResourceTypes
-                        .OrderBy(type => type.ResourceType!.Name)
-                        .ThenBy(type => type.Id)
-                        .Select(type => new ResourceTypeReadDTO(
-                            type.Id,
-                            type.ResourceTypeId,
-                            type.ResourceType!.Name ?? "Unknown",
-                            type.ResourceType.CategoryId,
-                            type.ResourceType.Category!.Name))
-                        .ToList(),
-                    Tags = resource.ResourceTags
-                        .OrderBy(tag => tag.Tag!.Name)
-                        .ThenBy(tag => tag.Id)
-                        .Select(tag => new ResourceTagReadDTO(
-                            tag.Id,
-                            tag.TagId,
-                            tag.Tag!.Name))
-                        .ToList()
-                })
-                .AsSplitQuery()
-                .FirstOrDefaultAsync(cancel),
-            ServiceResult.DBError,
-            ct: ct);
-
-        return ItemOrError(result);
+        return await _getResourceRead.Execute(
+            query, ServiceResult.ResourceNotFound, ct: ct);
     }
 
     public async Task<OneOf<Resource, ServiceResultContext>> Create(ResourceCreateDTO dto, CancellationToken ct = default)
@@ -823,31 +816,20 @@ public partial class ResourceService(SnestorageContext context, CacheService cac
         return res;
     }
 
-    public async Task<OneOf<List<ResourcePreview>, ServiceResultContext>> GetResourceAllPreviews(long resourceId, CancellationToken ct)
+    public async Task<OneOf<List<ResourcePreview>, ServiceResultContext>> GetResourceAllPreviews(
+        long resourceId, CancellationToken ct)
     {
         var accessResult = await _accessService.GetViewAccess(resourceId, ct);
         if (!accessResult.TryPickT0(out _, out var accessError))
             return accessError;
 
-        var res = await _dbHelperService.TryFunction(
-            cancel => _context.ResourcePreviews
-                .AsNoTracking()
-                .Where(preview => preview.ResourceId == resourceId)
-                .Include(preview => preview.File)
-                .OrderBy(preview => preview.Id)
-                .ToListAsync(cancel),
-            ServiceResult.DBError, ct: ct);
-        return res;
-    }
+        var query = _context.ResourcePreviews
+            .AsNoTracking()
+            .Where(preview => preview.ResourceId == resourceId)
+            .Include(preview => preview.File)
+            .OrderBy(preview => preview.Id);
 
-    private OneOf<T, ServiceResultContext> ItemOrError<T>(
-        OneOf<T?, ServiceResultContext> item,
-        ServiceResult? notFoundError = null) where T : class
-    {
-        if (!item.TryPickT0(out var i, out var error))
-            return error;
-        return i != null ? i :
-            (notFoundError ?? ServiceResult.ResourceNotFound).Return(_logger);
+        return await _getPreviewList.Execute(query, ct: ct);
     }
 
     private static IQueryable<Resource> SortFind(IQueryable<Resource> query, ResourceSortingDTO sort)

@@ -1,18 +1,16 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using OneOf;
 using SNEStorage.DTOs;
 using System.Runtime.CompilerServices;
 
 namespace SNEStorage.Services.Interfaces;
 
-public interface IFullGet<TModel, TFilter, TSort, TSelect> where TSort : struct, Enum
+public interface IFullGet<TModel, TFilter, TSort, TSelect> :
+    IFullGetDefinition<TModel, TFilter, TSort, TSelect>
+    where TSort : struct, Enum
 {
-    public IQueryable<TModel> GetFilter(IQueryable<TModel> query, TFilter filter);
-    public IQueryable<TModel> GetSort(IQueryable<TModel> query, TSort sort);
-    public IQueryable<TSelect> GetSelect(IQueryable<TModel> query);
-
-    public Task<OneOf<List<TSelect>, ServiceResultContext>> FullGet(TFilter filter,
-        TSort sort, int maxAmount = 10, int page = 0,
+    public Task<OneOf<List<TSelect>, ServiceResultContext>> FullGet(
+        TFilter filter, TSort sort, int maxAmount = 10, int page = 0,
         CancellationToken ct = default);
 
     public async Task<OneOf<List<TSelect>, ServiceResultContext>> FullGetResult(
