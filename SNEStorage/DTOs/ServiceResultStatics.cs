@@ -386,6 +386,16 @@ public partial class ServiceResult
     public static ServiceResult NewNotFound { get; } =
         Create(ServiceResultTypes.NewNotFound, ActionResultType.NotFound);
 
+    // Flags
+    public static ServiceResult FlagNotFound { get; } =
+        Create(ServiceResultTypes.FlagNotFound, ActionResultType.NotFound);
+    public static ServiceResult RepeatedFlag { get; } =
+        Create(ServiceResultTypes.RepeatedFlag, ActionResultType.NotFound);
+
+    // Reasons
+    public static ServiceResult ReasonNotFound { get; } =
+        Create(ServiceResultTypes.ReasonNotFound, ActionResultType.NotFound);
+
     // Discord
     public static ServiceResult InvalidUserId { get; } =
         Create(ServiceResultTypes.InvalidUserId, ActionResultType.BadRequest);

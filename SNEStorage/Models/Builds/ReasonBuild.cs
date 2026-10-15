@@ -14,6 +14,8 @@ public partial class Reason
         entity.Property(e => e.Id)
             .HasColumnName("id")
             .ValueGeneratedOnAdd();
+        entity.Property(e => e.Priority)
+            .HasColumnName("priority");
 
         entity.Property(e => e.Description)
             .HasColumnType("nvarchar(max)")

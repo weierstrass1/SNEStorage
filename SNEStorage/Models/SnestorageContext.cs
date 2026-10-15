@@ -49,6 +49,7 @@ public partial class SnestorageContext : IdentityDbContext<ApplicationUser>
     public virtual DbSet<ResourceCategory> ResourceCategories { get; set; }
     public virtual DbSet<CommentComment> CommentComments { get; set; }
     public virtual DbSet<New> News { get; set; }
+    public virtual DbSet<CommentFlags> CommentFlags { get; set; }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -90,6 +91,7 @@ public partial class SnestorageContext : IdentityDbContext<ApplicationUser>
         modelBuilder.Entity<ResourceCategory>(ResourceCategory.Build);
         modelBuilder.Entity<CommentComment>(CommentComment.Build);
         modelBuilder.Entity<New>(New.Build);
+        modelBuilder.Entity<CommentFlags>(CommentFlags.Build);
 
         OnModelCreatingPartial(modelBuilder);
     }

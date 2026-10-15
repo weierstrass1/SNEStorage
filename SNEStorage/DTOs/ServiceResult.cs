@@ -108,6 +108,13 @@ public enum ServiceResultTypes
     // Noticias
     NewNotFound,
 
+    // Flags
+    FlagNotFound,
+    RepeatedFlag,
+
+    //Reasons
+    ReasonNotFound,
+
     // Discord
     InvalidUserId,
     InvalidDiscordUserId,

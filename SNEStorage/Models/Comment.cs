@@ -26,4 +26,5 @@ public partial class Comment
     public virtual ResourceComments? ResourceComment { get; set; }
     public virtual ICollection<CommentComment> Childrens { get; set; } = [];
     public virtual CommentComment? Parent { get; set; }
+    public virtual ICollection<CommentFlags> CommentFlags { get; set; } = [];
 }

@@ -15,8 +15,13 @@ public partial class Flag
             .HasColumnName("id")
             .ValueGeneratedOnAdd();
 
-        entity.Property(e => e.Date)
-            .HasColumnName("date");
+        entity.Property(e => e.CreatedAt)
+            .HasColumnName("created_at");
+        entity.Property(e => e.ResolvedAt)
+            .HasColumnName("resolved_at");
+
+        entity.Property(e => e.Resolved)
+            .HasColumnName("resolved");
 
         entity.Property(e => e.UserId)
             .HasColumnType("nvarchar(450)")

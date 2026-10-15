@@ -7,8 +7,7 @@ namespace SNEStorage.Services;
 
 public partial class NewsService
 {
-    public Task<ServiceResultContext> ValidateEdit(
-        NewsEditDTO edit, CancellationToken ct = default)
+    public Task<ServiceResultContext> ValidateEdit(NewsEditDTO edit, CancellationToken ct = default)
     {
         if (!_accountService.IsModeratorOrAdmin())
             return Task.FromResult(string.IsNullOrWhiteSpace(_accountService.GetUserID()) ?
@@ -26,8 +25,7 @@ public partial class NewsService
                 ServiceResult.Success.Return(_logger));
     }
 
-    public Task<OneOf<New, ServiceResultContext>> FindEdit(
-        long key, CancellationToken ct = default)
+    public Task<OneOf<New, ServiceResultContext>> FindEdit(long key, CancellationToken ct = default)
     {
         var parameter = new GetByPropertyQuery<New, long>(
             news => news.Id, key, ServiceResult.NewNotFound);
@@ -35,8 +33,8 @@ public partial class NewsService
         return _getById.Execute(_context.News, parameter, ct: ct);
     }
 
-    public async Task<ServiceResultContext> EditInternal(
-        New item, NewsEditDTO edit, CancellationToken ct = default)
+    public async Task<ServiceResultContext> EditInternal(New item, NewsEditDTO edit, 
+        CancellationToken ct = default)
     {
         item.Title = edit.Title?.Trim() ?? item.Title;
         item.Text = edit.Text?.Trim() ?? item.Text;
