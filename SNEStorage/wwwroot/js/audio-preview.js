@@ -166,7 +166,7 @@ async function prepare(state, context, signal) {
         state.native.addEventListener("ended", () => { state.playing = false; state.position = 0; clearInterval(state.timer); update(state); }, { signal: state.listeners.signal });
         state.native.addEventListener("error", () => {
             stop(state);
-            state.feedback.textContent = "This browser could not play the audio format. Try downloading the original preview.";
+            state.feedback.textContent = "This browser could not play the audio format. Try a browser that supports this format.";
         }, { signal: state.listeners.signal });
         state.root.append(state.native);
         state.native.src = state.blobUrl;
@@ -190,7 +190,7 @@ async function play(state) {
         token.throwIfAborted();
         if (state.disposed || activePlayer !== state) return;
         if (state.kind === "spc") {
-            if (!state.spcLoaded) { spcBackend.loadSPC(state.bytes); state.spcLoaded = true; }
+            if (!state.spcLoaded) { state.spcLoaded = true; spcBackend.loadSPC(state.bytes); }
             spcBackend.setVolume(state.volume);
             await context.resume();
         } else if (state.kind === "brr") {
@@ -229,7 +229,9 @@ async function play(state) {
     } catch (error) {
         if (!state.disposed && error.name !== "AbortError") {
             stop(state);
-            state.feedback.textContent = error.name === "NotAllowedError" ? "Press Play again to allow sound in this browser."
+            state.feedback.textContent = state.kind === "spc" && spcBackend?.status !== 1 && spcBackend
+                ? "This SPC snapshot could not be played. Reload the page to restart the SPC engine."
+                : error.name === "NotAllowedError" ? "Press Play again to allow sound in this browser."
                 : error.message || "This sound preview could not be played.";
         }
     } finally {

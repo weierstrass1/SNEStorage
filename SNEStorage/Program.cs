@@ -12,6 +12,7 @@ using SNEStorage.Components;
 using SNEStorage.DTOs;
 using SNEStorage.Models;
 using SNEStorage.Services;
+using SNEStorage.Services.QueryComponents;
 using System.Globalization;
 using System.Security.Claims;
 using System.Text;
@@ -204,6 +205,13 @@ services.AddTransient<ResourceService>();
 services.AddScoped<EmailService>();
 services.AddScoped<DateTimeService>();
 services.AddScoped<DBHelperService>();
+services.AddScoped(typeof(GetFirstOrErrorQueryOperation<>));
+services.AddScoped(typeof(GetSingleOrErrorQueryOperation<>));
+services.AddScoped(typeof(GetByIdQueryOperation<,>));
+services.AddScoped(typeof(GetByPropertyQueryOperation<,>));
+services.AddScoped(typeof(GetLikeByNameQueryOperation<>));
+services.AddScoped(typeof(GetLikeBySelectorQueryOperation<,>));
+services.AddScoped(typeof(PaginatedListQueryOperation<,>));
 services.AddHttpClient<CaptchaService>(client =>
 {
     client.Timeout = TimeSpan.FromSeconds(10);

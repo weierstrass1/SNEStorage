@@ -28,6 +28,7 @@
 .markdown-rendered ::deep th, .markdown-rendered ::deep td { padding: .5em .7em; border: 1px solid #69439455; vertical-align: top; }
 .markdown-rendered ::deep th { color: #eee2ff; background: #b68ae818; font-weight: 700; }
 .markdown-rendered ::deep tr:nth-child(even) { background: #b68ae808; }
-.markdown-compact { max-height: 6.6em; overflow: hidden; }
+.markdown-compact:not(.markdown-excerpt) { max-height: 6.6em; overflow: hidden; }
+.markdown-excerpt .markdown-rendered, .markdown-excerpt .markdown-fallback { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: var(--markdown-lines); line-clamp: var(--markdown-lines); max-height: calc(var(--markdown-lines) * 1lh); overflow: hidden; white-space: pre-line; }
 .markdown-compact .markdown-rendered ::deep h1, .markdown-compact .markdown-rendered ::deep h2, .markdown-compact .markdown-rendered ::deep h3 { font-size: 1.05em; }
 @media (forced-colors: active) { .markdown-rendered ::deep blockquote, .markdown-rendered ::deep code, .markdown-rendered ::deep pre, .markdown-rendered ::deep .markdown-table-scroll { background: Canvas; color: CanvasText; border-color: CanvasText; } .markdown-rendered ::deep a { color: LinkText; } }

@@ -18,7 +18,7 @@
         <label>Per page<InputSelect @bind-Value="_pageSize" @bind-Value:after="PageSizeChangedAsync"><option value="20">20</option><option value="50">50</option><option value="100">100</option><option value="200">200</option><option value="0">All</option></InputSelect></label>
     </div>
     <div id="library-filter-panel" hidden="@(!_filtersOpen)">
-        @if (_filtersOpen)
+        @if (_filtersInitialized)
         {
             @if (_optionsLoading) { <BoxLoader Label="Loading filter choices…" Compact="true" /> }
             @if (_optionsError is not null) { <p role="alert">@_optionsError <button type="button" class="text-button" @onclick="LoadOptionsAsync">Try again</button></p> }

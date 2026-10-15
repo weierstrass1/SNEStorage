@@ -71,7 +71,7 @@ public sealed class DiscordNewsNotificationService(
         }
 
         var news = lookup.News;
-        var newsUrl = new Uri(baseUri, $"News#news-{news.Id}").ToString();
+        var newsUrl = new Uri(baseUri, $"News/{news.Id}").ToString();
         var title = DiscordNotificationFormatting.SingleLine(
             news.Title,
             EmbedBuilder.MaxTitleLength,

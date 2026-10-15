@@ -21,7 +21,7 @@ public partial class Resources : IAsyncDisposable
     private bool _descending = true;
     private int _pageSize = 20, _page, _blocks, _revision, _errorStatus;
     private int? _lastPage;
-    private bool _loading = true, _loadingMore, _endReached, _filtersOpen, _optionsLoading, _syncObserver, _disposed, _scrollPending;
+    private bool _loading = true, _loadingMore, _endReached, _filtersOpen, _filtersInitialized, _optionsLoading, _syncObserver, _disposed, _scrollPending;
     private string? _error, _errorBody, _filterError, _optionsError, _announcement;
     [Inject] private IJSRuntime JavaScript { get; set; } = default!;
     [Inject] private ILogger<Resources> Logger { get; set; } = default!;
@@ -189,7 +189,11 @@ public partial class Resources : IAsyncDisposable
     private async Task ToggleFiltersAsync()
     {
         _filtersOpen = !_filtersOpen;
-        if (_filtersOpen) await LoadOptionsAsync();
+        if (_filtersOpen)
+        {
+            _filtersInitialized = true;
+            await LoadOptionsAsync();
+        }
     }
     private async Task LoadOptionsAsync()
     {

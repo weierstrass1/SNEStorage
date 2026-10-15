@@ -1,8 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using OneOf;
 using SNEStorage.DTOs;
+using SNEStorage.DTOs.QueryOperations;
 using SNEStorage.Models;
 using SNEStorage.Services.Interfaces;
+using SNEStorage.Services.QueryComponents;
 
 namespace SNEStorage.Services;
 
@@ -14,6 +16,9 @@ public enum NewsSorting
 
 public class NewsService(SnestorageContext context, DBHelperService dbHelperService,
     AccountService accountService, DiscordService discordService,
+    PaginatedListQueryOperation<NewsReadDTO, NewsSorting> getPage,
+    GetSingleOrErrorQueryOperation<NewsReadDTO> getSingle,
+    GetByPropertyQueryOperation<New, long> getById,
     ILogger<NewsService> logger) :
     IFullGet<New, NewsFilterDTO, NewsSorting, NewsReadDTO>,
     IEditSingle<long, NewsEditDTO, New>,
@@ -21,41 +26,35 @@ public class NewsService(SnestorageContext context, DBHelperService dbHelperServ
 {
     public const int MAX_AMOUNT_PER_PAGE = 50;
     public const int MAX_TITLE_LENGTH = 200;
+
     private readonly SnestorageContext _context = context;
     private readonly DBHelperService _dbHelperService = dbHelperService;
     private readonly AccountService _accountService = accountService;
     private readonly DiscordService _discordService = discordService;
+    private readonly PaginatedListQueryOperation<NewsReadDTO, NewsSorting> _getPage = getPage;
+    private readonly GetSingleOrErrorQueryOperation<NewsReadDTO> _getSingle = getSingle;
+    private readonly GetByPropertyQueryOperation<New, long> _getById = getById;
     private readonly ILogger<NewsService> _logger = logger;
 
-    public async Task<OneOf<List<NewsReadDTO>, ServiceResultContext>> FullGet(
+    public Task<OneOf<List<NewsReadDTO>, ServiceResultContext>> FullGet(
         NewsFilterDTO filter, NewsSorting sort, int maxAmount = 10,
         int page = 0, CancellationToken ct = default)
     {
-        IFullGet<New, NewsFilterDTO, NewsSorting, NewsReadDTO> fullGet = this;
-        PaginationRequest pagination = new(maxAmount, MAX_AMOUNT_PER_PAGE, page);
-        ServiceResult validation = pagination.Validate(sort);
+        var query = GetFilter(_context.News.AsNoTracking(), filter);
+        var resultQuery = GetSelect(GetSort(query, sort));
+        var parameter = new PaginatedQuery<NewsSorting>(
+            new PaginationRequest(maxAmount, MAX_AMOUNT_PER_PAGE, page), sort);
 
-        if (validation != ServiceResult.Success)
-            return validation.Return(_logger);
-
-        return await fullGet.FullGetResult(_context.News.AsNoTracking(), filter,
-            sort, pagination, _dbHelperService, ct: ct);
+        return _getPage.Execute(resultQuery, parameter, ct: ct);
     }
 
-    public async Task<OneOf<NewsReadDTO, ServiceResultContext>> Get(
+    public Task<OneOf<NewsReadDTO, ServiceResultContext>> Get(
         long newsId, CancellationToken ct = default)
     {
         var query = GetSelect(_context.News.AsNoTracking()
             .Where(news => news.Id == newsId));
 
-        var result = await _dbHelperService.TryFunction(
-            cancel => query.SingleOrDefaultAsync(cancel),
-            ServiceResult.DBError, ct: ct);
-
-        if (!result.TryPickT0(out var news, out var error))
-            return error;
-
-        return news is null ? ServiceResult.NewNotFound.Return(_logger) : news;
+        return _getSingle.Execute(query, ServiceResult.NewNotFound, ct: ct);
     }
 
     public IQueryable<New> GetFilter(
@@ -124,18 +123,13 @@ public class NewsService(SnestorageContext context, DBHelperService dbHelperServ
                 ServiceResult.Success.Return(_logger));
     }
 
-    public async Task<OneOf<New, ServiceResultContext>> FindEdit(
+    public Task<OneOf<New, ServiceResultContext>> FindEdit(
         long key, CancellationToken ct = default)
     {
-        var found = await _dbHelperService.TryFunction(
-            cancel => _context.News.FirstOrDefaultAsync(
-                news => news.Id == key, cancel),
-            ServiceResult.DBError, ct: ct);
+        var parameter = new GetByPropertyQuery<New, long>(
+            news => news.Id, key, ServiceResult.NewNotFound);
 
-        if (!found.TryPickT0(out var news, out var error))
-            return error;
-
-        return news is null ? ServiceResult.NewNotFound.Return(_logger) : news;
+        return _getById.Execute(_context.News, parameter, ct: ct);
     }
 
     public async Task<ServiceResultContext> EditInternal(
@@ -195,7 +189,7 @@ public class NewsService(SnestorageContext context, DBHelperService dbHelperServ
         if (!saveResult.TryPickT0(out var newItem, out var saveError))
             return saveError;
 
-        var notification = new DiscordBotEventDTO(Guid.NewGuid(),
+        DiscordBotEventDTO notification = new (Guid.NewGuid(),
             DiscordBotEventTypes.NewsPublished, newItem.Id.ToString(),
             DateTimeOffset.UtcNow);
 

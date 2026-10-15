@@ -13,6 +13,10 @@ public partial class NewsCard
     [Parameter, EditorRequired] public NewsReadDTO Item { get; set; } = default!;
     [Parameter] public bool Compact { get; set; }
     [Parameter] public bool CanEdit { get; set; }
+    [Parameter] public bool FullArticle { get; set; }
+    [Parameter] public EventCallback<NewsReadDTO> OnUpdated { get; set; }
+    private string ArticleUrl => $"/News/{Item.Id}";
+    private int? ExcerptLines => FullArticle ? null : Compact ? 4 : 6;
     private string ResolvedAvatar => PublicFileUrl.Resolve(Item.UserSummary.Avatar?.URL, "/images/caja.png");
     private string AvatarUrl => _failedAvatar == ResolvedAvatar ? "/images/caja.png" : ResolvedAvatar;
     private string ProfileUrl => $"/Profile/{Uri.EscapeDataString(Item.UserSummary.Id)}";
@@ -28,11 +32,12 @@ public partial class NewsCard
 
     private void StartEditing() { if (CanEdit) { _editing = true; _saved = false; } }
     private void CancelEditing() => _editing = false;
-    private void NewsSaved(NewsEditDTO dto)
+    private async Task NewsSaved(NewsEditDTO dto)
     {
         Item.Title = dto.Title ?? Item.Title;
         Item.Text = dto.Text ?? Item.Text;
         _editing = false;
         _saved = true;
+        await OnUpdated.InvokeAsync(Item);
     }
 }

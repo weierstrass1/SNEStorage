@@ -28,13 +28,13 @@ public partial class CreateNews : IAsyncDisposable
         _validationErrors = [];
         try
         {
-            _module ??= await JavaScript.InvokeAsync<IJSObjectReference>("import", _lifetime.Token, "./js/news.js?v=5");
+            _module ??= await JavaScript.InvokeAsync<IJSObjectReference>("import", _lifetime.Token, "./js/news.js?v=6");
             if (_disposed) return;
             var response = await new NewsApiClient(_module, _requestKey).CreateAsync(_form, _lifetime.Token);
             if (_disposed) return;
             if (response.Status is >= 200 and < 300 && long.TryParse(response.Body, out var newsId) && newsId > 0)
             {
-                Navigation.NavigateTo($"/News#news-{newsId}");
+                Navigation.NavigateTo($"/News/{newsId}");
                 return;
             }
             _error = response.Status is 0 or 408 or 499 or 504 or (>= 200 and < 300) ?

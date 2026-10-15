@@ -28,13 +28,25 @@ const sanitizeOptions = {
     RETURN_DOM_FRAGMENT: true
 };
 
-export function renderMarkdown(element, source) {
+export function renderMarkdown(element, source, excerpt = false) {
     if (!(element instanceof HTMLElement) || !element.isConnected)
         return;
     if (!DOMPurify.isSupported)
         throw new Error("Safe Markdown rendering is unavailable.");
 
     const fragment = DOMPurify.sanitize(parser.parse(String(source ?? "")), sanitizeOptions);
+    if (excerpt) {
+        // CSS limits rendered lines at the current width/font size; no character truncation.
+        // Use plain text from sanitized markup so headings, code and tables cannot expand a preview.
+        const copy = fragment.cloneNode(true);
+        for (const block of copy.querySelectorAll("p,li,blockquote,h1,h2,h3,h4,h5,h6,pre,tr")) block.append("\n");
+        for (const cell of copy.querySelectorAll("th,td")) cell.append(" ");
+        for (const lineBreak of copy.querySelectorAll("br,hr")) lineBreak.replaceWith("\n");
+        const plainText = (copy.textContent ?? "").replace(/\r\n?/g, "\n")
+            .replace(/[^\S\n]+/g, " ").replace(/\n{3,}/g, "\n\n").trim();
+        element.replaceChildren(document.createTextNode(plainText));
+        return;
+    }
     for (const link of fragment.querySelectorAll("a")) {
         const href = link.getAttribute("href");
         if (!href) continue;

@@ -1,4 +1,4 @@
-<article class="news-card @(Compact ? "is-compact" : null)" id="@($"news-{Item.Id}")" aria-labelledby="@($"news-heading-{Item.Id}")">
+<article class="news-card @(Compact ? "is-compact" : null) @(FullArticle ? "is-full" : null)" id="@($"news-{Item.Id}")" aria-labelledby="@($"news-heading-{Item.Id}")">
     <div class="news-meta">
         <span class="author-avatar-frame" aria-hidden="true">
             <img class="author-avatar" src="@AvatarUrl" alt="" width="32" height="32" loading="lazy" @onerror="ShowFallbackAvatar" />
@@ -10,7 +10,14 @@
             <button class="edit-news" type="button" @onclick="StartEditing" aria-expanded="@_editing" aria-controls="@($"news-editor-{Item.Id}")" aria-label="@($"Edit news: {Item.Title}")" disabled="@_editing">Edit news</button>
         }
     </div>
-    <h3 id="@($"news-heading-{Item.Id}")">@Item.Title</h3>
+    @if (FullArticle)
+    {
+        <h1 id="@($"news-heading-{Item.Id}")">@Item.Title</h1>
+    }
+    else
+    {
+        <h3 id="@($"news-heading-{Item.Id}")"><a class="news-title-link" href="@ArticleUrl">@Item.Title</a></h3>
+    }
     @if (_editing && CanEdit)
     {
         <div id="@($"news-editor-{Item.Id}")">
@@ -19,11 +26,11 @@
     }
     else
     {
-        <div class="news-text"><MarkdownText Text="@Item.Text" Compact="Compact" /></div>
+        <div class="news-text"><MarkdownText Text="@Item.Text" Compact="Compact" MaxLines="ExcerptLines" /></div>
         @if (_saved) { <p class="news-saved" role="status">Changes saved.</p> }
     }
-    @if (Compact)
+    @if (!FullArticle && !_editing)
     {
-        <a class="read-news" href="@($"/News#news-{Item.Id}")" aria-label="@($"Read full news: {Item.Title}")">Read full update <span aria-hidden="true">→</span></a>
+        <a class="read-news" href="@ArticleUrl" aria-label="@($"Read full news: {Item.Title}")">Read full update <span aria-hidden="true">→</span></a>
     }
 </article>

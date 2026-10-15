@@ -103,12 +103,26 @@ Remaining backend responsibilities (owned by the project owner):
 5. Return the saved resource's real ID in its response. Return only public data, excluding Identity password hashes and security stamps from related users.
 
 The UI accepts ZIP, RAR, 7Z, TAR, GZ and TAR.GZ archives, up to 250 MB. Previews accept
-PNG, JPG/JPEG, GIF, WEBP, AVIF, MP4, WEBM and OGV. They can be added in multiple batches
+PNG, JPG/JPEG, GIF, WEBP, AVIF, MP4, WEBM, OGV, MP3, WAV, OGG/OGA/Opus,
+FLAC, M4A, AAC, WebA, SPC and BRR. They can be added in multiple batches
 and individually removed. The browser retains their File objects and sends them as
 repeated Previews parts; no browser file streams are read by the C# component.
 Thumbnail media boxes are 160px high and use object-fit: contain so large images/GIFs
 do not expand the layout. Videos have native controls and preload="none"; changing
 tabs pauses videos in hidden panels. Object URLs are revoked on removal and disposal.
+
+Sound previews use ResourceAudioPreview with native browser audio, a locally hosted
+SMW Central SPC WASM emulator, or a BRR decoder. Bytes/engines are loaded on Play;
+the controls do not send playback updates over SignalR. Switching previews, hiding
+their panel or leaving the page stops playback. Only the active BRR retains expanded
+PCM data. BNK is not supported. BRR previews play raw samples with an adjustable
+sample rate, without instrument envelopes or complete DSP emulation.
+
+The owner has applied the audio context validation, size checks and inspectors in
+FileService. The frontend uses their canonical MIME values. See
+`docs/previews-audio-backend-2026-10-14.md` for the implementation guide and required
+FileType rows. Database contents and an end-to-end upload have not been checked by
+this review. Existing image/video support is retained.
 
 The owner must configure the action/server upload limits to accept the complete
 request: a 250 MB archive plus twenty 5 MB previews can total 350 MB before overhead.

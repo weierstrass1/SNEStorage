@@ -125,11 +125,11 @@ internal static class ApiErrorPresentation
     {
         "InvalidTitle" => new("Check the title", "Enter a title with 1–200 characters. Your text has been kept.", code),
         "InvalidText" => new("Add an announcement", "Write your announcement before publishing. Your text has been kept.", code),
-        "NewNotFound" => new("News not found", "This announcement no longer exists. Your text has been kept.", code),
+        "NewNotFound" => new("News not found", "This announcement could not be found or is no longer available.", code),
         "Unauthorized" when status == 401 => new("Log in to continue", "Your session could not be verified. Log in again; your text has been kept.", code, true),
         "Unauthorized" => new("Staff access required", "Only moderators and admins can publish news. Your text has been kept.", code),
         "UserNotFound" => new("Account unavailable", "Log in again to verify your account. Your text has been kept.", code, true),
-        "DBError" => new("News could not be saved", "Please try again later. Your text has been kept.", code),
+        "DBError" => new("News is unavailable", "We could not complete this news request. Please try again later.", code),
         _ => null
     };
 
@@ -191,15 +191,15 @@ internal static class ApiErrorPresentation
             ServiceResultTypes.InvalidImageNumberOfFrames or ServiceResultTypes.InvalidImage => new("The image could not be read", "Choose a complete, valid PNG, JPG, GIF, WebP or AVIF image.", error.ToString()),
             ServiceResultTypes.FormReadingError => new("The file could not be read", "Select the file again and retry the upload.", error.ToString()),
             ServiceResultTypes.InvalidMime => new("Unsupported file format", "Choose a file format supported by this upload.", error.ToString()),
-            ServiceResultTypes.InvalidFileForContext => new("File format not allowed here", "Use an image for an avatar, an image or video for a preview, and an archive for a resource file.", error.ToString()),
+            ServiceResultTypes.InvalidFileForContext => new("File format not allowed here", "Use an image for an avatar; an image, video, audio, SPC or BRR file for a preview; and an archive for a resource file.", error.ToString()),
             ServiceResultTypes.MimeMismatch => new("The file type does not match its contents", "Choose a file whose reported media type matches its actual format.", error.ToString()),
             ServiceResultTypes.CacheError => new("File options are unavailable", "File formats could not be verified. Please try again later.", error.ToString()),
             ServiceResultTypes.BatchError or ServiceResultTypes.UpdateBatchError => new("Uploads are temporarily unavailable", "We could not prepare storage for your files. Please try again later.", error.ToString()),
             ServiceResultTypes.DBError => new("File data is unavailable", "We could not save the file information. Please try again later.", error.ToString()),
             ServiceResultTypes.InvalidVideo => new("The video could not be read", "Choose a valid MP4, WebM or Ogg video.", error.ToString()),
-            ServiceResultTypes.InvalidFile => new("The archive could not be accepted", "Choose a complete, nonempty ZIP, RAR, 7Z, TAR or GZ archive without encryption or split volumes, with at most 10,000 entries.", error.ToString()),
+            ServiceResultTypes.InvalidFile => new("The file could not be accepted", "Choose a complete, valid file in a supported format. Audio, SPC and BRR previews must contain valid sound data. Archives must not be encrypted or split and can contain at most 10,000 entries.", error.ToString()),
             ServiceResultTypes.EmptyFile => new("The file is empty", "Choose a file that contains data before uploading.", error.ToString()),
-            ServiceResultTypes.MediaSizeSurpassTheLimit => new("The media file is too large", "Each image or video must be no larger than 5 MB.", error.ToString()),
+            ServiceResultTypes.MediaSizeSurpassTheLimit => new("The media file is too large", "Each image, video, audio, SPC or BRR preview must be no larger than 5 MB.", error.ToString()),
             ServiceResultTypes.AvatarSizeSurpassTheLimit => new("The avatar is too large", "Choose an avatar no larger than 5 MB.", error.ToString()),
             ServiceResultTypes.CompressedFileSizeSurpassTheLimit or ServiceResultTypes.FileSizeSurpassTheLimit => new("The file is too large", "Each resource archive must be no larger than 250 MB.", error.ToString()),
             _ => null

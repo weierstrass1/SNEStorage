@@ -16,6 +16,17 @@ internal sealed class NewsApiClient(IJSObjectReference module, string requestKey
     public Task<NewsWriteResponse> EditAsync(long newsId, NewsEditDTO dto, CancellationToken ct) =>
         module.InvokeAsync<NewsWriteResponse>("editNews", ct, requestKey, newsId, dto).AsTask();
 
+    public async Task<NewsReadResponse> ReadOneAsync(long newsId, CancellationToken ct)
+    {
+        var json = await module.InvokeAsync<string>("readNewsItem", ct, requestKey, newsId);
+        var response = JsonSerializer.Deserialize<BrowserResponse>(json, JsonOptions)
+            ?? throw new JsonException("The news endpoint returned no response.");
+        if (response.Status is < 200 or >= 300) return new(response.Status, null, response.Body);
+        var item = JsonSerializer.Deserialize<NewsReadDTO>(response.Body, JsonOptions);
+        if (item is null || item.Id != newsId) throw new JsonException("The news endpoint returned an unexpected announcement.");
+        return new(response.Status, item, response.Body);
+    }
+
     public async Task<List<NewsReadDTO>> ReadAsync(int amount, int page, NewsSorting sort)
     {
         var json = await module.InvokeAsync<string>("readNews", requestKey, amount, page, sort.ToString());
@@ -31,3 +42,4 @@ internal sealed class NewsApiClient(IJSObjectReference module, string requestKey
 }
 
 internal sealed record NewsWriteResponse(int Status, string Body);
+internal sealed record NewsReadResponse(int Status, NewsReadDTO? Item, string Body);

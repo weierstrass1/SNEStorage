@@ -75,6 +75,7 @@ Dependencias relevantes: MailKit para correo, SkiaSharp para imágenes, SharpCom
 | `/Resource/{id}/Versions/Create` | Nueva versión |
 | `/Resource/{id}/Versions/{versionId}/Edit` | Edición de versión |
 | `/News` y `/News/Create` | Lista de noticias y creación |
+| `/News/{id}` | Noticia completa, pública; edición para mods/admins |
 | `/Login` y `/Register` | Login y registro |
 | `/Register/CheckEmail` | Instrucciones para confirmar el correo |
 | `/Register/Confirmation` | Confirmación; admite variante con UserId y usa query `token` |
@@ -185,6 +186,14 @@ Los botones de like/dislike muestran el estado confirmado. Pulsar el mismo voto 
 Mostrar username/color, avatar, publicación y edición. Reply abre la caja y al publicar la cierra; desplazar hacia el nuevo comentario. Las listas y respuestas cargan más al hacer scroll, con paginación debajo. El servicio admite comentarios fuera de recursos: no asumir que cualquier comentario pertenece a uno.
 
 Noticias tienen título y cuerpo, orden por antigüedad, lista con carga progresiva y edición. Crear/editar noticias debe ser accesible solo a mods/admins; ocultar botones para visitantes y usuarios sin ese permiso.
+
+Las tarjetas de la lista enlazan por el título a `/News/{id}` y muestran un extracto
+de hasta 6 líneas visibles (4 en el landing), ajustado por CSS al ancho disponible.
+Los textos cortos se muestran completos, sin reservar altura vacía. El extracto usa
+texto de Markdown saneado y conserva saltos de línea; no se recorta por caracteres.
+La vista individual usa `GET /api/news/{id}`, muestra Markdown completo, autor con
+avatar/color y fecha, y permite editar a staff con sesión verificada. Crear una noticia
+redirige a esa vista. Comentarios y likes/dislikes de noticias siguen pendientes.
 
 ## 8. Perfiles y Discord
 

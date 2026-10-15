@@ -7,6 +7,7 @@ using SharpCompress.Readers;
 using SkiaSharp;
 using SNEStorage.DTOs;
 using SNEStorage.Models;
+using System.Text;
 using System.Text.Json;
 
 namespace SNEStorage.Services;
@@ -268,7 +269,8 @@ public class FileService(SnestorageContext context, CacheService cacheService,
 
             FileContext.Previews =>
                 contentType.StartsWith("image/", StringComparison.Ordinal) ||
-                contentType.StartsWith("video/", StringComparison.Ordinal),
+                contentType.StartsWith("video/", StringComparison.Ordinal) ||
+                contentType.StartsWith("audio/", StringComparison.Ordinal),
 
             FileContext.Resource =>
                 contentType.StartsWith("application/", StringComparison.Ordinal),
@@ -296,8 +298,9 @@ public class FileService(SnestorageContext context, CacheService cacheService,
 
         bool isImage = expectedMime.StartsWith("image/", StringComparison.Ordinal);
         bool isVideo = expectedMime.StartsWith("video/", StringComparison.Ordinal);
+        bool isAudio = expectedMime.StartsWith("audio/", StringComparison.Ordinal);
 
-        if ((isImage || isVideo) && form.Length > MAX_MEDIA_FILE_SIZE)
+        if ((isImage || isVideo || isAudio) && form.Length > MAX_MEDIA_FILE_SIZE)
             return ServiceResult.MediaSizeSurpassTheLimit.Return(_logger);
 
         var streamResult = _dbHelperService.TryFunction(
@@ -317,6 +320,10 @@ public class FileService(SnestorageContext context, CacheService cacheService,
             inspectionResult = InspectImage(stream, ct);
         else if (isVideo)
             inspectionResult = await InspectVideo(stream, ct);
+        else if (expectedMime is "audio/x-spc" or "audio/x-brr")
+            inspectionResult = await InspectSnesSound(stream, expectedMime, ct);
+        else if (isAudio)
+            inspectionResult = await InspectAudio(stream, ct);
         else
             inspectionResult = InspectArchive(stream, ct);
 
@@ -446,6 +453,37 @@ public class FileService(SnestorageContext context, CacheService cacheService,
 
         return mime;
     }
+    private async Task<OneOf<string, ServiceResultContext>> InspectAudio(Stream stream, 
+        CancellationToken ct = default)
+    {
+        if (ct.IsCancellationRequested)
+            return ServiceResult.RequestCancelled.Return(_logger);
+
+        var mediaResult = await _dbHelperService.TryFunction(
+            cancel => _mediaAnalyzer.AnalyzeAsync(stream, true, cancel),
+            ServiceResult.InvalidFile, ct: ct);
+
+        if (!mediaResult.TryPickT0(out var media, out var mediaError))
+            return mediaError;
+
+        if (!media.Success || !media.HasAudio || media.HasVideo ||
+            !media.AudioStreams.Any())
+            return ServiceResult.InvalidFile.Return(_logger);
+
+        string? mime = media.General.Format switch
+        {
+            "MPEG Audio" => "audio/mpeg",
+            "Wave" => "audio/wav",
+            "Ogg" => "audio/ogg",
+            "FLAC" => "audio/flac",
+            "MPEG-4" => "audio/mp4",
+            "ADTS" or "ADIF" => "audio/aac",
+            "WebM" => "audio/webm",
+            _ => null
+        };
+
+        return mime is null ? ServiceResult.InvalidMime.Return(_logger) : mime;
+    }
 
     private async Task<OneOf<string, ServiceResultContext>> InspectVideo(
         Stream stream, CancellationToken ct = default)
@@ -475,6 +513,64 @@ public class FileService(SnestorageContext context, CacheService cacheService,
         };
 
         return mime is null ? ServiceResult.InvalidMime.Return(_logger) : mime;
+    }
+    private async Task<OneOf<string, ServiceResultContext>> InspectSnesSound(Stream stream, 
+        string mime, CancellationToken ct = default)
+    {
+        if (ct.IsCancellationRequested)
+            return ServiceResult.RequestCancelled.Return(_logger);
+
+        var readResult = await _dbHelperService.TryFunction(async cancel =>
+        {
+            stream.Position = 0;
+            byte[] bytes = new byte[checked((int)stream.Length)];
+            await stream.ReadExactlyAsync(bytes, cancel);
+            return bytes;
+        }, ServiceResult.InvalidFile, ct: ct);
+
+        if (!readResult.TryPickT0(out var data, out var readError))
+            return readError;
+
+        if (mime == "audio/x-spc")
+        {
+            byte[] signature = Encoding.ASCII.GetBytes("SNES-SPC700 Sound File Data ");
+
+            if (data.Length < 0x10180 ||
+                !data.AsSpan(0, signature.Length).SequenceEqual(signature))
+                return ServiceResult.InvalidFile.Return(_logger);
+
+            return mime;
+        }
+
+        int offset = data.Length % 9 == 0 ? 0 : data.Length % 9 == 2 ? 2 : -1;
+
+        if (offset < 0 || data.Length - offset < 9)
+            return ServiceResult.InvalidFile.Return(_logger);
+
+        int blocks = (data.Length - offset) / 9;
+
+        for (int block = 0; block < blocks - 1; block++)
+        {
+            if (ct.IsCancellationRequested)
+                return ServiceResult.RequestCancelled.Return(_logger);
+
+            if ((data[offset + block * 9] & 1) != 0)
+                return ServiceResult.InvalidFile.Return(_logger);
+        }
+
+        byte lastHeader = data[^9];
+
+        if ((lastHeader & 1) == 0)
+            return ServiceResult.InvalidFile.Return(_logger);
+
+        bool loop = (lastHeader & 2) != 0;
+        int loopOffset = offset == 2 ? data[0] | data[1] << 8 : 0;
+
+        if (loop && offset == 2 &&
+            (loopOffset % 9 != 0 || loopOffset >= blocks * 9))
+            return ServiceResult.InvalidFile.Return(_logger);
+
+        return mime;
     }
 
     private OneOf<string, ServiceResultContext> InspectArchive(

@@ -27,6 +27,7 @@ public partial class PageAccessGuard : IAsyncDisposable
     private int _generation;
     private bool _pending;
     private bool _checking;
+    private bool _accessBlocked;
     private bool _disposed;
     protected string LoginUrl => LoginNavigation.GetLoginUrl(Navigation);
 
@@ -40,12 +41,14 @@ public partial class PageAccessGuard : IAsyncDisposable
 
     protected override async Task OnParametersSetAsync()
     {
-        var pageKey = $"{RouteData.PageType.FullName}:{Navigation.Uri}";
+        // An anchor scroll stays on the same page and must not recreate its form.
+        var pageKey = $"{RouteData.PageType.FullName}:{new Uri(Navigation.Uri).GetLeftPart(UriPartial.Query)}";
         if (_pageKey == pageKey) return;
         _pageKey = pageKey;
         _generation++;
         _requirement = RouteData.PageType.GetCustomAttribute<RequireAccountAttribute>();
         _access = null;
+        _accessBlocked = false;
         _errorStatus = null;
         _errorBody = null;
         _errorDomain = "profile";
@@ -114,6 +117,7 @@ public partial class PageAccessGuard : IAsyncDisposable
 
             // Keep the editor's current draft when a recheck confirms the same account and permissions.
             _access ??= new(profile, resource);
+            _accessBlocked = false;
             _errorStatus = null;
             _errorBody = null;
         }
@@ -122,7 +126,7 @@ public partial class PageAccessGuard : IAsyncDisposable
             if (!_disposed && generation == _generation)
             {
                 Logger.LogDebug(exception, "Page access could not be verified.");
-                if (_access is null) _errorStatus = exception is JsonException ? 502 : 0;
+                if (_access is null || _accessBlocked) _errorStatus = exception is JsonException ? 502 : 0;
             }
         }
         finally
@@ -144,11 +148,18 @@ public partial class PageAccessGuard : IAsyncDisposable
     {
         if (response is { Status: 200, Cancelled: false } && !string.IsNullOrWhiteSpace(response.Body)) return true;
         // A transient connection/DB failure does not discard an already verified user's draft.
-        if (_access is null || response.Status == 404) Deny(response.Cancelled ? 499 : response.Status, response.Body);
+        if (_access is null || _accessBlocked || response.Status == 404) Deny(response.Cancelled ? 499 : response.Status, response.Body);
         return false;
     }
 
-    private void Deny(int status, string? body = null) { _access = null; _errorStatus = status; _errorBody = body; }
+    private void Deny(int status, string? body = null)
+    {
+        if (_access is not null && (!_accessBlocked || _errorStatus != status))
+            Logger.LogWarning("Access recheck for {Page} returned HTTP {Status}. The editor is blocked; its draft is retained.", RouteData.PageType.Name, status);
+        _accessBlocked = true;
+        _errorStatus = status;
+        _errorBody = body;
+    }
     private void Retry() { _pending = _requirement is not null; _errorStatus = null; _errorBody = null; _errorDomain = "profile"; }
 
     [JSInvokable]

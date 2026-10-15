@@ -6,6 +6,10 @@
 .author-name:hover { text-decoration: underline; }
 time { margin-left: auto; color: #bda5d3; font-size: .75rem; }
 h3 { margin: 0 0 .7rem; color: #f1e5ff; font: 800 1.3rem/1.35 "Exo 2", sans-serif; overflow-wrap: anywhere; }
+h1 { margin: .25rem 0 1.3rem; color: #f1e5ff; font: 900 clamp(1.75rem, 4vw, 2.6rem)/1.2 "Exo 2", sans-serif; overflow-wrap: anywhere; }
+.news-title-link { color: inherit; text-decoration: none; }
+.news-title-link:hover { color: #ffe14d; text-decoration: underline; text-underline-offset: .2em; }
+.is-full { padding: clamp(1.2rem, 3vw, 2rem); }
 .news-text { margin: 0; min-width: 0; color: #d3c2e4; overflow-wrap: anywhere; line-height: 1.75; }
 .is-compact { padding: 1rem; }
 .is-compact h3 { font-size: 1.1rem; }

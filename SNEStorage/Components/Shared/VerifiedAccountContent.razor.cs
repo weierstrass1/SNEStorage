@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.JSInterop;
 
 namespace SNEStorage.Components.Shared;
@@ -8,8 +9,12 @@ public partial class VerifiedAccountContent : IAsyncDisposable
     private bool _authenticated, _disposed;
     private IJSObjectReference? _module, _monitor;
     private DotNetObjectReference<VerifiedAccountContent>? _receiver;
+    private int _revision;
 
     [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public bool StaffOnly { get; set; }
+    [Parameter] public EventCallback<bool> AccessChanged { get; set; }
+    [Inject] private AuthenticationStateProvider Authentication { get; set; } = default!;
     [Inject] private IJSRuntime JavaScript { get; set; } = default!;
     [Inject] private ILogger<VerifiedAccountContent> Logger { get; set; } = default!;
 
@@ -37,10 +42,23 @@ public partial class VerifiedAccountContent : IAsyncDisposable
     }
 
     [JSInvokable]
-    public Task UpdateAccount(BrowserAccount account) => InvokeAsync(() =>
+    public Task UpdateAccount(BrowserAccount account) => InvokeAsync(async () =>
     {
         if (_disposed) return;
-        _authenticated = account.Authenticated == true && !string.IsNullOrWhiteSpace(account.UserId);
+        var revision = ++_revision;
+        // An unavailable API does not prove that a previously verified session ended.
+        if (account.Authenticated is null) return;
+        var allowed = account.Authenticated == true && !string.IsNullOrWhiteSpace(account.UserId);
+        if (allowed && StaffOnly)
+        {
+            var state = await Authentication.GetAuthenticationStateAsync();
+            if (_disposed || revision != _revision) return;
+            allowed = StaffAccess.IsAllowed(state.User, account.UserId);
+        }
+        if (_authenticated == allowed) return;
+        _authenticated = allowed;
+        await AccessChanged.InvokeAsync(allowed);
+        if (_disposed) return;
         StateHasChanged();
     });
 

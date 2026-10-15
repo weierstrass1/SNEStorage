@@ -1,0 +1,26 @@
+@page "/News/{NewsId:long}"
+@using SNEStorage.Components.News
+
+<PageTitle>@(_news is null ? "News | SNEStorage" : $"{_news.Title} | SNEStorage news")</PageTitle>
+
+<div class="news-detail-page">
+    <nav class="news-detail-navigation" aria-label="News navigation">
+        <NavLink href="/News"><ActionArrow Left="true" /> All news</NavLink>
+        <span>SNEStorage announcements</span>
+    </nav>
+
+    <VerifiedAccountContent StaffOnly="true" AccessChanged="StaffAccessChanged" />
+
+    @if (_loading)
+    {
+        <div class="news-detail-loading"><BoxLoader Label="Loading announcement…" /></div>
+    }
+    else if (_errorStatus is { } status)
+    {
+        <ErrorPanel StatusCode="status" ErrorBody="@_errorBody" Domain="news" OnRetry="Reload" />
+    }
+    else if (_news is not null)
+    {
+        <NewsCard @key="_news.Id" Item="_news" FullArticle="true" CanEdit="_canEdit" OnUpdated="ArticleUpdated" />
+    }
+</div>

@@ -1,3 +1,5 @@
+.access-content { display: contents; }
+.access-content[hidden] { display: none; }
 .access-loading { max-width: 660px; margin: 2rem auto; padding: 1.5rem; border: 1px solid #5d3977; border-radius: 8px; background: rgba(27, 17, 41, var(--ui-surface-alpha)); color: #c5b2d7; }
 .access-loading h1 { margin-bottom: .65rem; color: #f5edff; font: 700 1.65rem "Exo 2", sans-serif; }
 .access-loading p { margin: 0; }

@@ -32,14 +32,22 @@ async function writeNews(key, method, url, dto) {
     }
 }
 
-export async function readNews(key, amount, page, sort = "RecentFirst") {
+export function readNews(key, amount, page, sort = "RecentFirst") {
+    const query = new URLSearchParams({ maxAmount: String(amount), page: String(page), sort });
+    return readNewsResponse(key, `/api/news?${query}`);
+}
+
+export function readNewsItem(key, newsId) {
+    return readNewsResponse(key, `/api/news/${encodeURIComponent(newsId)}`);
+}
+
+async function readNewsResponse(key, url) {
     const controller = new AbortController();
     requests.get(key)?.abort();
     requests.set(key, controller);
     const timeout = setTimeout(() => controller.abort(), 30000);
     try {
-        const query = new URLSearchParams({ maxAmount: String(amount), page: String(page), sort });
-        const response = await fetch(`/api/news?${query}`, {
+        const response = await fetch(url, {
             method: "GET", credentials: "omit", cache: "no-store", redirect: "error",
             headers: { Accept: "application/json" }, signal: controller.signal
         });

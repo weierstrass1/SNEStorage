@@ -2,14 +2,18 @@
 {
     @ChildContent
 }
-else if (_access is not null)
-{
-    <CascadingValue Name="VerifiedPageAccount" Value="_access" IsFixed="true" @key="@($"{_pageKey}:{_access.Profile.UserId}")">
-        @ChildContent
-    </CascadingValue>
-}
 else
 {
+    @if (_access is not null)
+    {
+        @* Keep the verified page mounted so a rejected recheck cannot erase files or drafts.
+           Hidden/inert prevents interaction until the same account regains access. *@
+        <div class="access-content" hidden="@_accessBlocked" inert="@(_accessBlocked ? string.Empty : null)">
+            <CascadingValue Name="VerifiedPageAccount" Value="_access" IsFixed="true" @key="@($"{_pageKey}:{_access.Profile.UserId}")">
+                @ChildContent
+            </CascadingValue>
+        </div>
+    }
     @if (_errorStatus is { } status)
     {
         <PageTitle>Access | SNEStorage</PageTitle>
@@ -19,7 +23,7 @@ else
             <div class="access-sign-in"><NavLink href="@LoginUrl">Log in with an account that has access</NavLink></div>
         }
     }
-    else
+    else if (_access is null || _accessBlocked)
     {
         <section class="access-loading" role="status" aria-live="polite">
             <PageTitle>Loading | SNEStorage</PageTitle>
