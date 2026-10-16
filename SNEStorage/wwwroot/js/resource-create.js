@@ -2,7 +2,7 @@ import { appendPreviews, validatePreviews } from "./resource-previews.js?v=4";
 import { basicUploadError } from "./upload-validation.js?v=2";
 import { captchaFetch } from "./captcha.js?v=3";
 import { validateVersionInputs } from "./resource-version.js?v=2";
-import { validateResourceTextFields } from "./resource-form-validation.js?v=1";
+import { validateResourceTextFields } from "./resource-form-validation.js?v=2";
 
 const uploads = new Map();
 

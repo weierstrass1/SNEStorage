@@ -18,7 +18,7 @@ h1 { font-family: "Exo 2", sans-serif; font-style: italic; font-weight: 900; fon
 .library-table-scroll:focus-visible { outline: 2px solid #b287e4; outline-offset: 3px; }
 .library-table { width: 100%; border-collapse: collapse; }
 th { background: #2a173c; border-bottom: 1px solid #715093; color: #cdb3e9; text-align: left; padding: .85rem .8rem; font-size: .7rem; text-transform: uppercase; letter-spacing: .5px; }
-.downloads-heading { text-align: right; }
+.downloads-heading { text-align: center; }
 .load-sentinel { min-height: 1px; text-align: center; }
 .load-more { margin: 1rem auto 0; }
 .library-pagination { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-top: 1rem; }

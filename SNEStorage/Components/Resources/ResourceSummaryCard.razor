@@ -31,7 +31,7 @@
             {
                 <a href="@DownloadUrl" data-enhance-nav="false" aria-label="@($"Download {Item.ResourceIdName.Name} {Item.Version}")">↓ Download</a>
             }
-            <small>Downloads: @Item.Downloads.ToString("N0", System.Globalization.CultureInfo.InvariantCulture)</small>
+            <small title="Total downloads across all versions">Downloads: @Item.Downloads.ToString("N0", System.Globalization.CultureInfo.InvariantCulture)</small>
         </div>
     </div>
 </article>

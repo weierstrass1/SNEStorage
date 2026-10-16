@@ -31,7 +31,7 @@ td { padding: .5rem .7rem; border-bottom: 1px solid #352343; vertical-align: top
 .rating-cell strong { display: block; color: #f5ce64; font-size: .83rem; margin-top: .15rem; }
 .rating-cell small { font-size: .65rem; color: #a99aba; }
 .votes { display: block; color: #b8a4ca; font-size: .65rem; margin-top: .15rem; }
-.download-cell { text-align: right; min-width: 125px; }
+.download-cell { text-align: center; min-width: 125px; }
 .download-count { display: block; font-weight: 400; font-size: .65rem; color: #a99aba; margin-top: .35rem; }
 .download-count span { color: #cab8da; font-weight: 650; }
 .download-button { display: inline-block; white-space: nowrap; color: #e9dcff; text-decoration: none; font-weight: 700; font-size: .75rem; padding: .45rem .65rem; border: 1px solid #8557ac; border-radius: 7px; background: #3b2354; }

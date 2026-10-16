@@ -22,7 +22,6 @@
                 }
                 <div class="release-notes"><MarkdownText Text="@(string.IsNullOrWhiteSpace(version.ChangeLog) ? "No release notes were provided." : version.ChangeLog)" /></div>
                 <div class="release-footer">
-                    <span>@version.Downloads.ToString("N0", DisplayCulture) downloads</span>
                     <div class="release-actions">
                     @if (CanManage)
                     {
@@ -30,7 +29,17 @@
                     }
                     @if (DownloadUrl(version) is { } downloadUrl)
                     {
-                        <a class="release-download" href="@downloadUrl" data-enhance-nav="false">Download @VersionName(version) <span aria-hidden="true">↓</span></a>
+                        <div class="release-download-group">
+                            <a class="release-download" href="@downloadUrl" data-enhance-nav="false">Download @VersionName(version) <span aria-hidden="true">↓</span></a>
+                            <small class="release-download-count">Downloads: @version.Downloads.ToString("N0", DisplayCulture)</small>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="release-download-group">
+                            <span>Download unavailable</span>
+                            <small class="release-download-count">Downloads: @version.Downloads.ToString("N0", DisplayCulture)</small>
+                        </div>
                     }
                     </div>
                 </div>

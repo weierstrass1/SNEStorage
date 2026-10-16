@@ -87,6 +87,7 @@ public sealed class ResourceFinderViewDTO
 public sealed class ResourceReadDTO
 {
     public long Id { get; set; }
+    public long Downloads { get; set; }
     public required string Name { get; set; }
     public required string Description { get; set; }
     public DateTime CreatedAt { get; set; }

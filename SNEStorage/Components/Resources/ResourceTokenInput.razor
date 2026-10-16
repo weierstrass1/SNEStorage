@@ -13,7 +13,7 @@
         </ul>
     }
     <div class="token-entry">
-        <input class="token-input" id="@InputId" name="@FieldName" type="text" @bind="_pending" @bind:event="oninput" @bind:after="TextChangedAsync" @onkeydown="KeyDownAsync" data-resource-token-input autocomplete="off" placeholder="Type a tag…" aria-describedby="@(InputId + "-help")" aria-invalid="@(_error is not null)" />
+        <input class="token-input" id="@InputId" name="@FieldName" type="text" @bind="_pending" @bind:event="oninput" @bind:after="TextChangedAsync" @onkeydown="KeyDownAsync" data-resource-token-input data-item-max-length="@TextLimits.TAG" autocomplete="off" placeholder="Type a tag…" aria-describedby="@(InputId + "-help")" aria-invalid="@(_error is not null)" />
         <button class="token-add" type="button" @onclick="AddPendingAsync" disabled="@string.IsNullOrWhiteSpace(_pending)">Add</button>
     </div>
     <small id="@(InputId + "-help")">Up to @TextLimits.TAG characters per tag.</small>

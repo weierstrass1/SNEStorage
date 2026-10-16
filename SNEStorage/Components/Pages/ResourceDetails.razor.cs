@@ -56,7 +56,7 @@ public partial class ResourceDetails : IAsyncDisposable
     protected IReadOnlyList<ResourceVersion> Versions => _versions.Data is { } versions ? versions : [];
     protected ResourceVersion? LatestVersion => _latest.Data;
     protected string? LatestDownload => LatestVersion is { } version ? ResourceFileLinks.For(ResourceId, version.FileId > 0 ? version.FileId : version.File?.Id ?? 0, true) : null;
-    protected long Downloads => Versions.Sum(version => (long)version.Downloads);
+    protected long Downloads => _resource?.Downloads ?? 0L;
     protected bool CanManage => _isAuthenticated && ResourceManagementAccess.CanDisplay(_resource, _currentUserId);
     protected bool RatingPermissionsReady => _resource is not null && _accountVerifiedOnce && !_accountRefreshPending && !_accountRefreshRunning;
     protected bool HasQualitySeal => LatestVersion?.SealOfQuality == true;

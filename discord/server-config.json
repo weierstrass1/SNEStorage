@@ -488,28 +488,21 @@
           "name": "general",
           "type": "TEXT",
           "topic": "General discussion.",
-          "slowmodeSeconds": 5
+          "slowmodeSeconds": 0
         },
         {
           "key": "showoff",
           "name": "showoff",
           "type": "TEXT",
           "topic": "Show the community what you are creating: screenshots, videos, demos, art, music, and other progress.",
-          "slowmodeSeconds": 10
+          "slowmodeSeconds": 0
         },
         {
           "key": "introductions",
           "name": "introductions",
           "type": "TEXT",
           "topic": "Introduce yourself and tell the community what you enjoy creating.",
-          "slowmodeSeconds": 30
-        },
-        {
-          "key": "off-topic",
-          "name": "off-topic",
-          "type": "TEXT",
-          "topic": "Friendly conversation that does not fit the technical channels.",
-          "slowmodeSeconds": 10
+          "slowmodeSeconds": 0
         },
         {
           "key": "general-voice",
@@ -517,6 +510,69 @@
           "type": "VOICE",
           "userLimit": 0,
           "bitrate": 64000
+        }
+      ]
+    },
+    {
+      "key": "languages",
+      "name": "Languages",
+      "permissionProfile": "memberCommunity",
+      "channels": [
+        {
+          "key": "spanish",
+          "name": "español",
+          "type": "TEXT",
+          "topic": "Canal de la comunidad para conversar en español.",
+          "slowmodeSeconds": 0
+        },
+        {
+          "key": "portuguese",
+          "name": "português",
+          "type": "TEXT",
+          "topic": "Canal da comunidade para conversar em português.",
+          "slowmodeSeconds": 0
+        },
+        {
+          "key": "japanese",
+          "name": "日本語",
+          "type": "TEXT",
+          "topic": "日本語で交流するためのコミュニティチャンネルです。",
+          "slowmodeSeconds": 0
+        }
+      ]
+    },
+    {
+      "key": "offtopic",
+      "name": "Offtopic",
+      "permissionProfile": "memberCommunity",
+      "channels": [
+        {
+          "key": "off-topic",
+          "name": "off-topic",
+          "type": "TEXT",
+          "topic": "Friendly conversation that does not fit the technical channels.",
+          "slowmodeSeconds": 0
+        },
+        {
+          "key": "videogames",
+          "name": "videogames",
+          "type": "TEXT",
+          "topic": "Discuss videogames beyond SNES development and hacking.",
+          "slowmodeSeconds": 0
+        },
+        {
+          "key": "media",
+          "name": "media",
+          "type": "TEXT",
+          "topic": "Discuss movies, television, books, music, and other media.",
+          "slowmodeSeconds": 0
+        },
+        {
+          "key": "anime",
+          "name": "anime",
+          "type": "TEXT",
+          "topic": "Discuss anime and manga.",
+          "slowmodeSeconds": 0
         }
       ]
     },
@@ -530,7 +586,7 @@
           "name": "website-chat",
           "type": "TEXT",
           "topic": "General discussion about the SNEStorage website and its features.",
-          "slowmodeSeconds": 5
+          "slowmodeSeconds": 0
         },
         {
           "key": "feedback",
@@ -553,7 +609,7 @@
           ],
           "defaultSortOrder": "LATEST_ACTIVITY",
           "defaultForumLayout": "LIST",
-          "defaultThreadSlowmodeSeconds": 15
+          "defaultThreadSlowmodeSeconds": 0
         },
         {
           "key": "bug-reports",
@@ -569,7 +625,7 @@
           ],
           "defaultSortOrder": "LATEST_ACTIVITY",
           "defaultForumLayout": "LIST",
-          "defaultThreadSlowmodeSeconds": 15
+          "defaultThreadSlowmodeSeconds": 0
         },
         {
           "key": "website-support",
@@ -588,7 +644,7 @@
           ],
           "defaultSortOrder": "LATEST_ACTIVITY",
           "defaultForumLayout": "LIST",
-          "defaultThreadSlowmodeSeconds": 15
+          "defaultThreadSlowmodeSeconds": 0
         }
       ]
     },
@@ -602,7 +658,7 @@
           "name": "supporter-chat",
           "type": "TEXT",
           "topic": "Private lounge for members who support SNEStorage.",
-          "slowmodeSeconds": 5
+          "slowmodeSeconds": 0
         },
         {
           "key": "supporter-feedback",
@@ -618,7 +674,7 @@
           ],
           "defaultSortOrder": "LATEST_ACTIVITY",
           "defaultForumLayout": "LIST",
-          "defaultThreadSlowmodeSeconds": 15
+          "defaultThreadSlowmodeSeconds": 0
         },
         {
           "key": "future-projects",
@@ -634,7 +690,7 @@
           ],
           "defaultSortOrder": "LATEST_ACTIVITY",
           "defaultForumLayout": "LIST",
-          "defaultThreadSlowmodeSeconds": 15
+          "defaultThreadSlowmodeSeconds": 0
         }
       ]
     },
@@ -654,7 +710,7 @@
           ],
           "type": "TEXT",
           "topic": "Discuss SNES development and hacking tools.",
-          "slowmodeSeconds": 5
+          "slowmodeSeconds": 0
         },
         {
           "key": "tools-and-releases",
@@ -670,7 +726,7 @@
           ],
           "defaultSortOrder": "LATEST_ACTIVITY",
           "defaultForumLayout": "LIST",
-          "defaultThreadSlowmodeSeconds": 10
+          "defaultThreadSlowmodeSeconds": 0
         },
         {
           "key": "tooling-projects",
@@ -690,7 +746,7 @@
           ],
           "defaultSortOrder": "LATEST_ACTIVITY",
           "defaultForumLayout": "LIST",
-          "defaultThreadSlowmodeSeconds": 10
+          "defaultThreadSlowmodeSeconds": 0
         },
         {
           "key": "tool-help",
@@ -710,7 +766,7 @@
           ],
           "defaultSortOrder": "LATEST_ACTIVITY",
           "defaultForumLayout": "LIST",
-          "defaultThreadSlowmodeSeconds": 10
+          "defaultThreadSlowmodeSeconds": 0
         }
       ]
     },
@@ -724,7 +780,7 @@
           "name": "resource-chat",
           "type": "TEXT",
           "topic": "Discuss SNES graphics, music, documentation, code, and other reusable resources.",
-          "slowmodeSeconds": 5
+          "slowmodeSeconds": 0
         },
         {
           "key": "resources-and-releases",
@@ -741,7 +797,7 @@
           ],
           "defaultSortOrder": "LATEST_ACTIVITY",
           "defaultForumLayout": "GALLERY",
-          "defaultThreadSlowmodeSeconds": 10
+          "defaultThreadSlowmodeSeconds": 0
         },
         {
           "key": "resource-projects",
@@ -758,7 +814,7 @@
           ],
           "defaultSortOrder": "LATEST_ACTIVITY",
           "defaultForumLayout": "GALLERY",
-          "defaultThreadSlowmodeSeconds": 10
+          "defaultThreadSlowmodeSeconds": 0
         },
         {
           "key": "resource-help",
@@ -775,7 +831,7 @@
           ],
           "defaultSortOrder": "LATEST_ACTIVITY",
           "defaultForumLayout": "LIST",
-          "defaultThreadSlowmodeSeconds": 10
+          "defaultThreadSlowmodeSeconds": 0
         }
       ]
     },
@@ -789,7 +845,7 @@
           "name": "homebrew-chat",
           "type": "TEXT",
           "topic": "General discussion about creating original software and games for the SNES.",
-          "slowmodeSeconds": 5
+          "slowmodeSeconds": 0
         },
         {
           "key": "homebrew-projects",
@@ -806,7 +862,7 @@
           ],
           "defaultSortOrder": "LATEST_ACTIVITY",
           "defaultForumLayout": "GALLERY",
-          "defaultThreadSlowmodeSeconds": 10
+          "defaultThreadSlowmodeSeconds": 0
         },
         {
           "key": "homebrew-help",
@@ -824,7 +880,7 @@
           ],
           "defaultSortOrder": "LATEST_ACTIVITY",
           "defaultForumLayout": "LIST",
-          "defaultThreadSlowmodeSeconds": 10
+          "defaultThreadSlowmodeSeconds": 0
         },
         {
           "key": "homebrew-playtesting",
@@ -840,7 +896,7 @@
           ],
           "defaultSortOrder": "LATEST_ACTIVITY",
           "defaultForumLayout": "LIST",
-          "defaultThreadSlowmodeSeconds": 10
+          "defaultThreadSlowmodeSeconds": 0
         }
       ]
     },
@@ -860,7 +916,7 @@
           ],
           "type": "TEXT",
           "topic": "General discussion about SNES ROM hacking and modification.",
-          "slowmodeSeconds": 5
+          "slowmodeSeconds": 0
         },
         {
           "key": "hacking-projects",
@@ -881,7 +937,7 @@
           ],
           "defaultSortOrder": "LATEST_ACTIVITY",
           "defaultForumLayout": "GALLERY",
-          "defaultThreadSlowmodeSeconds": 10
+          "defaultThreadSlowmodeSeconds": 0
         },
         {
           "key": "hacking-help",
@@ -902,7 +958,7 @@
           ],
           "defaultSortOrder": "LATEST_ACTIVITY",
           "defaultForumLayout": "LIST",
-          "defaultThreadSlowmodeSeconds": 10
+          "defaultThreadSlowmodeSeconds": 0
         },
         {
           "key": "hack-playtesting",
@@ -922,7 +978,7 @@
           ],
           "defaultSortOrder": "LATEST_ACTIVITY",
           "defaultForumLayout": "LIST",
-          "defaultThreadSlowmodeSeconds": 10
+          "defaultThreadSlowmodeSeconds": 0
         }
       ]
     },

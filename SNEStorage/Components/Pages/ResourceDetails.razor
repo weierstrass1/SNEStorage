@@ -161,22 +161,24 @@ else if (_resource is { } resource)
                             <p><strong>@VersionLabel(latest)</strong> · @FormatDate(latest.CreatedAt)</p>
                             <ResourceVersionStatus Version="latest" />
                         }
-                        @if (_versions.Ready)
-                        {
-                            <span>@Downloads.ToString("N0", DisplayCulture) total downloads</span>
-                        }
-                        else if (_latest.Ready && LatestVersion is { } downloadVersion)
-                        {
-                            <span>@downloadVersion.Downloads.ToString("N0", DisplayCulture) downloads of this version</span>
-                        }
+                        <span class="detail-total-downloads">Total downloads: <strong>@Downloads.ToString("N0", DisplayCulture)</strong> <small>across all versions</small></span>
                     </div>
                     @if (_latest.Ready && LatestDownload is { } download)
                     {
-                        <a class="detail-download" href="@download" data-enhance-nav="false">Download <span aria-hidden="true">↓</span></a>
+                        <div class="detail-download-actions">
+                            <a class="detail-download" href="@download" data-enhance-nav="false">Download <span aria-hidden="true">↓</span></a>
+                            <small class="detail-version-downloads">Downloads: @LatestVersion!.Downloads.ToString("N0", DisplayCulture)</small>
+                        </div>
                     }
                     else if (_latest.Ready)
                     {
-                        <span class="detail-muted">No download available</span>
+                        <div class="detail-download-actions">
+                            <span class="detail-muted">No download available</span>
+                            @if (LatestVersion is { } unavailableVersion)
+                            {
+                                <small class="detail-version-downloads">Downloads: @unavailableVersion.Downloads.ToString("N0", DisplayCulture)</small>
+                            }
+                        </div>
                     }
                 </section>
             </section>

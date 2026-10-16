@@ -124,6 +124,7 @@ public partial class ResourceService(SnestorageContext context, CacheService cac
             .Select(resource => new ResourceReadDTO
             {
                 Id = resource.Id,
+                Downloads = resource.ResourceVersions.Sum(version => (long?)version.Downloads) ?? 0L,
                 Name = resource.Name,
                 Description = resource.Description,
                 CreatedAt = resource.CreatedAt,

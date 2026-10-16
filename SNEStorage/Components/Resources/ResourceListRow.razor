@@ -49,6 +49,6 @@
             <a class="download-button" href="@($"/api/resource/{Item.ResourceIdName.Id}/file/{file.Id}/download")" data-enhance-nav="false" aria-label="@($"Download {Item.ResourceIdName.Name} {Item.Version}")">↓ Download</a>
         }
         else { <small>Unavailable</small> }
-        <small class="download-count">Downloads: <span>@Item.Downloads.ToString("N0", CultureInfo.InvariantCulture)</span></small>
+        <small class="download-count" title="Total downloads across all versions">Downloads: <span>@Item.Downloads.ToString("N0", CultureInfo.InvariantCulture)</span></small>
     </td>
 </tr>

@@ -57,6 +57,10 @@
 .detail-download-section h2 { margin-bottom: .5rem; }
 .detail-download-section p { margin: 0 0 .4rem; color: #cfb8e5; font-size: .85rem; }
 .detail-download-section > div > span { color: #b9a1cd; font-size: .75rem; }
+.detail-download-actions { display: flex; flex-direction: column; align-items: center; gap: .45rem; max-width: 100%; text-align: center; }
+.detail-version-downloads { color: #b9a1cd; font-size: .7rem; }
+.detail-total-downloads strong { color: #e0c8f5; font-weight: 700; }
+.detail-total-downloads small { margin-left: .25rem; color: #b9a1cd; font-size: .7rem; }
 .detail-download { display: inline-flex; align-items: center; justify-content: center; gap: .7rem; min-height: 44px; padding: .65rem .9rem; border: 2px solid #10081c; border-radius: 4px; color: #291139; background: #ffe14d; box-shadow: 3px 3px 0 #6a2be0; font: .6rem/1.8 "Press Start 2P", monospace; text-decoration: none; }
 .detail-download:hover { color: #291139; background: #fff0a2; }
 .detail-previews { display: grid; justify-items: center; width: 100%; padding: .3rem 0; }

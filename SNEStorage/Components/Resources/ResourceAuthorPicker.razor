@@ -17,7 +17,7 @@
     }
 
     <div class="author-entry">
-        <input class="author-search" id="@InputId" type="text" name="@(External ? FieldName : null)" @bind="_search" @bind:event="oninput" @bind:after="SearchChangedAsync" @onkeydown="KeyDownAsync" maxlength="@(External ? TextLimits.EXTERNAL_AUTHOR : TextLimits.SEARCH)" autocomplete="off" disabled="@(!_ready)" placeholder="@(External ? "Enter an author's name…" : "Type at least 2 characters…")" aria-describedby="@(InputId + "-status")" data-resource-author-input />
+        <input class="author-search" id="@InputId" type="text" name="@(External ? FieldName : null)" @bind="_search" @bind:event="oninput" @bind:after="SearchChangedAsync" @onkeydown="KeyDownAsync" maxlength="@(External ? TextLimits.EXTERNAL_AUTHOR : TextLimits.SEARCH)" autocomplete="off" disabled="@(!_ready)" placeholder="@(External ? "Enter an author's name…" : "Type at least 2 characters…")" aria-describedby="@(InputId + "-status")" data-resource-author-input data-item-max-length="@TextLimits.EXTERNAL_AUTHOR" />
         @if (External)
         {
             <button class="author-add" type="button" disabled="@(!_ready || !CanAddName)" @onclick="AddPendingAsync">Add</button>

@@ -3,7 +3,7 @@ import { appendPreviews, previewCount, validatePreviews } from "./resource-previ
 import { basicUploadError } from "./upload-validation.js?v=2";
 import { captchaFetch } from "./captcha.js?v=3";
 import { validateVersionInputs } from "./resource-version.js?v=2";
-import { validateResourceTextFields } from "./resource-form-validation.js?v=1";
+import { validateResourceTextFields } from "./resource-form-validation.js?v=2";
 
 export { getResource, getResourceOptions, getResourceSection, getResourceAccount };
 
@@ -23,7 +23,7 @@ async function invalidInput(form, mode, previewInputId, original) {
     for (const field of form.elements) {
         if (typeof field.setCustomValidity === "function") field.setCustomValidity("");
     }
-    validateResourceTextFields(form, mode === "EditVersion" ? original?.version?.releaseNotes ?? "" : null);
+    validateResourceTextFields(form, mode === "EditVersion" ? original?.version?.releaseNotes ?? "" : null, original);
     for (const field of form.querySelectorAll("input[name^='ExternalDependencies[']")) {
         if (field.required && !field.value.trim()) field.setCustomValidity("Complete this dependency field before saving.");
     }
