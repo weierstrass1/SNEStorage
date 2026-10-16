@@ -46,7 +46,7 @@ function validateRegistration(state) {
     const password = field("Password").value;
     const policy = rules.password;
     const requirements = {
-        length: password.length >= policy.requiredLength,
+        length: password.length >= policy.requiredLength && password.length <= rules.maximumPasswordLength,
         uppercase: !policy.requireUppercase || /[A-Z]/.test(password),
         lowercase: !policy.requireLowercase || /[a-z]/.test(password),
         digit: !policy.requireDigit || /[0-9]/.test(password),
@@ -64,11 +64,14 @@ function validateRegistration(state) {
     if (!avatarError && state.avatarInspection?.file === avatar) avatarError = state.avatarInspection.message;
     const messages = {
         User: !username.trim() ? "Enter a username." :
+            username.length > rules.maximumUsernameLength ? `Use at most ${rules.maximumUsernameLength} characters for your username.` :
             rules.allowedUsernameCharacters && username.split("").some(character => !rules.allowedUsernameCharacters.includes(character)) ?
                 "Your username contains characters that are not allowed." : "",
         Email: !field("Email").value.trim() ? "Enter your email address." :
+            field("Email").value.length > rules.maximumEmailLength ? `Use at most ${rules.maximumEmailLength} characters for your email address.` :
             field("Email").validity.typeMismatch ? "Enter a valid email address." : "",
         Password: !password ? "Enter a password." :
+            password.length > rules.maximumPasswordLength ? `Use at most ${rules.maximumPasswordLength} characters for your password.` :
             Object.values(requirements).some(met => !met) ? "Your password must meet all the requirements below." : "",
         PasswordRepeat: !field("PasswordRepeat").value ? "Confirm your password." :
             field("PasswordRepeat").value !== password ? "Passwords do not match." : "",

@@ -12,8 +12,8 @@ public class SearchControllerTests
     public async Task VideogameController_ReturnsBadRequest_WhenLimitIsInvalid()
     {
         await using var database = new TestDatabase();
-        var service = new VideogameService(database.Context, database.DBHelper,
-            NullLogger<VideogameService>.Instance);
+        var service = new VideogameService(database.Context,
+            database.CreateGetLikeBySelector<Videogame, Videogame>());
         var controller = new VideogameController(service);
 
         var action = await controller.GetVideogamesLike("mario", 0);
@@ -30,8 +30,8 @@ public class SearchControllerTests
             new Videogame { Id = 2, Name = "Other", ReleaseDate = null },
             new Videogame { Id = 1, Name = "Any", ReleaseDate = null });
         await database.Context.SaveChangesAsync();
-        var service = new VideogameService(database.Context, database.DBHelper,
-            NullLogger<VideogameService>.Instance);
+        var service = new VideogameService(database.Context,
+            database.CreateGetLikeBySelector<Videogame, Videogame>());
         var controller = new VideogameController(service);
 
         var action = await controller.GetVideogamesLike(null, 10);
@@ -45,8 +45,8 @@ public class SearchControllerTests
     public async Task ExternalAuthorController_ReturnsBadRequest_WhenLimitExceedsMaximum()
     {
         await using var database = new TestDatabase();
-        var service = new ExternalAuthorService(database.Context, database.DBHelper,
-            NullLogger<ExternalAuthorService>.Instance);
+        var service = new ExternalAuthorService(database.Context,
+            database.CreateGetLikeBySelector<string, string>());
         var controller = new ExternalAuthorController(service);
 
         var action = await controller.GetExternalAuthorsLike(
@@ -64,8 +64,8 @@ public class SearchControllerTests
             new ResourceExternalAuthor { Id = 1, ResourceId = 1, Author = "alpha" },
             new ResourceExternalAuthor { Id = 2, ResourceId = 2, Author = "alpha" });
         await database.Context.SaveChangesAsync();
-        var service = new ExternalAuthorService(database.Context, database.DBHelper,
-            NullLogger<ExternalAuthorService>.Instance);
+        var service = new ExternalAuthorService(database.Context,
+            database.CreateGetLikeBySelector<string, string>());
         var controller = new ExternalAuthorController(service);
 
         var action = await controller.GetExternalAuthorsLike(string.Empty, 10);
@@ -78,8 +78,8 @@ public class SearchControllerTests
     public async Task UserController_ReturnsBadRequest_WhenLimitIsInvalid()
     {
         await using var database = new TestDatabase();
-        var service = new UserService(database.Context, database.DBHelper,
-            NullLogger<UserService>.Instance);
+        var service = new UserService(database.Context,
+            database.CreateGetLikeBySelector<UserInfo, SNEStorage.DTOs.UserNameDTO>());
         var controller = new UserController(service);
 
         var action = await controller.GetUsersLike("user", 0);

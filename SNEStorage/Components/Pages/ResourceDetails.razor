@@ -45,10 +45,18 @@ else if (_resource is { } resource)
                         <p class="detail-muted" role="status">@_ratingMessage</p>
                     }
                 </div>
-                @if (CanManage)
-                {
-                    <NavLink class="detail-action" href="@($"/Resource/{ResourceId}/Edit")">Edit resource</NavLink>
-                }
+                <div class="detail-header-actions">
+                    @if (CanManage)
+                    {
+                        <NavLink class="detail-action" href="@($"/Resource/{ResourceId}/Edit")">Edit resource</NavLink>
+                    }
+                    @if (_isAuthenticated && !resource.AlreadyModerated)
+                    {
+                        <ReportMenu Context="resource" TargetId="ResourceId" UserId="@_currentUserId"
+                                    HasPreviews="@(_previews.Ready ? Previews.Count > 0 : null)"
+                                    HasVersions="@(_versions.Ready ? Versions.Count > 0 : LatestVersion is not null ? true : null)" />
+                    }
+                </div>
             </div>
             @if (resource.AlreadyModerated)
             {
@@ -65,7 +73,7 @@ else if (_resource is { } resource)
                 <p class="detail-muted">Author information is not available.</p>
             }
             <ul class="detail-credits">
-                @foreach (var author in _authors.Data ?? [])
+                @foreach (var author in (_authors.Data ?? []).OrderBy(AuthorName, StringComparer.OrdinalIgnoreCase))
                 {
                     <li>
                         @if (AuthorProfileUrl(author) is { } profileUrl)
@@ -78,9 +86,9 @@ else if (_resource is { } resource)
                         }
                     </li>
                 }
-                @foreach (var author in _externalAuthors.Data ?? [])
+                @foreach (var author in (_externalAuthors.Data ?? []).OrderBy(author => author.Author, StringComparer.OrdinalIgnoreCase))
                 {
-                    <li><span>@author.Author</span><small>External author</small></li>
+                    <li><span>@author.Author</span></li>
                 }
             </ul>
         </section>
@@ -200,7 +208,17 @@ else if (_resource is { } resource)
                     <ul class="detail-dependencies">
                         @foreach (var dependency in _dependencies.Data ?? [])
                         {
-                            <li><span class="detail-list-label">SNEStorage</span><NavLink href="@($"/Resource/{dependency.DependencyResourceId}")">@(dependency.Name ?? "View dependency") <span aria-hidden="true">→</span></NavLink></li>
+                            <li>
+                                <span class="detail-list-label">SNEStorage</span>
+                                @if (!string.IsNullOrWhiteSpace(dependency.Name))
+                                {
+                                    <NavLink href="@($"/Resource/{dependency.DependencyResourceId}")">@dependency.Name <span aria-hidden="true">→</span></NavLink>
+                                }
+                                else
+                                {
+                                    <span class="detail-muted">Dependency unavailable</span>
+                                }
+                            </li>
                         }
                         @foreach (var dependency in _externalDependencies.Data ?? [])
                         {

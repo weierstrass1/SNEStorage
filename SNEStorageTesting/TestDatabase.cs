@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using SNEStorage.Models;
 using SNEStorage.Services;
+using SNEStorage.Services.QueryComponents;
 
 namespace SNEStorageTesting;
 
@@ -47,6 +48,33 @@ internal sealed class TestDatabase : IAsyncDisposable
             null!, null!, null!, null!, Context, null!, accessor, null!, DBHelper,
             null!, NullLogger<AccountService>.Instance);
     }
+
+    public GetFirstOrDefaultQueryOperation<T> CreateGetFirstOrDefault<T>()
+        where T : class => new(DBHelper);
+
+    public GetFirstOrErrorQueryOperation<T> CreateGetFirstOrError<T>()
+        where T : class => new(
+            CreateGetFirstOrDefault<T>(),
+            NullLogger<GetFirstOrErrorQueryOperation<T>>.Instance);
+
+    public GetSingleOrErrorQueryOperation<T> CreateGetSingleOrError<T>()
+        where T : class => new(
+            DBHelper, NullLogger<GetSingleOrErrorQueryOperation<T>>.Instance);
+
+    public GetByPropertyQueryOperation<T, TValue> CreateGetByProperty<T, TValue>()
+        where T : class => new(CreateGetFirstOrError<T>());
+
+    public GetListQueryOperation<T> CreateGetList<T>() => new(DBHelper);
+
+    public GetLikeBySelectorQueryOperation<T, TResult>
+        CreateGetLikeBySelector<T, TResult>() => new(
+            DBHelper,
+            NullLogger<GetLikeBySelectorQueryOperation<T, TResult>>.Instance);
+
+    public PaginatedListQueryOperation<T, TSort> CreatePaginatedList<T, TSort>()
+        where TSort : struct, Enum => new(
+            CreateGetList<T>(),
+            NullLogger<PaginatedListQueryOperation<T, TSort>>.Instance);
 
     public ValueTask DisposeAsync() => Context.DisposeAsync();
 }

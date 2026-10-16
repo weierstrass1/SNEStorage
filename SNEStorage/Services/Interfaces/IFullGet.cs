@@ -7,7 +7,6 @@ namespace SNEStorage.Services.Interfaces;
 
 public interface IFullGet<TModel, TFilter, TSort, TSelect> :
     IFullGetDefinition<TModel, TFilter, TSort, TSelect>
-    where TSort : struct, Enum
 {
     public Task<OneOf<List<TSelect>, ServiceResultContext>> FullGet(
         TFilter filter, TSort sort, int maxAmount = 10, int page = 0,

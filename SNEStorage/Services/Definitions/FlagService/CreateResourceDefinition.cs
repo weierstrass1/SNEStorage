@@ -42,7 +42,7 @@ public partial class FlagsService
         if (!res1.TryPickT0(out _, out var error))
             return error;
 
-        GetByPropertyQuery<Resource, long> getResourceByProperty = new(r => r.Id, create.ReasonID,
+        GetByPropertyQuery<Resource, long> getResourceByProperty = new(r => r.Id, create.ResourceID,
             ServiceResult.ResourceNotFound);
 
         var res2 = await _getResourceById.Execute(_context.Resources.AsNoTracking(), getResourceByProperty);

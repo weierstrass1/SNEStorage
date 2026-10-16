@@ -19,6 +19,7 @@ public partial class NewsService(SnestorageContext context, DBHelperService dbHe
     PaginatedListQueryOperation<NewsReadDTO, NewsSorting> getPage,
     GetSingleOrErrorQueryOperation<NewsReadDTO> getSingle,
     GetByPropertyQueryOperation<New, long> getById,
+    GetFirstOrDefaultQueryOperation<LikeUsers> getLike,
     ILogger<NewsService> logger) :
     IFullGet<New, NewsFilterDTO, NewsSorting, NewsReadDTO>,
     IEditSingle<long, NewsEditDTO, New>,
@@ -34,6 +35,7 @@ public partial class NewsService(SnestorageContext context, DBHelperService dbHe
     private readonly PaginatedListQueryOperation<NewsReadDTO, NewsSorting> _getPage = getPage;
     private readonly GetSingleOrErrorQueryOperation<NewsReadDTO> _getSingle = getSingle;
     private readonly GetByPropertyQueryOperation<New, long> _getById = getById;
+    private readonly GetFirstOrDefaultQueryOperation<LikeUsers> _getLike = getLike;
     private readonly ILogger<NewsService> _logger = logger;
 
     public Task<OneOf<List<NewsReadDTO>, ServiceResultContext>> FullGet(
@@ -69,5 +71,55 @@ public partial class NewsService(SnestorageContext context, DBHelperService dbHe
     {
         ICreate<NewsCreateDTO, New> creator = this;
         return creator.CreateItem(create, ct);
+    }
+    public async Task<OneOf<LikeUsers, ServiceResultContext>> AddEditOrDeleteLike(
+        long newId, LikeValues value, CancellationToken ct = default)
+    {
+        if (!Enum.IsDefined(value))
+            return ServiceResult.UndefinedLike.Return(_logger);
+
+        var newsRes = await Get(newId, ct);
+
+        if (!newsRes.TryPickT0(out var news, out var error))
+            return error;
+
+        string? userId = _accountService.GetUserID();
+
+        if (string.IsNullOrWhiteSpace(userId))
+            return ServiceResult.Unauthorized.Return(_logger);
+
+        var likeQuery = _context.LikesUsers
+            .Where(like =>
+                like.UserId == userId &&
+                like.ScoreId == news.ScoreId);
+
+        var likeResult = await _getLike.Execute(likeQuery, ct: ct);
+
+        if (!likeResult.TryPickT0(out var like, out var likeError))
+            return likeError;
+
+        if (value == LikeValues.Remove)
+        {
+            if (like is null)
+                return ServiceResult.LikeNotFound.Return(_logger);
+
+            _context.LikesUsers.Remove(like);
+            return await _dbHelperService.TrySyncContext(like, ct: ct);
+        }
+
+        if (like is null)
+        {
+            like = new LikeUsers
+            {
+                Id = 0,
+                UserId = userId,
+                ScoreId = news.ScoreId
+            };
+
+            _context.LikesUsers.Add(like);
+        }
+
+        like.Value = value == LikeValues.Like;
+        return await _dbHelperService.TrySyncContext(like, ct: ct);
     }
 }

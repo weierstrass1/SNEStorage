@@ -37,7 +37,8 @@ public partial class NewsService
             PosterUserId = userId,
             CreatedAt = DateTime.UtcNow,
             Title = create.Title.Trim(),
-            Text = create.Text.Trim()
+            Text = create.Text.Trim(),
+            Score = new()
         };
 
         _context.News.Add(news);

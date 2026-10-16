@@ -14,7 +14,7 @@
             }
         </ul>
     }
-    <input id="resource-dependency-search" type="search" value="@_search" @oninput="SearchChangedAsync" disabled="@(!_ready)" placeholder="Type at least 2 characters…" autocomplete="off" aria-describedby="resource-dependency-status" data-resource-author-input />
+    <input id="resource-dependency-search" type="search" @bind="_search" @bind:event="oninput" @bind:after="SearchChangedAsync" maxlength="@TextLimits.SEARCH" disabled="@(!_ready)" placeholder="Type at least 2 characters…" autocomplete="off" aria-describedby="resource-dependency-status" data-resource-author-input />
     <div id="resource-dependency-status" role="status" aria-live="polite">
         @if (_error is not null)
         {

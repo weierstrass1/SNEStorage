@@ -95,11 +95,17 @@ public class ResourceVersionServiceTests
     {
         var accountService = database.CreateAccountService(userId);
         var accessService = new ResourceAccessService(
-            database.Context, accountService, database.DBHelper,
+            database.Context, accountService,
+            database.CreateGetFirstOrError<ResourceAccessRow>(),
             NullLogger<ResourceAccessService>.Instance);
         return new ResourceVersionService(
             null!, database.Context, null!, accountService, accessService,
-            database.DBHelper, NullLogger<ResourceVersionService>.Instance);
+            database.DBHelper,
+            database.CreateGetFirstOrError<Resource>(),
+            database.CreateGetFirstOrError<SNEStorage.Models.File>(),
+            database.CreateGetList<ResourceVersion>(),
+            database.CreateGetFirstOrError<ResourceVersion>(),
+            NullLogger<ResourceVersionService>.Instance);
     }
 
     private static async Task AddResourceWithVersions(TestDatabase database,

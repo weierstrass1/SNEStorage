@@ -1,46 +1,13 @@
 import { inspectSpc } from "./audio-formats.js?v=1";
 import { readPreviewBlob } from "./resource-media.js?v=4";
 
+import { audioContext, contextForClick, loadSpcEngine, stopSpcEngine } from "./spc-engine.js?v=2";
+import { claimAudio, releaseAudio } from "./audio-focus.js?v=1";
+
 const players = new Map();
-let activePlayer, audioContext, spcPromise, spcBackend;
+let activePlayer, spcBackend;
 const playIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7Z"/></svg>';
 const pauseIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5h4v14H6Zm8 0h4v14h-4Z"/></svg>';
-
-function contextForClick() {
-    const Context = window.AudioContext || window.webkitAudioContext;
-    if (!Context) throw new Error("Your browser does not support this sound preview.");
-    audioContext ??= new Context();
-    // Run synchronously from the native click handler, before loading files or WASM.
-    audioContext.resume().catch(() => {});
-    return audioContext;
-}
-
-function loadSpcEngine(context) {
-    if (spcBackend?.status === 1) return Promise.resolve(spcBackend);
-    if (spcBackend) return Promise.reject(new Error("The SPC engine stopped after an invalid snapshot. Reload the page to restart it."));
-    if (spcPromise) return spcPromise;
-    spcPromise = new Promise((resolve, reject) => {
-        const script = document.createElement("script");
-        const assetUrl = new URL("../lib/spc-player/spc-core.js?v=1", import.meta.url);
-        const timer = setTimeout(() => reject(new Error("The SPC player could not finish loading. Reload the page and try again.")), 15000);
-        window.SNEStorageSPCModule = {
-            audioContext: context,
-            locateFile: name => new URL(name, assetUrl).href,
-            onAbort: () => { clearTimeout(timer); reject(new Error("The SPC player could not start.")); },
-            onRuntimeInitialized: () => queueMicrotask(() => {
-                clearTimeout(timer);
-                spcBackend = window.SMWCentral?.SPCPlayer?.Backend;
-                if (spcBackend?.status !== 1) reject(new Error("The SPC player is unavailable in this browser."));
-                else resolve(spcBackend);
-                delete window.SNEStorageSPCModule;
-            })
-        };
-        script.src = assetUrl.href;
-        script.onerror = () => { clearTimeout(timer); reject(new Error("The SPC player could not be downloaded. Reload the page and try again.")); };
-        document.head.append(script);
-    });
-    return spcPromise;
-}
 
 const template = `
     <header class="sound-heading"><span class="sound-mark" aria-hidden="true">♪</span><div><span class="sound-format"></span><strong class="sound-name"></strong></div></header>
@@ -119,7 +86,7 @@ function activate(state) {
             previous.ready = false;
         }
     }
-    for (const media of document.querySelectorAll("audio, video")) if (media !== state.native) media.pause();
+    claimAudio(state.id, () => stop(state, false), () => state.native);
     activePlayer = state;
 }
 
@@ -267,17 +234,11 @@ function stop(state, suspend = true) {
     state.controller = new AbortController();
     if (state.native) state.native.currentTime = 0;
     if (state.spcLoaded) {
-        clearTimeout(spcBackend.timeoutID);
-        if (spcBackend.scriptProcessorNode) {
-            spcBackend.scriptProcessorNode.onaudioprocess = null;
-            spcBackend.scriptProcessorNode.disconnect();
-            spcBackend.scriptProcessorNode = null;
-        }
-        // Emscripten can abort after an invalid SPC; teardown must still finish.
-        try { spcBackend.stopSPC(false); } catch { }
+        stopSpcEngine(spcBackend);
         state.spcLoaded = false;
     }
     state.position = 0;
+    releaseAudio(state.id);
     if (activePlayer === state) {
         activePlayer = null;
         if (suspend) audioContext?.suspend().catch(() => {});
@@ -319,6 +280,3 @@ new MutationObserver(() => {
     if (activePlayer?.root.closest("[hidden]")) stop(activePlayer);
 }).observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ["hidden"] });
 window.addEventListener("pagehide", () => { for (const id of [...players.keys()]) disposeAudioPreview(id); });
-document.addEventListener("play", event => {
-    if (activePlayer && event.target !== activePlayer.native && event.target instanceof HTMLMediaElement) stop(activePlayer);
-}, true);

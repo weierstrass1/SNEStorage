@@ -16,6 +16,9 @@ internal sealed class NewsApiClient(IJSObjectReference module, string requestKey
     public Task<NewsWriteResponse> EditAsync(long newsId, NewsEditDTO dto, CancellationToken ct) =>
         module.InvokeAsync<NewsWriteResponse>("editNews", ct, requestKey, newsId, dto).AsTask();
 
+    public Task<NewsWriteResponse> VoteAsync(long newsId, LikeValues value, string userId, CancellationToken ct) =>
+        module.InvokeAsync<NewsWriteResponse>("submitNewsVote", ct, $"{requestKey}-vote", newsId, value.ToString(), userId).AsTask();
+
     public async Task<NewsReadResponse> ReadOneAsync(long newsId, CancellationToken ct)
     {
         var json = await module.InvokeAsync<string>("readNewsItem", ct, requestKey, newsId);

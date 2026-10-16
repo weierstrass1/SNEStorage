@@ -1,0 +1,57 @@
+@page "/Users"
+
+<PageTitle>Users | SNEStorage</PageTitle>
+
+<div class="users-page" id="@_directoryId">
+    <header class="users-heading">
+        <p class="users-kicker">SNESTORAGE COMMUNITY</p>
+        <h1>Users</h1>
+        <p>Find community members and visit their profiles.</p>
+    </header>
+    <div class="users-search" role="search" aria-label="Search users">
+        <label for="@(_directoryId + "-search")">Search by username</label>
+        <div class="users-search-controls">
+            <input id="@(_directoryId + "-search")" data-users-input type="search" maxlength="100" autocomplete="off"
+                   placeholder="Search users…" aria-describedby="@(_directoryId + "-hint")" aria-controls="@(_directoryId + "-results")" />
+            <button type="button" data-users-search disabled>Search <ActionArrow /></button>
+        </div>
+        <p id="@(_directoryId + "-hint")">Leave empty to browse all users, or type at least 2 characters to search. More users load as you scroll.</p>
+    </div>
+    <div class="users-toolbar">
+        <label for="@(_directoryId + "-page-size")">Per page</label>
+        <select id="@(_directoryId + "-page-size")" data-users-page-size>
+            <option value="20">20</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+            <option value="200">200</option>
+            <option value="0">All</option>
+        </select>
+        <small>Results load in groups of 20.</small>
+    </div>
+    <p class="users-count" data-users-count role="status" aria-live="polite"></p>
+    <ul class="users-results" id="@(_directoryId + "-results")" data-users-results aria-label="Matching users" aria-busy="false"></ul>
+    <div class="users-loader" data-users-loading hidden><BoxLoader Label="Loading users…" Compact="true" /></div>
+    <div class="users-empty" data-users-empty hidden>
+        <EmptyBoxIllustration />
+        <h2 data-users-empty-title>No users yet</h2>
+        <p data-users-empty-description>Community members will appear here once they join SNEStorage.</p>
+    </div>
+    <div class="users-error" data-users-error hidden role="alert">
+        <p data-users-error-message></p>
+        <button type="button" data-users-retry>Try again</button>
+    </div>
+    <div class="users-more" data-users-more hidden><button type="button" data-users-load-more>Load more users</button></div>
+    <div class="users-sentinel" data-users-sentinel aria-hidden="true"></div>
+    <nav class="users-pagination" data-users-pagination aria-label="User pages" hidden>
+        <span data-users-page-label></span>
+        <div>
+            <button type="button" data-users-previous disabled><ActionArrow Left="true" /> Previous</button>
+            <button type="button" data-users-next disabled>Next <ActionArrow /></button>
+        </div>
+    </nav>
+    <noscript><p class="users-unavailable">Enable JavaScript to search for users.</p></noscript>
+    @if (_initializationError is not null)
+    {
+        <p class="users-unavailable" role="alert">@_initializationError</p>
+    }
+</div>

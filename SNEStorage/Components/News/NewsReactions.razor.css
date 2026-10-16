@@ -1,0 +1,16 @@
+.news-reactions { display: flex; align-items: center; flex-wrap: wrap; gap: .65rem 1rem; margin-top: .9rem; }
+.news-reactions:empty { display: none; }
+.reaction-buttons { display: flex; gap: .4rem; }
+.reaction-button { display: inline-flex; align-items: center; justify-content: center; gap: .4rem; padding: .4rem .65rem; border: 1px solid #775194; border-radius: 7px; background: #231530b3; color: #ddc9ef; font: inherit; font-size: .78rem; cursor: pointer; transition: background .15s, border-color .15s; }
+.reaction-button svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.thumb-down { transform: rotate(180deg); }
+.reaction-button:hover:not(:disabled) { border-color: #ba8ee1; background: #49305d; }
+.reaction-button.is-liked { color: #b2f0c6; border-color: #6abf88; background: #1d3a2bbd; }
+.reaction-button.is-disliked { color: #ffc0cd; border-color: #d47d94; background: #482533bd; }
+.reaction-button:disabled { opacity: .55; cursor: default; }
+.reaction-counts { display: flex; flex-wrap: wrap; gap: .3rem .7rem; color: #c9b3da; font-size: .75rem; }
+.approval { color: #e0c4ff; }
+.reaction-status { color: #bba4cf; font-size: .75rem; }
+.reaction-message { flex-basis: 100%; margin: 0; color: #f1cb9f; font-size: .8rem; }
+.refresh-reactions { padding: .3rem .55rem; border: 1px solid #775194; border-radius: 6px; background: #231530b3; color: #ddc9ef; font: inherit; font-size: .78rem; cursor: pointer; }
+button:focus-visible { outline: 2px solid #ffe14d; outline-offset: 3px; }

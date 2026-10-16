@@ -148,7 +148,7 @@ public class DiscordService(
         if (string.IsNullOrWhiteSpace(sneStorageUserId))
             return ServiceResult.InvalidUserId.Return(_logger);
 
-        if (string.IsNullOrWhiteSpace(code))
+        if (string.IsNullOrWhiteSpace(code) || code.Length > TextLimits.OAUTH_CODE)
             return ServiceResult.InvalidOAuthCode.Return(_logger);
 
         HttpClient client = _httpClientFactory.CreateClient("Discord");

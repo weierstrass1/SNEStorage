@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.RateLimiting;
 using SNEStorage.DTOs;
 using SNEStorage.Models;
 using SNEStorage.Services;
+using System.ComponentModel.DataAnnotations;
 
 namespace SNEStorage.Controllers;
 
@@ -25,7 +26,8 @@ public class ProfileController(AccountService accountService) : ControllerBase
     [AllowAnonymous]
     [HttpGet("{userId}")]
     [ProducesResponseType<UserInfo>(StatusCodes.Status200OK)]
-    public async Task<ActionResult<UserInfo>> GetProfile([FromRoute] string userId, CancellationToken ct)
+    public async Task<ActionResult<UserInfo>> GetProfile(
+        [FromRoute, StringLength(TextLimits.USER_ID)] string userId, CancellationToken ct)
     {
         var result = await _accountService.GetUserInfo(userId, ct);
         if (result.IsT0)

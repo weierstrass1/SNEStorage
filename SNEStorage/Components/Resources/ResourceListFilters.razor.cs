@@ -13,6 +13,7 @@ public partial class ResourceListFilters
     [Parameter] public EventCallback OnReset { get; set; }
     [Parameter] public string? Error { get; set; }
     [Parameter] public bool Disabled { get; set; }
+    [Parameter] public bool CanChooseSensitiveContent { get; set; }
     private IReadOnlyList<IdNamePair> Categories { get; set; } = [];
     // InputSelect<bool?> formats null as "false"; explicit UI values preserve the Any option.
     private string SealSelection

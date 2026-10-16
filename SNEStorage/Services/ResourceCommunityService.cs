@@ -83,6 +83,9 @@ public class ResourceCommunityService(SnestorageContext context,
         if (!accessResult.TryPickT0(out var access, out var accessError))
             return accessError;
 
+        if (!access.ContentAllowed)
+            return ServiceResult.Forbidden.Return(_logger);
+
         if (access.VisibilityId == 3)
             return ServiceResult.CantAddScoreToPrivateResource.Return(_logger);
 

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SNEStorage.DTOs;
 using SNEStorage.Services;
+using System.ComponentModel.DataAnnotations;
 
 namespace SNEStorage.Controllers;
 
@@ -16,7 +17,8 @@ public class LoginController(AccountService accountService) : Controller
     [EnableRateLimiting("login")]
     [HttpPost("submit")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Login([FromForm] LoginCredentials credentials, [FromForm] string? returnUrl = null)
+    public async Task<IActionResult> Login([FromForm] LoginCredentials credentials,
+        [FromForm, StringLength(TextLimits.RETURN_URL)] string? returnUrl = null)
     {
         var destination = Url.IsLocalUrl(returnUrl) ? returnUrl! : "/";
         var result = await _accountService.Login(credentials);

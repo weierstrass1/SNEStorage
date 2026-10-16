@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using SNEStorage.DTOs;
+using SNEStorage.Filters.Attributes;
+using SNEStorage.Models;
 using SNEStorage.Services;
 
 namespace SNEStorage.Controllers;
@@ -58,5 +60,15 @@ public class NewsController(NewsService newsService) : Controller
         [FromRoute] long newsId, CancellationToken ct = default)
     {
         return this.GetActionResult(await _newsService.Get(newsId, ct));
+    }
+    [EnableRateLimiting("votes")]
+    [HttpPost("{newsId}/like")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [RequireCaptcha("news_AddEditOrDeleteLike", CaptchaPolicy.After10TriesInShortTime)]
+    public async Task<ActionResult<LikeUsers>> AddEditOrDeleteLike([FromRoute] long newsId,
+    [FromForm] LikeValues value, CancellationToken ct = default)
+    {
+        var res = await _newsService.AddEditOrDeleteLike(newsId, value, ct);
+        return this.GetActionResult(res);
     }
 }

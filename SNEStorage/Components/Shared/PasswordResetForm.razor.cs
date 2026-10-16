@@ -100,6 +100,7 @@ public partial class PasswordResetForm : IAsyncDisposable
     {
         [Required(ErrorMessage = "Enter your account email.")]
         [EmailAddress(ErrorMessage = "Enter a valid email address.")]
+        [StringLength(TextLimits.EMAIL)]
         public string Email { get; set; } = "";
     }
 

@@ -56,7 +56,7 @@ public partial class NewsFeed : IAsyncDisposable
         _error = null;
         try
         {
-            var module = await JavaScript.InvokeAsync<IJSObjectReference>("import", "./js/news.js?v=6");
+            var module = await JavaScript.InvokeAsync<IJSObjectReference>("import", "./js/news.js?v=7");
             if (_disposed) { await module.DisposeAsync(); return; }
             _module = module;
             _api = new(module, _requestKey);

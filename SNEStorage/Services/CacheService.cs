@@ -15,7 +15,8 @@ public enum CacheKeys
     Visibility,
     Category,
     Type,
-    TimeZone
+    TimeZone,
+    Reasons
 }
 
 public class CacheService(IMemoryCache cache, IServiceScopeFactory factory) : IDisposable
@@ -28,6 +29,11 @@ public class CacheService(IMemoryCache cache, IServiceScopeFactory factory) : ID
     private delegate Task<OneOf<FrozenDictionary<TKey, TValue>, ServiceResultContext>>
         CacheLoader<TKey, TValue>(AsyncServiceScope scope, DBHelperService helper,
             CancellationToken ct) where TKey : notnull;
+    public Task<OneOf<Dictionary<long, Reason>, ServiceResultContext>>
+    GetAllReasons(CancellationToken ct = default)
+    {
+        return Get(CacheKeys.Reasons, LoadReasons, ct);
+    }
 
     public Task<OneOf<Dictionary<long, Models.TimeZone>, ServiceResultContext>>
         GetAllTimeZones(CancellationToken ct = default)
@@ -120,6 +126,14 @@ public class CacheService(IMemoryCache cache, IServiceScopeFactory factory) : ID
 
         return Load(CacheKeys.Category, value => value.Id,
             context.ResourceCategories.AsNoTracking().ToListAsync, helper, ct);
+    }
+    private Task<OneOf<FrozenDictionary<long, Reason>, ServiceResultContext>>
+    LoadReasons(AsyncServiceScope scope, DBHelperService helper, CancellationToken ct)
+    {
+        var context = scope.ServiceProvider.GetRequiredService<SnestorageContext>();
+
+        return Load(CacheKeys.Reasons, value => value.Id,
+            context.Reasons.AsNoTracking().Include(r => r.ReasonCategory).ToListAsync, helper, ct);
     }
 
     private Task<OneOf<FrozenDictionary<long, Models.TimeZone>, ServiceResultContext>>

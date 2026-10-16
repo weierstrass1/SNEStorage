@@ -108,7 +108,7 @@ public class ResourceAccessServiceTests
         return new ResourceAccessService(
             database.Context,
             database.CreateAccountService(userId, isModerator),
-            database.DBHelper,
+            database.CreateGetFirstOrError<ResourceAccessRow>(),
             NullLogger<ResourceAccessService>.Instance);
     }
 

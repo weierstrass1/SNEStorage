@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Globalization;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using SNEStorage.Components.Resources;
@@ -10,6 +11,8 @@ public partial class Resources : IAsyncDisposable
 {
     private readonly string _requestKey = Guid.NewGuid().ToString("N");
     private IJSObjectReference? _module;
+    private IJSObjectReference? _contentMonitor;
+    private bool _canChooseSensitiveContent;
     private DotNetObjectReference<Resources>? _reference;
     private ResourceListApiClient? _api;
     private ElementReference _sentinel;
@@ -51,10 +54,17 @@ public partial class Resources : IAsyncDisposable
         {
             if (firstRender)
             {
-                _module = await JavaScript.InvokeAsync<IJSObjectReference>("import", "./js/resource-list.js?v=3");
+                _module = await JavaScript.InvokeAsync<IJSObjectReference>("import", "./js/resource-list.js?v=4");
                 if (_disposed) { await _module.DisposeAsync(); return; }
                 _reference = DotNetObjectReference.Create(this);
                 _api = new(_module, _requestKey);
+                _contentMonitor = await _module.InvokeAsync<IJSObjectReference>("watchContentAccount", _reference);
+                if (_disposed)
+                {
+                    await _contentMonitor.InvokeVoidAsync("stop");
+                    await _contentMonitor.DisposeAsync();
+                    return;
+                }
                 await ReloadAsync(0);
                 return;
             }
@@ -117,6 +127,7 @@ public partial class Resources : IAsyncDisposable
     private async Task ReadBlockAsync(int revision)
     {
         if (_api is null) return;
+        if (!_canChooseSensitiveContent) HideSensitiveContent(_applied);
         var backendPage = (long)_page * BlocksPerPage + _blocks;
         if (backendPage * BlockSize > int.MaxValue)
         {
@@ -174,6 +185,7 @@ public partial class Resources : IAsyncDisposable
     private Task PageSizeChangedAsync() { _lastPage = null; return ReloadAsync(0); }
     private async Task ApplyFiltersAsync()
     {
+        if (!_canChooseSensitiveContent) HideSensitiveContent(_draft);
         _filterError = _draft.Validate();
         if (_filterError is not null) return;
         _applied = _draft.Copy();
@@ -225,12 +237,52 @@ public partial class Resources : IAsyncDisposable
         _errorBody = body;
         _error = ApiErrorPresentation.Describe(status, body, "resource").Message;
     }
+
+    [JSInvokable]
+    public Task UpdateContentAccount(bool? authenticated, string? birthday) => InvokeAsync(async () =>
+    {
+        if (_disposed) return;
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        // Only /api/profile/me supplies the private date of birth; public profiles mask it.
+        var allowed = authenticated == true &&
+            DateOnly.TryParseExact(birthday, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var birth) &&
+            birth != DateOnly.MinValue && birth <= today.AddYears(-18);
+        if (_canChooseSensitiveContent == allowed) return;
+        _canChooseSensitiveContent = allowed;
+        if (!allowed)
+        {
+            HideSensitiveContent(_draft);
+            if (HideSensitiveContent(_applied))
+            {
+                _lastPage = null;
+                await ReloadAsync(0);
+            }
+        }
+        if (!_disposed) StateHasChanged();
+    });
+
+    private static bool HideSensitiveContent(ResourceListFilterState state)
+    {
+        var finder = state.Finder;
+        var changed = finder.CanIncludesPorn || finder.CanIncludesGore || finder.CanIncludesPolitics ||
+            finder.CanIncludesSlurs || finder.CanIncludesSensitiveContent;
+        finder.CanIncludesPorn = finder.CanIncludesGore = finder.CanIncludesPolitics =
+            finder.CanIncludesSlurs = finder.CanIncludesSensitiveContent = false;
+        return changed;
+    }
+
     public async ValueTask DisposeAsync()
     {
         _disposed = true;
         ++_revision;
         try
         {
+            if (_contentMonitor is not null)
+            {
+                using var cleanup = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+                await _contentMonitor.InvokeVoidAsync("stop", cleanup.Token);
+                await _contentMonitor.DisposeAsync();
+            }
             if (_module is not null)
             {
                 await _module.InvokeVoidAsync("dispose", _requestKey);

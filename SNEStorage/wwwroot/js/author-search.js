@@ -6,10 +6,11 @@ document.addEventListener("keydown", event => {
     }
 });
 
-async function search(path, likeString, maxAmount) {
+async function search(path, likeString, maxAmount, withAvatar) {
     const url = new URL(path, document.baseURI);
     url.searchParams.set("likeString", likeString);
     url.searchParams.set("maxAmount", String(maxAmount));
+    if (typeof withAvatar === "boolean") url.searchParams.set("withAvatar", String(withAvatar));
     const response = await fetch(url, {
         credentials: "same-origin",
         headers: { Accept: "application/json" },
@@ -23,7 +24,7 @@ async function search(path, likeString, maxAmount) {
 }
 
 export function searchUsers(likeString, maxAmount) {
-    return search("/api/user/search", likeString, maxAmount);
+    return search("/api/user/search", likeString, Math.min(maxAmount, 20), false);
 }
 
 export function searchExternalAuthors(likeString, maxAmount) {

@@ -1,4 +1,7 @@
 import { antiforgeryFetch } from "./antiforgery.js?v=1";
+import { captchaFetch } from "./captcha.js?v=3";
+import { getAccountSession } from "./account-session.js?v=2";
+export { watchAccount } from "./account-navigation.js?v=9";
 
 const requests = new Map();
 const watchers = new Map();
@@ -9,6 +12,31 @@ export function createNews(key, dto) {
 
 export function editNews(key, newsId, dto) {
     return writeNews(key, "PUT", `/api/news/${encodeURIComponent(newsId)}/edit`, dto);
+}
+
+export async function submitNewsVote(key, newsId, value, userId) {
+    const controller = new AbortController();
+    requests.set(key, controller);
+    try {
+        const account = await getAccountSession(controller.signal);
+        if (controller.signal.aborted) return { status: 0, body: "" };
+        if (account.status !== 200 || JSON.parse(account.body).userId !== userId)
+            return { status: 401, body: JSON.stringify("NewsController-Unauthorized") };
+        const body = new FormData();
+        body.set("value", value);
+        const response = await captchaFetch(`/api/news/${encodeURIComponent(newsId)}/like`, {
+            method: "POST", body, credentials: "same-origin", cache: "no-store", redirect: "error",
+            headers: { Accept: "application/json" }, signal: controller.signal
+        }, "news_AddEditOrDeleteLike");
+        if (response.status === 401) window.dispatchEvent(new Event("snestorage-session-rejected"));
+        return { status: response.status, body: await response.text() };
+    } catch (error) {
+        if (controller.signal.aborted || error.name === "AbortError" || error instanceof TypeError)
+            return { status: 0, body: "" };
+        throw error;
+    } finally {
+        if (requests.get(key) === controller) requests.delete(key);
+    }
 }
 
 async function writeNews(key, method, url, dto) {
@@ -48,7 +76,7 @@ async function readNewsResponse(key, url) {
     const timeout = setTimeout(() => controller.abort(), 30000);
     try {
         const response = await fetch(url, {
-            method: "GET", credentials: "omit", cache: "no-store", redirect: "error",
+            method: "GET", credentials: "same-origin", cache: "no-store", redirect: "error",
             headers: { Accept: "application/json" }, signal: controller.signal
         });
         return JSON.stringify({ status: response.status, body: await response.text() });

@@ -21,6 +21,7 @@ public class ResourceEditDTO
     public long? VisibilityId { get; set; }
     [Required]
     [MaxLength(50)]
+    [MaxItemLength(TextLimits.TAG)]
     public string[] Tags { get; set; } = [];
     [Required]
     public long[] Types { get; set; } = [];
@@ -39,8 +40,10 @@ public class ResourceEditDTO
     [Required]
     public long[] RemovedTypeIDs { get; set; } = [];
     [Required]
+    [MaxItemLength(TextLimits.EXTERNAL_AUTHOR)]
     public string[] ExternalAuthors { get; set; } = [];
     [Required]
+    [MaxItemLength(TextLimits.USER_ID)]
     public string[] AuthorsIDs { get; set; } = [];
     [Required]
     public long[] DependencyIDs { get; set; } = [];

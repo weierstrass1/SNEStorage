@@ -86,11 +86,14 @@ public partial class Register : IAsyncDisposable
 
     private async Task InitializeFormAsync()
     {
-        _module ??= await JavaScript.InvokeAsync<IJSObjectReference>("import", _lifetime.Token, "./js/register.js?v=10");
+        _module ??= await JavaScript.InvokeAsync<IJSObjectReference>("import", _lifetime.Token, "./js/register.js?v=11");
         if (_disposed) return;
         await _module.InvokeVoidAsync("initializeRegistration", _lifetime.Token, FormId, new
         {
             allowedUsernameCharacters = AccountOptions.Value.User.AllowedUserNameCharacters,
+            maximumUsernameLength = TextLimits.USERNAME,
+            maximumEmailLength = TextLimits.EMAIL,
+            maximumPasswordLength = TextLimits.PASSWORD,
             password = AccountOptions.Value.Password
         });
     }

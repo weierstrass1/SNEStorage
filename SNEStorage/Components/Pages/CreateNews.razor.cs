@@ -28,7 +28,7 @@ public partial class CreateNews : IAsyncDisposable
         _validationErrors = [];
         try
         {
-            _module ??= await JavaScript.InvokeAsync<IJSObjectReference>("import", _lifetime.Token, "./js/news.js?v=6");
+            _module ??= await JavaScript.InvokeAsync<IJSObjectReference>("import", _lifetime.Token, "./js/news.js?v=7");
             if (_disposed) return;
             var response = await new NewsApiClient(_module, _requestKey).CreateAsync(_form, _lifetime.Token);
             if (_disposed) return;

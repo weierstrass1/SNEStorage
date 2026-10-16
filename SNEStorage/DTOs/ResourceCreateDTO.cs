@@ -29,15 +29,18 @@ public class ResourceCreateDTO
     public required IFormFile File { get; set; }
     [Required]
     [MaxLength(50)]
+    [MaxItemLength(TextLimits.TAG)]
     public string[] Tags { get; set; } = [];
     [Required]
     [MinLength(1)]
     public long[] Types { get; set; } = [];
     [Required]
     [MaxLength(50)]
+    [MaxItemLength(TextLimits.EXTERNAL_AUTHOR)]
     public string[] ExternalAuthors { get; set; } = [];
     [Required]
     [MaxLength(50)]
+    [MaxItemLength(TextLimits.USER_ID)]
     public string[] AuthorsIDs { get; set; } = [];
     [Required]
     [MaxLength(50)]

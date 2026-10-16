@@ -119,10 +119,14 @@ public class ResourceRatingTests
     {
         var accountService = database.CreateAccountService(userId);
         var accessService = new ResourceAccessService(
-            database.Context, accountService, database.DBHelper,
+            database.Context, accountService,
+            database.CreateGetFirstOrError<ResourceAccessRow>(),
             NullLogger<ResourceAccessService>.Instance);
         return new ResourceCommunityService(
             database.Context, accountService, accessService, database.DBHelper,
+            database.CreateGetFirstOrError<ApplicationUser>(),
+            database.CreateGetFirstOrDefault<ScoreUsers>(),
+            database.CreateGetFirstOrError<RatingReadDto>(),
             NullLogger<ResourceCommunityService>.Instance);
     }
 

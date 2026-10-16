@@ -17,7 +17,7 @@ namespace SNEStorage.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.12")
+                .HasAnnotation("ProductVersion", "10.0.13")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -339,6 +339,34 @@ namespace SNEStorage.Migrations
                     b.ToTable("comment_comments", (string)null);
                 });
 
+            modelBuilder.Entity("SNEStorage.Models.CommentFlag", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<long>("CommentId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("resource_id");
+
+                    b.Property<long>("FlagId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("flag_id");
+
+                    b.HasKey("Id")
+                        .HasName("PK_Comment_Flags");
+
+                    b.HasIndex("CommentId");
+
+                    b.HasIndex("FlagId")
+                        .IsUnique();
+
+                    b.ToTable("comment_flags", (string)null);
+                });
+
             modelBuilder.Entity("SNEStorage.Models.File", b =>
                 {
                     b.Property<long>("Id")
@@ -401,13 +429,21 @@ namespace SNEStorage.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
 
-                    b.Property<DateTime>("Date")
+                    b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2")
-                        .HasColumnName("date");
+                        .HasColumnName("created_at");
 
                     b.Property<long>("ReasonId")
                         .HasColumnType("bigint")
                         .HasColumnName("reason_id");
+
+                    b.Property<bool>("Resolved")
+                        .HasColumnType("bit")
+                        .HasColumnName("resolved");
+
+                    b.Property<DateTime?>("ResolvedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("resolved_at");
 
                     b.Property<string>("UserId")
                         .IsRequired()
@@ -641,6 +677,9 @@ namespace SNEStorage.Migrations
                         .HasColumnType("nvarchar(450)")
                         .HasColumnName("poster_user_id");
 
+                    b.Property<long>("ScoreId")
+                        .HasColumnType("bigint");
+
                     b.Property<string>("Text")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)")
@@ -656,6 +695,8 @@ namespace SNEStorage.Migrations
                         .HasName("PK_New");
 
                     b.HasIndex("PosterUserId");
+
+                    b.HasIndex("ScoreId");
 
                     b.ToTable("new", (string)null);
                 });
@@ -674,10 +715,40 @@ namespace SNEStorage.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("description");
 
+                    b.Property<int>("Priority")
+                        .HasColumnType("int")
+                        .HasColumnName("priority");
+
+                    b.Property<long>("ReasonCategoryId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("reason_category_id");
+
                     b.HasKey("Id")
                         .HasName("PK_Reason");
 
+                    b.HasIndex("ReasonCategoryId");
+
                     b.ToTable("reason", (string)null);
+                });
+
+            modelBuilder.Entity("SNEStorage.Models.ReasonCategory", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("name");
+
+                    b.HasKey("Id")
+                        .HasName("PK_Reason_Category");
+
+                    b.ToTable("reason_category", (string)null);
                 });
 
             modelBuilder.Entity("SNEStorage.Models.Resource", b =>
@@ -1635,6 +1706,27 @@ namespace SNEStorage.Migrations
                     b.Navigation("ParentComment");
                 });
 
+            modelBuilder.Entity("SNEStorage.Models.CommentFlag", b =>
+                {
+                    b.HasOne("SNEStorage.Models.Comment", "Comment")
+                        .WithMany("CommentFlags")
+                        .HasForeignKey("CommentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_comment_flags_comment");
+
+                    b.HasOne("SNEStorage.Models.Flag", "Flag")
+                        .WithOne("CommentFlags")
+                        .HasForeignKey("SNEStorage.Models.CommentFlag", "FlagId")
+                        .OnDelete(DeleteBehavior.ClientCascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_comment_flags_flag");
+
+                    b.Navigation("Comment");
+
+                    b.Navigation("Flag");
+                });
+
             modelBuilder.Entity("SNEStorage.Models.File", b =>
                 {
                     b.HasOne("SNEStorage.Models.FileType", "FileType")
@@ -1773,7 +1865,27 @@ namespace SNEStorage.Migrations
                         .IsRequired()
                         .HasConstraintName("FK_new_poster_user");
 
+                    b.HasOne("SNEStorage.Models.Score", "Score")
+                        .WithMany()
+                        .HasForeignKey("ScoreId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("PosterUser");
+
+                    b.Navigation("Score");
+                });
+
+            modelBuilder.Entity("SNEStorage.Models.Reason", b =>
+                {
+                    b.HasOne("SNEStorage.Models.ReasonCategory", "ReasonCategory")
+                        .WithMany("Reasons")
+                        .HasForeignKey("ReasonCategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_reason_category_category");
+
+                    b.Navigation("ReasonCategory");
                 });
 
             modelBuilder.Entity("SNEStorage.Models.Resource", b =>
@@ -2156,6 +2268,8 @@ namespace SNEStorage.Migrations
                 {
                     b.Navigation("Childrens");
 
+                    b.Navigation("CommentFlags");
+
                     b.Navigation("Parent");
 
                     b.Navigation("ResourceComment");
@@ -2175,6 +2289,8 @@ namespace SNEStorage.Migrations
 
             modelBuilder.Entity("SNEStorage.Models.Flag", b =>
                 {
+                    b.Navigation("CommentFlags");
+
                     b.Navigation("MemoryAddressFlags");
 
                     b.Navigation("ResourceFlags");
@@ -2197,6 +2313,11 @@ namespace SNEStorage.Migrations
             modelBuilder.Entity("SNEStorage.Models.Reason", b =>
                 {
                     b.Navigation("Flags");
+                });
+
+            modelBuilder.Entity("SNEStorage.Models.ReasonCategory", b =>
+                {
+                    b.Navigation("Reasons");
                 });
 
             modelBuilder.Entity("SNEStorage.Models.Resource", b =>

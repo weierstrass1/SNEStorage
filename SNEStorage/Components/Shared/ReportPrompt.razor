@@ -1,0 +1,18 @@
+<dialog id="report-dialog" class="report-dialog" aria-labelledby="report-heading" aria-describedby="report-description">
+    <div class="report-content">
+        <header class="report-heading">
+            <div><span class="report-eyebrow">COMMUNITY GUIDELINES</span><h2 id="report-heading" data-report-heading>Report this resource</h2></div>
+            <button type="button" class="report-close" data-report-close aria-label="Close report" autofocus><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg></button>
+        </header>
+        <p id="report-description" data-report-description>Choose the reason that best describes the issue. SNEStorage staff will review your report.</p>
+        <div class="report-categories" data-report-categories aria-busy="false"></div>
+        <p class="report-status" data-report-status role="status" aria-live="polite" tabindex="-1"></p>
+        <p class="report-error" data-report-error role="alert" hidden></p>
+        <button type="button" class="report-retry" data-report-retry hidden>Try again</button>
+        <footer class="report-actions">
+            <a href="/Rules" target="_blank" rel="noopener noreferrer">Read the rules <span aria-hidden="true">↗</span></a>
+            <button type="button" data-report-cancel>Cancel</button>
+            <button type="button" class="report-submit" data-report-submit disabled>Submit report</button>
+        </footer>
+    </div>
+</dialog>

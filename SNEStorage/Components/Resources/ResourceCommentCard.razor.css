@@ -1,13 +1,14 @@
-.resource-comment { padding: .8rem 0; border-top: 1px solid #4b2d68; scroll-margin-block: 6rem; border-radius: 5px; }
+.resource-comment { margin-top: .7rem; padding: .95rem; border: 1px solid #69439470; scroll-margin-block: 6rem; border-radius: 9px; background: rgba(35, 19, 51, .3); }
 .comment-just-posted { display: block; margin-bottom: .2rem; color: #ffe18b; font-size: .65rem; letter-spacing: .04em; text-transform: uppercase; }
 .resource-comment:focus { outline: none; }
 .resource-comment:focus-visible { outline: 2px solid #b68ae8; outline-offset: 4px; }
 .resource-comment.comment-new-highlight { animation: comment-arrival 2.8s ease-out both; }
-@keyframes comment-arrival { 0%, 25% { background: #b68ae824; box-shadow: 0 0 0 2px #b68ae8, 0 0 18px #b68ae83b; } 100% { background: transparent; box-shadow: 0 0 0 2px transparent; } }
+@keyframes comment-arrival { 0%, 25% { background: #b68ae824; box-shadow: 0 0 0 2px #b68ae8, 0 0 18px #b68ae83b; } 100% { background: rgba(35, 19, 51, .3); box-shadow: 0 0 0 2px transparent; } }
 @media (prefers-reduced-motion: reduce) { .resource-comment.comment-new-highlight { animation: none; box-shadow: 0 0 0 2px #b68ae8; } }
 .resource-comment header { display: flex; align-items: center; gap: .7rem; }
 .comment-avatar { flex: 0 0 40px; object-fit: cover; border: 1px solid #8053aa; border-radius: 5px; background: #241236; }
 .comment-author { min-width: 0; }
+.comment-report { margin-left: auto; align-self: flex-start; }
 .comment-author ::deep a, .comment-author strong { font-weight: 700; font-size: .85rem; text-decoration: none; overflow-wrap: anywhere; }
 .comment-author ::deep a:hover { text-decoration: underline; }
 .comment-dates { display: flex; flex-wrap: wrap; column-gap: .8rem; row-gap: .25rem; margin-top: .2rem; color: #a990c3; font-size: .7rem; }
@@ -35,4 +36,4 @@
 .comment-message { margin: .7rem 0 0; color: #ffdf85; font-size: .8rem; }
 .comment-delete-confirmation { padding: .65rem; margin-top: .7rem; border: 1px solid #9f597d; border-radius: 5px; background: #341526; }
 .comment-delete-confirmation p { margin: 0; font-size: .8rem; }
-@media (max-width: 600px) { .comment-replies { margin-left: 0; padding-left: .5rem; } }
+@media (max-width: 600px) { .resource-comment { padding: .8rem .7rem; } .comment-replies { margin-left: 0; padding-left: .5rem; } }

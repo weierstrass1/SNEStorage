@@ -1,4 +1,6 @@
 .token-editor { display: grid; gap: .65rem; min-width: 0; }
+.token-editor > small { color: #c8b5df; }
+.token-error { color: #ffb5c1; margin: 0; font-size: .88rem; }
 .token-list { display: flex; flex-wrap: wrap; gap: .45rem; margin: 0; padding: 0; list-style: none; }
 .token { display: inline-flex; max-width: 100%; align-items: center; gap: .4rem; padding: .15rem .25rem .15rem .6rem; border: 1px solid #9861d1; border-radius: 4px; color: #e9d7ff; background: #301748; font-size: .85rem; }
 .token > span { min-width: 0; overflow-wrap: anywhere; }

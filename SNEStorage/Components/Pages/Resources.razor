@@ -22,7 +22,7 @@
         {
             @if (_optionsLoading) { <BoxLoader Label="Loading filter choices…" Compact="true" /> }
             @if (_optionsError is not null) { <p role="alert">@_optionsError <button type="button" class="text-button" @onclick="LoadOptionsAsync">Try again</button></p> }
-            <ResourceListFilters @key="_draft" State="_draft" Types="_types" CategoryOptions="_categories" OnApply="ApplyFiltersAsync" OnReset="ResetFiltersAsync" Error="@_filterError" Disabled="@(_module is null)" />
+            <ResourceListFilters @key="_draft" State="_draft" Types="_types" CategoryOptions="_categories" OnApply="ApplyFiltersAsync" OnReset="ResetFiltersAsync" Error="@_filterError" Disabled="@(_module is null)" CanChooseSensitiveContent="_canChooseSensitiveContent" />
         }
     </div>
     <div class="filter-summary" aria-label="Applied filters">

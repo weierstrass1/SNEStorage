@@ -27,7 +27,17 @@ public sealed class GetLikeBySelectorQueryOperation<TItem, TResult>(
             return validation.Return(_logger, filePath: filePath,
                 methodName: methodName, line: line);
 
+        if (parameter.Page < 0)
+            return ServiceResult.NegativePage.Return(_logger,
+                filePath: filePath, methodName: methodName, line: line);
+
+        long skip = (long)parameter.MaxAmount * parameter.Page;
+        if (skip > int.MaxValue)
+            return ServiceResult.SkipOutOfRange.Return(_logger,
+                filePath: filePath, methodName: methodName, line: line);
+
         var resultQuery = LikeQueryHelper.Apply(query, parameter.SearchSelector, parameter)
+            .Skip((int)skip)
             .Take(parameter.MaxAmount)
             .Select(parameter.ResultSelector);
 

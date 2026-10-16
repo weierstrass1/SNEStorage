@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using SNEStorage.Services;
+using System.ComponentModel.DataAnnotations;
 
 namespace SNEStorage.DTOs;
 
@@ -10,6 +11,10 @@ public class NewsReadDTO
     public required string Title { get; set; }
     public required string Text { get; set; }
     public required UserNameDTO UserSummary { get; set; }
+    public required long ScoreId { get; set; }
+    public int Likes { get; set; }
+    public int Dislikes { get; set; }
+    public LikeValues MyVote { get; set; } = LikeValues.Remove;
 }
 public class NewsCreateDTO
 {

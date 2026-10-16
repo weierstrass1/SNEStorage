@@ -37,7 +37,7 @@ public partial class ResourceAudioPreview : IAsyncDisposable
         _pending = false;
         try
         {
-            _module ??= await JavaScript.InvokeAsync<IJSObjectReference>("import", _lifetime.Token, "./js/audio-preview.js?v=2");
+            _module ??= await JavaScript.InvokeAsync<IJSObjectReference>("import", _lifetime.Token, "./js/audio-preview.js?v=4");
             if (_disposed) return;
             if (Enabled && !string.IsNullOrWhiteSpace(SourceUrl))
                 await _module.InvokeVoidAsync("initializeAudioPreview", _lifetime.Token, _playerId, SourceUrl, Kind, FileName);

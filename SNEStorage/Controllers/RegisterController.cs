@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using SNEStorage.DTOs;
 using SNEStorage.Filters.Attributes;
 using SNEStorage.Services;
+using System.ComponentModel.DataAnnotations;
 
 namespace SNEStorage.Controllers;
 
@@ -57,8 +58,8 @@ public class RegisterController(AccountService accountService, CacheService cach
     }
     [AllowAnonymous]
     [HttpPost("confirmed/{userId}")]
-    public async Task<IActionResult> Confirmed([FromRoute] string userId,
-        [FromQuery] string token, CancellationToken ct = default)
+    public async Task<IActionResult> Confirmed([FromRoute, StringLength(TextLimits.USER_ID)] string userId,
+        [FromQuery, StringLength(TextLimits.TOKEN)] string token, CancellationToken ct = default)
     {
         var result = await _accountService.ConfirmUser(userId, token, ct);
         return this.GetActionResult(result);

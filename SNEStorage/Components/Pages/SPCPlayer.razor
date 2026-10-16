@@ -1,0 +1,72 @@
+@page "/Tools/SPCPlayer"
+
+<PageTitle>SPC Player | SNEStorage</PageTitle>
+
+<section class="spc-player spc-page" id="@_playerId">
+    <header class="spc-page-heading">
+        <p class="spc-kicker">SNESTORAGE SOUND ROOM</p>
+        <h1>SPC Player</h1>
+        <p>Your SNES music collection, right in your browser. Build a playlist and keep listening while you explore SNEStorage.</p>
+        <span class="spc-local-badge"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h14v18H5zM9 17h6M9 7h6" /></svg> Local files · No uploads · No account required</span>
+    </header>
+
+    <div class="spc-library-grid">
+        <div class="spc-library-main">
+            <label class="spc-drop" data-spc-drop for="@(_playerId + "-files")">
+                <input class="spc-file-input" id="@(_playerId + "-files")" data-spc-files type="file" accept=".spc" multiple disabled />
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V3m-5 5 5-5 5 5M4 14v6h16v-6" /></svg>
+                <strong>Add SPC files</strong>
+                <span>Choose files or drop them here.</span>
+                <small>Up to 5 MB per SPC · 1,000 tracks / 100 MB per library</small>
+            </label>
+
+            <div class="spc-library-toolbar">
+                <div><h2>Your playlist</h2><p data-spc-summary role="status">Opening your local library…</p></div>
+                <button class="spc-text-button" type="button" data-spc-command="clear" disabled>Clear playlist</button>
+            </div>
+            <p class="spc-playback-help">Choose <strong>Playback</strong> beside a song to set its length and how many times it plays before moving to the next song.</p>
+            <div class="spc-clear-confirm" data-spc-confirm hidden>
+                <p>Remove all SPC files from this browser's library? Your original files on your computer will remain available.</p>
+                <div><button type="button" data-spc-command="confirm-clear">Remove all tracks</button><button type="button" data-spc-command="cancel-clear">Keep playlist</button></div>
+            </div>
+            <section class="spc-track-settings" data-spc-track-settings hidden aria-label="Track playback settings">
+                <h3 data-spc-edit-title>Track playback</h3>
+                <p data-spc-edit-info></p>
+                <div class="spc-track-setting-fields">
+                    <label>1. How long is one play?<select data-spc-timing-mode><option value="auto">Use the file's timing</option><option value="custom">Set a length in seconds</option><option value="continuous">Keep playing until I skip</option></select></label>
+                    <label>Length in seconds<input data-spc-custom-length type="number" min="1" max="21600" step="1" value="180" disabled /><small>For example, 180 seconds = 3 minutes.</small></label>
+                    <label><span data-spc-plays-label>2. How many times?</span><select data-spc-plays><option value="tag">File default</option><option value="1">1 time</option><option value="2">2 times</option><option value="3">3 times</option><option value="4">4 times</option><option value="5">5 times</option><option value="10">10 times</option><option value="0">Keep repeating</option></select><small>The total count: 2 means twice, not three times.</small></label>
+                </div>
+                <p data-spc-timing-hint></p>
+                <button class="spc-text-button" type="button" data-spc-command="use-custom" data-spc-enable-count hidden>Set a length to enable repetitions</button>
+                <p class="spc-play-plan" data-spc-play-plan role="status" aria-live="polite"></p>
+                <div class="spc-repeat-warning" data-spc-repeat-warning hidden><p><strong>Repeat current song is on.</strong> It keeps this song playing indefinitely and overrides the per-song count.</p><button type="button" data-spc-command="repeat-off">Use this song's play count</button></div>
+                <div class="spc-track-setting-actions"><button type="button" data-spc-command="save-timing">Apply to this song</button><button type="button" data-spc-command="cancel-timing">Cancel</button></div>
+            </section>
+            <div class="spc-empty" data-spc-empty hidden>
+                <span aria-hidden="true">♫</span><h3>A little SNES music?</h3><p>Add your SPC files above to start your own soundtrack.</p>
+            </div>
+            <ol class="spc-queue" data-spc-queue aria-label="SPC playlist"></ol>
+        </div>
+
+        <aside class="spc-listening-panel" aria-label="SPC playback controls">
+            <div class="spc-full-controls" data-spc-controls></div>
+            <p class="spc-feedback" data-spc-message role="status" aria-live="polite"></p>
+            <button class="spc-text-button" type="button" data-spc-command="retry" data-spc-retry hidden>Try opening the library again</button>
+            <details class="spc-settings">
+                <summary>Playback &amp; storage</summary>
+                <label class="spc-fallback-toggle"><input data-spc-use-fallback type="checkbox" /> Use a default length for tracks without timing tags</label>
+                <div class="spc-duration-setting"><label for="@(_playerId + "-duration")">Default:</label><input id="@(_playerId + "-duration")" data-spc-fallback type="number" min="10" max="3600" step="1" value="180" disabled /><span>seconds</span></div>
+                <p>Without timing tags, tracks keep playing until you skip them unless you enable the default length. Use a track's settings button to choose its length and play count.</p>
+                <p>SPC files can loop indefinitely; their tags describe playback timing, not a detected musical ending. Incorrect tags can be overridden with a custom length. The global Repeat one button keeps the current track repeating.</p>
+                <p>Files are saved in this browser on this device. Clearing site data removes this library. Keep your original SPC files as a backup.</p>
+                <p>Music continues during navigation within the app. A full reload or closing the tab stops playback; your playlist stays saved.</p>
+            </details>
+        </aside>
+    </div>
+    <noscript><p class="spc-feedback">Enable JavaScript to use the local SPC player.</p></noscript>
+    @if (_initializationError is not null)
+    {
+        <p class="spc-feedback" role="alert">@_initializationError</p>
+    }
+</section>

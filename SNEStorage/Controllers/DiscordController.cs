@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Options;
 using SNEStorage.Services;
+using System.ComponentModel.DataAnnotations;
 using System.Security.Cryptography;
 using System.Text;
 using SNEStorage.DTOs;
@@ -42,8 +43,9 @@ public class DiscordController(DiscordService discordService,
     [HttpGet("link/callback")]
     [Authorize(AuthenticationSchemes =
     JwtBearerDefaults.AuthenticationScheme)]
-    public async Task<IActionResult> LinkCallback([FromQuery] string? code,
-        [FromQuery] string? state, [FromQuery] string? error, CancellationToken ct)
+    public async Task<IActionResult> LinkCallback([FromQuery, StringLength(TextLimits.OAUTH_CODE)] string? code,
+        [FromQuery, StringLength(TextLimits.OAUTH_STATE)] string? state,
+        [FromQuery, StringLength(TextLimits.SEARCH)] string? error, CancellationToken ct)
     {
         if (!ConsumeOAuthState(state))
             return BadRequest("DiscordController-InvalidOAuthState");
@@ -66,7 +68,7 @@ public class DiscordController(DiscordService discordService,
         HttpContext.Session.Remove(OAuthStateSessionKey);
 
         if (string.IsNullOrWhiteSpace(expectedState) ||
-            string.IsNullOrWhiteSpace(receivedState))
+            string.IsNullOrWhiteSpace(receivedState) || receivedState.Length != TextLimits.OAUTH_STATE)
             return false;
 
         byte[] expectedBytes = Encoding.UTF8.GetBytes(expectedState);

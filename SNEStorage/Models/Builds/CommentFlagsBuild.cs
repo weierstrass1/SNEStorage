@@ -3,9 +3,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace SNEStorage.Models;
 
-public partial class CommentFlags
+public partial class CommentFlag
 {
-    public static void Build(EntityTypeBuilder<CommentFlags> entity)
+    public static void Build(EntityTypeBuilder<CommentFlag> entity)
     {
         entity.ToTable("comment_flags");
 
@@ -26,8 +26,8 @@ public partial class CommentFlags
         entity.Property(e => e.FlagId)
             .HasColumnName("flag_id");
         entity.HasOne(d => d.Flag).WithOne(p => p.CommentFlags)
-            .HasForeignKey<ResourceFlags>(d => d.FlagId)
+            .HasForeignKey<CommentFlag>(d => d.FlagId)
             .OnDelete(DeleteBehavior.ClientCascade)
-            .HasConstraintName("FK_resource_flags_flag");
+            .HasConstraintName("FK_comment_flags_flag");
     }
 }

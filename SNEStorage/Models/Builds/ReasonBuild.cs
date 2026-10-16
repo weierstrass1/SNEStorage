@@ -16,6 +16,13 @@ public partial class Reason
             .ValueGeneratedOnAdd();
         entity.Property(e => e.Priority)
             .HasColumnName("priority");
+        entity.Property(e => e.ReasonCategoryId)
+            .HasColumnName("reason_category_id");
+        entity.HasOne(d => d.ReasonCategory).WithMany(e => e.Reasons)
+            .HasForeignKey(d => d.ReasonCategoryId)
+            .OnDelete(DeleteBehavior.Cascade)
+            .HasConstraintName("FK_reason_category_category");
+
 
         entity.Property(e => e.Description)
             .HasColumnType("nvarchar(max)")

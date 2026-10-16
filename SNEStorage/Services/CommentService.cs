@@ -27,6 +27,7 @@ public enum CommentSorting
 
 public class CommentService(SnestorageContext context, DBHelperService dbHelperService,
     AccountService accountService,
+    ResourceAccessService accessService,
     GetFirstOrDefaultQueryOperation<LikeUsers> getLike,
     GetFirstOrErrorQueryOperation<Comment> getComment,
     ILogger<CommentService> logger)
@@ -36,6 +37,7 @@ public class CommentService(SnestorageContext context, DBHelperService dbHelperS
     private readonly SnestorageContext _context = context;
     private readonly DBHelperService _dbHelperService = dbHelperService;
     private readonly AccountService _accountService = accountService;
+    private readonly ResourceAccessService _accessService = accessService;
     private readonly GetFirstOrDefaultQueryOperation<LikeUsers> _getLike = getLike;
     private readonly GetFirstOrErrorQueryOperation<Comment> _getComment = getComment;
     private readonly ILogger<CommentService> _logger = logger;
@@ -309,6 +311,7 @@ public class CommentService(SnestorageContext context, DBHelperService dbHelperS
             return ServiceResult.EmptyComment.Return(_logger);
 
         var commentQuery = _context.Comments
+            .Include(comment => comment.ResourceComment)
             .Where(comment => comment.Id == commentId);
 
         var commentResult = await _getComment.Execute(
@@ -326,6 +329,15 @@ public class CommentService(SnestorageContext context, DBHelperService dbHelperS
                 return ServiceResult.Unauthorized.Return(_logger);
 
             return ServiceResult.Forbidden.Return(_logger);
+        }
+
+        if (comment.ResourceComment is not null)
+        {
+            var permission = await CheckResourcePermission(
+                comment.ResourceComment.ResourceId, ct);
+
+            if (permission.Result != ServiceResult.Success)
+                return permission;
         }
 
         comment.Text = commentText;
@@ -358,6 +370,14 @@ public class CommentService(SnestorageContext context, DBHelperService dbHelperS
                 return ServiceResult.Unauthorized.Return(_logger);
 
             return ServiceResult.Forbidden.Return(_logger);
+        }
+        if (comment.ResourceComment is not null)
+        {
+            var permission = await CheckResourcePermission(
+                comment.ResourceComment.ResourceId, ct);
+
+            if (permission.Result != ServiceResult.Success)
+                return permission;
         }
 
         if (comment.Childrens.Count == 0)
@@ -409,38 +429,10 @@ public class CommentService(SnestorageContext context, DBHelperService dbHelperS
     private async Task<ServiceResultContext> CheckResourcePermission(
         long resourceId, CancellationToken ct)
     {
-        string? userId = _accountService.GetUserID();
-        bool hasUser = !string.IsNullOrWhiteSpace(userId);
-        bool isStaff = _accountService.IsModeratorOrAdmin();
+        var result = await _accessService.GetViewAccess(resourceId, ct);
 
-        var query = _context.Resources
-            .Where(resource => resource.Id == resourceId)
-            .Select(resource => (bool?)(
-                resource.VisibilityId != 3 ||
-                isStaff ||
-                hasUser && (
-                    resource.SubmitterId == userId ||
-                    resource.ResourcesAuthors.Any(author =>
-                        author.UserId == userId) ||
-                    resource.ResourceVersions.Any(version =>
-                        version.SubmitterUserId == userId))));
-
-        var result = await _dbHelperService.TryFunction(
-            cancel => query.FirstOrDefaultAsync(cancel),
-            ServiceResult.DBError, ct: ct);
-
-        if (!result.TryPickT0(out var hasPermission, out var error))
-            return error;
-
-        if (hasPermission is null)
-            return ServiceResult.ResourceNotFound.Return(_logger);
-
-        if (hasPermission == true)
-            return ServiceResult.Success.Return(_logger);
-
-        return hasUser ?
-            ServiceResult.Forbidden.Return(_logger) :
-            ServiceResult.Unauthorized.Return(_logger);
+        return result.TryPickT0(out _, out var error) ?
+            ServiceResult.Success.Return(_logger) : error;
     }
     private OneOf<IQueryable<Comment>, ServiceResultContext> GetStart(
         int maxAmount, int page, CommentSorting sort)

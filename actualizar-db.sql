@@ -3063,3 +3063,278 @@ END;
 COMMIT;
 GO
 
+BEGIN TRANSACTION;
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261015190827_FlagsAndNewsLikes'
+)
+BEGIN
+    EXEC sp_rename N'[flag].[date]', N'created_at', 'COLUMN';
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261015190827_FlagsAndNewsLikes'
+)
+BEGIN
+    ALTER TABLE [reason] ADD [priority] int NOT NULL DEFAULT 1;
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261015190827_FlagsAndNewsLikes'
+)
+BEGIN
+    ALTER TABLE [new] ADD [ScoreId] bigint NULL;
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261015190827_FlagsAndNewsLikes'
+)
+BEGIN
+    EXEC(N'
+        DECLARE @NewsScores TABLE (
+            [NewsId] bigint NOT NULL PRIMARY KEY,
+            [ScoreId] bigint NOT NULL
+        );
+
+        MERGE [dbo].[score] AS target
+        USING (
+            SELECT [id] AS [NewsId]
+            FROM [dbo].[new]
+            WHERE [ScoreId] IS NULL
+        ) AS source
+        ON 1 = 0
+        WHEN NOT MATCHED THEN
+            INSERT DEFAULT VALUES
+        OUTPUT source.[NewsId], inserted.[id]
+            INTO @NewsScores ([NewsId], [ScoreId]);
+
+        UPDATE news
+        SET news.[ScoreId] = scores.[ScoreId]
+        FROM [dbo].[new] AS news
+        INNER JOIN @NewsScores AS scores ON scores.[NewsId] = news.[id];
+    ');
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261015190827_FlagsAndNewsLikes'
+)
+BEGIN
+    DECLARE @var57 nvarchar(max);
+    SELECT @var57 = QUOTENAME([d].[name])
+    FROM [sys].[default_constraints] [d]
+    INNER JOIN [sys].[columns] [c] ON [d].[parent_column_id] = [c].[column_id] AND [d].[parent_object_id] = [c].[object_id]
+    WHERE ([d].[parent_object_id] = OBJECT_ID(N'[new]') AND [c].[name] = N'ScoreId');
+    IF @var57 IS NOT NULL EXEC(N'ALTER TABLE [new] DROP CONSTRAINT ' + @var57 + ';');
+    ALTER TABLE [new] ALTER COLUMN [ScoreId] bigint NOT NULL;
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261015190827_FlagsAndNewsLikes'
+)
+BEGIN
+    ALTER TABLE [flag] ADD [resolved] bit NOT NULL DEFAULT CAST(0 AS bit);
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261015190827_FlagsAndNewsLikes'
+)
+BEGIN
+    ALTER TABLE [flag] ADD [resolved_at] datetime2 NULL;
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261015190827_FlagsAndNewsLikes'
+)
+BEGIN
+    CREATE TABLE [comment_flags] (
+        [id] bigint NOT NULL IDENTITY,
+        [flag_id] bigint NOT NULL,
+        [resource_id] bigint NOT NULL,
+        CONSTRAINT [PK_Comment_Flags] PRIMARY KEY ([id]),
+        CONSTRAINT [FK_comment_flags_comment] FOREIGN KEY ([resource_id]) REFERENCES [comment] ([id]) ON DELETE CASCADE,
+        CONSTRAINT [FK_comment_flags_flag] FOREIGN KEY ([flag_id]) REFERENCES [flag] ([id])
+    );
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261015190827_FlagsAndNewsLikes'
+)
+BEGIN
+    CREATE INDEX [IX_new_ScoreId] ON [new] ([ScoreId]);
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261015190827_FlagsAndNewsLikes'
+)
+BEGIN
+    CREATE UNIQUE INDEX [IX_comment_flags_flag_id] ON [comment_flags] ([flag_id]);
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261015190827_FlagsAndNewsLikes'
+)
+BEGIN
+    CREATE INDEX [IX_comment_flags_resource_id] ON [comment_flags] ([resource_id]);
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261015190827_FlagsAndNewsLikes'
+)
+BEGIN
+    ALTER TABLE [new] ADD CONSTRAINT [FK_new_score_ScoreId] FOREIGN KEY ([ScoreId]) REFERENCES [score] ([id]) ON DELETE CASCADE;
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261015190827_FlagsAndNewsLikes'
+)
+BEGIN
+    INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+    VALUES (N'20261015190827_FlagsAndNewsLikes', N'10.0.13');
+END;
+
+COMMIT;
+GO
+
+BEGIN TRANSACTION;
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261015191439_FlagsAndNewsLikes2'
+)
+BEGIN
+    INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+    VALUES (N'20261015191439_FlagsAndNewsLikes2', N'10.0.13');
+END;
+
+COMMIT;
+GO
+
+BEGIN TRANSACTION;
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261015194823_ReasonCategory'
+)
+BEGIN
+    ALTER TABLE [reason] ADD [reason_category_id] bigint NOT NULL DEFAULT CAST(0 AS bigint);
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261015194823_ReasonCategory'
+)
+BEGIN
+    CREATE TABLE [ReasonCategory] (
+        [Id] bigint NOT NULL IDENTITY,
+        [Name] nvarchar(max) NOT NULL,
+        CONSTRAINT [PK_ReasonCategory] PRIMARY KEY ([Id])
+    );
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261015194823_ReasonCategory'
+)
+BEGIN
+    CREATE INDEX [IX_reason_reason_category_id] ON [reason] ([reason_category_id]);
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261015194823_ReasonCategory'
+)
+BEGIN
+    ALTER TABLE [reason] ADD CONSTRAINT [FK_reason_category] FOREIGN KEY ([reason_category_id]) REFERENCES [ReasonCategory] ([Id]) ON DELETE CASCADE;
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261015194823_ReasonCategory'
+)
+BEGIN
+    INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+    VALUES (N'20261015194823_ReasonCategory', N'10.0.13');
+END;
+
+COMMIT;
+GO
+
+BEGIN TRANSACTION;
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261015195305_ReasonCategory2'
+)
+BEGIN
+    ALTER TABLE [reason] DROP CONSTRAINT [FK_reason_category];
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261015195305_ReasonCategory2'
+)
+BEGIN
+    ALTER TABLE [ReasonCategory] DROP CONSTRAINT [PK_ReasonCategory];
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261015195305_ReasonCategory2'
+)
+BEGIN
+    EXEC sp_rename N'[ReasonCategory]', N'reason_category', 'OBJECT';
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261015195305_ReasonCategory2'
+)
+BEGIN
+    EXEC sp_rename N'[reason_category].[Name]', N'name', 'COLUMN';
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261015195305_ReasonCategory2'
+)
+BEGIN
+    EXEC sp_rename N'[reason_category].[Id]', N'id', 'COLUMN';
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261015195305_ReasonCategory2'
+)
+BEGIN
+    ALTER TABLE [reason_category] ADD CONSTRAINT [PK_Reason_Category] PRIMARY KEY ([id]);
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261015195305_ReasonCategory2'
+)
+BEGIN
+    ALTER TABLE [reason] ADD CONSTRAINT [FK_reason_category_category] FOREIGN KEY ([reason_category_id]) REFERENCES [reason_category] ([id]) ON DELETE CASCADE;
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261015195305_ReasonCategory2'
+)
+BEGIN
+    INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+    VALUES (N'20261015195305_ReasonCategory2', N'10.0.13');
+END;
+
+COMMIT;
+GO
+

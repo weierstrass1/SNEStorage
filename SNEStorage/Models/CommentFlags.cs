@@ -1,6 +1,6 @@
 ﻿namespace SNEStorage.Models;
 
-public partial class CommentFlags
+public partial class CommentFlag
 {
     public required long Id { get; set; }
     public required long FlagId {  get; set; }

@@ -20,11 +20,11 @@
             <input type="hidden" name="returnUrl" value="@LoginReturnUrl" />
             <div class="login-field">
                 <label for="username">Username</label>
-                <input class="login-input" id="username" name="User" type="text" autocomplete="username" placeholder="Your player name" required />
+                <input class="login-input" id="username" name="User" type="text" maxlength="@TextLimits.USERNAME" autocomplete="username" placeholder="Your player name" required />
             </div>
             <div class="login-field">
                 <label for="password">Password</label>
-                <input class="login-input" id="password" name="Password" type="password" autocomplete="current-password" placeholder="Your password" required />
+                <input class="login-input" id="password" name="Password" type="password" maxlength="@TextLimits.LOGIN_PASSWORD" autocomplete="current-password" placeholder="Your password" required />
             </div>
             <button class="login-submit action-button action-button-primary" type="submit"><span>Log in</span><ActionArrow /></button>
         </form>

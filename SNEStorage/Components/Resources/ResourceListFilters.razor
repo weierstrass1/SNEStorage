@@ -1,13 +1,13 @@
 <div class="library-filters">
 <EditForm Model="State" OnValidSubmit="ApplyAsync">
     <ValidationSummary />
-    <label class="name-filter">Name contains<InputText type="search" @bind-Value="State.Finder.NameLike" placeholder="Search resources…" /></label>
+    <label class="name-filter">Name contains<InputText type="search" maxlength="@TextLimits.RESOURCE_NAME_SEARCH" @bind-Value="State.Finder.NameLike" placeholder="Search resources…" /></label>
 
     <details class="filter-group">
         <summary>Authors &amp; tags</summary>
         <div class="filter-grid text-filters">
-            <label>Author contains<InputText type="search" @bind-Value="State.AuthorLike" placeholder="Username or external author…" /></label>
-            <label>Tag contains<InputText type="search" @bind-Value="State.Finder.TagLike" placeholder="Search tags…" /></label>
+            <label>Author contains<InputText type="search" maxlength="@TextLimits.SEARCH" @bind-Value="State.AuthorLike" placeholder="Username or external author…" /></label>
+            <label>Tag contains<InputText type="search" maxlength="@TextLimits.TAG" @bind-Value="State.Finder.TagLike" placeholder="Search tags…" /></label>
         </div>
     </details>
 
@@ -62,6 +62,8 @@
         </div>
     </details>
 
+    @if (CanChooseSensitiveContent)
+    {
     <details class="filter-group content-settings">
         <summary>Content preferences <small>Sensitive content is hidden by default</small></summary>
         <div class="content-choices">
@@ -72,6 +74,7 @@
             <label><input type="checkbox" @bind="State.Finder.CanIncludesSensitiveContent" />Can include other sensitive content</label>
         </div>
     </details>
+    }
     @if (Error is not null) { <p class="filter-error" role="alert">@Error</p> }
     <div class="filter-actions"><button class="apply" type="submit" disabled="@Disabled">Apply filters</button><button type="button" @onclick="OnReset" disabled="@Disabled">Reset filters</button></div>
 </EditForm>

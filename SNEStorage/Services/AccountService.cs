@@ -39,6 +39,11 @@ public class AccountService(
     public async Task<ServiceResultContext> ChangePassword(
         ChangePasswordDTO dto, CancellationToken ct = default)
     {
+        if (dto.UserId?.Length > TextLimits.USER_ID || dto.Token?.Length > TextLimits.TOKEN)
+            return ServiceResult.InvalidToken.Return(_logger);
+        if (dto.NewPassword?.Length > TextLimits.PASSWORD || dto.ConfirmPassword?.Length > TextLimits.PASSWORD)
+            return ServiceResult.InvalidPassword.Return(_logger);
+
         if (string.IsNullOrWhiteSpace(dto.UserId) ||
             string.IsNullOrWhiteSpace(dto.Token) ||
             string.IsNullOrWhiteSpace(dto.NewPassword) ||
@@ -84,7 +89,7 @@ public class AccountService(
     public async Task<ServiceResultContext> RequestPasswordReset(
         string email, CancellationToken ct = default)
     {
-        if (string.IsNullOrWhiteSpace(email))
+        if (string.IsNullOrWhiteSpace(email) || email.Length > TextLimits.EMAIL)
             return ServiceResult.InvalidEmail.Return(_logger);
 
         var userResult = await _dbHelperService.TryFunction(
@@ -113,7 +118,7 @@ public class AccountService(
     public async Task<ServiceResultContext> RequestEmailConfirmation(
         string email, CancellationToken ct = default)
     {
-        if (string.IsNullOrWhiteSpace(email))
+        if (string.IsNullOrWhiteSpace(email) || email.Length > TextLimits.EMAIL)
             return ServiceResult.InvalidEmail.Return(_logger);
 
         var userResult = await _dbHelperService.TryFunction(
@@ -142,6 +147,16 @@ public class AccountService(
     public async Task<OneOf<RegisterResponseDTO, ServiceResultContext>> Register(
         RegisterInfo registerInfo, CancellationToken ct = default)
     {
+        if (string.IsNullOrWhiteSpace(registerInfo.User) || registerInfo.User.Length > TextLimits.USERNAME)
+            return ServiceResult.InvalidName.Return(_logger);
+        if (string.IsNullOrWhiteSpace(registerInfo.Email) || registerInfo.Email.Length > TextLimits.EMAIL)
+            return ServiceResult.InvalidEmail.Return(_logger);
+        if (string.IsNullOrWhiteSpace(registerInfo.Password) ||
+            registerInfo.Password.Length > TextLimits.PASSWORD ||
+            registerInfo.PasswordRepeat?.Length > TextLimits.PASSWORD ||
+            registerInfo.Password != registerInfo.PasswordRepeat)
+            return ServiceResult.InvalidPassword.Return(_logger);
+
         var user = new ApplicationUser
         {
             UserName = registerInfo.User,
@@ -271,7 +286,9 @@ public class AccountService(
         LoginCredentials credentials)
     {
         if (string.IsNullOrWhiteSpace(credentials.User) ||
-            string.IsNullOrWhiteSpace(credentials.Password))
+            credentials.User.Length > TextLimits.USERNAME ||
+            string.IsNullOrWhiteSpace(credentials.Password) ||
+            credentials.Password.Length > TextLimits.LOGIN_PASSWORD)
             return ServiceResult.InvalidPassword.Return(_logger);
 
         var signInResult = await _dbHelperService.TryFunction(
@@ -333,6 +350,9 @@ public class AccountService(
     public async Task<OneOf<UserInfo, ServiceResultContext>> GetUserInfo(
         string userId, CancellationToken ct)
     {
+        if (string.IsNullOrWhiteSpace(userId) || userId.Length > TextLimits.USER_ID)
+            return ServiceResult.InvalidUserId.Return(_logger);
+
         var query = _context.UserInfos.AsNoTracking()
             .Include(info => info.TimeZone)
             .Include(info => info.EmailVisibility)
@@ -438,6 +458,10 @@ public class AccountService(
 
     public async Task<ServiceResultContext> AddRole(EditRole editRole)
     {
+        if (string.IsNullOrWhiteSpace(editRole.RoleName) || editRole.RoleName.Length > TextLimits.ROLE ||
+            string.IsNullOrWhiteSpace(editRole.Username) || editRole.Username.Length > TextLimits.USERNAME)
+            return ServiceResult.Invalid.Return(_logger);
+
         var userResult = await _dbHelperService.TryFunction(
             _ => _userManager.FindByNameAsync(editRole.Username),
             ServiceResult.DBError);
@@ -484,6 +508,10 @@ public class AccountService(
 
     public async Task<ServiceResultContext> RemoveRole(EditRole editRole)
     {
+        if (string.IsNullOrWhiteSpace(editRole.RoleName) || editRole.RoleName.Length > TextLimits.ROLE ||
+            string.IsNullOrWhiteSpace(editRole.Username) || editRole.Username.Length > TextLimits.USERNAME)
+            return ServiceResult.Invalid.Return(_logger);
+
         var userResult = await _dbHelperService.TryFunction(
             _ => _userManager.FindByNameAsync(editRole.Username),
             ServiceResult.DBError);
@@ -637,6 +665,10 @@ public class AccountService(
     public async Task<ServiceResultContext> ConfirmUser(
         string userId, string token64, CancellationToken ct)
     {
+        if (string.IsNullOrWhiteSpace(userId) || userId.Length > TextLimits.USER_ID ||
+            string.IsNullOrWhiteSpace(token64) || token64.Length > TextLimits.TOKEN)
+            return ServiceResult.InvalidToken.Return(_logger);
+
         var userResult = await _dbHelperService.TryFunction(
             _ => _userManager.FindByIdAsync(userId),
             ServiceResult.DBError, ct: ct);
@@ -763,5 +795,26 @@ public class AccountService(
         while (System.IO.File.Exists(physicalPath));
 
         return Path.GetRelativePath(_environment.ContentRootPath, physicalPath);
+    }
+    public async Task<OneOf<bool, ServiceResultContext>> IsAdult(
+    CancellationToken ct = default)
+    {
+        string? userId = GetUserID();
+        if (userId is null)
+            return false;
+
+        var minimumBirthday = DateOnly.MinValue;
+        var birthdayLimit = DateOnly
+            .FromDateTime(DateTime.UtcNow)
+            .AddYears(-18);
+
+        return await _dbHelperService.TryFunction(
+            async cancel => await _context.UserInfos
+                .AnyAsync(info =>
+                    info.UserId == userId &&
+                    info.Birthday > minimumBirthday &&
+                    info.Birthday <= birthdayLimit,
+                    cancel),
+            ServiceResult.DBError, ct: ct);
     }
 }

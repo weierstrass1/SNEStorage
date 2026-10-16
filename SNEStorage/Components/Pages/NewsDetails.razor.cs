@@ -51,7 +51,7 @@ public partial class NewsDetails : IAsyncDisposable
         {
             if (newsId <= 0) { _errorStatus = 404; return; }
             var module = _module ?? await JavaScript.InvokeAsync<IJSObjectReference>(
-                "import", _lifetime.Token, "./js/news.js?v=6");
+                "import", _lifetime.Token, "./js/news.js?v=7");
             if (_disposed) { await module.DisposeAsync(); return; }
             _module = module;
             if (generation != _generation) return;

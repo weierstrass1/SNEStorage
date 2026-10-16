@@ -16,8 +16,8 @@ public class SearchServiceTests
         ServiceResultTypes expected)
     {
         await using var database = new TestDatabase();
-        var service = new VideogameService(database.Context, database.DBHelper,
-            NullLogger<VideogameService>.Instance);
+        var service = new VideogameService(database.Context,
+            database.CreateGetLikeBySelector<Videogame, Videogame>());
 
         var result = await service.GetVideogamesLike("mario", maxAmount);
 
@@ -38,8 +38,8 @@ public class SearchServiceTests
             new Videogame { Id = 2, Name = "Other", ReleaseDate = null },
             new Videogame { Id = 1, Name = "Any", ReleaseDate = null });
         await database.Context.SaveChangesAsync();
-        var service = new VideogameService(database.Context, database.DBHelper,
-            NullLogger<VideogameService>.Instance);
+        var service = new VideogameService(database.Context,
+            database.CreateGetLikeBySelector<Videogame, Videogame>());
 
         var result = await service.GetVideogamesLike(term!, 10);
 
@@ -55,8 +55,8 @@ public class SearchServiceTests
             new Videogame { Id = 3, Name = "a_game", ReleaseDate = null },
             new Videogame { Id = 4, Name = "abgame", ReleaseDate = null });
         await database.Context.SaveChangesAsync();
-        var service = new VideogameService(database.Context, database.DBHelper,
-            NullLogger<VideogameService>.Instance);
+        var service = new VideogameService(database.Context,
+            database.CreateGetLikeBySelector<Videogame, Videogame>());
 
         var result = await service.GetVideogamesLike("a_", 10);
 
@@ -72,8 +72,8 @@ public class SearchServiceTests
         ServiceResultTypes expected)
     {
         await using var database = new TestDatabase();
-        var service = new ExternalAuthorService(database.Context, database.DBHelper,
-            NullLogger<ExternalAuthorService>.Instance);
+        var service = new ExternalAuthorService(database.Context,
+            database.CreateGetLikeBySelector<string, string>());
 
         var result = await service.GetAuthorLike("author", maxAmount);
 
@@ -91,8 +91,8 @@ public class SearchServiceTests
             new ResourceExternalAuthor { Id = 3, ResourceId = 3, Author = "charlie" },
             new ResourceExternalAuthor { Id = 4, ResourceId = 4, Author = "bravo" });
         await database.Context.SaveChangesAsync();
-        var service = new ExternalAuthorService(database.Context, database.DBHelper,
-            NullLogger<ExternalAuthorService>.Instance);
+        var service = new ExternalAuthorService(database.Context,
+            database.CreateGetLikeBySelector<string, string>());
 
         var result = await service.GetAuthorLike(string.Empty, 2);
 
@@ -109,8 +109,8 @@ public class SearchServiceTests
             new ResourceExternalAuthor { Id = 2, ResourceId = 2, Author = "manual" },
             new ResourceExternalAuthor { Id = 3, ResourceId = 3, Author = "zelda" });
         await database.Context.SaveChangesAsync();
-        var service = new ExternalAuthorService(database.Context, database.DBHelper,
-            NullLogger<ExternalAuthorService>.Instance);
+        var service = new ExternalAuthorService(database.Context,
+            database.CreateGetLikeBySelector<string, string>());
 
         var result = await service.GetAuthorLike("  an  ", 10);
 
@@ -125,8 +125,8 @@ public class SearchServiceTests
     public async Task UserSearch_RejectsInvalidLimits(int maxAmount, ServiceResultTypes expected)
     {
         await using var database = new TestDatabase();
-        var service = new UserService(database.Context, database.DBHelper,
-            NullLogger<UserService>.Instance);
+        var service = new UserService(database.Context,
+            database.CreateGetLikeBySelector<UserInfo, UserNameDTO>());
 
         var result = await service.GetUserLike("user", maxAmount);
 
@@ -142,8 +142,8 @@ public class SearchServiceTests
         AddUser(database.Context, "user-a", "alpha", "#111111");
         AddUser(database.Context, "user-b", "bravo", "#222222");
         await database.Context.SaveChangesAsync();
-        var service = new UserService(database.Context, database.DBHelper,
-            NullLogger<UserService>.Instance);
+        var service = new UserService(database.Context,
+            database.CreateGetLikeBySelector<UserInfo, UserNameDTO>());
 
         var result = await service.GetUserLike(string.Empty, 2);
 
@@ -162,8 +162,8 @@ public class SearchServiceTests
         AddUser(database.Context, "user-2", "manual", "#222222");
         AddUser(database.Context, "user-3", "zelda", "#333333");
         await database.Context.SaveChangesAsync();
-        var service = new UserService(database.Context, database.DBHelper,
-            NullLogger<UserService>.Instance);
+        var service = new UserService(database.Context,
+            database.CreateGetLikeBySelector<UserInfo, UserNameDTO>());
 
         var result = await service.GetUserLike("  an  ", 10);
 

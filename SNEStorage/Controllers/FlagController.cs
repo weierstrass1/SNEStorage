@@ -4,15 +4,25 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using SNEStorage.DTOs;
 using SNEStorage.Filters.Attributes;
+using SNEStorage.Models;
 using SNEStorage.Services;
 
 namespace SNEStorage.Controllers;
 
 [ApiController]
 [Route("api/flags")]
-public class FlagController(FlagsService flagsService) : Controller
+public class FlagController(FlagsService flagsService,
+    CacheService cacheService) : Controller
 {
     private readonly FlagsService _flagsService = flagsService;
+    private readonly CacheService _cacheService = cacheService;
+    [EnableRateLimiting("reads")]
+    [HttpGet("options")]
+    public async Task<ActionResult<Dictionary<long, Reason>>> GetCreateOptions(CancellationToken ct)
+    {
+        var res = await _cacheService.GetAllReasons(ct);
+        return this.GetActionResult(res);
+    }
     [EnableRateLimiting("reads")]
     [HttpGet]
     [AllowAnonymous]

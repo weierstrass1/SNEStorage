@@ -28,7 +28,8 @@ public class AccountController(AccountService accountService) : ControllerBase
     [HttpPost("password/request")]
     [RequireCaptcha("password_reset_request")]
     [AllowAnonymous]
-    public async Task<ActionResult> RequestChangePassword([FromBody] string email, CancellationToken ct)
+    public async Task<ActionResult> RequestChangePassword(
+        [FromBody, Required, EmailAddress, StringLength(TextLimits.EMAIL)] string email, CancellationToken ct)
     {
         var res = await _accountService.RequestPasswordReset(email, ct);
         return this.GetActionResult(res);
@@ -84,7 +85,7 @@ public class AccountController(AccountService accountService) : ControllerBase
     [RequireCaptcha("email_confirmation_resend")]
     [HttpPost("confirmation/resend")]
     public async Task<ActionResult> RequestEmailConfirmation(
-        [FromBody, Required, EmailAddress] string email, CancellationToken ct)
+        [FromBody, Required, EmailAddress, StringLength(TextLimits.EMAIL)] string email, CancellationToken ct)
     {
         var res = await _accountService.RequestEmailConfirmation(email, ct);
         return this.GetActionResult(res);

@@ -21,7 +21,8 @@ public class DateTimeServiceTests
             TimeZone = timeZone
         });
         await database.Context.SaveChangesAsync();
-        var service = new DateTimeService(database.Context, database.DBHelper,
+        var service = new DateTimeService(database.Context,
+            database.CreateGetFirstOrError<UserInfo>(),
             NullLogger<DateTimeService>.Instance);
         int yearBeforeCall = DateTime.UtcNow.AddHours(timeZone.Value).Year;
 
@@ -36,7 +37,8 @@ public class DateTimeServiceTests
     public async Task GetYear_ReturnsUserNotFound_WhenUserDoesNotExist()
     {
         await using var database = new TestDatabase();
-        var service = new DateTimeService(database.Context, database.DBHelper,
+        var service = new DateTimeService(database.Context,
+            database.CreateGetFirstOrError<UserInfo>(),
             NullLogger<DateTimeService>.Instance);
 
         var result = await service.GetYear("missing-user");
@@ -56,7 +58,8 @@ public class DateTimeServiceTests
             TimeZoneId = 999
         });
         await database.Context.SaveChangesAsync();
-        var service = new DateTimeService(database.Context, database.DBHelper,
+        var service = new DateTimeService(database.Context,
+            database.CreateGetFirstOrError<UserInfo>(),
             NullLogger<DateTimeService>.Instance);
 
         var result = await service.GetYear("user-1");

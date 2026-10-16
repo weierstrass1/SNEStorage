@@ -26,6 +26,8 @@ SNEStorage es un archivo comunitario de recursos relacionados con **Super Ninten
 
 El creador es **anonimzwx**. Su perfil en el sitio usa el ID público `79b39789-949b-4e0a-9ef9-78eabaf4c3c5`. About debe enlazar a ese perfil y usar sus datos públicos, color y avatar. Sus redes personales no deben ocupar el footer general.
 
+`/Credits`, en Info después de About, acredita al creador con su perfil público y a los proyectos externos. Se edita desde `wwwroot/Content/credits.json`. Flips/Alcaro figura como referencia del aplicador independiente en JavaScript; Telinc1 y snes_spc/Shay Green figuran como código adaptado para audio. Incluye enlaces a proyectos, licencia y fuente local del reproductor.
+
 El sitio ya se publicó en **https://snestorage.dev**, alojado en **Monster.ASP**, con SQL Server. El propietario indicó que los servidores están en Estados Unidos. Esto no establece su país de residencia ni el domicilio legal del proyecto.
 
 Correo público de soporte/envío: **support@snestorage.dev**. El correo personal usado al inicio ya no debe proponerse como contacto público.
@@ -77,6 +79,7 @@ Dependencias relevantes: MailKit para correo, SkiaSharp para imágenes, SharpCom
 | `/News` y `/News/Create` | Lista de noticias y creación |
 | `/News/{id}` | Noticia completa, pública; edición para mods/admins |
 | `/Tools/ApplyPatches` | Aplicador público de BPS/IPS, completamente local en el navegador |
+| `/Tools/SPCPlayer` | Biblioteca SPC en IndexedDB y reproductor flotante que continúa durante la navegación dentro de la app |
 | `/Login` y `/Register` | Login y registro |
 | `/Register/CheckEmail` | Instrucciones para confirmar el correo |
 | `/Register/Confirmation` | Confirmación; admite variante con UserId y usa query `token` |
@@ -86,16 +89,23 @@ Dependencias relevantes: MailKit para correo, SkiaSharp para imágenes, SharpCom
 | `/Account/ForgotPassword` | Solicitar email de recuperación; alias `/Profile/Password` |
 | `/Account/ResetPassword` | Establecer contraseña mediante enlace/token |
 | `/Rules`, `/SealOfQuality`, `/Privacy` | Información pública |
-| `/Community`, `/About`, `/Donations` | Información pública |
+| `/Community`, `/About`, `/Donations`, `/Credits` | Información pública |
+| `/Users` | Búsqueda pública por username con avatar y color; páginas de 20/50/100/200/All con carga por scroll en bloques de 20 |
 | `/Error`, `/Error/{status}`, `/not-found` | Errores |
 
 El header tiene el logo arriba a la izquierda y controles de cuenta a la derecha. El menú principal está en una barra **lateral derecha**, empieza debajo del header y se puede minimizar. En móvil es un drawer. No volver a sobrecargar la barra superior con navegación ni añadir un botón Home al menú lateral.
+
+Info, Community y Tools empiezan colapsados. Info conserva News visible; Community conserva Community y Donations visibles y oculta Users; Tools oculta todos sus enlaces (Apply IPS/BPS y SPC Player).
 
 La cuenta muestra avatar con margen, username en su color y un menú con perfil/logout. Deslogueado se muestran login/registro. Durante la comprobación inicial se reserva espacio con un placeholder neutral; no se debe mostrar brevemente una identidad antigua.
 
 ### Aplicador de parches
 
 `/Tools/ApplyPatches` aplica BPS/IPS a ROMs `.sfc`/`.smc` usando JavaScript y un Web Worker. Los archivos se leen únicamente en el navegador, sin `InputFile`, endpoints de subida ni persistencia en DB. Es un motor compatible independiente; no ejecuta `flips.exe`. Valida estructura SNES, límites, estructura del parche y los CRC que BPS proporciona. IPS no permite verificar el juego/revisión base. Ver `docs/rom-patcher-2026-10-15.md` para límites, cabeceras y comprobaciones pendientes.
+
+### Biblioteca SPC local
+
+`/Tools/SPCPlayer` guarda archivos y preferencias en IndexedDB del navegador, sin subirlos al servidor. Admite selección múltiple/drop, orden, eliminación, deduplicación, volumen, shuffle y repeat. Cada canción tiene ajustes de duración y número de reproducciones/bucles. Lee tiempos ID666/xid6; sin duración conocida sigue hasta Next/Stop por defecto, con duración predeterminada opcional. El reproductor flotante vive en MainLayout fuera de PageAccessGuard; no se detiene al desmontar la página de la biblioteca. Incluye modo mínimo y cursor para saltos de un segundo con avance cooperativo del emulador. Comparte el motor SPC con las previews y coordina un solo propietario de audio. No se garantiza continuidad al recargar completamente, cerrar la pestaña o suspender el navegador. Conservar los originales porque borrar los datos del sitio borra la biblioteca. Ver `docs/spc-playlist-2026-10-15.md`.
 
 ## 5. Recursos y versiones
 
@@ -198,7 +208,7 @@ Los textos cortos se muestran completos, sin reservar altura vacía. El extracto
 texto de Markdown saneado y conserva saltos de línea; no se recorta por caracteres.
 La vista individual usa `GET /api/news/{id}`, muestra Markdown completo, autor con
 avatar/color y fecha, y permite editar a staff con sesión verificada. Crear una noticia
-redirige a esa vista. Comentarios y likes/dislikes de noticias siguen pendientes.
+redirige a esa vista. Los likes/dislikes ya están conectados en landing, lista e individual mediante NewsReactions, con captcha condicional y sesión verificada. GET devuelve Likes, Dislikes y MyVote; pulsar el voto activo envía Remove. Los comentarios de noticias siguen pendientes.
 
 ## 8. Perfiles y Discord
 

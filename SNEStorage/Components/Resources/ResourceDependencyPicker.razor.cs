@@ -38,7 +38,7 @@ public partial class ResourceDependencyPicker : IAsyncDisposable
         if (!firstRender || _disposed) return;
         try
         {
-            var module = await JavaScript.InvokeAsync<IJSObjectReference>("import", "./js/author-search.js");
+            var module = await JavaScript.InvokeAsync<IJSObjectReference>("import", "./js/author-search.js?v=2");
             if (_disposed) { await module.DisposeAsync(); return; }
             _module = module;
             _ready = true;
@@ -51,11 +51,8 @@ public partial class ResourceDependencyPicker : IAsyncDisposable
         if (!_disposed) StateHasChanged();
     }
 
-    private async Task SearchChangedAsync(ChangeEventArgs args)
-    {
-        _search = args.Value?.ToString() ?? string.Empty;
-        await SearchAsync(debounce: true);
-    }
+    // Binding tracks the current browser value before async searches can re-render.
+    private Task SearchChangedAsync() => SearchAsync(debounce: true);
     private Task RetryAsync() => SearchAsync(debounce: false);
     private Task RemoveAsync(long id) => ValuesChanged.InvokeAsync([.. Values.Where(value => value != id)]);
     private async Task AddAsync(SelectOptionDto item)

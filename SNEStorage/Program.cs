@@ -202,6 +202,7 @@ services.AddTransient<ResourceAccessService>();
 services.AddTransient<ResourceCommunityService>();
 services.AddTransient<ResourceVersionService>();
 services.AddTransient<ResourceService>();
+services.AddTransient<FlagsService>();
 services.AddScoped<EmailService>();
 services.AddScoped<DateTimeService>();
 services.AddScoped<DBHelperService>();

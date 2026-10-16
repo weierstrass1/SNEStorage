@@ -11,6 +11,9 @@ public record GetLikeQuery<TItem>(string? Search, int MaxAmount,
 
     public ServiceResult Validate()
     {
+        if (Search?.Length > TextLimits.SEARCH)
+            return ServiceResult.InvalidSearch;
+
         if (MaxAmount <= 0)
             return ServiceResult.InvalidMaxAmount;
 

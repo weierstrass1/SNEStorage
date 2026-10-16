@@ -20,6 +20,12 @@ internal static class ApiErrorPresentation
             _ => null
         };
         if (captchaError is not null) return captchaError;
+        if (code == nameof(ServiceResultTypes.InvalidTag))
+            return new("Check your tags", $"Each new tag can contain up to {TextLimits.TAG} characters.", code);
+        if (code == nameof(ServiceResultTypes.InvalidExternalAuthor))
+            return new("Check the author names", $"Each external author name can contain up to {TextLimits.EXTERNAL_AUTHOR} characters.", code);
+        if (code == nameof(ServiceResultTypes.InvalidSearch))
+            return new("Search text is too long", "Shorten your search and try again.", code);
         if (domain == "public-profile" && status == 404)
             return new("Profile not found", "This user profile does not exist or is no longer available.", code);
         if (domain == "account-upload")

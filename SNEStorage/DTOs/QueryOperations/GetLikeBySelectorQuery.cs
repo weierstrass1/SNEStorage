@@ -9,4 +9,7 @@ public sealed record GetLikeBySelectorQuery<TItem, TResult>(string? Search,
     Expression<Func<TItem, bool>>? ShortSearchPredicate = null,
     bool OrderShortSearchBySelector = true) :
     GetLikeQuery<TItem>(Search, MaxAmount, MaxAmountLimit, MinimumLength,
-        ShortSearchPredicate, OrderShortSearchBySelector);
+        ShortSearchPredicate, OrderShortSearchBySelector)
+{
+    public int Page { get; init; }
+}

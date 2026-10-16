@@ -10,6 +10,7 @@ public partial class NewsService
 
     public IQueryable<NewsReadDTO> GetSelect(IQueryable<New> query)
     {
+        string? userId = _accountService.GetUserID();
         return query.Select(news => new NewsReadDTO
         {
             Id = news.Id,
@@ -26,8 +27,16 @@ public partial class NewsService
                     Id = news.PosterUser.UserInfo.AvatarId,
                     FileTypeId = news.PosterUser.UserInfo.Avatar!.FileTypeId,
                     URL = news.PosterUser.UserInfo.Avatar.URL
-                }
-            }
+                },
+            },
+            ScoreId = news.ScoreId,
+            Likes = news.Score!.LikesUsers.Count(like => like.Value),
+            Dislikes = news.Score!.LikesUsers.Count(like => !like.Value),
+            MyVote = news.Score!.LikesUsers
+                .Where(like => userId != null && like.UserId == userId)
+                .Select(like => (LikeValues?)(
+                    like.Value ? LikeValues.Like : LikeValues.Dislike))
+                .FirstOrDefault() ?? LikeValues.Remove
         });
     }
 

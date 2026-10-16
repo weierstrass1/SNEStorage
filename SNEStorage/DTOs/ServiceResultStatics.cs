@@ -88,6 +88,15 @@ public partial class ServiceResult
             LogLevel.Error);
 
     // Validación y paginación
+    public static ServiceResult InvalidTag { get; } =
+        Create(ServiceResultTypes.InvalidTag, ActionResultType.BadRequest);
+
+    public static ServiceResult InvalidExternalAuthor { get; } =
+        Create(ServiceResultTypes.InvalidExternalAuthor, ActionResultType.BadRequest);
+
+    public static ServiceResult InvalidSearch { get; } =
+        Create(ServiceResultTypes.InvalidSearch, ActionResultType.BadRequest);
+
     public static ServiceResult InvalidSort { get; } =
         Create(ServiceResultTypes.InvalidSort, ActionResultType.BadRequest);
 

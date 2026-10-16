@@ -1,0 +1,39 @@
+.credits-page { max-width: 1050px; margin: 0 auto; padding: 1rem 0 2.5rem; color: #e8defa; }
+.credits-hero { display: flex; align-items: center; gap: 1.6rem; padding: 1.8rem; border: 1px solid #72509c; border-radius: 20px; background: radial-gradient(ellipse at top right, #704ba338, transparent 65%), rgba(26, 17, 42, var(--ui-surface-alpha)); }
+.credits-hero img { flex-shrink: 0; object-fit: contain; filter: drop-shadow(0 8px 18px #08051050); }
+.credits-kicker { margin: 0 0 .6rem; color: #bf99f1; font-family: 'Press Start 2P', monospace; font-size: .62rem; line-height: 1.9; letter-spacing: .05em; }
+h1, h2, h3 { font-family: 'Exo 2', sans-serif; font-weight: 800; }
+h1 { margin: 0 0 .65rem; color: #f5edff; font-size: clamp(2rem, 4vw, 3rem); }
+.credits-hero > div > p:last-child { margin: 0; max-width: 650px; color: #c9b9dd; line-height: 1.7; }
+.credits-creator { display: flex; align-items: center; gap: 1.3rem; margin: 1.3rem 0 2rem; padding: 1.5rem; border: 1px solid #72509c; border-left: 4px solid #b488ef; border-radius: 14px; background: linear-gradient(120deg, rgba(53, 31, 76, var(--ui-surface-alpha)), rgba(23, 16, 36, var(--ui-surface-alpha))); }
+.credits-avatar { flex-shrink: 0; display: block; padding: 6px; border: 1px solid #9d73cd; border-radius: 16px; background: #241733; }
+.credits-avatar img { display: block; width: 64px; height: 64px; object-fit: contain; border-radius: 10px; }
+.credits-fallback { object-fit: contain; }
+.credits-creator h2 { margin: 0 0 .3rem; font-size: 1.8rem; overflow-wrap: anywhere; }
+.credits-creator h2 a { color: #e7e2ff; text-decoration: none; }
+.credits-creator p:last-child { color: #c9b9dd; margin: 0; }
+.credits-creator .credits-kicker { margin-bottom: .25rem; }
+.credits-section { margin-top: 1.8rem; }
+.credits-section > h2 { font-size: 1.35rem; margin: 0 0 1rem; }
+.credits-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.credit-card { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; padding: 1.5rem; border: 1px solid #543a71; border-radius: 14px; background: rgba(23, 16, 36, var(--ui-surface-alpha)); }
+.credit-card h3 { font-size: 1.2rem; color: #f2e5ff; margin: 0 0 .5rem; }
+.credit-by { color: #cda6fd; font-weight: 600; margin: 0 0 .8rem; }
+.credit-description { color: #c4b5d7; line-height: 1.7; margin: 0 0 1rem; }
+.credit-license { display: inline-block; padding: .25rem .6rem; border: 1px solid #684787; border-radius: 6px; color: #dac4f4; font-size: .75rem; margin-bottom: 1rem; }
+.credit-links { display: flex; flex-wrap: wrap; gap: .7rem 1.2rem; }
+.credit-card .credit-links { margin-top: auto; }
+.credit-links a { color: #d6b3ff; font-size: .9rem; font-weight: 600; text-underline-offset: .25em; }
+a:hover { color: #fff; }
+a:focus-visible { outline: 2px solid #ffe14d; outline-offset: 4px; border-radius: 3px; }
+.credits-notices, .credits-status { margin-top: 1.5rem; padding: 1.5rem; border: 1px solid #543a71; border-radius: 14px; background: rgba(23, 16, 36, var(--ui-surface-alpha)); }
+.credits-notices h2 { font-size: 1.15rem; margin: 0 0 .8rem; }
+.credits-notices p { color: #beaed1; line-height: 1.7; }
+@media (max-width: 600px) {
+    .credits-grid { grid-template-columns: 1fr; }
+    .credits-hero { padding: 1.4rem; gap: 1rem; }
+    .credits-hero img { width: 66px; height: auto; }
+    .credits-creator { padding: 1.2rem; gap: 1rem; }
+    .credits-creator h2 { font-size: 1.5rem; }
+}
+@media (max-width: 380px) { .credits-hero { flex-direction: column; align-items: flex-start; } }

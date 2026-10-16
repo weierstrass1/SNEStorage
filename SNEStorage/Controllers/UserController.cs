@@ -13,10 +13,12 @@ public class UserController(UserService userService) : Controller
 
     [EnableRateLimiting("reads")]
     [HttpGet("search")]
-    public async Task<ActionResult<List<UserNameDTO>>> GetUsersLike([FromQuery] string likeString,
-        [FromQuery] int maxAmount = 10, CancellationToken ct = default)
+    public async Task<ActionResult<List<UserNameDTO>>> GetUsersLike([FromQuery] string? likeString = null,
+        [FromQuery] int maxAmount = 10, [FromQuery] int page = 0, [FromQuery] bool withAvatar = false,
+        CancellationToken ct = default)
     {
-        var users = await _userService.GetUserLike(likeString, maxAmount, ct);
+        var users = await _userService.GetUserLike(likeString ?? string.Empty, maxAmount, 
+            page, withAvatar, ct);
         return this.GetActionResult(users);
     }
 }

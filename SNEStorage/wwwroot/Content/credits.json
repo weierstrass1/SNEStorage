@@ -1,0 +1,79 @@
+{
+  "title": "Credits",
+  "introduction": "SNEStorage brings together community work and open-source tools. Meet the creator and the people whose projects help make the site possible.",
+  "creator": {
+    "userId": "79b39789-949b-4e0a-9ef9-78eabaf4c3c5",
+    "name": "anonimzwx",
+    "role": "Creator, developer, and maintainer of SNEStorage"
+  },
+  "sections": [
+    {
+      "title": "SNES tools & audio",
+      "entries": [
+        {
+          "title": "Floating IPS (Flips)",
+          "by": "Alcaro",
+          "description": "Creator of Floating IPS, the IPS/BPS patching tool used as a reference for SNEStorage's patching feature. The browser tool uses an independent JavaScript implementation of the patch formats.",
+          "links": [{ "label": "Flips project", "url": "https://github.com/Alcaro/Flips" }]
+        },
+        {
+          "title": "SMW Central SPC Player",
+          "by": "Telinc1 and contributors",
+          "description": "The SPC audio backend used for resource previews and the local SPC playlist is adapted from SMW Central's player. SNEStorage adds its own interface, browser library, and playback controls.",
+          "license": "LGPL 2.1",
+          "links": [
+            { "label": "Project repository", "url": "https://codeberg.org/Telinc1/smwcentral-spc-player" },
+            { "label": "GitHub archive", "url": "https://github.com/telinc1/smwcentral-spc-player" }
+          ]
+        },
+        {
+          "title": "snes_spc & BRR decoding",
+          "by": "Shay Green (blargg), with resampling contributions by Liam Wilson",
+          "description": "The SNES sound emulator beneath the SPC player. SNEStorage's BRR sample decoder also adapts the DSP decoding logic distributed with the upstream player.",
+          "license": "LGPL 2.1",
+          "links": [{ "label": "Upstream player & emulator source", "url": "https://github.com/telinc1/smwcentral-spc-player" }]
+        },
+        {
+          "title": "BPS patch format",
+          "by": "byuu",
+          "description": "Author of the public-domain BPS specification used by the browser patcher to interpret patches and verify checksums.",
+          "license": "Public-domain specification",
+          "links": [{ "label": "BPS specification", "url": "https://github.com/Sir-Walrus/Flips/blob/master/bps_spec.md" }]
+        }
+      ]
+    },
+    {
+      "title": "Interface & text libraries",
+      "entries": [
+        {
+          "title": "Marked",
+          "by": "The Marked authors and contributors",
+          "description": "Markdown parsing for news, resource descriptions, and comments.",
+          "license": "MIT",
+          "links": [{ "label": "Project repository", "url": "https://github.com/markedjs/marked" }]
+        },
+        {
+          "title": "DOMPurify",
+          "by": "Cure53 and contributors",
+          "description": "HTML sanitization for the site's Markdown renderer.",
+          "license": "Apache 2.0 or MPL 2.0",
+          "links": [{ "label": "Project repository", "url": "https://github.com/cure53/DOMPurify" }]
+        },
+        {
+          "title": "Cropper.js",
+          "by": "Chen Fengyuan and contributors",
+          "description": "The image cropping component used by the avatar editor.",
+          "license": "MIT",
+          "links": [{ "label": "Project repository", "url": "https://github.com/fengyuanchen/cropperjs" }]
+        },
+        {
+          "title": "Bootstrap",
+          "by": "The Bootstrap authors and contributors",
+          "description": "Interface foundations, including the mobile navigation drawer.",
+          "license": "MIT",
+          "links": [{ "label": "Project repository", "url": "https://github.com/twbs/bootstrap" }]
+        }
+      ]
+    }
+  ]
+}

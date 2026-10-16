@@ -132,7 +132,11 @@ public enum ServiceResultTypes
     InvalidConfiguration,
     EntityNotFound,
     Ineligible,
-    UnsupportedEvent
+    UnsupportedEvent,
+
+    InvalidTag,
+    InvalidExternalAuthor,
+    InvalidSearch
 }
 public enum ActionResultType
 {

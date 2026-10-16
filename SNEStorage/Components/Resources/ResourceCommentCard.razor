@@ -22,6 +22,10 @@
                 }
             </div>
         </div>
+        @if (IsAuthenticated && !Comment.Deleted && !string.IsNullOrWhiteSpace(CurrentUserId))
+        {
+            <div class="comment-report"><ReportMenu Context="comment" TargetId="Comment.Id" UserId="@CurrentUserId" /></div>
+        }
     </header>
     @if (Comment.Deleted)
     {

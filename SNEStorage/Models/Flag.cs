@@ -21,6 +21,6 @@ public partial class Flag
     public UserNameDTO? UserSummary { get; set; }
     public virtual Reason? Reason { get; set; }
     public virtual ResourceFlags? ResourceFlags { get; set; }
-    public virtual CommentFlags? CommentFlags { get; set; }
+    public virtual CommentFlag? CommentFlags { get; set; }
     public virtual MemoryAddressFlags? MemoryAddressFlags { get; set; }
 }

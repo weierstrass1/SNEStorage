@@ -6,10 +6,12 @@ minimizes the rail to 72px with labeled icons, or expands it to 232px. MainLayou
 holds only this UI state in its code-behind; it remains while navigating in that layout.
 Mobile navigation always displays full labels in the drawer.
 Links are grouped into Resources, collapsible Info, Community and Tools.
-Info starts collapsed and contains News, About, Rules, Privacy and Seal of Quality;
-News remains visible when Info is collapsed. Community contains Community and Donations.
+Info starts collapsed and contains News, About, Credits, Rules, Privacy and Seal of Quality;
+News remains visible when Info is collapsed. Community starts collapsed: Community and
+Donations stay visible, while Users is inside the collapsible group.
 The toggle also works in the minimized
-rail, where it uses an information icon. Tools contains Apply IPS/BPS.
+rail, where it uses a group icon. Tools starts collapsed and hides all of its links:
+SPC Player followed by Apply IPS/BPS.
 The sticky top bar spans the full viewport width. The rail starts below it using
 --site-header-height as its top offset; only page content and the footer reserve
 the rail width. Both areas use --site-divider-color for their borders.
@@ -17,6 +19,13 @@ Below 992px, the Menu button below the header opens the same links in a Bootstra
 offcanvas drawer from the right. Bootstrap handles focus, Escape, the backdrop and scroll locking.
 The UI-only side-navigation.js closes the drawer after choosing a link, back/forward
 navigation or resizing to desktop. It performs no API requests.
+
+SpcPlaylistHost lives in MainLayout outside PageAccessGuard. Its native browser
+controls and JavaScript playback state survive navigation within the document.
+The full library is at /Tools/SPCPlayer; its dock appears when leaving that page.
+Files and preferences stay in IndexedDB, without uploading files or invoking a
+backend service. The emulator loads only after playback is requested. The dock
+queue is rendered only when expanded, avoiding hidden lists on unrelated pages.
 
 The account area contains AccountNavigation: Log in/Sign up or the existing account
 button with username color, avatar, View profile and Log out. There is one account

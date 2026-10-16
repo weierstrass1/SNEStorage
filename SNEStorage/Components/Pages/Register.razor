@@ -41,12 +41,12 @@
                     <div class="register-identity-fields">
                         <div class="register-field">
                             <label for="username">Username <span aria-hidden="true">*</span></label>
-                            <input class="register-input" id="username" name="User" type="text" autocomplete="username" placeholder="Your player name" aria-describedby="username-error" required />
+                            <input class="register-input" id="username" name="User" type="text" maxlength="@TextLimits.USERNAME" autocomplete="username" placeholder="Your player name" aria-describedby="username-error" required />
                             <span class="field-error" id="username-error" aria-live="polite" data-validation-for="User"></span>
                         </div>
                         <div class="register-field">
                             <label for="email">Email address <span aria-hidden="true">*</span></label>
-                            <input class="register-input" id="email" name="Email" type="email" autocomplete="email" placeholder="you@example.com" aria-describedby="email-error" required />
+                            <input class="register-input" id="email" name="Email" type="email" maxlength="@TextLimits.EMAIL" autocomplete="email" placeholder="you@example.com" aria-describedby="email-error" required />
                             <span class="field-error" id="email-error" aria-live="polite" data-validation-for="Email"></span>
                             <span class="field-hint">We'll send a confirmation link to this address.</span>
                         </div>
@@ -59,16 +59,16 @@
                 <div class="register-grid">
                     <div class="register-field">
                         <label for="password">Password <span aria-hidden="true">*</span></label>
-                        <input class="register-input" id="password" name="Password" type="password" autocomplete="new-password" placeholder="Create a password" aria-describedby="password-rules password-error" required />
+                        <input class="register-input" id="password" name="Password" type="password" maxlength="@TextLimits.PASSWORD" autocomplete="new-password" placeholder="Create a password" aria-describedby="password-rules password-error" required />
                         <span class="field-error" id="password-error" aria-live="polite" data-validation-for="Password"></span>
                     </div>
                     <div class="register-field">
                         <label for="password-repeat">Confirm password <span aria-hidden="true">*</span></label>
-                        <input class="register-input" id="password-repeat" name="PasswordRepeat" type="password" autocomplete="new-password" placeholder="Enter it again" aria-describedby="password-repeat-error" required />
+                        <input class="register-input" id="password-repeat" name="PasswordRepeat" type="password" maxlength="@TextLimits.PASSWORD" autocomplete="new-password" placeholder="Enter it again" aria-describedby="password-repeat-error" required />
                         <span class="field-error" id="password-repeat-error" aria-live="polite" data-validation-for="PasswordRepeat"></span>
                     </div>
                     <ul class="password-rules field-full" id="password-rules" aria-label="Password requirements">
-                        <li data-password-rule="length">At least @AccountOptions.Value.Password.RequiredLength characters</li>
+                        <li data-password-rule="length">@AccountOptions.Value.Password.RequiredLength–@TextLimits.PASSWORD characters</li>
                         @if (AccountOptions.Value.Password.RequireUppercase) { <li data-password-rule="uppercase">An uppercase letter (A–Z)</li> }
                         @if (AccountOptions.Value.Password.RequireLowercase) { <li data-password-rule="lowercase">A lowercase letter (a–z)</li> }
                         @if (AccountOptions.Value.Password.RequireDigit) { <li data-password-rule="digit">A number (0–9)</li> }

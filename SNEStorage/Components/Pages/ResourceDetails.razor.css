@@ -9,6 +9,7 @@
 .detail-repository-link { color: #dcc2ff; text-decoration: none; }
 .detail-repository-link:hover { text-decoration: underline; }
 .detail-title-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.detail-header-actions { display: flex; align-items: center; gap: .55rem; flex: 0 0 auto; align-self: flex-start; }
 .detail-header h1 { display: flex; align-items: center; gap: .6rem; min-width: 0; margin: 0; color: #f5edff; font: 900 clamp(1.65rem, 4vw, 2.4rem)/1.15 "Exo 2", sans-serif; letter-spacing: -.025em; overflow-wrap: anywhere; }
 .detail-header h1 > span { min-width: 0; }
 .detail-resource-name.has-quality-seal { color: #f5d475; text-shadow: 0 1px 2px #6b461a70; }

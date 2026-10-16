@@ -18,7 +18,7 @@ public class CommentServiceTests
         var result = await service.GetResourceComments(1);
 
         Assert.True(result.IsT1);
-        Assert.Same(ServiceResult.Unauthorized, result.AsT1.Result);
+        Assert.Same(ServiceResult.UserNotFoundUnauthorized, result.AsT1.Result);
     }
 
     [Fact(DisplayName = "Unrelated authenticated users cannot read comments from a private resource")]
@@ -181,9 +181,18 @@ public class CommentServiceTests
     private static CommentService CreateService(TestDatabase database, string? userId = null,
         bool isModerator = false)
     {
+        var accountService = database.CreateAccountService(userId, isModerator);
+        var accessService = new ResourceAccessService(
+            database.Context,
+            accountService,
+            database.CreateGetFirstOrError<ResourceAccessRow>(),
+            NullLogger<ResourceAccessService>.Instance);
+
         return new CommentService(
             database.Context, database.DBHelper,
-            database.CreateAccountService(userId, isModerator),
+            accountService, accessService,
+            database.CreateGetFirstOrDefault<LikeUsers>(),
+            database.CreateGetFirstOrError<Comment>(),
             NullLogger<CommentService>.Instance);
     }
 

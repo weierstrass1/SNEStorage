@@ -24,6 +24,13 @@ public sealed class ResourceListFilterState
 
     public string? Validate()
     {
+        if (Finder.NameLike?.Length > TextLimits.RESOURCE_NAME_SEARCH)
+            return $"Search resource names with up to {TextLimits.RESOURCE_NAME_SEARCH} characters.";
+        if (AuthorLike?.Length > TextLimits.SEARCH)
+            return $"Search authors with up to {TextLimits.SEARCH} characters.";
+        if (Finder.TagLike?.Length > TextLimits.TAG)
+            return $"Search tags with up to {TextLimits.TAG} characters.";
+
         if (Finder.CreatedAtFrom?.Date > Finder.CreatedAtTo?.Date ||
             Finder.VersionCreatedAtFrom?.Date > Finder.VersionCreatedAtTo?.Date)
             return "The start date must be on or before the end date.";

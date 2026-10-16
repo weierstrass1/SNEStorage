@@ -26,7 +26,7 @@ public partial class LatestResources : IAsyncDisposable
         _error = null;
         try
         {
-            _module ??= await JavaScript.InvokeAsync<IJSObjectReference>("import", "./js/resource-list.js?v=3");
+            _module ??= await JavaScript.InvokeAsync<IJSObjectReference>("import", "./js/resource-list.js?v=4");
             if (_disposed) { await _module.DisposeAsync(); return; }
             var result = await new ResourceListApiClient(_module, _requestKey).FindLatestPublicAsync();
             if (_disposed) return;

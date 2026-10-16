@@ -13,5 +13,7 @@ public partial class New
     public required string Title { get; set; }
     [Required]
     public required string Text { get; set; }
+    public long ScoreId { get; set; }
+    public virtual Score? Score { get; set; }
     public virtual ApplicationUser? PosterUser { get; set; }
 }

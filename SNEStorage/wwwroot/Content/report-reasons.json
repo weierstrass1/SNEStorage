@@ -1,0 +1,131 @@
+{
+  "reasons": [
+    {
+      "description": "Suspected illegal material.",
+      "contexts": [
+        "resource",
+        "comment"
+      ]
+    },
+    {
+      "description": "Malicious or phishing links.",
+      "contexts": [
+        "resource",
+        "comment"
+      ]
+    },
+    {
+      "description": "A ROM is distributed instead of a BPS or IPS patch, excluding non-infringing homebrew.",
+      "contexts": [
+        "resource"
+      ]
+    },
+    {
+      "description": "Someone else's work is distributed without permission.",
+      "contexts": [
+        "resource"
+      ]
+    },
+    {
+      "description": "Suspicious or unrelated links.",
+      "contexts": [
+        "resource",
+        "comment"
+      ]
+    },
+    {
+      "description": "Harassment or intimidation of another user.",
+      "contexts": [
+        "resource",
+        "comment"
+      ]
+    },
+    {
+      "description": "Language deliberately used to provoke, insult, or upset others.",
+      "contexts": [
+        "resource",
+        "comment"
+      ]
+    },
+    {
+      "description": "Spam, repeated messages, or unsolicited promotion.",
+      "contexts": [
+        "comment"
+      ]
+    },
+    {
+      "description": "Political, religious, or other sensitive discussion unrelated to the context.",
+      "contexts": [
+        "comment"
+      ]
+    },
+    {
+      "description": "Vague, nonsensical, or unrelated comment.",
+      "contexts": [
+        "comment"
+      ]
+    },
+    {
+      "description": "The uploaded files do not match the resource description.",
+      "contexts": [
+        "resource"
+      ]
+    },
+    {
+      "description": "Required sensitive-content warnings are missing or incorrect.",
+      "contexts": [
+        "resource"
+      ]
+    },
+    {
+      "description": "The resource is unrelated to the SNES.",
+      "contexts": [
+        "resource"
+      ]
+    },
+    {
+      "description": "Previews contain unrelated or inappropriate material.",
+      "contexts": [
+        "resource"
+      ],
+      "requiresPreviews": true
+    },
+    {
+      "description": "An author or contributor is missing from the credits.",
+      "contexts": [
+        "resource"
+      ]
+    },
+    {
+      "description": "The videogame, resource types, or categories are incorrect.",
+      "contexts": [
+        "resource"
+      ]
+    },
+    {
+      "description": "Required dependencies are missing or incorrectly specified.",
+      "contexts": [
+        "resource"
+      ]
+    },
+    {
+      "description": "The resource information is vague, incomplete, or inaccurate.",
+      "contexts": [
+        "resource"
+      ]
+    },
+    {
+      "description": "A dependency is private or became inaccessible after a visibility change.",
+      "contexts": [
+        "resource"
+      ]
+    },
+    {
+      "description": "The resource has no remaining versions.",
+      "contexts": [
+        "resource"
+      ],
+      "requiresNoVersions": true
+    }
+  ]
+}

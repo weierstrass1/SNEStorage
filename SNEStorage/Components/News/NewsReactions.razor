@@ -1,0 +1,43 @@
+@using SNEStorage.Services
+
+<div class="news-reactions" aria-label="Announcement reactions" aria-busy="@(_saving || _refreshing)">
+    @if (!string.IsNullOrWhiteSpace(_userId))
+    {
+        <div class="reaction-buttons" role="group" aria-label="Your reaction">
+            <button type="button" class="reaction-button @(_vote == LikeValues.Like ? "is-liked" : null)"
+                    @onclick="() => VoteAsync(LikeValues.Like)" disabled="@(_saving || _refreshing || _needsRefresh)"
+                    aria-pressed="@(_vote == LikeValues.Like ? "true" : "false")"
+                    aria-label="@(_vote == LikeValues.Like ? "Remove your like" : "Like this announcement")">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10v11H3V10h4Zm0 0 5-7c1-1 3 0 2.5 2L14 9h5a2 2 0 0 1 2 2l-1 8a2 2 0 0 1-2 2H7" /></svg>
+                Like
+            </button>
+            <button type="button" class="reaction-button @(_vote == LikeValues.Dislike ? "is-disliked" : null)"
+                    @onclick="() => VoteAsync(LikeValues.Dislike)" disabled="@(_saving || _refreshing || _needsRefresh)"
+                    aria-pressed="@(_vote == LikeValues.Dislike ? "true" : "false")"
+                    aria-label="@(_vote == LikeValues.Dislike ? "Remove your dislike" : "Dislike this announcement")">
+                <svg class="thumb-down" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10v11H3V10h4Zm0 0 5-7c1-1 3 0 2.5 2L14 9h5a2 2 0 0 1 2 2l-1 8a2 2 0 0 1-2 2H7" /></svg>
+                Dislike
+            </button>
+        </div>
+    }
+    @if (_likes + (long)_dislikes > 0)
+    {
+        <div class="reaction-counts" aria-live="polite" aria-atomic="true">
+            <span>@_likes @(_likes == 1 ? "like" : "likes")</span>
+            <span>@_dislikes @(_dislikes == 1 ? "dislike" : "dislikes")</span>
+            <span class="approval" title="Likes as a percentage of all votes">@Approval% approval</span>
+        </div>
+    }
+    @if (_saving || _refreshing)
+    {
+        <span class="reaction-status" role="status">@(_saving ? "Saving…" : "Updating reactions…")</span>
+    }
+    @if (_message is not null)
+    {
+        <p class="reaction-message" role="status">@_message</p>
+    }
+    @if (_needsRefresh && !_saving && !_refreshing)
+    {
+        <button class="refresh-reactions" type="button" @onclick="RefreshAsync">Refresh reactions</button>
+    }
+</div>

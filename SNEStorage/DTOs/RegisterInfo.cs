@@ -7,15 +7,19 @@ public class RegisterInfo
 {
     [Required]
     [Display(Name = "Username")]
+    [StringLength(TextLimits.USERNAME)]
     public required string User { get; set; }
     [Required]
     [EmailAddress]
+    [StringLength(TextLimits.EMAIL)]
     public required string Email { get; set; }
     [Required]
+    [StringLength(TextLimits.PASSWORD)]
     public required string Password { get; set; }
     [Required]
     [Compare(nameof(Password), ErrorMessage = "Passwords do not match.")]
     [Display(Name = "Repeat Password")]
+    [StringLength(TextLimits.PASSWORD)]
     public required string PasswordRepeat { get; set; }
     [Required]
     [StringLength(7)]

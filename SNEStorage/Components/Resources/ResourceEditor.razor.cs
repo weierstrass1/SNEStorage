@@ -207,7 +207,8 @@ public partial class ResourceEditor : IAsyncDisposable
                     ? "Unknown user" : group.First().UserSummary.Username);
             _dependencyChoices = [.. _data.Dependencies.Select(dependency => new SelectOptionDto
             {
-                Id = dependency.DependencyResourceId, Name = dependency.Name ?? $"Resource #{dependency.DependencyResourceId}"
+                Id = dependency.DependencyResourceId, Name = string.IsNullOrWhiteSpace(dependency.Name)
+                    ? "Dependency unavailable" : dependency.Name
             }).DistinctBy(dependency => dependency.Id)];
             _existingPreviews = [.. _data.Previews];
             _form = new()

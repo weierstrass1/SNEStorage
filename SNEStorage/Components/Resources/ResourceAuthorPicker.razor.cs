@@ -2,6 +2,7 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
+using SNEStorage.DTOs;
 
 namespace SNEStorage.Components.Resources;
 
@@ -50,7 +51,7 @@ public partial class ResourceAuthorPicker : IAsyncDisposable
         if (!firstRender || _disposed) return;
         try
         {
-            var module = await JavaScript.InvokeAsync<IJSObjectReference>("import", "./js/author-search.js");
+            var module = await JavaScript.InvokeAsync<IJSObjectReference>("import", "./js/author-search.js?v=2");
             if (_disposed)
             {
                 await module.DisposeAsync();
@@ -69,11 +70,8 @@ public partial class ResourceAuthorPicker : IAsyncDisposable
 
     private string DisplayName(string value) => External ? value : _usernames.GetValueOrDefault(value, "Selected user");
 
-    private async Task SearchChangedAsync(ChangeEventArgs args)
-    {
-        _search = args.Value?.ToString() ?? string.Empty;
-        await SearchAsync(debounce: true);
-    }
+    // Binding tracks the current browser value before async searches can re-render.
+    private Task SearchChangedAsync() => SearchAsync(debounce: true);
 
     private Task RetryAsync() => SearchAsync(debounce: false);
 
@@ -85,6 +83,11 @@ public partial class ResourceAuthorPicker : IAsyncDisposable
 
     private async Task AddAsync(AuthorChoice choice)
     {
+        if (choice.Value.Length > (External ? TextLimits.EXTERNAL_AUTHOR : TextLimits.USER_ID))
+        {
+            _error = "This author name is too long.";
+            return;
+        }
         if (Values.Contains(choice.Value, Comparer) || (!External && choice.Value == ExcludedUserId)) return;
         if (!External) _usernames[choice.Value] = choice.Name;
         ClearSearch();

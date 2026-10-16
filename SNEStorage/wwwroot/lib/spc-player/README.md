@@ -45,6 +45,13 @@ An existing matching distribution can be obtained from:
 - [npm package 2.0.2](https://registry.npmjs.org/@smwcentral/spc-player/-/spc-player-2.0.2.tgz)
 - [source revision archive](https://github.com/telinc1/smwcentral-spc-player/archive/dbe113fd87f47ce3f2da5852d1704928bbb75a53.tar.gz)
 
-SNEStorage's controls are in `wwwroot/js/audio-preview.js`; BRR prediction math
+SNEStorage's preview controls are in `wwwroot/js/audio-preview.js`. Local playlists
+use `wwwroot/js/spc-playlist.js` and IndexedDB through `spc-library.js`.
+`spc-engine.js` shares the AudioContext/emulator loader and cleanup between both;
+its cooperative seek adapts the load/connect protocol in the included upstream
+`spc_player.js` (Copyright (C) 2021 Telinc1, LGPL-2.1-only) and uses the unchanged
+WASM skip routine in bounded chunks. This keeps the UI responsive to cancellation.
+`audio-focus.js` coordinates ownership so a preview cannot run over the playlist.
+BRR prediction math
 in `wwwroot/js/brr-decoder.js` is adapted from the included `SPC_DSP.cpp` and
 retains its LGPL notice. Files are hosted locally; playback makes no CDN requests.

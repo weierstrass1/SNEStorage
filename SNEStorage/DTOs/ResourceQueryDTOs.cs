@@ -12,8 +12,8 @@ public enum ResourceSorting
 }
 
 public sealed record RatingReadDto(double Average, int VoteCount, long? MyRating);
-public sealed record ResourceAccessRow(
-    long Id, long ScoreId, long VisibilityId, bool IsContributor);
+public sealed record ResourceAccessRow(long Id, long ScoreId, long VisibilityId, 
+    bool IsContributor, bool ContentAllowed);
 public sealed record ResourceDependencyViewDTO(
     long Id,
     long DependencyResourceId,
@@ -46,14 +46,18 @@ public sealed class ResourceFinderDTO
     public DateTime? CreatedAtTo { get; set; }
     public DateTime? VersionCreatedAtFrom { get; set; }
     public DateTime? VersionCreatedAtTo { get; set; }
+    [StringLength(TextLimits.RESOURCE_NAME_SEARCH)]
     public string? NameLike { get; set; }
+    [StringLength(TextLimits.SEARCH)]
     public string? AuthorLike { get; set; }
     [Required]
     public ResourceSortingDTO Sorting { get; set; } = new();
     public long[] TypeIds { get; set; } = [];
     public long[] CategoryIDs { get; set; } = [];
     public long[] VideogameIDs { get; set; } = [];
+    [MaxItemLength(TextLimits.USER_ID)]
     public string[] AuthorsIDs { get; set; } = [];
+    [StringLength(TextLimits.TAG)]
     public string? TagLike { get; set; }
 }
 public sealed class ResourceFinderViewDTO

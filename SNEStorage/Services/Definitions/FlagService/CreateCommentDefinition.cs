@@ -11,7 +11,7 @@ public partial class FlagsService
     {
         string userId = _accountService.GetUserID()!;
 
-        CommentFlags rflag = new()
+        CommentFlag rflag = new()
         {
             Id = 0,
             FlagId = 0,
@@ -42,10 +42,10 @@ public partial class FlagsService
         if (!res1.TryPickT0(out _, out var error))
             return error;
 
-        GetByPropertyQuery<Comment, long> getCommentByProperty = new(r => r.Id, create.ReasonID,
+        GetByPropertyQuery<Comment, long> getCommentByProperty = new(r => r.Id, create.CommentID,
             ServiceResult.CommentNotFound);
 
-        var res2 = await _getCommentById.Execute(_context.Resources.AsNoTracking(), getCommentByProperty);
+        var res2 = await _getCommentById.Execute(_context.Comments.AsNoTracking(), getCommentByProperty);
         if(!res2.TryPickT0(out _, out error))
              return error;
 

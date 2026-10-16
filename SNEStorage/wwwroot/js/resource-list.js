@@ -1,4 +1,40 @@
 import { getProfile, cancelProfileRequest } from "./profile.js?v=10";
+import { getAccountSession, watchAccountSession } from "./account-session.js?v=2";
+
+// Shares the existing session request; the birthday never comes from a public profile.
+export function watchContentAccount(receiver) {
+    let stopped = false, checking = false, checkAgain = false, activeRequest;
+    async function check() {
+        if (stopped) return;
+        if (checking) { checkAgain = true; return; }
+        checking = true;
+        const controller = new AbortController();
+        activeRequest = controller;
+        try {
+            const response = await getAccountSession(controller.signal);
+            if (stopped || controller.signal.aborted) return;
+            let authenticated = null, birthday = null;
+            if (!response.cancelled && response.status === 401) authenticated = false;
+            else if (!response.cancelled && response.status === 200) {
+                const profile = JSON.parse(response.body);
+                authenticated = true;
+                birthday = typeof profile.birthday === "string" ? profile.birthday : null;
+            }
+            await receiver.invokeMethodAsync("UpdateContentAccount", authenticated, birthday);
+        } catch {
+            if (!stopped) {
+                try { await receiver.invokeMethodAsync("UpdateContentAccount", null, null); } catch { /* Circuit closed. */ }
+            }
+        } finally {
+            checking = false;
+            activeRequest = null;
+            if (checkAgain && !stopped) { checkAgain = false; void check(); }
+        }
+    }
+    const monitor = watchAccountSession(() => { void check(); });
+    void check();
+    return { stop() { stopped = true; monitor.stop(); activeRequest?.abort(); } };
+}
 
 async function read(url, key) {
     let timedOut = false;

@@ -1,0 +1,91 @@
+@page "/Credits"
+@using SNEStorage.Components.Credits
+@inherits StaticDocumentPage<CreditsDocument>
+
+<PageTitle>Credits | SNEStorage</PageTitle>
+
+<div class="credits-page">
+    <header class="credits-hero">
+        <img src="images/caja.png" alt="" width="104" height="88" />
+        <div>
+            <p class="credits-kicker">THE PEOPLE BEHIND SNESTORAGE</p>
+            <h1>@(_document?.Title ?? "Credits")</h1>
+            <p>@_document?.Introduction</p>
+        </div>
+    </header>
+
+    @if (_loading)
+    {
+        <p class="credits-status" role="status">Loading credits…</p>
+    }
+    else if (_error is not null)
+    {
+        <div class="credits-status" role="alert"><p>@_error</p><button type="button" class="action-button" @onclick="LoadAsync">Try again</button></div>
+    }
+    else if (_document is { } credits)
+    {
+        <section class="credits-creator" aria-labelledby="credits-creator-title">
+            <PublicProfileLoader UserId="@credits.Creator.UserId">
+                <ChildContent Context="profile">
+                    <a class="credits-avatar" href="@CreatorProfileUrl" aria-label="View @credits.Creator.Name's profile">
+                        <img src="@CreatorAvatar(profile)" alt="" width="76" height="76" />
+                    </a>
+                    <div>
+                        <p class="credits-kicker">SITE CREATOR</p>
+                        <h2 id="credits-creator-title"><a href="@CreatorProfileUrl" style="color: @CreatorColor(profile)">@(profile.UserSummary?.Username ?? credits.Creator.Name)</a></h2>
+                        <p>@credits.Creator.Role</p>
+                    </div>
+                </ChildContent>
+                <FallbackContent>
+                    <img class="credits-fallback" src="images/caja.png" alt="" width="76" height="76" />
+                    <div>
+                        <p class="credits-kicker">SITE CREATOR</p>
+                        <h2 id="credits-creator-title"><a href="@CreatorProfileUrl">@credits.Creator.Name</a></h2>
+                        <p>@credits.Creator.Role</p>
+                    </div>
+                </FallbackContent>
+            </PublicProfileLoader>
+        </section>
+
+        @foreach (var section in credits.Sections)
+        {
+            <section class="credits-section" aria-label="@section.Title">
+                <h2>@section.Title</h2>
+                <div class="credits-grid">
+                    @foreach (var entry in section.Entries)
+                    {
+                        <article class="credit-card">
+                            <h3>@entry.Title</h3>
+                            <p class="credit-by">@entry.By</p>
+                            <p class="credit-description">@entry.Description</p>
+                            @if (!string.IsNullOrWhiteSpace(entry.License))
+                            {
+                                <span class="credit-license">@entry.License</span>
+                            }
+                            <div class="credit-links">
+                                @foreach (var link in entry.Links)
+                                {
+                                    @if (link.SafeUrl is { } url)
+                                    {
+                                        <a href="@url" target="_blank" rel="noopener noreferrer">@link.Label <span aria-hidden="true">↗</span></a>
+                                    }
+                                }
+                            </div>
+                        </article>
+                    }
+                </div>
+            </section>
+        }
+
+        <aside class="credits-notices" aria-label="Source code and licenses">
+            <h2>Source code &amp; licenses</h2>
+            <p>Thanks to the authors and contributors who make these projects available. Their work remains credited to its respective creators.</p>
+            <p>The adapted SPC backend and BRR decoder retain their original notices. The corresponding upstream source, license, and build instructions are available below.</p>
+            <div class="credit-links">
+                <a href="lib/spc-player/upstream-source.tar.gz" download>SPC upstream source ↓</a>
+                <a href="lib/spc-player/LICENSE" target="_blank" rel="noopener noreferrer">SPC license ↗</a>
+                <a href="lib/spc-player/README.md" target="_blank" rel="noopener noreferrer">Adaptation &amp; build instructions ↗</a>
+            </div>
+        </aside>
+    }
+</div>

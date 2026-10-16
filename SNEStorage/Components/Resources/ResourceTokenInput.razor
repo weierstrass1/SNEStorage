@@ -13,7 +13,9 @@
         </ul>
     }
     <div class="token-entry">
-        <input class="token-input" id="@InputId" name="@FieldName" type="text" value="@_pending" @oninput="TextChangedAsync" @onkeydown="KeyDownAsync" data-resource-token-input autocomplete="off" placeholder="Type a tag…" />
+        <input class="token-input" id="@InputId" name="@FieldName" type="text" @bind="_pending" @bind:event="oninput" @bind:after="TextChangedAsync" @onkeydown="KeyDownAsync" data-resource-token-input autocomplete="off" placeholder="Type a tag…" aria-describedby="@(InputId + "-help")" aria-invalid="@(_error is not null)" />
         <button class="token-add" type="button" @onclick="AddPendingAsync" disabled="@string.IsNullOrWhiteSpace(_pending)">Add</button>
     </div>
+    <small id="@(InputId + "-help")">Up to @TextLimits.TAG characters per tag.</small>
+    @if (_error is not null) { <p class="token-error" role="alert">@_error</p> }
 </div>

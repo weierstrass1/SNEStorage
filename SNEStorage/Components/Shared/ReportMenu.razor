@@ -1,0 +1,14 @@
+<details class="report-menu" data-report-menu>
+    <summary aria-label="@($"More {Context} options")" title="@($"More {Context} options")">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.7" /><circle cx="12" cy="12" r="1.7" /><circle cx="19" cy="12" r="1.7" /></svg>
+    </summary>
+    <div class="report-menu-options">
+        <button type="button" data-report-trigger data-report-context="@Context" data-report-id="@TargetId"
+                data-report-user="@UserId" data-report-previews="@PreviewsValue"
+                data-report-versions="@VersionsValue"
+                aria-haspopup="dialog">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V3m0 1c5-4 9 4 14 0v10c-5 4-9-4-14 0" /></svg>
+            Report this @Context
+        </button>
+    </div>
+</details>

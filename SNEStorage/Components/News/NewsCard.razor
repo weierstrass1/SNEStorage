@@ -33,4 +33,5 @@
     {
         <a class="read-news" href="@ArticleUrl" aria-label="@($"Read full news: {Item.Title}")">Read full update <span aria-hidden="true">→</span></a>
     }
+    <NewsReactions @key="Item.Id" Item="Item" />
 </article>
