@@ -1,5 +1,5 @@
 <input type="hidden" name="VideogameId" value="@Value" />
-<ResourcePicker @ref="_picker" PickerId="resource-game-picker" Label="Video game" Required="@Required" FocusSearch="true">
+<ResourcePicker PickerId="resource-game-picker" Label="Video game" Required="@Required" FocusSearch="true">
     <SummaryContent><span title="@SelectedName">@SelectedName</span></SummaryContent>
     <ChildContent>
     <label class="game-search-label" for="resource-game-search">Search games</label>
@@ -36,7 +36,7 @@
         <div @key="_search" class="game-results" role="group" aria-label="Video game choices">
             @foreach (var game in _matches)
             {
-                <button @key="game.Id" class="game-choice @(game.Id == Value ? "selected" : null)" type="button" aria-pressed="@(game.Id == Value)" title="@game.Name" @onclick="() => SelectAsync(game)">
+                <button @key="game.Id" data-picker-close class="game-choice @(game.Id == Value ? "selected" : null)" type="button" aria-pressed="@(game.Id == Value)" title="@game.Name" @onclick="() => SelectAsync(game)">
                     <span>@game.Name</span>
                     @if (game.Id == Value)
                     {

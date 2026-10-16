@@ -6,5 +6,8 @@
 .report-menu > summary:focus-visible, .report-menu-options button:focus-visible { outline: 2px solid #ffe14d; outline-offset: 3px; }
 .report-menu-options { position: absolute; right: 0; top: calc(100% + .3rem); z-index: 20; width: max-content; max-width: min(260px, 80vw); padding: .3rem; border: 1px solid #8156a5; border-radius: 8px; background: #20122f; box-shadow: 0 8px 24px #0006; }
 .report-menu-options button { display: flex; align-items: center; gap: .6rem; width: 100%; padding: .65rem .8rem; border: 0; border-radius: 5px; background: transparent; color: #edd7fa; font: inherit; font-size: .8rem; text-align: left; cursor: pointer; }
-.report-menu-options button:hover { background: #432655; color: #fff; }
+.report-menu-options button:not(:disabled):hover { background: #432655; color: #fff; }
+.report-menu-options:has(button:disabled) { cursor: not-allowed; }
+.report-menu-options button:disabled { opacity: .5; cursor: not-allowed; pointer-events: none; }
+.report-disabled-description { display: block; max-width: 235px; padding: 0 .8rem .6rem; color: #bcaacb; font-size: .72rem; line-height: 1.5; }
 .report-menu-options svg { width: 18px; height: 18px; flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }

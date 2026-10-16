@@ -45,9 +45,14 @@ public partial class FlagsService
         GetByPropertyQuery<Resource, long> getResourceByProperty = new(r => r.Id, create.ResourceID,
             ServiceResult.ResourceNotFound);
 
-        var res2 = await _getResourceById.Execute(_context.Resources.AsNoTracking(), getResourceByProperty);
-        if(!res2.TryPickT0(out _, out error))
-             return error;
+        var res2 = await _getResourceById.Execute(
+            _context.Resources.AsNoTracking(), getResourceByProperty, ct: ct);
+
+        if (!res2.TryPickT0(out var resource, out error))
+            return error;
+
+        if (resource.AlreadyModerated)
+            return ServiceResult.Forbidden.Return(_logger);
 
         var repeatedRes = await _dbHelperService.TryFunction(
             cancel => _context.ResourcesFlags

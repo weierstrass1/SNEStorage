@@ -186,6 +186,12 @@ public partial class ServiceResult
         Create(ServiceResultTypes.EmptyTypeList, ActionResultType.BadRequest);
 
     // Recursos, versiones y comentarios
+    public static ServiceResult ResourceHasSealOfQuality { get; } =
+    Create(ServiceResultTypes.ResourceHasSealOfQuality, ActionResultType.Conflict);
+
+    public static ServiceResult ResourceHasDependents { get; } =
+        Create(ServiceResultTypes.ResourceHasDependents, ActionResultType.Conflict);
+
     public static ServiceResult ResourceNotFound { get; } =
         Create(ServiceResultTypes.ResourceNotFound, ActionResultType.NotFound);
 
@@ -197,6 +203,12 @@ public partial class ServiceResult
 
     public static ServiceResult VersionAlreadyExists { get; } =
         Create(ServiceResultTypes.VersionAlreadyExists, ActionResultType.Conflict);
+
+    public static ServiceResult VersionHasSealOfQuality { get; } =
+        Create(ServiceResultTypes.VersionHasSealOfQuality, ActionResultType.Conflict);
+
+    public static ServiceResult CantDeleteOnlyVersion { get; } =
+        Create(ServiceResultTypes.CantDeleteOnlyVersion, ActionResultType.Conflict);
 
     public static ServiceResult CommentNotFound { get; } =
         Create(ServiceResultTypes.CommentNotFound, ActionResultType.NotFound);

@@ -8,6 +8,7 @@ namespace SNEStorage.Components.Resources;
 public partial class ResourceListRow
 {
     private static readonly Regex HexColor = new("\\A#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})\\z", RegexOptions.CultureInvariant);
+    private ResourceFinderViewDTO? _preparedItem;
     [Parameter, EditorRequired] public ResourceFinderViewDTO Item { get; set; } = default!;
     [Parameter] public bool ShowGame { get; set; } = true;
     [Parameter] public bool ShowTypes { get; set; } = true;
@@ -21,6 +22,8 @@ public partial class ResourceListRow
     private string RatingWidth => $"width:{(Math.Clamp(Item.Score, 0, 5) * 20).ToString("0.##", CultureInfo.InvariantCulture)}%";
     protected override void OnParametersSet()
     {
+        if (ReferenceEquals(_preparedItem, Item)) return;
+        _preparedItem = Item;
         Authors = [.. Item.AuthorsUserSummary.OrderBy(author => author.Username, StringComparer.OrdinalIgnoreCase)
             .Select(author => new ResourceListValue($"user-{author.Id}", author.Username,
             $"/Profile/{Uri.EscapeDataString(author.Id)}", author.UsernameColor is { } color && HexColor.IsMatch(color) ? color : "#dcc8fa"))

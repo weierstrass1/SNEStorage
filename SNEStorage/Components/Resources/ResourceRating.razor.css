@@ -11,5 +11,6 @@
 .rating-choice:disabled { cursor: default; }
 .rating-save { min-height: 36px; padding: .4rem .8rem; border: 1px solid #9565c5; border-radius: 4px; color: #e5d5fc; background: #28163b; font-size: .8rem; }
 .rating-save:disabled { opacity: .5; }
+.resource-rating[data-vote-busy="true"] .rating-save:disabled { opacity: 1; }
 .rating-message { margin: 0; }
 .rating-choice:focus-visible, .rating-save:focus-visible { outline: 3px solid #ffe14d; outline-offset: 2px; }

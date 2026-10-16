@@ -43,9 +43,9 @@
 .resource-tabs { display: flex; gap: .35rem; min-width: 0; overflow-x: auto; padding-bottom: .7rem; border-bottom: 1px solid #59408f; scrollbar-color: #7a4aa5 #110a23; }
 .resource-tab { display: flex; flex: 1 0 auto; align-items: center; justify-content: center; gap: .4rem; min-height: 48px; padding: .6rem .55rem; border: 1px solid transparent; border-radius: 4px; color: #baacce; background: transparent; font: inherit; font-size: .82rem; font-weight: 700; white-space: nowrap; }
 .resource-tab:hover { color: #f1eaff; background: #25133e; }
-.resource-tab.active { border-color: #9861d1; color: #ffe14d; background: #301748; box-shadow: inset 0 -2px #b14cff; }
+.resource-tab[aria-selected="true"] { border-color: #9861d1; color: #ffe14d; background: #301748; box-shadow: inset 0 -2px #b14cff; }
 .resource-tab-number { display: grid; width: 23px; height: 23px; place-items: center; border: 1px solid #59408f; border-radius: 3px; color: #dac4f7; font-size: .73rem; }
-.resource-tab.active .resource-tab-number { border-color: #9861d1; color: #ffe14d; }
+.resource-tab[aria-selected="true"] .resource-tab-number { border-color: #9861d1; color: #ffe14d; }
 .resource-tab:focus-visible { outline: 2px solid #ffe14d; outline-offset: -3px; }
 .resource-tab-panel { min-width: 0; }
 .resource-tab-panel[hidden] { display: none; }
@@ -179,3 +179,5 @@
 @media (prefers-reduced-motion: reduce) {
     .resource-primary, .resource-secondary { transition: none; }
 }
+
+[data-ui-step][hidden], [data-ui-last][hidden] { display: none !important; }

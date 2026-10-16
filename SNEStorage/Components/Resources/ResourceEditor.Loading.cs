@@ -7,9 +7,11 @@ namespace SNEStorage.Components.Resources;
 
 public partial class ResourceEditor
 {
-    private async Task<bool> LoadEditorDataAsync()
+    private async Task<bool> LoadEditorDataAsync(IReadOnlyDictionary<string, string> initial)
     {
-        var client = new ResourceApiClient(_module!, _requestKey, _lifetime.Token);
+        Task<ResourceReadResult<T>> Read<T>(string section) where T : class =>
+            Task.FromResult(initial.TryGetValue(section, out var json)
+                ? ResourceApiClient.Decode<T>(json) : new ResourceReadResult<T>(502, null, null));
         if (Mode == ResourceEditorMode.CreateVersion)
         {
             _data = new();
@@ -17,18 +19,18 @@ public partial class ResourceEditor
         }
         if (Mode == ResourceEditorMode.EditVersion)
         {
-            var versions = await client.ReadSectionAsync<List<ResourceVersion>>(ResourceId, "versions");
+            var versions = await Read<List<ResourceVersion>>("versions");
             if (_disposed) return false;
             if (!AcceptSection(versions)) return false;
             _data = new() { Versions = versions.Data! };
             return true;
         }
 
-        var authorsLoad = client.ReadSectionAsync<List<ResourceAuthorDTO>>(ResourceId, "authors");
-        var externalAuthorsLoad = client.ReadSectionAsync<List<ResourceExternalAuthor>>(ResourceId, "external-authors");
-        var dependenciesLoad = client.ReadSectionAsync<List<ResourceDependencyViewDTO>>(ResourceId, "dependencies");
-        var externalDependenciesLoad = client.ReadSectionAsync<List<ResourceExternalDependency>>(ResourceId, "external-dependencies");
-        var previewsLoad = client.ReadSectionAsync<List<ResourcePreview>>(ResourceId, "previews");
+        var authorsLoad = Read<List<ResourceAuthorDTO>>("authors");
+        var externalAuthorsLoad = Read<List<ResourceExternalAuthor>>("external-authors");
+        var dependenciesLoad = Read<List<ResourceDependencyViewDTO>>("dependencies");
+        var externalDependenciesLoad = Read<List<ResourceExternalDependency>>("external-dependencies");
+        var previewsLoad = Read<List<ResourcePreview>>("previews");
         await Task.WhenAll(authorsLoad, externalAuthorsLoad, dependenciesLoad, externalDependenciesLoad, previewsLoad);
         if (_disposed) return false;
         var authorsResult = await authorsLoad;
@@ -54,15 +56,14 @@ public partial class ResourceEditor
         return false;
     }
 
-    private async Task<bool> LoadOptionsAsync()
+    private Task<bool> LoadOptionsAsync(string? json)
     {
-        var json = await _module!.InvokeAsync<string>("getResourceOptions", _lifetime.Token, _requestKey);
-        if (_disposed) return false;
+        if (_disposed || json is null) return Task.FromResult(false);
         var response = JsonSerializer.Deserialize<BrowserResponse>(json, JsonOptions);
-        if (!AcceptResponse(response)) return false;
+        if (!AcceptResponse(response)) return Task.FromResult(false);
         _options = JsonSerializer.Deserialize<ResourceCreateOptionsDto>(response!.Body!, JsonOptions);
-        if (_options is not null) return true;
+        if (_options is not null) return Task.FromResult(true);
         _errorStatus = 502;
-        return false;
+        return Task.FromResult(false);
     }
 }

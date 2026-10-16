@@ -8,6 +8,10 @@
     <meta name="color-scheme" content="dark" />
     <meta name="snestorage-turnstile-sitekey" content="@Configuration["APISettings:TurnstileSiteKey"]" />
     <base href="/" />
+    <link rel="preload" as="script" href="js/read-startup.js?v=1" />
+    <link rel="modulepreload" href="js/markdown.js?v=5" />
+    <link rel="modulepreload" href="lib/markdown/marked.esm.js" />
+    <link rel="modulepreload" href="lib/markdown/purify.es.js" />
     <link rel="icon" type="image/svg+xml" href="favicon.svg?v=1" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
@@ -15,7 +19,7 @@
     <link rel="stylesheet" href="lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="css/surfaces.css?v=1" />
     <link rel="stylesheet" href="css/site.css?v=surfaces-1" />
-    <link rel="stylesheet" href="SNEStorage.styles.css?v=version-downloads-20261015" />
+    <link rel="stylesheet" href="SNEStorage.styles.css?v=inline-authors-20261016" />
     <link rel="stylesheet" href="css/quality-shine.css?v=1" />
     <link rel="stylesheet" href="css/controls.css?v=reports-20261015" />
     <link rel="stylesheet" href="css/buttons.css?v=20261012" />
@@ -29,7 +33,12 @@
     <Routes @rendermode="InteractiveServer" />
     <script src="lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script type="module" src="js/quality-shine.js?v=1"></script>
-    <script type="module" src="js/side-navigation.js?v=1"></script>
+    <script type="module" src="js/side-navigation.js?v=2"></script>
+    <script type="module" src="js/resource-pickers.js?v=5"></script>
+    <script type="module" src="js/local-controls.js?v=2"></script>
+    <script type="module" src="js/optimistic-votes.js?v=2"></script>
+    <script type="module" src="js/markdown-loader.js?v=2"></script>
+    <script src="js/read-startup.js?v=1"></script>
     <script src="_framework/blazor.web.js"></script>
 </body>
 </html>

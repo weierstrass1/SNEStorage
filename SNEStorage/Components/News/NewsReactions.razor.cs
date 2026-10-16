@@ -14,6 +14,8 @@ public partial class NewsReactions : IAsyncDisposable
     private readonly string _key = Guid.NewGuid().ToString("N");
     private readonly CancellationTokenSource _lifetime = new();
     private IJSObjectReference? _module, _monitor;
+    private IJSObjectReference? _sharedModule;
+    private VerifiedAccountContent.BrowserAccount? _feedAccount;
     private DotNetObjectReference<NewsReactions>? _receiver;
     private NewsReadDTO? _snapshot;
     private NewsApiClient? _api;
@@ -23,15 +25,17 @@ public partial class NewsReactions : IAsyncDisposable
     private bool _identityKnown, _saving, _refreshing, _needsRefresh, _disposed;
 
     [Parameter, EditorRequired] public NewsReadDTO Item { get; set; } = default!;
+    [CascadingParameter(Name = "NewsFeedContext")] private NewsFeedContext? FeedContext { get; set; }
     [Inject] private IJSRuntime JavaScript { get; set; } = default!;
     [Inject] private ILogger<NewsReactions> Logger { get; set; } = default!;
     private int Approval => (int)Math.Round(100.0 * _likes / (_likes + (long)_dislikes));
+    private string VoteState => JsonSerializer.Serialize(new { mode = "reaction", context = $"news:{Item.Id}:{_userId}", likes = _likes, dislikes = _dislikes, vote = _vote.ToString(), decimals = 0 });
 
     protected override void OnParametersSet()
     {
         if (ReferenceEquals(_snapshot, Item)) return;
         _snapshot = Item;
-        ApplySnapshot(Item);
+        if (!_saving) ApplySnapshot(Item);
     }
 
     private void ApplySnapshot(NewsReadDTO item)
@@ -42,12 +46,27 @@ public partial class NewsReactions : IAsyncDisposable
         if (_identityKnown && _userId is null) _vote = LikeValues.Remove;
     }
 
+    protected override async Task OnParametersSetAsync()
+    {
+        if (FeedContext is not { } context) return;
+        if (!ReferenceEquals(_sharedModule, context.Module))
+        {
+            _sharedModule = context.Module;
+            _api = new NewsApiClient(context.Module, _key);
+        }
+        if (context.Account is { } account && !ReferenceEquals(_feedAccount, account))
+        {
+            _feedAccount = account;
+            await UpdateAccount(account);
+        }
+    }
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!firstRender || _disposed) return;
+        if (!firstRender || _disposed || FeedContext is not null) return;
         try
         {
-            var module = await JavaScript.InvokeAsync<IJSObjectReference>("import", _lifetime.Token, "./js/news.js?v=7");
+            var module = await JavaScript.InvokeAsync<IJSObjectReference>("import", _lifetime.Token, "./js/news.js?v=9");
             if (_disposed) { await module.DisposeAsync(); return; }
             _module = module;
             _api = new NewsApiClient(module, _key);
@@ -91,11 +110,15 @@ public partial class NewsReactions : IAsyncDisposable
         var userId = _userId;
         var revision = _revision;
         var value = _vote == button ? LikeValues.Remove : button;
+        var previous = (_likes, _dislikes, _vote);
+        var confirmed = false;
         _saving = true;
         _message = null;
+        ApplyVote(value);
+        StateHasChanged();
         try
         {
-            var response = await _api.VoteAsync(Item.Id, value, userId, _lifetime.Token);
+            var response = await _api.VoteAsync(Item.Id, value, userId);
             if (_disposed || revision != _revision) return;
             bool alreadyRemoved = value == LikeValues.Remove && response.Status == 404 &&
                 ApiErrorPresentation.Describe(response.Status, response.Body, "news").Code == "LikeNotFound";
@@ -104,18 +127,19 @@ public partial class NewsReactions : IAsyncDisposable
                 _message = ApiErrorPresentation.Describe(response.Status, response.Body, "news").Message;
                 return;
             }
-            bool confirmed = alreadyRemoved;
+            confirmed = alreadyRemoved;
             if (response.Status is >= 200 and < 300)
             {
                 var saved = JsonSerializer.Deserialize<LikeUsers>(response.Body, JsonOptions);
                 confirmed = saved is { Id: > 0 } && saved.ScoreId == Item.ScoreId && saved.UserId == userId &&
                     (value == LikeValues.Remove || saved.Value == (value == LikeValues.Like));
-                if (confirmed) ApplyVote(value);
             }
+            if (confirmed) return;
             // Read back authoritative totals. Never repeat a write after a lost response.
             _needsRefresh = true;
             await RefreshAsync();
-            if (!_disposed && revision == _revision && !_needsRefresh && !confirmed && _vote != value)
+            confirmed = !_needsRefresh;
+            if (!_disposed && revision == _revision && !_needsRefresh && _vote != value)
                 _message = "We could not confirm your change. The current reactions are shown; you can try again.";
         }
         catch (JSDisconnectedException) { }
@@ -131,7 +155,13 @@ public partial class NewsReactions : IAsyncDisposable
         }
         finally
         {
-            if (!_disposed) { _saving = false; StateHasChanged(); }
+            if (!_disposed && revision == _revision)
+            {
+                if (!confirmed) (_likes, _dislikes, _vote) = previous;
+                _saving = false;
+                StateHasChanged();
+            }
+            else if (!_disposed) { _saving = false; StateHasChanged(); }
         }
     }
 
@@ -182,6 +212,10 @@ public partial class NewsReactions : IAsyncDisposable
         try
         {
             using var cleanup = new CancellationTokenSource(TimeSpan.FromSeconds(1));
+            // Ordinary feed cards own no JS handles and require no interop on exit.
+            // Only an outstanding verification GET needs cancellation; vote POSTs continue.
+            if (_module is null && _sharedModule is not null && _refreshing)
+                await _sharedModule.InvokeVoidAsync("dispose", cleanup.Token, _key);
             if (_monitor is not null)
             {
                 await _monitor.InvokeVoidAsync("stop", cleanup.Token);
@@ -194,7 +228,7 @@ public partial class NewsReactions : IAsyncDisposable
                 await _module.DisposeAsync();
             }
         }
-        catch (Exception exception) when (exception is JSDisconnectedException or JSException or OperationCanceledException) { }
+        catch (Exception exception) when (exception is JSDisconnectedException or JSException or OperationCanceledException or ObjectDisposedException) { }
         finally { _receiver?.Dispose(); _lifetime.Dispose(); }
     }
 }

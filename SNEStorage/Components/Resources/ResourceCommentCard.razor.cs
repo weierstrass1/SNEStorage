@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Components;
 using SNEStorage.DTOs;
@@ -44,7 +45,8 @@ public partial class ResourceCommentCard
     protected bool HasReplies => _hasRepliesOverride ?? Comment.HasReplies;
     protected int Likes => Comment.Likes;
     protected int Dislikes => Comment.Dislikes;
-    protected string Approval => (100d * Likes / (Likes + Dislikes)).ToString("0.#", CultureInfo.GetCultureInfo("en-US"));
+    protected string VoteState => JsonSerializer.Serialize(new { mode = "reaction", context = $"comment:{Comment.Id}:{CurrentUserId}", likes = Likes, dislikes = Dislikes, vote = Comment.MyVote.ToString(), decimals = 1 });
+    protected string Approval => (100d * Likes / (Likes + (long)Dislikes)).ToString("0.#", CultureInfo.GetCultureInfo("en-US"));
     protected bool? MyVote => IsAuthenticated && !string.IsNullOrEmpty(CurrentUserId)
         ? Comment.MyVote switch { LikeValues.Like => true, LikeValues.Dislike => false, _ => null } : null;
     protected string Username => string.IsNullOrWhiteSpace(Comment.UserSummary?.Username) ? "Community member" : Comment.UserSummary.Username;

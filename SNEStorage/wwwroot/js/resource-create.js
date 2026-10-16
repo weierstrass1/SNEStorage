@@ -1,8 +1,8 @@
-import { appendPreviews, validatePreviews } from "./resource-previews.js?v=4";
-import { basicUploadError } from "./upload-validation.js?v=2";
-import { captchaFetch } from "./captcha.js?v=3";
-import { validateVersionInputs } from "./resource-version.js?v=2";
-import { validateResourceTextFields } from "./resource-form-validation.js?v=2";
+import { readResourceOptions } from "./resource-options.js?v=1";
+import { selectLocalTab } from "./local-controls.js?v=2";
+import { endSubmission } from "./submission-progress.js?v=1";
+
+export { beginSubmission, endSubmission } from "./submission-progress.js?v=1";
 
 const uploads = new Map();
 
@@ -21,8 +21,6 @@ document.addEventListener("keydown", event => {
         event.target.hasAttribute("data-resource-token-input")) {
         event.preventDefault();
     }
-    if (event.target instanceof HTMLElement && event.target.hasAttribute("data-resource-tab") &&
-        ["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) event.preventDefault();
 });
 
 function invalidField(form) {
@@ -40,6 +38,10 @@ function invalidMessage(field) {
 export async function validateResourceForm(formId) {
     const form = document.getElementById(formId);
     if (!(form instanceof HTMLFormElement)) return { valid: false, tab: 0, message: "The form is unavailable." };
+    const [{ validatePreviews }, { basicUploadError }, { validateVersionInputs }, { validateResourceTextFields }] = await Promise.all([
+        import("./resource-previews.js?v=4"), import("./upload-validation.js?v=2"),
+        import("./resource-version.js?v=2"), import("./resource-form-validation.js?v=2")
+    ]);
     // Check trimmed text as well as native constraints, including values restored by Blazor.
     validateResourceTextFields(form);
     validateVersionInputs(form);
@@ -66,32 +68,14 @@ export function focusInvalidField(formId) {
     invalid.reportValidity();
 }
 
-export function focusTab(id) { document.getElementById(id)?.focus(); }
-
+// Used only when validation needs to reveal a field in another tab.
 export function syncTabs(formId, tabId) {
     const form = document.getElementById(formId);
-    if (!(form instanceof HTMLFormElement)) return;
-    for (const video of form.querySelectorAll("[data-resource-tab-panel][hidden] video")) video.pause();
-    for (const picker of form.querySelectorAll("[data-resource-tab-panel][hidden] [data-resource-picker]"))
-        picker.dispatchEvent(new Event("resource-picker-dismiss"));
     const tab = document.getElementById(tabId);
-    const tabList = tab?.parentElement;
-    if (tab && tabList) {
-        const left = tab.offsetLeft - tabList.offsetLeft;
-        if (left < tabList.scrollLeft) tabList.scrollLeft = left;
-        else if (left + tab.offsetWidth > tabList.scrollLeft + tabList.clientWidth)
-            tabList.scrollLeft = left + tab.offsetWidth - tabList.clientWidth;
-    }
+    if (form && tab) selectLocalTab(form, Number(tab.dataset.uiTab));
 }
 
-export async function getCreateOptions() {
-    const response = await fetch("/api/resource/options", {
-        credentials: "same-origin",
-        headers: { Accept: "application/json" },
-        redirect: "error"
-    });
-    return readResponse(response);
-}
+export function getCreateOptions() { return readResourceOptions(); }
 
 export async function submitResource(formId) {
     const form = document.getElementById(formId);
@@ -104,6 +88,7 @@ export async function submitResource(formId) {
         const value = data.get(name);
         if (typeof value === "string") data.set(name, value.trim());
     }
+    const { appendPreviews } = await import("./resource-previews.js?v=4");
     appendPreviews(data, "resource-previews");
     // An unchecked checkbox does not appear in FormData, including IAmAuthor (whose DTO default is true).
     for (const name of ["IAmAuthor", "SealOfQualityRequested", "IncludesPorn", "IncludesGore", "IncludesPolitics", "IncludesSlurs", "IncludesSensitiveContent"]) {
@@ -145,6 +130,7 @@ export async function submitResource(formId) {
     const controller = new AbortController();
     uploads.set(formId, controller);
     try {
+        const { captchaFetch } = await import("./captcha.js?v=3");
         const response = await captchaFetch(form.action, {
             method: "POST",
             credentials: "same-origin",
@@ -158,10 +144,12 @@ export async function submitResource(formId) {
         if (uploads.get(formId) === controller) {
             uploads.delete(formId);
         }
+        endSubmission(formId);
     }
 }
 
 export function cancelSubmission(formId) {
     uploads.get(formId)?.abort();
     uploads.delete(formId);
+    endSubmission(formId);
 }

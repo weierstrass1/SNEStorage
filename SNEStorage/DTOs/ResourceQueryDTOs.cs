@@ -95,6 +95,8 @@ public sealed class ResourceReadDTO
     public string? RepositoryURL { get; set; }
     public bool AlreadyModerated { get; set; }
     public bool CanEdit { get; set; }
+    public bool CanDelete { get; set; }
+    public ServiceResultTypes? DeleteBlockReason { get; set; }
 
     public bool IncludesPorn { get; set; }
     public bool IncludesGore { get; set; }

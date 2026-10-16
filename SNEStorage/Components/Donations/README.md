@@ -1,6 +1,6 @@
 # Donations page
 
-The public `/Donations` page loads `wwwroot/Content/donations.json` through the existing `StaticDocumentPage` browser loader. No account or backend endpoint is needed.
+The public `/Donations` page reads `wwwroot/Content/donations.json` locally during component initialization through `StaticDocumentPage`. The first render includes the text, without browser JSON requests or a shared server cache. No account or API endpoint is needed.
 
 Edit the JSON to update the titles, introductory text, Patreon URL, supporter benefits, support cards, and thank-you message. `benefitsTitle` sets the supporter section heading; `benefits` contains editable `{ title, text }` cards. An empty benefits list hides that section. Keep at least one item in `sections`. The Patreon button accepts an absolute HTTPS URL on `patreon.com` or `www.patreon.com`; invalid URLs show the configured unavailable message. Text is rendered as plain text.
 

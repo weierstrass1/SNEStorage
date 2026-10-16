@@ -17,6 +17,7 @@ public partial class PageAccessGuard : IAsyncDisposable
     private readonly CancellationTokenSource _lifetime = new();
     private IJSObjectReference? _module;
     private IJSObjectReference? _watcher;
+    private Task? _watcherLoad;
     private DotNetObjectReference<PageAccessGuard>? _receiver;
     private RequireAccountAttribute? _requirement;
     private AccountPageContext? _access;
@@ -76,14 +77,32 @@ public partial class PageAccessGuard : IAsyncDisposable
         var resourceId = RouteData.RouteValues.GetValueOrDefault("ResourceId") as long?;
         try
         {
-            _module ??= await JavaScript.InvokeAsync<IJSObjectReference>("import", _lifetime.Token, "./js/page-access.js?v=5");
-            if (_disposed) return;
-            if (_watcher is null)
+            var needsOptions = management || RouteData.PageType == typeof(SNEStorage.Components.Pages.CreateResource);
+            PageAccessRead? read;
+            if (_module is null)
             {
-                _receiver = DotNetObjectReference.Create(this);
-                _watcher = await _module.InvokeAsync<IJSObjectReference>("watchPageAccess", _lifetime.Token, _receiver);
+                var initial = await BrowserReadStartup.LoadAsync<PageAccessRead>(JavaScript,
+                    "./js/page-access.js?v=7", "readPageAccess",
+                    [_requestKey, management ? resourceId : null, needsOptions], _requestKey, "cancelPageAccess");
+                if (_disposed || generation != _generation)
+                {
+                    if (initial.Module is not null) await initial.Module.DisposeAsync();
+                    return;
+                }
+                if (initial.Cancelled || initial.Module is null) return;
+                _module = initial.Module;
+                read = initial.Response;
             }
-            var accountResponse = await ReadResponseAsync("getPageAccount");
+            else
+            {
+                var current = await BrowserReadStartup.ReadAsync<PageAccessRead>(JavaScript, _module,
+                    "readPageAccess", [_requestKey, management ? resourceId : null, needsOptions], _requestKey, "cancelPageAccess");
+                if (current.Cancelled) return;
+                read = current.Response;
+            }
+            _watcherLoad ??= InitializeWatcherAsync();
+            if (read is null) { Deny(502); return; }
+            var accountResponse = JsonSerializer.Deserialize<BrowserResponse>(read.Account, JsonOptions) ?? new() { Status = 502 };
             if (_disposed || generation != _generation) return;
             if (accountResponse.Status is 401 or 403) { Deny(403); return; }
             if (!AcceptResponse(accountResponse)) return;
@@ -106,7 +125,7 @@ public partial class PageAccessGuard : IAsyncDisposable
             {
                 _errorDomain = "resource";
                 if (resourceId is null or <= 0) { Deny(404); return; }
-                var resourceResponse = await ReadResponseAsync("getPageResource", resourceId.Value);
+                var resourceResponse = JsonSerializer.Deserialize<BrowserResponse>(read.Resource ?? "null", JsonOptions) ?? new() { Status = 502 };
                 if (_disposed || generation != _generation) return;
                 if (resourceResponse.Status is 401 or 403) { Deny(403); return; }
                 if (!AcceptResponse(resourceResponse)) return;
@@ -136,12 +155,24 @@ public partial class PageAccessGuard : IAsyncDisposable
         }
     }
 
-    private async Task<BrowserResponse> ReadResponseAsync(string method, long? resourceId = null)
+    private async Task InitializeWatcherAsync()
     {
-        var json = resourceId is null
-            ? await _module!.InvokeAsync<string>(method, _lifetime.Token, _requestKey)
-            : await _module!.InvokeAsync<string>(method, _lifetime.Token, resourceId.Value, _requestKey);
-        return JsonSerializer.Deserialize<BrowserResponse>(json, JsonOptions) ?? new() { Status = 502 };
+        if (_module is null || _disposed) return;
+        try
+        {
+            _receiver ??= DotNetObjectReference.Create(this);
+            var watcher = await _module.InvokeAsync<IJSObjectReference>("watchPageAccess", _receiver);
+            if (_disposed) { await watcher.InvokeVoidAsync("stop"); await watcher.DisposeAsync(); }
+            else _watcher = watcher;
+        }
+        catch (Exception exception) when (exception is JSDisconnectedException or JSException or OperationCanceledException or ObjectDisposedException)
+        { if (!_disposed) Logger.LogDebug(exception, "Page access monitoring could not be initialized."); }
+    }
+
+    private sealed class PageAccessRead
+    {
+        public string Account { get; set; } = "null";
+        public string? Resource { get; set; }
     }
 
     private bool AcceptResponse(BrowserResponse response)
@@ -178,6 +209,7 @@ public partial class PageAccessGuard : IAsyncDisposable
         try
         {
             using var cleanup = new CancellationTokenSource(TimeSpan.FromSeconds(1));
+            await BrowserReadStartup.CancelAsync(JavaScript, _requestKey, cleanup.Token);
             if (_watcher is not null)
             {
                 await _watcher.InvokeVoidAsync("stop", cleanup.Token);

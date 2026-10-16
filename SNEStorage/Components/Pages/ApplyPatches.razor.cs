@@ -16,7 +16,7 @@ public partial class ApplyPatches : IAsyncDisposable
         if (!firstRender || _disposed) return;
         try
         {
-            var module = await JavaScript.InvokeAsync<IJSObjectReference>("import", "./js/rom-patcher.js?v=1");
+            var module = await JavaScript.InvokeAsync<IJSObjectReference>("import", "./js/rom-patcher.js?v=2");
             if (_disposed) { await module.DisposeAsync(); return; }
             _module = module;
             await module.InvokeVoidAsync("initializePatcher", _patcherId);

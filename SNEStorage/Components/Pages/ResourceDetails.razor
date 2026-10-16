@@ -2,6 +2,7 @@
 @using SNEStorage.Components.Resources
 
 <PageTitle>@ResourceName | SNEStorage</PageTitle>
+<HeadContent><link rel="modulepreload" href="js/resource-details.js?v=18" /></HeadContent>
 
 @if (_loading)
 {
@@ -16,7 +17,7 @@ else if (_errorStatus is { } status)
 }
 else if (_resource is { } resource)
 {
-    <article class="resource-detail">
+    <article class="resource-detail" data-ui-tabs @key="resource.Id">
         <nav class="detail-breadcrumb" aria-label="Breadcrumb">
             <NavLink href="/">Home</NavLink><span aria-hidden="true">/</span>
             <NavLink href="/Resources">Resources</NavLink><span aria-hidden="true">/</span>
@@ -50,9 +51,19 @@ else if (_resource is { } resource)
                     {
                         <NavLink class="detail-action" href="@($"/Resource/{ResourceId}/Edit")">Edit resource</NavLink>
                     }
-                    @if (_isAuthenticated && !resource.AlreadyModerated)
+                    @if (_isAuthenticated && (CanManage || _canModerateComments))
+                    {
+                        <ResourceDeleteButton @key="resource.Id" ResourceId="resource.Id" ResourceName="@ResourceName"
+                                              CurrentUserId="@_currentUserId" CanDelete="resource.CanDelete"
+                                              BlockReason="resource.DeleteBlockReason" IsStaff="_canModerateComments"
+                                              Disabled="_refreshingVersionDetails"
+                                              OnDeleted="ResourceDeleted" />
+                    }
+                    @if (_isAuthenticated)
                     {
                         <ReportMenu Context="resource" TargetId="ResourceId" UserId="@_currentUserId"
+                                    Disabled="resource.AlreadyModerated"
+                                    DisabledReason="This resource has already been moderated and complies with SNEStorage's site rules."
                                     HasPreviews="@(_previews.Ready ? Previews.Count > 0 : null)"
                                     HasVersions="@(_versions.Ready ? Versions.Count > 0 : LatestVersion is not null ? true : null)" />
                     }
@@ -94,11 +105,11 @@ else if (_resource is { } resource)
         </section>
 
         <div class="detail-tabs" role="tablist" aria-label="Resource sections">
-            <button type="button" id="resource-overview-tab" role="tab" aria-selected="@(!_showVersions)" aria-controls="resource-overview-panel" tabindex="@(_showVersions ? -1 : 0)" @onclick="ShowOverview" @onkeydown="HandleTabKeyDown">Overview</button>
-            <button type="button" id="resource-versions-tab" role="tab" aria-selected="@_showVersions" aria-controls="resource-versions-panel" tabindex="@(_showVersions ? 0 : -1)" @onclick="ShowVersions" @onkeydown="HandleTabKeyDown">Version history @if (_versions.Ready) { <span>@Versions.Count</span> }</button>
+            <button type="button" id="resource-overview-tab" role="tab" aria-selected="true" aria-controls="resource-overview-panel" tabindex="0" data-ui-tab="0">Overview</button>
+            <button type="button" id="resource-versions-tab" role="tab" aria-selected="false" aria-controls="resource-versions-panel" tabindex="-1" data-ui-tab="1" @onclick="@(!_versions.Started ? EventCallback.Factory.Create<MouseEventArgs>(this, ShowVersions) : default)">Version history @if (_versions.Ready) { <span>@Versions.Count</span> }</button>
         </div>
 
-        <div id="resource-overview-panel" role="tabpanel" aria-labelledby="resource-overview-tab" hidden="@_showVersions" tabindex="0" class="detail-tab-panel">
+        <div id="resource-overview-panel" role="tabpanel" aria-labelledby="resource-overview-tab" data-ui-panel="0" tabindex="0" class="detail-tab-panel">
             <section class="detail-panel detail-overview" aria-labelledby="about-heading">
                 <h2 id="about-heading" class="detail-sr-only">About this resource</h2>
                 <dl class="detail-metadata">
@@ -161,13 +172,13 @@ else if (_resource is { } resource)
                             <p><strong>@VersionLabel(latest)</strong> · @FormatDate(latest.CreatedAt)</p>
                             <ResourceVersionStatus Version="latest" />
                         }
-                        <span class="detail-total-downloads">Total downloads: <strong>@Downloads.ToString("N0", DisplayCulture)</strong> <small>across all versions</small></span>
+                        <span class="detail-total-downloads"><strong>Total downloads:</strong> @Downloads.ToString("N0", DisplayCulture) <small>across all versions</small></span>
                     </div>
                     @if (_latest.Ready && LatestDownload is { } download)
                     {
                         <div class="detail-download-actions">
                             <a class="detail-download" href="@download" data-enhance-nav="false">Download <span aria-hidden="true">↓</span></a>
-                            <small class="detail-version-downloads">Downloads: @LatestVersion!.Downloads.ToString("N0", DisplayCulture)</small>
+                            <small class="detail-version-downloads"><strong>Downloads:</strong> @LatestVersion!.Downloads.ToString("N0", DisplayCulture)</small>
                         </div>
                     }
                     else if (_latest.Ready)
@@ -176,7 +187,7 @@ else if (_resource is { } resource)
                             <span class="detail-muted">No download available</span>
                             @if (LatestVersion is { } unavailableVersion)
                             {
-                                <small class="detail-version-downloads">Downloads: @unavailableVersion.Downloads.ToString("N0", DisplayCulture)</small>
+                                <small class="detail-version-downloads"><strong>Downloads:</strong> @unavailableVersion.Downloads.ToString("N0", DisplayCulture)</small>
                             }
                         </div>
                     }
@@ -266,15 +277,22 @@ else if (_resource is { } resource)
             </p>
         </div>
 
-        <div id="resource-versions-panel" role="tabpanel" aria-labelledby="resource-versions-tab" hidden="@(!_showVersions)" tabindex="0" class="detail-tab-panel">
+        <div id="resource-versions-panel" role="tabpanel" aria-labelledby="resource-versions-tab" data-ui-panel="1" hidden tabindex="0" class="detail-tab-panel">
             @if (CanManage)
             {
                 <div class="detail-version-actions"><p class="detail-muted">Manage the releases of your resource.</p><NavLink class="detail-action" href="@($"/Resource/{ResourceId}/Versions/Create")">+ Add version</NavLink></div>
             }
-            <ResourceSectionStatus Loading="_versions.Loading" ErrorStatus="_versions.ErrorStatus" ErrorBody="@_versions.ErrorBody" Label="version history" OnRetry="LoadVersionsAsync" />
+            <ResourceSectionStatus Loading="@(!_versions.Started || _versions.Loading)" ErrorStatus="_versions.ErrorStatus" ErrorBody="@_versions.ErrorBody" Label="version history" OnRetry="LoadVersionsAsync" />
+            @if (_versionDeletionNotice is not null)
+            {
+                <p class="version-deletion-notice" role="status">@_versionDeletionNotice
+                    @if (!_refreshingVersionDetails) { <button type="button" @onclick="RefreshVersionDetailsAsync">Refresh details</button> }
+                </p>
+            }
             @if (_versions.Ready)
             {
-                <ResourceReleaseList ResourceId="resource.Id" Versions="@Versions" CanManage="CanManage" />
+                <ResourceReleaseList ResourceId="resource.Id" ResourceName="@ResourceName" Versions="@Versions" CanManage="CanManage"
+                                     CurrentUserId="@_currentUserId" IsStaff="_canModerateComments" OnVersionDeleted="RefreshVersionDetailsAsync" />
             }
         </div>
         <NavLink class="detail-library-link" href="/Resources">← Back to resources</NavLink>

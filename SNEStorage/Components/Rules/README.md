@@ -1,16 +1,17 @@
 # Public site rules
 
-`/Rules` reads `wwwroot/content/site-rules.json` in the browser. The static file
+`/Rules` reads `wwwroot/Content/site-rules.json` locally during initialization. The static file
 is the source of the public policy, with English copy and stable section/rule
 anchors. It does not query an account endpoint, database or backend service.
 
 `SiteRulesDocument` and its section/entry classes are presentation data only.
 Rules.razor.cs selects the document and its numbering. StaticDocumentPage shares
-browser transport and cleanup with the separate Seal of Quality page, keeping
-those details out of the views. A failed read shows a retry button. Requests
-time out and are cancelled on disposal; disconnected-circuit cleanup is handled.
+local JSON reading with the separate Seal of Quality page, keeping those details
+out of the views. A failed read shows a retry button. The first render includes
+the content without browser JSON requests or a shared server cache. Only deep
+links need JavaScript interop after rendering, to scroll to their anchor.
 
-The JSON is revalidated on page entry. Text is rendered with normal Razor
+The JSON is read on page entry. Text is rendered with normal Razor
 encoding. Preserve unique section and rule IDs to keep incoming links valid.
 Sections receive letters in JSON order (A, B, C, …). Rule numbers restart at 1
 in each section and appear as A.1, A.2, B.1, …; reordering or adding a rule

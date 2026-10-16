@@ -1,3 +1,5 @@
+import { attachToolUsage } from "./tool-usage.js?v=1";
+
 const patchers = new Map();
 
 export function initializePatcher(id) {
@@ -9,7 +11,8 @@ export function initializePatcher(id) {
     const state = { root, events, worker: null, timer: null, url: null, ready: false,
         rom: find("rom"), patch: find("patch"), mode: find("header"), apply: find("apply"),
         cancel: find("cancel"), status: find("status"), error: find("error"),
-        result: find("result"), download: find("download"), info: find("info"), note: find("note"), warning: find("warning") };
+        result: find("result"), download: find("download"), info: find("info"), note: find("note"), warning: find("warning"),
+        usage: attachToolUsage(find("usage"), "apply-ips-bps") };
     patchers.set(id, state);
     const on = (element, name, handler) => element.addEventListener(name, handler, { signal: events.signal });
     for (const input of [state.rom, state.patch, state.mode]) on(input, "change", () => run(state, "inspect"));
@@ -88,6 +91,7 @@ function run(state, action) {
         state.status.textContent = "Patch applied successfully. Your patched ROM is ready.";
         state.result.querySelector("[data-patcher-output]").textContent =
             `${data.outputInfo.mapping} · ${(data.buffer.byteLength / 1048576).toLocaleString(undefined, { maximumFractionDigits: 2 })} MB · CRC32 ${data.outputInfo.crc}`;
+        state.usage.recordSuccess();
         state.download.click();
     };
     try { worker.postMessage({ action, romFile, patchFile, mode: state.mode.value }); }
@@ -124,6 +128,7 @@ export function disposePatcher(id) {
     if (!state) return;
     stopWorker(state);
     clearDownload(state);
+    state.usage.dispose();
     state.events.abort();
     patchers.delete(id);
 }

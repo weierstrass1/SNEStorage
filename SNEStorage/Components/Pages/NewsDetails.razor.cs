@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using SNEStorage.Components.News;
 using SNEStorage.DTOs;
+using SNEStorage.Components.Shared;
 
 namespace SNEStorage.Components.Pages;
 
@@ -50,12 +51,21 @@ public partial class NewsDetails : IAsyncDisposable
         try
         {
             if (newsId <= 0) { _errorStatus = 404; return; }
-            var module = _module ?? await JavaScript.InvokeAsync<IJSObjectReference>(
-                "import", _lifetime.Token, "./js/news.js?v=7");
-            if (_disposed) { await module.DisposeAsync(); return; }
-            _module = module;
-            if (generation != _generation) return;
-            var response = await new NewsApiClient(module, _requestKey).ReadOneAsync(newsId, _lifetime.Token);
+            NewsReadResponse response;
+            if (_module is null)
+            {
+                var initial = await BrowserReadStartup.LoadAsync<string>(JavaScript,
+                    "./js/news.js?v=9", "readNewsItem", [_requestKey, newsId], _requestKey, "dispose");
+                if (_disposed || generation != _generation)
+                {
+                    if (initial.Module is not null) await initial.Module.DisposeAsync();
+                    return;
+                }
+                if (initial.Cancelled || initial.Module is null || initial.Response is null) return;
+                _module = initial.Module;
+                response = NewsApiClient.DecodeOne(initial.Response, newsId);
+            }
+            else response = await new NewsApiClient(_module, _requestKey).ReadOneAsync(newsId, _lifetime.Token);
             if (_disposed || generation != _generation) return;
             _news = response.Item;
             _errorStatus = response.Item is null ? response.Status : null;
@@ -85,6 +95,12 @@ public partial class NewsDetails : IAsyncDisposable
         _disposed = true;
         _generation++;
         _lifetime.Cancel();
+        try
+        {
+            using var cleanup = new CancellationTokenSource(TimeSpan.FromSeconds(1));
+            await BrowserReadStartup.CancelAsync(JavaScript, _requestKey, cleanup.Token);
+        }
+        catch (Exception exception) when (exception is JSDisconnectedException or JSException or OperationCanceledException) { }
         if (_module is not null)
         {
             try

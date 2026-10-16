@@ -5,6 +5,7 @@ import { claimAudio, releaseAudio, ownsAudio } from "./audio-focus.js?v=1";
 import * as library from "./spc-library.js?v=1";
 
 const ownerKey = "snestorage-local-playlist";
+const playerUiKey = "snestorage-spc-player-ui";
 const maxFileSize = 5 * 1024 * 1024, maxLibrarySize = 100 * 1024 * 1024, maxTracks = 1000;
 const views = new Map();
 const icons = {
@@ -29,9 +30,24 @@ const transport = `
 let tracks = [], settings = { volume: .65, shuffle: false, repeat: "off", fallback: 180, useFallback: false, currentId: null };
 let ready = false, initializing, importing = false, modifying = false, playing = false, busy = false;
 let backend, loadedId, position = 0, playRevision = 0, timer, settingsTimer;
-let message = "", storageError = false, expanded = false, minimized = false, dismissed = false, confirmClear = false;
+let message = "", storageError = false, expanded = false, minimized = false, dismissed = true, confirmClear = false;
 let history = [], shuffleBag = [];
 let editingId, completedPlays = 0, fading = false;
+
+// Restore visibility before mounting the dock, so a closed player never flashes open.
+// Existing libraries without this preference stay hidden until explicitly opened.
+try {
+    const saved = JSON.parse(localStorage.getItem(playerUiKey) ?? "null");
+    dismissed = saved?.open !== true;
+    minimized = saved?.minimized === true;
+    expanded = saved?.expanded === true;
+} catch { /* Storage may be unavailable; retain the closed default for this visit. */ }
+
+function persistPlayerUi() {
+    // Write immediately: closing the tab must not lose a recent close/minimize click.
+    try { localStorage.setItem(playerUiKey, JSON.stringify({ open: !dismissed, minimized, expanded })); }
+    catch { /* The controls still work for this visit if browser storage is blocked. */ }
+}
 
 function currentTrack() { return tracks.find(track => track.id === settings.currentId); }
 function duration(track = currentTrack()) {
@@ -99,6 +115,11 @@ async function mount(id, type) {
     unmount(id);
     const view = { root, type, events: new AbortController() };
     views.set(id, view);
+    if (type === "page") {
+        // Opening the dedicated tool is an explicit request to show the player again.
+        dismissed = false;
+        persistPlayerUi();
+    }
     if (type === "dock") root.innerHTML = `<div data-spc-dock-body><div class="spc-dock-heading"><a href="/Tools/SPCPlayer">SPC PLAYER</a><div>${button("minimize", "Minimize player", "minimize")}${button("expand", "Show playlist", "up")}${button("close", "Stop and hide player", "close")}</div></div><div data-spc-controls></div><div class="spc-dock-queue" data-spc-dock-queue hidden><ol class="spc-queue" data-spc-queue aria-label="SPC playlist"></ol></div><p data-spc-message class="spc-feedback" role="status"></p></div><div class="spc-mini" data-spc-mini hidden>${button("restore", "Restore player", "restore")}${button("play", "Play", "play")}${button("close", "Stop and hide player", "close")}</div>`;
     root.querySelector("[data-spc-controls]").innerHTML = transport;
     root.addEventListener("click", event => {
@@ -190,10 +211,10 @@ async function command(action, id, view) {
         const count = view.root.querySelector("[data-spc-plays]");
         (count?.disabled ? view.root.querySelector("[data-spc-timing-mode]") : count)?.focus();
     }
-    else if (action === "expand") { minimized = false; expanded = !expanded; render(true); }
-    else if (action === "minimize") { minimized = true; render(); view.root.querySelector('[data-spc-command="restore"]')?.focus(); }
-    else if (action === "restore") { minimized = false; render(true); view.root.querySelector('[data-spc-command="minimize"]')?.focus(); }
-    else if (action === "close") { pause(); dismissed = true; render(); }
+    else if (action === "expand") { minimized = false; expanded = !expanded; persistPlayerUi(); render(true); }
+    else if (action === "minimize") { minimized = true; persistPlayerUi(); render(); view.root.querySelector('[data-spc-command="restore"]')?.focus(); }
+    else if (action === "restore") { minimized = false; persistPlayerUi(); render(true); view.root.querySelector('[data-spc-command="minimize"]')?.focus(); }
+    else if (action === "close") { pause(); dismissed = true; persistPlayerUi(); render(); }
     else if (action === "remove") await remove(id);
     else if (action === "timing") {
         editingId = id; render(); view.root.querySelector("[data-spc-timing-mode]")?.focus();
@@ -287,6 +308,7 @@ async function play(id, from, remember = true, preservePlayCount = false) {
         for (const view of views.values()) view.seeking = false;
         shuffleBag = shuffleBag.filter(candidate => candidate !== id);
         dismissed = false;
+        persistPlayerUi();
         playing = false;
         busy = true;
         message = position > 0 ? `Seeking to ${time(position)}…` : "Loading track…";

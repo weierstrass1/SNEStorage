@@ -49,13 +49,20 @@ public partial class FlagsService(SnestorageContext context,
         IEditSingle<long, bool, Flag> editor = this;
         return editor.EditSingle(key, edit, ct);
     }
-    public Task<OneOf<List<FlagReadDTO>, ServiceResultContext>> FullGet(FlagFilterDTO filter, FlagSort sort, int maxAmount = 10, int page = 0, CancellationToken ct = default)
+    public async Task<OneOf<List<FlagReadDTO>, ServiceResultContext>> FullGet(
+        FlagFilterDTO filter, FlagSort sort,
+        int maxAmount = 10, int page = 0, CancellationToken ct = default)
     {
+        if (!_accountService.IsModeratorOrAdmin())
+            return string.IsNullOrWhiteSpace(_accountService.GetUserID()) ?
+                ServiceResult.Unauthorized.Return(_logger) :
+                ServiceResult.Forbidden.Return(_logger);
+
         var query = GetFilter(_context.Flags.AsNoTracking(), filter);
         var resultQuery = GetSelect(GetSort(query, sort));
         var parameter = new PaginatedQuery<FlagSort>(
             new PaginationRequest(maxAmount, MAX_AMOUNT_PER_PAGE, page), sort);
 
-        return _getPage.Execute(resultQuery, parameter, ct: ct);
+        return await _getPage.Execute(resultQuery, parameter, ct: ct);
     }
 }

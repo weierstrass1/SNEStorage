@@ -10,8 +10,11 @@ public partial class ResourceAudioPreview : IAsyncDisposable
     [Parameter] public string FileName { get; set; } = "Sound preview";
     [Parameter] public bool Enabled { get; set; } = true;
     [Parameter] public bool Compact { get; set; }
+    [Parameter] public string? PlayerId { get; set; }
+    [Parameter] public bool BrowserManaged { get; set; }
     [Inject] private IJSRuntime JavaScript { get; set; } = default!;
     private readonly string _playerId = "sound-preview-" + Guid.NewGuid().ToString("N");
+    private string HostId => PlayerId ?? _playerId;
     private readonly CancellationTokenSource _lifetime = new();
     private IJSObjectReference? _module;
     private string? _previousSource;
@@ -33,15 +36,15 @@ public partial class ResourceAudioPreview : IAsyncDisposable
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (_disposed || !_pending) return;
+        if (_disposed || !_pending || BrowserManaged) return;
         _pending = false;
         try
         {
             _module ??= await JavaScript.InvokeAsync<IJSObjectReference>("import", _lifetime.Token, "./js/audio-preview.js?v=4");
             if (_disposed) return;
             if (Enabled && !string.IsNullOrWhiteSpace(SourceUrl))
-                await _module.InvokeVoidAsync("initializeAudioPreview", _lifetime.Token, _playerId, SourceUrl, Kind, FileName);
-            else await _module.InvokeVoidAsync("disposeAudioPreview", _lifetime.Token, _playerId);
+                await _module.InvokeVoidAsync("initializeAudioPreview", _lifetime.Token, HostId, SourceUrl, Kind, FileName);
+            else await _module.InvokeVoidAsync("disposeAudioPreview", _lifetime.Token, HostId);
         }
         catch (Exception exception) when (exception is JSDisconnectedException or OperationCanceledException) { }
         catch (JSException)
@@ -62,7 +65,7 @@ public partial class ResourceAudioPreview : IAsyncDisposable
             try
             {
                 using var cleanup = new CancellationTokenSource(TimeSpan.FromSeconds(1));
-                await _module.InvokeVoidAsync("disposeAudioPreview", cleanup.Token, _playerId);
+                await _module.InvokeVoidAsync("disposeAudioPreview", cleanup.Token, HostId);
                 await _module.DisposeAsync();
             }
             catch (Exception exception) when (exception is JSDisconnectedException or JSException or OperationCanceledException) { }

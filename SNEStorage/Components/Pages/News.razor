@@ -2,10 +2,11 @@
 @using SNEStorage.Components.News
 
 <PageTitle>News | SNEStorage</PageTitle>
+<HeadContent><link rel="modulepreload" href="js/news.js?v=9" /></HeadContent>
 <div class="news-page">
     <header class="news-heading">
         <span class="eyebrow">FROM THE ARCHIVE</span>
-        <h1>SNEStorage news</h1>
+        <h1>News</h1>
         <p>Updates, announcements, and what's new at SNEStorage.</p>
         @if (_canCreateNews)
         {

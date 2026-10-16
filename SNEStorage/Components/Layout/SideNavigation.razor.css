@@ -8,9 +8,9 @@
 }
 .sidebar-heading {
     display: flex;
-    height: 48px;
-    min-height: 48px;
-    flex: 0 0 48px;
+    height: 44px;
+    min-height: 44px;
+    flex: 0 0 44px;
     box-sizing: border-box;
     align-items: center;
     justify-content: space-between;
@@ -36,38 +36,39 @@
     line-height: 1;
 }
 .sidebar-close:focus-visible { outline: 3px solid #ffe14d; outline-offset: 3px; }
-.sidebar-body { overflow-y: auto; padding: .9rem .75rem; }
-.sidebar-caption { margin: 0 .4rem .2rem; color: #ab90cd; font: .5rem/1.8 "Press Start 2P", monospace; letter-spacing: .1em; text-transform: uppercase; }
-.site-navigation { display: flex; flex-direction: column; gap: 1rem; }
-.navigation-group, .navigation-group-links { display: flex; flex-direction: column; gap: .4rem; min-width: 0; }
-.navigation-group + .navigation-group { padding-top: .8rem; border-top: 1px solid #77529a45; }
+.sidebar-body { overflow-y: auto; padding: .65rem .65rem; }
+.sidebar-caption { margin: 0 .4rem .2rem; color: #ab90cd; font: 700 .66rem/1.5 "Exo 2", "Segoe UI", sans-serif; letter-spacing: .08em; text-transform: uppercase; }
+.site-navigation { display: flex; flex-direction: column; gap: .65rem; }
+.navigation-group, .navigation-group-links { display: flex; flex-direction: column; gap: .25rem; min-width: 0; }
+.navigation-group + .navigation-group { padding-top: .6rem; border-top: 1px solid #77529a45; }
 .navigation-group-links[hidden] { display: none; }
-.navigation-group-toggle { display: flex; align-items: center; justify-content: space-between; gap: .5rem; width: 100%; padding: .15rem .4rem; border: 0; border-radius: 4px; background: transparent; color: #ab90cd; cursor: pointer; }
+.navigation-group-toggle { display: flex; align-items: center; justify-content: space-between; gap: .5rem; width: 100%; min-height: 30px; padding: .3rem .4rem; border: 0; border-radius: 4px; background: transparent; color: #ab90cd; cursor: pointer; }
 .navigation-group-toggle:hover { color: #e7dcff; background: #a06dd012; }
 .navigation-group-toggle:focus-visible { outline: 2px solid #ffe14d; outline-offset: 3px; }
-.navigation-group-title { font: .5rem/1.8 "Press Start 2P", monospace; letter-spacing: .1em; text-transform: uppercase; }
+.navigation-group-title { font: 700 .66rem/1.5 "Exo 2", "Segoe UI", sans-serif; letter-spacing: .08em; text-transform: uppercase; }
 .navigation-group-toggle svg { width: 17px; height: 17px; flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .navigation-group-symbol { display: none; }
 .navigation-group-chevron { transition: transform .15s ease; }
-.navigation-group-chevron.is-expanded { transform: rotate(180deg); }
+.navigation-group-toggle[aria-expanded="true"] .navigation-group-chevron { transform: rotate(180deg); }
 .site-navigation ::deep .navigation-label { min-width: 0; overflow-wrap: anywhere; }
 /* NavLink renders its own element, so isolated styles must cross its component boundary. */
 .site-navigation ::deep .navigation-button {
     display: inline-flex;
     width: 100%;
-    min-height: 40px;
+    min-height: 36px;
     align-items: center;
     justify-content: flex-start;
     gap: .55rem;
-    padding: .45rem .7rem;
-    border: 2px solid #6a429b;
-    border-radius: 5px;
+    padding: .4rem .6rem;
+    border: 1px solid #60447d;
+    border-radius: 7px;
     color: #e7dcff;
-    background: linear-gradient(180deg, #24133f, #170c30);
-    box-shadow: 0 3px 0 #090513;
-    font-family: "Press Start 2P", "Courier New", monospace;
-    font-size: .55rem;
-    line-height: 1.8;
+    background: #b58be309;
+    box-shadow: none;
+    font-family: "Exo 2", "Segoe UI", sans-serif;
+    font-size: .84rem;
+    font-weight: 600;
+    line-height: 1.35;
     text-decoration: none;
     white-space: normal;
     transition: border-color .15s ease, background .15s ease, color .15s ease, box-shadow .15s ease;
@@ -77,7 +78,7 @@
     border-color: #b14cff;
     color: #fff;
     background: #321957;
-    box-shadow: 0 3px 0 #090513, 0 0 15px rgba(177, 76, 255, .3);
+    box-shadow: none;
     text-decoration: none;
 }
 
@@ -85,7 +86,7 @@
     border-color: #b14cff;
     color: #ffe14d;
     background: #351a5b;
-    box-shadow: inset 0 -3px 0 #b14cff, 0 3px 0 #090513;
+    box-shadow: inset 2px 0 #bf8dff;
 }
 
 .site-navigation ::deep .navigation-button:focus-visible {
@@ -189,3 +190,5 @@
     .site-navigation ::deep .navigation-button-quality::before { display: none; }
 }
 
+
+@media (pointer: coarse) { .navigation-group-toggle { min-height: 44px; } }

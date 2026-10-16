@@ -1,6 +1,14 @@
-.value-list { display: grid; gap: .3rem; font-size: .82rem; line-height: 1.35; overflow-wrap: anywhere; }
+.value-list { display: grid; gap: .3rem; min-width: 0; font-size: .82rem; line-height: 1.35; overflow-wrap: anywhere; }
+.value-items { display: grid; gap: .3rem; min-width: 0; }
+.value-item { min-width: 0; max-width: 100%; }
+.value-item[hidden] { display: none !important; }
 .value-list a { text-decoration: none; font-weight: 650; }
 .value-list a:hover { text-decoration: underline; }
-.value-list button { justify-self: start; border: 0; background: none; padding: .2rem 0; color: #c3a0ff; font-size: .72rem; }
-.value-list button:hover { text-decoration: underline; }
 .empty { color: #87799c; }
+.value-list-inline .value-items { display: flex; flex-wrap: wrap; align-items: baseline; gap: .25rem .55rem; }
+.value-list-inline .value-item + .value-item::before { content: "·"; margin-right: .55rem; color: #9a83b0; }
+.value-toggle { justify-self: start; padding: .2rem 0; border: 0; background: none; color: #c3a0ff; font: inherit; font-size: .72rem; cursor: pointer; text-align: left; }
+.value-toggle:hover { text-decoration: underline; }
+.value-toggle:focus-visible { outline: 2px solid #ffe14d; outline-offset: 2px; }
+.value-toggle .less-label, .value-toggle[aria-expanded="true"] .more-label { display: none; }
+.value-toggle[aria-expanded="true"] .less-label { display: inline; }

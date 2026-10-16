@@ -28,7 +28,7 @@
             <PublicProfileLoader UserId="@credits.Creator.UserId">
                 <ChildContent Context="profile">
                     <a class="credits-avatar" href="@CreatorProfileUrl" aria-label="View @credits.Creator.Name's profile">
-                        <img src="@CreatorAvatar(profile)" alt="" width="76" height="76" />
+                        <img src="@CreatorAvatar(profile)" alt="" width="128" height="128" />
                     </a>
                     <div>
                         <p class="credits-kicker">SITE CREATOR</p>
@@ -37,7 +37,9 @@
                     </div>
                 </ChildContent>
                 <FallbackContent>
-                    <img class="credits-fallback" src="images/caja.png" alt="" width="76" height="76" />
+                    <a class="credits-avatar" href="@CreatorProfileUrl" aria-label="View @credits.Creator.Name's profile">
+                        <img src="images/caja.png" alt="" width="128" height="128" />
+                    </a>
                     <div>
                         <p class="credits-kicker">SITE CREATOR</p>
                         <h2 id="credits-creator-title"><a href="@CreatorProfileUrl">@credits.Creator.Name</a></h2>
@@ -51,25 +53,31 @@
         {
             <section class="credits-section" aria-label="@section.Title">
                 <h2>@section.Title</h2>
-                <div class="credits-grid">
+                <div class="credits-grid @(section.Entries.Count == 1 ? "single-entry" : null)">
                     @foreach (var entry in section.Entries)
                     {
-                        <article class="credit-card">
-                            <h3>@entry.Title</h3>
-                            <p class="credit-by">@entry.By</p>
-                            <p class="credit-description">@entry.Description</p>
-                            @if (!string.IsNullOrWhiteSpace(entry.License))
+                        <article class="credit-card @(entry.SafeImageUrl is not null ? "has-image" : null)">
+                            @if (entry.SafeImageUrl is { } imageUrl)
                             {
-                                <span class="credit-license">@entry.License</span>
+                                <img class="credit-image" src="@imageUrl" alt="@entry.ImageAlt" width="88" height="88" loading="lazy" />
                             }
-                            <div class="credit-links">
-                                @foreach (var link in entry.Links)
+                            <div class="credit-copy">
+                                <h3>@entry.Title</h3>
+                                <p class="credit-by">@entry.By</p>
+                                <p class="credit-description">@entry.Description</p>
+                                @if (!string.IsNullOrWhiteSpace(entry.License))
                                 {
-                                    @if (link.SafeUrl is { } url)
-                                    {
-                                        <a href="@url" target="_blank" rel="noopener noreferrer">@link.Label <span aria-hidden="true">↗</span></a>
-                                    }
+                                    <span class="credit-license">@entry.License</span>
                                 }
+                                <div class="credit-links">
+                                    @foreach (var link in entry.Links)
+                                    {
+                                        @if (link.SafeUrl is { } url)
+                                        {
+                                            <a href="@url" target="_blank" rel="noopener noreferrer">@link.Label <span aria-hidden="true">↗</span></a>
+                                        }
+                                    }
+                                </div>
                             </div>
                         </article>
                     }

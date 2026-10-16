@@ -1,6 +1,7 @@
-import { getProfile, cancelProfileRequest } from "./profile.js?v=10";
+import { getProfile, cancelProfileRequest } from "./profile.js?v=14";
 import { captchaFetch } from "./captcha.js?v=3";
 import { antiforgeryFetch } from "./antiforgery.js?v=1";
+import { trackBackgroundVote } from "./optimistic-votes.js?v=2";
 
 const writes = new Map();
 
@@ -30,21 +31,26 @@ export async function submitCommentAction(commentId, action, text, key) {
 export function submitCommentVote(commentId, value, key) {
     const body = new FormData();
     body.set("value", value);
-    return submit(`/api/comment/${encodeURIComponent(commentId)}/like`, "POST", body, key, "comment_AddEditOrDeleteLike");
+    const finished = trackBackgroundVote("comment", commentId, value);
+    return submit(`/api/comment/${encodeURIComponent(commentId)}/like`, "POST", body, key, "comment_AddEditOrDeleteLike", true)
+        .then(json => { const response = JSON.parse(json); finished(response.status, response.body); return json; }, error => { finished(0); throw error; });
 }
 
 export function getCommentVote(commentId, key) {
     return getProfile(`/api/comment/${encodeURIComponent(commentId)}/userlike`, `${key}-current-vote`, false);
 }
 
-async function submit(path, method, body, key, captchaAction) {
+async function submit(path, method, body, key, captchaAction, persistOnNavigation = false) {
     const controller = new AbortController();
-    writes.get(key)?.abort();
-    writes.set(key, controller);
+    if (!persistOnNavigation) {
+        writes.get(key)?.abort();
+        writes.set(key, controller);
+    }
+    const timeout = persistOnNavigation ? setTimeout(() => controller.abort(), 180000) : null;
     try {
         const options = {
             method, body, credentials: "same-origin", cache: "no-store", redirect: "error",
-            headers: { Accept: "application/json" }, signal: controller.signal
+            headers: { Accept: "application/json" }, signal: controller.signal, keepalive: persistOnNavigation
         };
         const url = new URL(path, document.baseURI);
         const response = captchaAction ? await captchaFetch(url, options, captchaAction) : await antiforgeryFetch(url, options);
@@ -56,6 +62,7 @@ async function submit(path, method, body, key, captchaAction) {
             return JSON.stringify({ status: 0, body: "", cancelled: false });
         throw error;
     } finally {
+        clearTimeout(timeout);
         if (writes.get(key) === controller) writes.delete(key);
     }
 }

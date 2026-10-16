@@ -28,7 +28,7 @@ public partial class ResourceEditor : IAsyncDisposable
     private bool _focusInvalid;
     private int _activeTab;
     private bool _syncTabs;
-    private bool _focusTab;
+    private bool _loadPreviewMedia;
     private IReadOnlyDictionary<string, string> _authorNames = new Dictionary<string, string>();
     private SelectOptionDto[] _dependencyChoices = [];
     private ResourcePreview[] _existingPreviews = [];
@@ -60,23 +60,9 @@ public partial class ResourceEditor : IAsyncDisposable
     protected string PreviewInputId => $"resource-edit-previews-{_requestKey}";
     private string TabId(int index) => $"{FormId}-tab-{index}";
     private string PanelId(int index) => $"{FormId}-panel-{index}";
-    private void SelectTab(int index)
+    private void EnsurePreviewMedia(int tab)
     {
-        if (_saving || index < 0 || index >= TabTitles.Length) return;
-        _activeTab = index;
-        _syncTabs = true;
-    }
-    private void TabKeyDown(int index, KeyboardEventArgs args)
-    {
-        var next = args.Key switch
-        {
-            "ArrowRight" => (index + 1) % TabTitles.Length,
-            "ArrowLeft" => (index + TabTitles.Length - 1) % TabTitles.Length,
-            "Home" => 0, "End" => TabTitles.Length - 1, _ => -1
-        };
-        if (next < 0) return;
-        SelectTab(next);
-        _focusTab = true;
+        if (tab == 1) _loadPreviewMedia = true;
     }
     protected string SavedTitle => Mode == ResourceEditorMode.CreateVersion ? "Version uploaded successfully" : "Changes saved successfully";
     protected string SubmitLabel => _saving ? Mode == ResourceEditorMode.CreateVersion ? "Uploading…" : "Saving…"
@@ -88,8 +74,10 @@ public partial class ResourceEditor : IAsyncDisposable
         _saving = true;
         _message = null;
         _validationErrors = [];
+        StateHasChanged();
         try
         {
+            await _module.InvokeVoidAsync("beginSubmission", _lifetime.Token, FormId);
             var response = await _module.InvokeAsync<BrowserResponse>("submitEditor", _lifetime.Token,
                 FormId, ResourceId, VersionId, Mode.ToString(), _originalSelections, _requestKey, PreviewInputId);
             if (_disposed) return;
@@ -100,6 +88,7 @@ public partial class ResourceEditor : IAsyncDisposable
                 {
                     _activeTab = Math.Clamp(tab, 0, TabTitles.Length - 1);
                     _syncTabs = true;
+                    EnsurePreviewMedia(_activeTab);
                 }
                 _focusInvalid = true;
                 return;
@@ -135,7 +124,19 @@ public partial class ResourceEditor : IAsyncDisposable
                 _message = "The save response could not be received. Check the resource before submitting again.";
             }
         }
-        finally { _saving = false; }
+        finally
+        {
+            if (!_disposed && _module is not null)
+            {
+                try
+                {
+                    using var cleanup = new CancellationTokenSource(TimeSpan.FromSeconds(1));
+                    await _module.InvokeVoidAsync("endSubmission", cleanup.Token, FormId);
+                }
+                catch (Exception exception) when (exception is JSDisconnectedException or JSException or OperationCanceledException) { }
+            }
+            _saving = false;
+        }
     }
     protected void Reload() { _loadPending = true; _useAccessResource = false; _loading = true; _errorStatus = null; _errorBody = null; }
     protected void FileSelected(InputFileChangeEventArgs args)
@@ -154,9 +155,7 @@ public partial class ResourceEditor : IAsyncDisposable
         if (_syncTabs && !_saving && _module is not null)
         {
             _syncTabs = false;
-            var focus = _focusTab;
-            _focusTab = false;
-            try { await _module.InvokeVoidAsync("syncEditorTabs", _lifetime.Token, FormId, _activeTab, focus); }
+            try { await _module.InvokeVoidAsync("syncEditorTabs", _lifetime.Token, FormId, _activeTab, false); }
             catch (JSDisconnectedException) { }
             catch (OperationCanceledException) when (_disposed) { }
             catch (JSException exception) { Logger.LogDebug(exception, "The editor tab could not be focused."); }
@@ -175,15 +174,33 @@ public partial class ResourceEditor : IAsyncDisposable
         {
             if (_disposed) return;
             if (ResourceId <= 0) { _errorStatus = 404; return; }
-            _module ??= await JavaScript.InvokeAsync<IJSObjectReference>("import", _lifetime.Token, "./js/resource-editor.js?v=19");
-            if (_disposed) return;
             var userId = PageAccount?.Profile.UserId;
             if (string.IsNullOrWhiteSpace(userId)) { _errorStatus = 403; return; }
             var reuseAccess = _useAccessResource && PageAccount?.Resource?.Id == ResourceId;
             _resource = reuseAccess ? PageAccount?.Resource : null;
+            Dictionary<string, string>? initialReads;
+            if (_module is null)
+            {
+                var initial = await BrowserReadStartup.LoadAsync<Dictionary<string, string>>(JavaScript,
+                    "./js/resource-editor.js?v=25", "readEditorBootstrap",
+                    [ResourceId, _requestKey, Mode.ToString(), _resource is null], _requestKey, "cancelEditorRequest");
+                if (_disposed) { if (initial.Module is not null) await initial.Module.DisposeAsync(); return; }
+                if (initial.Cancelled || initial.Module is null) return;
+                _module = initial.Module;
+                initialReads = initial.Response;
+            }
+            else
+            {
+                var current = await BrowserReadStartup.ReadAsync<Dictionary<string, string>>(JavaScript, _module,
+                    "readEditorBootstrap", [ResourceId, _requestKey, Mode.ToString(), _resource is null], _requestKey, "cancelEditorRequest");
+                if (current.Cancelled) return;
+                initialReads = current.Response;
+            }
+            if (_disposed) return;
+            if (initialReads is null) { _errorStatus = 502; return; }
             if (_resource is null)
             {
-                var json = await _module.InvokeAsync<string>("getResource", _lifetime.Token, ResourceId, _requestKey);
+                var json = initialReads.GetValueOrDefault("resource") ?? "null";
                 if (_disposed) return;
                 var response = JsonSerializer.Deserialize<BrowserResponse>(json, JsonOptions);
                 if (!AcceptResponse(response)) return;
@@ -192,8 +209,8 @@ public partial class ResourceEditor : IAsyncDisposable
             _useAccessResource = false;
             if (_resource is null || _resource.Id != ResourceId) { _errorStatus = 502; return; }
             if (!ResourceManagementAccess.CanDisplay(_resource, userId)) { _errorStatus = 403; return; }
-            var dataLoad = LoadEditorDataAsync();
-            var optionsLoad = Mode == ResourceEditorMode.Resource ? LoadOptionsAsync() : Task.FromResult(true);
+            var dataLoad = LoadEditorDataAsync(initialReads);
+            var optionsLoad = Mode == ResourceEditorMode.Resource ? LoadOptionsAsync(initialReads.GetValueOrDefault("options")) : Task.FromResult(true);
             await Task.WhenAll(dataLoad, optionsLoad);
             if (_disposed || !await dataLoad || !await optionsLoad) return;
             if (Mode == ResourceEditorMode.EditVersion)
@@ -260,12 +277,19 @@ public partial class ResourceEditor : IAsyncDisposable
         if (_disposed) return;
         _disposed = true;
         _lifetime.Cancel();
+        try
+        {
+            using var cleanup = new CancellationTokenSource(TimeSpan.FromSeconds(1));
+            await BrowserReadStartup.CancelAsync(JavaScript, _requestKey, cleanup.Token);
+        }
+        catch (Exception exception) when (exception is JSDisconnectedException or JSException or OperationCanceledException) { }
         if (_module is not null)
         {
             try
             {
                 using var cleanup = new CancellationTokenSource(TimeSpan.FromSeconds(1));
                 await _module.InvokeVoidAsync("cancelEditorRequest", cleanup.Token, _requestKey);
+                await _module.InvokeVoidAsync("endSubmission", cleanup.Token, FormId);
                 await _module.DisposeAsync();
             }
             catch (Exception exception) when (exception is JSDisconnectedException or JSException or OperationCanceledException) { }

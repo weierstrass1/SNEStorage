@@ -25,7 +25,7 @@ export function initialize() {
         const button = event.target.closest("[data-report-trigger]");
         const menu = event.target.closest("details[data-report-menu]");
         closeMenus(menu);
-        if (button instanceof HTMLButtonElement) { event.preventDefault(); open(button); }
+        if (button instanceof HTMLButtonElement && !button.disabled) { event.preventDefault(); open(button); }
     });
     on(document, "keydown", event => {
         if (event.key !== "Escape" || host?.dialog.open) return;

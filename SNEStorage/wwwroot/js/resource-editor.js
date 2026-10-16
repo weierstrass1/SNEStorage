@@ -1,9 +1,8 @@
-import { getResource, getResourceOptions, getResourceSection, getResourceAccount, cancelResourceRequest } from "./resource-details.js?v=14";
-import { appendPreviews, previewCount, validatePreviews } from "./resource-previews.js?v=4";
-import { basicUploadError } from "./upload-validation.js?v=2";
-import { captchaFetch } from "./captcha.js?v=3";
-import { validateVersionInputs } from "./resource-version.js?v=2";
-import { validateResourceTextFields } from "./resource-form-validation.js?v=2";
+import { selectLocalTab } from "./local-controls.js?v=2";
+import { getResource, getResourceOptions, getResourceSection, getResourceAccount, cancelResourceRequest } from "./resource-details.js?v=18";
+import { endSubmission } from "./submission-progress.js?v=1";
+
+export { beginSubmission, endSubmission } from "./submission-progress.js?v=1";
 
 export { getResource, getResourceOptions, getResourceSection, getResourceAccount };
 
@@ -20,6 +19,10 @@ document.addEventListener("keydown", event => {
 });
 
 async function invalidInput(form, mode, previewInputId, original) {
+    const [{ previewCount, validatePreviews }, { basicUploadError }, { validateVersionInputs }, { validateResourceTextFields }] = await Promise.all([
+        import("./resource-previews.js?v=4"), import("./upload-validation.js?v=2"),
+        import("./resource-version.js?v=2"), import("./resource-form-validation.js?v=2")
+    ]);
     for (const field of form.elements) {
         if (typeof field.setCustomValidity === "function") field.setCustomValidity("");
     }
@@ -172,6 +175,7 @@ export async function submitEditor(formId, resourceId, versionId, mode, original
         if (data.get("RepositoryURL") === (original?.repositoryURL ?? "").trim()) data.delete("RepositoryURL");
         const keptCount = data.getAll("KeptPreviewIDs").length;
         appendSelectionChanges(data, original);
+        const { appendPreviews } = await import("./resource-previews.js?v=4");
         appendPreviews(data, previewInputId, Math.max(0, 20 - keptCount));
     } else if (mode === "CreateVersion") {
         url = `${root}/version/create/submit`;
@@ -198,6 +202,7 @@ export async function submitEditor(formId, resourceId, versionId, mode, original
     try {
         const captchaAction = mode === "Resource" ? "resource_edit"
             : mode === "CreateVersion" ? "resource_createVersion" : "resource_editVersion";
+        const { captchaFetch } = await import("./captcha.js?v=3");
         const response = await captchaFetch(url, {
             method, credentials: "same-origin", headers: { Accept: "application/json" },
             body: data, redirect: "error", signal: controller.signal
@@ -210,6 +215,7 @@ export async function submitEditor(formId, resourceId, versionId, mode, original
         throw error;
     } finally {
         if (submissions.get(requestKey) === controller) submissions.delete(requestKey);
+        endSubmission(formId);
     }
 }
 
@@ -234,20 +240,18 @@ export function focusInvalidEditor(formId) {
 }
 
 export function syncEditorTabs(formId, activeTab, focusTab) {
-    const form = document.getElementById(formId);
-    if (!form) return;
-    for (const panel of form.querySelectorAll("[data-editor-panel]")) {
-        if (Number(panel.dataset.editorPanel) === activeTab) continue;
-        for (const video of panel.querySelectorAll("video")) video.pause();
-        for (const picker of panel.querySelectorAll("[data-resource-picker]")) picker.dispatchEvent(new Event("resource-picker-dismiss"));
-    }
-    const tab = form.querySelectorAll("[role='tab']")[activeTab];
-    if (focusTab) tab?.focus({ preventScroll: true });
-    if (tab && tab.parentElement) {
-        const list = tab.parentElement;
-        const left = tab.offsetLeft - list.offsetLeft;
-        if (left < list.scrollLeft) list.scrollLeft = left;
-        else if (left + tab.offsetWidth > list.scrollLeft + list.clientWidth)
-            list.scrollLeft = left + tab.offsetWidth - list.clientWidth;
-    }
+    selectLocalTab(document.getElementById(formId), activeTab, focusTab);
+}
+
+// Start independent editor reads together, before returning their results to Blazor.
+export async function readEditorBootstrap(resourceId, key, mode, needsResource) {
+    const routes = mode === "Resource"
+        ? ["authors", "external-authors", "dependencies", "external-dependencies", "previews"]
+        : mode === "EditVersion" ? ["versions"] : [];
+    const entries = await Promise.all([
+        ...(needsResource ? [getResource(resourceId, key).then(value => ["resource", value])] : []),
+        ...(mode === "Resource" ? [getResourceOptions(key).then(value => ["options", value])] : []),
+        ...routes.map(route => getResourceSection(resourceId, route, key).then(value => [route, value]))
+    ]);
+    return Object.fromEntries(entries);
 }

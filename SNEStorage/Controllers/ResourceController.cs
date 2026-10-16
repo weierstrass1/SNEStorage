@@ -234,4 +234,24 @@ public class ResourceController(CacheService cacheService, ResourceService resou
         var result = await _communityService.GetRating(resourceId, ct);
         return this.GetActionResult(result);
     }
+    [EnableRateLimiting("writes")]
+    [HttpDelete("{resourceId:long}")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [RequireCaptcha("resource_delete", CaptchaPolicy.Always)]
+    public async Task<ActionResult> DeleteResource(
+        [FromRoute] long resourceId, CancellationToken ct = default)
+    {
+        var result = await _resourceService.Delete(resourceId, ct);
+        return this.GetActionResult(result);
+    }
+    [EnableRateLimiting("writes")]
+    [HttpDelete("{resourceId:long}/version/{versionId:long}")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [RequireCaptcha("resource_deleteVersion", CaptchaPolicy.Always)]
+    public async Task<ActionResult> DeleteVersion([FromRoute] long resourceId,
+        [FromRoute] long versionId, CancellationToken ct = default)
+    {
+        var result = await _versionService.DeleteVersion(resourceId, versionId, ct);
+        return this.GetActionResult(result);
+    }
 }

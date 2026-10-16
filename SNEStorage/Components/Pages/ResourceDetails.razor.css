@@ -3,13 +3,16 @@
 .detail-breadcrumb ::deep a { color: #cfb5f2; text-decoration: none; }
 .detail-breadcrumb > span:last-child { overflow-wrap: anywhere; }
 .detail-header { display: grid; gap: .5rem; }
+.version-deletion-notice { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; color: #d9c4ee; font-size: .8rem; }
+.version-deletion-notice button { padding: .4rem .7rem; border: 1px solid #9264b4; border-radius: 6px; background: #342044b8; color: #eedcff; font: inherit; cursor: pointer; }
+.version-deletion-notice button:focus-visible { outline: 2px solid #ffe14d; outline-offset: 3px; }
 .detail-title-and-rating { display: flex; min-width: 0; flex-wrap: wrap; align-items: center; gap: .5rem 1.2rem; }
 .detail-header ::deep .quality-seal { flex-shrink: 0; }
 .detail-rules-approved { margin: 0; color: #b4ebd7; font-size: .78rem; }
 .detail-repository-link { color: #dcc2ff; text-decoration: none; }
 .detail-repository-link:hover { text-decoration: underline; }
 .detail-title-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
-.detail-header-actions { display: flex; align-items: center; gap: .55rem; flex: 0 0 auto; align-self: flex-start; }
+.detail-header-actions { display: flex; align-items: center; flex-wrap: wrap; max-width: 100%; gap: .55rem; flex: 0 0 auto; align-self: flex-start; }
 .detail-header h1 { display: flex; align-items: center; gap: .6rem; min-width: 0; margin: 0; color: #f5edff; font: 900 clamp(1.65rem, 4vw, 2.4rem)/1.15 "Exo 2", sans-serif; letter-spacing: -.025em; overflow-wrap: anywhere; }
 .detail-header h1 > span { min-width: 0; }
 .detail-resource-name.has-quality-seal { color: #f5d475; text-shadow: 0 1px 2px #6b461a70; }
@@ -63,7 +66,7 @@
 .detail-total-downloads small { margin-left: .25rem; color: #b9a1cd; font-size: .7rem; }
 .detail-download { display: inline-flex; align-items: center; justify-content: center; gap: .7rem; min-height: 44px; padding: .65rem .9rem; border: 2px solid #10081c; border-radius: 4px; color: #291139; background: #ffe14d; box-shadow: 3px 3px 0 #6a2be0; font: .6rem/1.8 "Press Start 2P", monospace; text-decoration: none; }
 .detail-download:hover { color: #291139; background: #fff0a2; }
-.detail-previews { display: grid; justify-items: center; width: 100%; padding: .3rem 0; }
+.detail-previews { display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; width: 100%; min-width: 0; padding: .3rem 0; }
 .detail-previews h2 { text-align: center; }
 .detail-previews ::deep .media-carousel { margin-inline: auto; }
 .detail-version-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .8rem; }

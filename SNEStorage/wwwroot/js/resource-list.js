@@ -1,4 +1,5 @@
-import { getProfile, cancelProfileRequest } from "./profile.js?v=10";
+import { readResourceOptions } from "./resource-options.js?v=1";
+import { getProfile, cancelProfileRequest } from "./profile.js?v=14";
 import { getAccountSession, watchAccountSession } from "./account-session.js?v=2";
 
 // Shares the existing session request; the birthday never comes from a public profile.
@@ -92,7 +93,7 @@ export async function findPublicResources(key, filter, amount, page) {
         if (publicRequests.get(key) === controller) publicRequests.delete(key);
     }
 }
-export function getOptions(key) { return read("/api/resource/options", `${key}-options`); }
+export function getOptions(key) { return readResourceOptions().then(response => JSON.stringify(response)); }
 export function cancelList(key) { cancelProfileRequest(`${key}-list`); }
 
 const watchers = new Map();

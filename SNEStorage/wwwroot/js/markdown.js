@@ -35,19 +35,12 @@ export function renderMarkdown(element, source, excerpt = false) {
         throw new Error("Safe Markdown rendering is unavailable.");
 
     const fragment = DOMPurify.sanitize(parser.parse(String(source ?? "")), sanitizeOptions);
-    if (excerpt) {
-        // CSS limits rendered lines at the current width/font size; no character truncation.
-        // Use plain text from sanitized markup so headings, code and tables cannot expand a preview.
-        const copy = fragment.cloneNode(true);
-        for (const block of copy.querySelectorAll("p,li,blockquote,h1,h2,h3,h4,h5,h6,pre,tr")) block.append("\n");
-        for (const cell of copy.querySelectorAll("th,td")) cell.append(" ");
-        for (const lineBreak of copy.querySelectorAll("br,hr")) lineBreak.replaceWith("\n");
-        const plainText = (copy.textContent ?? "").replace(/\r\n?/g, "\n")
-            .replace(/[^\S\n]+/g, " ").replace(/\n{3,}/g, "\n\n").trim();
-        element.replaceChildren(document.createTextNode(plainText));
-        return;
-    }
+    // Excerpts use the same sanitized formatting as the full article.
+    // Their line/height limit belongs to CSS, after Markdown has been parsed.
     for (const link of fragment.querySelectorAll("a")) {
+        // The full article remains keyboard accessible through the card's Read link;
+        // clipped links must not pull hidden preview lines into view when tabbing.
+        if (excerpt) link.tabIndex = -1;
         const href = link.getAttribute("href");
         if (!href) continue;
         try {
@@ -66,7 +59,7 @@ export function renderMarkdown(element, source, excerpt = false) {
     for (const table of fragment.querySelectorAll("table")) {
         const scroll = document.createElement("div");
         scroll.className = "markdown-table-scroll";
-        scroll.tabIndex = 0;
+        scroll.tabIndex = excerpt ? -1 : 0;
         scroll.setAttribute("role", "region");
         scroll.setAttribute("aria-label", "Scrollable table");
         table.replaceWith(scroll);

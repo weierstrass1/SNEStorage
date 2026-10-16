@@ -186,19 +186,26 @@ public partial class ResourceCommentList : IAsyncDisposable
         if (!_actions.TryGetValue(comment.Id, out var state)) _actions[comment.Id] = state = new();
         _busy = true;
         state.Message = null;
+        ReplaceComment(CommentPresentation.WithVote(comment, value));
+        StateHasChanged();
         try
         {
             var result = await _api.VoteAsync(comment, value, userId);
             if (_disposed || context != _contextVersion) return;
-            if (!result.Success) { state.Message = result.Message; return; }
-            // Only display the result confirmed by CommentController.
+            if (!result.Success)
+            {
+                ReplaceComment(comment);
+                state.Message = result.Message ?? "Your vote could not be saved. Please try again.";
+                return;
+            }
+            // Reconcile the optimistic state using the original counts, without adding twice.
             var confirmed = value == LikeValues.Remove || result.Value is null ? LikeValues.Remove
                 : result.Value.Value ? LikeValues.Like : LikeValues.Dislike;
             ReplaceComment(CommentPresentation.WithVote(comment, confirmed));
         }
         finally
         {
-            if (!_disposed && context == _contextVersion) _busy = false;
+            if (!_disposed && context == _contextVersion) { _busy = false; StateHasChanged(); }
         }
     }
 

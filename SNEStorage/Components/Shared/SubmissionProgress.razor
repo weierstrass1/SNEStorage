@@ -1,0 +1,10 @@
+<dialog id="@(FormId + "-progress")" class="submission-progress" closedby="none"
+        aria-labelledby="@(FormId + "-progress-title")" aria-describedby="@(FormId + "-progress-description")">
+    <div class="submission-progress-content">
+        <p class="submission-progress-kicker">SNESTORAGE</p>
+        <h2 id="@(FormId + "-progress-title")">@Title</h2>
+        <BoxLoader Label="Processing your request…" />
+        <p id="@(FormId + "-progress-description")">Please wait while we process your submission. Keep this page open until it finishes.</p>
+    </div>
+</dialog>
+

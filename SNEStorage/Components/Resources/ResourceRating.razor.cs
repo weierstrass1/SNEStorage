@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.Json;
 using Microsoft.AspNetCore.Components;
 using SNEStorage.DTOs;
 
@@ -7,7 +8,6 @@ namespace SNEStorage.Components.Resources;
 public partial class ResourceRating
 {
     protected static readonly CultureInfo DisplayCulture = CultureInfo.GetCultureInfo("en-US");
-    private int _hoveredValue;
     private long? _previousResourceId;
     private string? _previousUserId;
     private long? _previousRating;
@@ -27,7 +27,7 @@ public partial class ResourceRating
     protected string RatingLabel => $"{Average.ToString("0.#", DisplayCulture)} out of 5 stars";
     protected bool CanSubmit => PermissionsReady && IsAuthenticated && !IsOwnResource && !IsPrivate && OnRate.HasDelegate;
     protected int SelectedValue { get; private set; }
-    protected int HighlightedValue => _hoveredValue > 0 ? _hoveredValue : SelectedValue;
+    protected string VoteState => JsonSerializer.Serialize(new { mode = "rating", context = $"rating:{ResourceId}:{CurrentUserId}", average = Average, count = VoteCount, myRating = Rating?.MyRating, selected = SelectedValue });
     protected override void OnParametersSet()
     {
         if (_previousResourceId == ResourceId && _previousUserId == CurrentUserId && _previousRating == Rating?.MyRating) return;
@@ -35,10 +35,7 @@ public partial class ResourceRating
         _previousUserId = CurrentUserId;
         _previousRating = Rating?.MyRating;
         SelectedValue = (int)(Rating?.MyRating is >= 1 and <= 5 ? Rating.MyRating.Value : 0);
-        _hoveredValue = 0;
     }
-    protected void Hover(int value) => _hoveredValue = value;
-    protected void ClearHover() => _hoveredValue = 0;
     protected void Select(int value) => SelectedValue = value;
     protected Task SaveAsync() => CanSubmit && !Saving && SelectedValue is >= 1 and <= 5
         ? OnRate.InvokeAsync(SelectedValue) : Task.CompletedTask;

@@ -16,7 +16,7 @@ public partial class PasswordResetForm : IAsyncDisposable
     };
     private IJSObjectReference? _module;
     private ErrorCopy? _error;
-    private bool _saving, _succeeded, _showPasswords, _disposed;
+    private bool _saving, _succeeded, _disposed;
 
     [Parameter] public bool RequestEmail { get; set; }
     [Parameter] public string? UserId { get; set; }
@@ -26,7 +26,6 @@ public partial class PasswordResetForm : IAsyncDisposable
     protected object FormModel => RequestEmail ? _emailForm : _passwordForm;
     protected bool HasCompleteLink => RequestEmail ||
         !string.IsNullOrWhiteSpace(UserId) && !string.IsNullOrWhiteSpace(Token);
-    protected string PasswordInputType => _showPasswords ? "text" : "password";
     protected string Heading => RequestEmail ? "Reset your password" : "Set a new password";
     protected string Introduction => RequestEmail
         ? "Enter your account email to receive a password reset link."
@@ -38,7 +37,6 @@ public partial class PasswordResetForm : IAsyncDisposable
         _passwordForm.Token = Token ?? "";
     }
 
-    protected void TogglePasswords() => _showPasswords = !_showPasswords;
     protected void TryAnotherEmail() { _succeeded = false; _error = null; }
 
     protected async Task SubmitAsync()
@@ -60,7 +58,6 @@ public partial class PasswordResetForm : IAsyncDisposable
             {
                 _passwordForm.NewPassword = "";
                 _passwordForm.ConfirmPassword = "";
-                _showPasswords = false;
             }
             else
             {

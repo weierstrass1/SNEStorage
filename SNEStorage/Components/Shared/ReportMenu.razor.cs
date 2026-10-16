@@ -9,6 +9,8 @@ public partial class ReportMenu
     [Parameter] public string? UserId { get; set; }
     [Parameter] public bool? HasPreviews { get; set; }
     [Parameter] public bool? HasVersions { get; set; }
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public string? DisabledReason { get; set; }
     private string PreviewsValue => BooleanValue(HasPreviews);
     private string VersionsValue => BooleanValue(HasVersions);
     private static string BooleanValue(bool? value) => value is null ? "unknown" : value.Value ? "true" : "false";

@@ -22,5 +22,9 @@ public sealed class CreditEntry
     public string By { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public string License { get; set; } = string.Empty;
+    public string Image { get; set; } = string.Empty;
+    public string ImageAlt { get; set; } = string.Empty;
+    public string? SafeImageUrl => !string.IsNullOrWhiteSpace(Image) && Image.StartsWith("/images/", StringComparison.Ordinal) &&
+        !Image.Contains('\\') && !Image.Contains("..", StringComparison.Ordinal) ? Image : null;
     public List<AboutLink> Links { get; set; } = [];
 }

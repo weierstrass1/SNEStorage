@@ -1,8 +1,10 @@
 <div class="news-feed" aria-busy="@(_initializing || _loading)">
-    @foreach (var item in _items)
-    {
-        <NewsCard @key="item.Id" Item="item" Compact="Compact" CanEdit="CanEdit" />
-    }
+    <CascadingValue Name="NewsFeedContext" Value="_reactionsContext">
+        @foreach (var item in _items)
+        {
+            <NewsCard @key="item.Id" Item="item" Compact="Compact" CanEdit="CanEdit" />
+        }
+    </CascadingValue>
     @if (_initializing || _loading)
     {
         <BoxLoader Label="@(_items.Count == 0 ? "Loading news…" : "Loading more news…")" Compact="@(_items.Count > 0)" />

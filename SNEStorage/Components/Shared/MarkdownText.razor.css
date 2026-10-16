@@ -1,5 +1,10 @@
 .markdown-content { display: block; min-width: 0; max-width: 100%; color: inherit; font: inherit; line-height: inherit; white-space: normal; overflow-wrap: anywhere; }
 .markdown-fallback { white-space: pre-wrap; }
+.markdown-content > [data-markdown-source][hidden], .markdown-content[data-markdown-ready] > .markdown-placeholder { display: none !important; }
+.markdown-placeholder { display: grid; gap: .4em; padding-block: .2em; }
+.markdown-placeholder span { height: .6em; width: 90%; border-radius: 4px; background: #a480c91f; }
+.markdown-placeholder span:last-child { width: 65%; }
+.markdown-rendered.markdown-plain { white-space: pre-wrap; }
 .markdown-fallback[hidden], .markdown-rendered[hidden] { display: none !important; }
 .markdown-rendered { min-width: 0; }
 .markdown-rendered ::deep > :first-child { margin-top: 0; }
@@ -29,6 +34,26 @@
 .markdown-rendered ::deep th { color: #eee2ff; background: #b68ae818; font-weight: 700; }
 .markdown-rendered ::deep tr:nth-child(even) { background: #b68ae808; }
 .markdown-compact:not(.markdown-excerpt) { max-height: 6.6em; overflow: hidden; }
-.markdown-excerpt .markdown-rendered, .markdown-excerpt .markdown-fallback { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: var(--markdown-lines); line-clamp: var(--markdown-lines); max-height: calc(var(--markdown-lines) * 1lh); overflow: hidden; white-space: pre-line; }
-.markdown-compact .markdown-rendered ::deep h1, .markdown-compact .markdown-rendered ::deep h2, .markdown-compact .markdown-rendered ::deep h3 { font-size: 1.05em; }
+.markdown-excerpt .markdown-rendered, .markdown-excerpt .markdown-fallback { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: var(--markdown-lines); line-clamp: var(--markdown-lines); max-height: calc(var(--markdown-lines) * 1lh); overflow: hidden; }
+.markdown-excerpt .markdown-fallback { white-space: pre-line; }
+.markdown-excerpt .markdown-rendered { white-space: normal; }
+/* Keep block formatting on the same line grid so previews remain bounded. */
+.markdown-excerpt .markdown-rendered ::deep p,
+.markdown-excerpt .markdown-rendered ::deep ul,
+.markdown-excerpt .markdown-rendered ::deep ol,
+.markdown-excerpt .markdown-rendered ::deep li { margin-top: 0; margin-bottom: 0; }
+.markdown-excerpt .markdown-rendered ::deep h1,
+.markdown-excerpt .markdown-rendered ::deep h2,
+.markdown-excerpt .markdown-rendered ::deep h3,
+.markdown-excerpt .markdown-rendered ::deep h4,
+.markdown-excerpt .markdown-rendered ::deep h5,
+.markdown-excerpt .markdown-rendered ::deep h6 { margin: 0; font-size: 1em; line-height: inherit; }
+.markdown-excerpt .markdown-rendered ::deep blockquote { margin: 0; padding: 0 .65em; }
+.markdown-excerpt .markdown-rendered ::deep pre { margin: 0; padding: 0 .5em; max-height: none; overflow: hidden; white-space: pre-wrap; }
+.markdown-excerpt .markdown-rendered ::deep pre code { white-space: pre-wrap; overflow-wrap: anywhere; }
+.markdown-excerpt .markdown-rendered ::deep .markdown-table-scroll { margin: 0; overflow: hidden; }
+.markdown-excerpt .markdown-rendered ::deep table { min-width: 0; font-size: 1em; }
+.markdown-excerpt .markdown-rendered ::deep th,
+.markdown-excerpt .markdown-rendered ::deep td { padding: 0 .35em; }
+.markdown-compact:not(.markdown-excerpt) .markdown-rendered ::deep h1, .markdown-compact:not(.markdown-excerpt) .markdown-rendered ::deep h2, .markdown-compact:not(.markdown-excerpt) .markdown-rendered ::deep h3 { font-size: 1.05em; }
 @media (forced-colors: active) { .markdown-rendered ::deep blockquote, .markdown-rendered ::deep code, .markdown-rendered ::deep pre, .markdown-rendered ::deep .markdown-table-scroll { background: Canvas; color: CanvasText; border-color: CanvasText; } .markdown-rendered ::deep a { color: LinkText; } }

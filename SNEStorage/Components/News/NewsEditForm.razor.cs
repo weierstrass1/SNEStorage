@@ -35,7 +35,7 @@ public partial class NewsEditForm : IAsyncDisposable
         var dto = new NewsEditDTO { Title = _form.Title.Trim(), Text = _form.Text.Trim() };
         try
         {
-            _module ??= await JavaScript.InvokeAsync<IJSObjectReference>("import", _lifetime.Token, "./js/news.js?v=7");
+            _module ??= await JavaScript.InvokeAsync<IJSObjectReference>("import", _lifetime.Token, "./js/news.js?v=9");
             if (_disposed) return;
             var response = await new NewsApiClient(_module, _requestKey).EditAsync(Item.Id, dto, _lifetime.Token);
             if (_disposed) return;

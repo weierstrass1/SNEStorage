@@ -1,7 +1,10 @@
 import { antiforgeryFetch } from "./antiforgery.js?v=1";
-import { captchaFetch } from "./captcha.js?v=3";
 import { getAccountSession } from "./account-session.js?v=2";
-export { watchAccount } from "./account-navigation.js?v=9";
+import { trackBackgroundVote } from "./optimistic-votes.js?v=2";
+export async function watchAccount(receiver) {
+    const { watchAccount } = await import("./account-navigation.js?v=10");
+    return watchAccount(receiver);
+}
 
 const requests = new Map();
 const watchers = new Map();
@@ -15,27 +18,33 @@ export function editNews(key, newsId, dto) {
 }
 
 export async function submitNewsVote(key, newsId, value, userId) {
+    // Votes belong to the user's action, not the lifetime of the rendered card.
+    // dispose(key) cancels reads/edit requests only; this small POST can finish after navigation.
     const controller = new AbortController();
-    requests.set(key, controller);
+    const timeout = setTimeout(() => controller.abort(), 180000);
+    const finished = trackBackgroundVote("news", newsId, value);
+    let result;
     try {
         const account = await getAccountSession(controller.signal);
-        if (controller.signal.aborted) return { status: 0, body: "" };
+        if (controller.signal.aborted) return result = { status: 0, body: "" };
         if (account.status !== 200 || JSON.parse(account.body).userId !== userId)
-            return { status: 401, body: JSON.stringify("NewsController-Unauthorized") };
+            return result = { status: 401, body: JSON.stringify("NewsController-Unauthorized") };
         const body = new FormData();
         body.set("value", value);
+        const { captchaFetch } = await import("./captcha.js?v=3");
         const response = await captchaFetch(`/api/news/${encodeURIComponent(newsId)}/like`, {
             method: "POST", body, credentials: "same-origin", cache: "no-store", redirect: "error",
-            headers: { Accept: "application/json" }, signal: controller.signal
+            headers: { Accept: "application/json" }, signal: controller.signal, keepalive: true
         }, "news_AddEditOrDeleteLike");
         if (response.status === 401) window.dispatchEvent(new Event("snestorage-session-rejected"));
-        return { status: response.status, body: await response.text() };
+        return result = { status: response.status, body: await response.text() };
     } catch (error) {
         if (controller.signal.aborted || error.name === "AbortError" || error instanceof TypeError)
-            return { status: 0, body: "" };
+            return result = { status: 0, body: "" };
         throw error;
     } finally {
-        if (requests.get(key) === controller) requests.delete(key);
+        clearTimeout(timeout);
+        finished(result?.status ?? 0, result?.body);
     }
 }
 

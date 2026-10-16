@@ -1,5 +1,22 @@
 # Resource submission frontend
 
+## Submission progress and input protection
+
+Create resource, resource editing, and version submission/editing open the shared
+SubmissionProgress native dialog with BoxLoader while a submission is processed.
+The saving guard is set before asynchronous validation and rendered explicitly,
+so repeated submits cannot start concurrent validations or duplicate uploads.
+The browser opens this dialog before CAPTCHA, allowing the verification dialog
+to appear above it. Native modal inertness blocks clicks and keyboard interaction
+with the page; Escape does not dismiss an in-flight submission indicator.
+
+Form fields remain included in FormData: do not replace inertness with disabled
+fieldsets, because disabled controls are omitted from multipart submissions.
+The indicator closes on validation failure, CAPTCHA cancellation, response/error,
+and page disposal. Network finally blocks also close it in the browser without
+waiting for another SignalR round trip. Existing fields and selected files are
+preserved on failures; no mutation retries or fake upload percentages are added.
+
 ## Comment read contract
 
 CommentApiClient reads CommentReadDto from GET /api/comment/resource/{resourceId}
@@ -12,8 +29,9 @@ Mutation responses keep their existing controller contracts: new resource commen
 return ResourceComments, replies return CommentComment, and votes return LikeUsers.
 CommentPresentation adapts a newly created comment to the read DTO and replaces
 immutable DTOs after confirmed actions. It has no database or business service access.
-Votes update only after the controller confirms success; the GET remains the source
-for aggregate counts after refresh. Deleted comments are shown only while HasReplies
+Votes update optimistically in the browser and component state, restoring the
+previous state on failure. The GET remains the source for aggregate counts after
+refresh. Deleted comments are shown only while HasReplies
 is true. Edit/delete refresh the loaded pages without repeating the mutation.
 
 ## Browser upload validation
@@ -182,13 +200,45 @@ Never expose Storage as an unrestricted static-file directory.
 ResourceMediaCarousel displays one preview at a time. Video metadata can load when
 the slide opens, but video bytes are fetched only after pressing Play; the native
 player provides playback, pause, seeking and volume. Preview downloads are bounded
-to 5 MB. Switching previews cancels obsolete requests and releases the previous
-object URL; disposal releases it too. A first-frame video poster requires
+to 5 MB. The carousel keeps the current image and the immediately previous/next
+images in browser memory, with protected downloads and decoded images ready for
+navigation. Neighbor loading starts after the current slide is ready; video/audio
+bytes are not prefetched. Repeated visits within that three-slide window reuse
+the object URL without downloading again. Leaving that window aborts obsolete
+requests and revokes their URLs; disposal releases the entire window. Only small
+file metadata crosses SignalR for initialization/parameter changes, never image bytes.
+
+The image remains up to 256 × 224, centered, with smaller side previews fading
+toward the outer edges. Arrow buttons or the side previews move the carousel;
+dots select any slide. A short directional transition respects reduced-motion
+preferences. Arrows, indicators, side previews, and keyboard navigation are handled
+by resource-carousel.js directly in the browser. No Blazor click handler or .NET
+callback is involved in changing slides. Cached images are applied synchronously
+in the click handler, before awaiting a request; images not ready yet show a loader.
+Video and audio use the same browser control path, preserving Play-only downloads
+and stopping playback when the active slide changes. ResourceAudioPreview provides
+the styled audio host in BrowserManaged mode; other usages keep their usual Blazor
+initialization. Request generations prevent stale downloads/imports from replacing
+a newer slide, and detached carousels release listeners, players, requests and URLs.
+On portrait screens up to 767px, side previews are hidden and the image carousel
+uses the compact single-slide width, capped at its container. Neighbor preloading,
+arrows, and dots remain available. Audio/video players also stay within the
+available width; the preview section's grid allows shrinking without widening
+the page.
+A first-frame video poster requires
 a server-generated thumbnail/URL; the current File/ResourcePreview models provide no
 poster field. Until one is supplied, the UI displays a Play placeholder without
 downloading video data automatically.
 
 ResourceReleaseList displays release history and individual download links.
+It also shows Delete version to verified contributors and staff. The last release
+is always protected, including for staff; sealed releases are protected from
+ordinary contributors. ResourceDeleteButton provides the confirmation, disabled
+reason tooltip, captcha and DELETE transport for both resources and versions.
+Version deletion uses DELETE /api/resource/{resourceId}/version/{versionId} and
+captcha action resource_deleteVersion. Successful deletion refreshes the latest
+release, complete history, totals and management permissions while keeping the
+resource instance and comment drafts. No full-page navigation is used.
 ResourceCreated already redirects to `/Resource/{id}` after three seconds and cancels
 that redirect when disposed; its implementation was kept.
 
@@ -256,7 +306,7 @@ The backend must still validate selected user IDs and remove duplicate author as
   Create and Edit deserialize ResourceCreateOptionsDto directly, with its
   ResourceTypeDTO entries. Types are grouped by CategoryId/CategoryName from
   GET /api/resource/options. Each
-  category starts collapsed and shows a selected/total count. Clicking a row label
+  category starts collapsed and shows only an X selected count. Clicking a row label
   toggles its checkbox. Empty category names use the neutral label Other types.
 - ResourceContentWarnings: shared Content panel for CreateResource and ResourceEditor;
   consistent vertical selectable rows, labels and multipart boolean names.
@@ -264,10 +314,12 @@ The backend must still validate selected user IDs and remove duplicate author as
   resource creation and for version creation/editing. Resource editing does not
   modify version quality fields. Uses the guide's gold title, animated seal and
   optional review explanation, with a /SealOfQuality link that opens a new tab.
-- ResourcePicker: shared button and floating options panel. Blazor owns open/closed
-  state, click/hover/Escape actions and the hidden/aria-expanded attributes. JavaScript enhances outside-click
-  and focus-leave dismissal, Escape dismissal with focus restoration, and touch support.
-  resource-pickers.js contains only browser dropdown and focus behavior.
+- ResourcePicker: shared button and floating options panel. resource-pickers.js owns
+  opening, hover, dismissal, placement, focus and aria-expanded in the browser. It is
+  loaded once by App, with delegated listeners and cleanup when a picker disappears.
+  The component renders initial closed attributes; subsequent Blazor renders leave
+  browser state untouched. Native labels keep checkbox selection instant; bound values
+  and search results still belong to Blazor. The game choice closes its panel locally.
 - ResourceTokenInput: comma/Enter input, removable tags and duplicate suppression.
 - ResourcePreviewPicker: local media selection, thumbnail display and removal.
 - ResourceDependencyPicker: remote resource search after two characters/300ms,
@@ -318,9 +370,9 @@ multipart requests to the ResourceController actions listed below.
 - Community author names use UserSummary.UsernameColor (validated hex, matching
   the existing profile presentation) and link to /Profile/{userId} using the summary ID.
 - ResourceRating displays five empty stars, 0 / 5 and Not rated when no votes exist.
-  Rated resources show their average and vote count from Score.ScoresUsers. Logged-in
-  users can preview a 1–5 selection; Save rating is disabled until a rating contract
-  is provided. It does not alter the returned score or persist a fake vote locally.
+  Rated resources show the aggregate and own vote from RatingReadDto. Eligible
+  logged-in users can preview a 1–5 selection and save it. The browser immediately
+  updates the summary; a failed save restores the previous rating and shows an error.
 - Images/GIFs fit within a 256 x 224 stage. Video bytes still load only on Play;
   playback expands the carousel up to 640px, constrained to the available width.
   Switching to Version history pauses any playing preview.
@@ -413,8 +465,11 @@ No controller was invoked to mutate live resource data during this work.
   Internal dependency
   names and links use `ResourceDependencyViewDTO`. Ratings use `RatingReadDto`'s
   aggregate and current user's vote, without receiving the full vote collection.
-- Saving a rating refreshes only `/rating`. A failed summary refresh does not imply
-  that the successful rating submission failed.
+- Saving a rating updates its summary optimistically and validates the returned
+  ScoreUsers. No additional GET is required for each successful save; votes from
+  other users arrive on the next read. Vote POSTs survive internal navigation;
+  disposing the view cancels reads, without aborting an already started vote.
+  See `docs/navegacion-y-votos-2026-10-16.md` for lifecycle and failure handling.
 - `/versions` loads on opening Version history. It also loads for authenticated
   visitors whose contributor status is not yet confirmed, because the current API
   does not provide a lightweight permission result for previous version submitters.
@@ -522,3 +577,35 @@ The cover renders before the list arrives. There is one resource query, no optio
 profile checks, previews or per-resource queries in this component. Failed loads
 have a retry button; leaving the page aborts only this feed's request. No backend
 files or DTOs were changed for the Home implementation.
+
+## Local presentation controls (October 16, 2026)
+
+local-controls.js handles resource Create/Edit tabs, previous/next, the detail tabs,
+and the resource filter disclosure without a circuit round trip. The initial tab is
+specified in Razor with static attributes; validation can explicitly select a tab via
+syncTabs/syncEditorTabs. Changing tabs preserves input/file DOM nodes. History and
+existing preview media load lazily on first opening; those events load data only.
+ResourceListValues uses a local toggle after its items for Read more/Show less.
+Authors use a horizontal wrapping list in both landing cards and resource rows. ResourceTypePicker prepares
+categories only when its options catalog changes, rather than on each form update.
+
+## Read startup and public options
+
+BrowserReadStartup/read-startup.js perform module import and the initial GET in one
+interop call. The returned JS module reference is retained for later actions. A
+cancelled/disposed view releases its initial read; writes retain their existing
+owners. Responses above 12 KiB use IJSStreamReference up to 8 MiB; this avoids a
+large combined bootstrap message without changing hub configuration. Existing
+editor/access rechecks use the same response envelope.
+
+resource-options.js shares an in-flight catalog request and caches a valid public
+catalog for five minutes in this tab's memory. Create, Edit and list filters use the
+same module instance. No resource/profile/permission response is cached there.
+The access guard preloads form modules and warms options after a successful account
+read. The editor's browser bootstrap requests independent collections together;
+its C# validation of resource identity, permissions and original selections remains.
+ResourceDetails starts its overview reads after the main GET succeeds and consumes
+those promises per section. This does not add a backend overview endpoint.
+
+JS object/stream references use the supported Blazor interop API:
+https://learn.microsoft.com/en-us/aspnet/core/blazor/call-dotnet-from-javascript

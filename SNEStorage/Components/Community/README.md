@@ -34,5 +34,6 @@ separate contact link, which is configured in `privacy-policy.json`.
 Community.razor contains the markup, Community.razor.css the appearance, and
 Community.razor.cs only selects the file and load-error text. CommunityDocument
 is a frontend presentation type, not an EF model or API DTO. StaticDocumentPage
-already handles loading the static JSON, retries and cancellation in the browser;
+reads the static JSON locally during initialization, including it in the first
+render without a browser JSON request or shared server cache, and handles retries;
 this page adds no controller, service, database access or account requirement.

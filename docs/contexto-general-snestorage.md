@@ -27,6 +27,7 @@ SNEStorage es un archivo comunitario de recursos relacionados con **Super Ninten
 El creador es **anonimzwx**. Su perfil en el sitio usa el ID público `79b39789-949b-4e0a-9ef9-78eabaf4c3c5`. About debe enlazar a ese perfil y usar sus datos públicos, color y avatar. Sus redes personales no deben ocupar el footer general.
 
 `/Credits`, en Info después de About, acredita al creador con su perfil público y a los proyectos externos. Se edita desde `wwwroot/Content/credits.json`. Flips/Alcaro figura como referencia del aplicador independiente en JavaScript; Telinc1 y snes_spc/Shay Green figuran como código adaptado para audio. Incluye enlaces a proyectos, licencia y fuente local del reproductor.
+Leonardo Pinto figura como autor del logo, con enlace a `https://www.leopintoart.cl/` y una copia local del retrato de su página About en `/images/credits/leonardo-pinto.jpg`. La sección Special thanks agradece a quienes probaron el proyecto y dieron feedback. Ambos créditos se editan desde el mismo JSON.
 
 El sitio ya se publicó en **https://snestorage.dev**, alojado en **Monster.ASP**, con SQL Server. El propietario indicó que los servidores están en Estados Unidos. Esto no establece su país de residencia ni el domicilio legal del proyecto.
 
@@ -196,7 +197,7 @@ Comentarios se leen como **CommentReadDto**, con agregados Likes/Dislikes, MyVot
 - Publicar raíz: `POST /api/resource/{id}/Comment/Submit`.
 - Puntuar recurso: `POST /api/resource/{id}/Score/Submit/{value}`.
 
-Los botones de like/dislike muestran el estado confirmado. Pulsar el mismo voto lo quita. No mostrar controles para votar comentarios propios, borrados o sin sesión. No permitir responder comentarios borrados. Un comentario borrado sin respuestas se oculta; si conserva respuestas, mostrar un placeholder.
+Los botones de like/dislike y las estrellas responden de forma optimista en el navegador y el componente, y restauran el estado previo si falla el guardado. Pulsar el mismo like/dislike lo quita. Las peticiones de votos siguen al cambiar de sección y no se abortan al desmontar la vista; errores posteriores se notifican desde el layout persistente. No mostrar controles para votar comentarios propios, borrados o sin sesión. No permitir responder comentarios borrados. Un comentario borrado sin respuestas se oculta; si conserva respuestas, mostrar un placeholder.
 
 Mostrar username/color, avatar, publicación y edición. Reply abre la caja y al publicar la cierra; desplazar hacia el nuevo comentario. Las listas y respuestas cargan más al hacer scroll, con paginación debajo. El servicio admite comentarios fuera de recursos: no asumir que cualquier comentario pertenece a uno.
 
@@ -299,7 +300,15 @@ Permite títulos, listas, citas, tablas, enlaces y código. HTML incrustado se m
 
 ## 12. Reglas, sello y contenido estático
 
-Reglas, sello, comunidad, about, donaciones y privacidad usan JSON público y componentes de presentación. StaticDocumentPage carga el documento desde el navegador, maneja retry/cancelación y anclas. No necesitan tablas de reglas.
+Rendimiento revisado el 16 de octubre: producción usa WebSocket confirmado; el
+retardo de navegación de InteractiveServer persiste incluso en páginas estáticas.
+Ver `docs/rendimiento-produccion-2026-10-16.md` para mediciones y próximos cambios.
+NewsFeed comparte un módulo/monitor de sesión con sus tarjetas mediante
+NewsFeedContext; no volver a crear un watcher por noticia. Las lecturas principales
+de recursos/listas arrancan sin esperar a monitores de cuenta ni RPCs separadas de
+cancelación. No se modificó backend ni se agregó caché de respuestas en esa revisión.
+
+Reglas, sello, comunidad, about, donaciones, créditos y privacidad usan JSON público y componentes de presentación. StaticDocumentPage lee el JSON local de wwwroot al inicializar y entrega el contenido desde el primer render, sin fetch del navegador ni caché compartida del servidor. Maneja retry/cancelación; solo los enlaces con fragmento necesitan JS para ir al ancla. No necesitan tablas de reglas.
 
 - Reglas por secciones con letras y numeración contextual. Índice debe navegar a anclas; números no son botones.
 - Solo material pertinente a SNES. No material ilegal, hostigamiento, spam, enlaces maliciosos, previews engañosas ni subida sin permiso. Clasificar con precisión, acreditar todos los autores y aplicar flags sensibles.
@@ -363,3 +372,24 @@ La compilación de la web revisada el 13 de octubre terminó con **0 errores y 5
 Mensaje sugerido para una conversación nueva:
 
 > Lee docs/contexto-general-snestorage.md y los archivos actuales relacionados con la tarea. El backend lo modifico yo: puedes revisarlo y darme los cambios necesarios, pero tú implementas el frontend. Conserva los contratos y el diseño aprobado. No repitas pendientes históricos sin comprobar si ya se corrigieron. Empecemos por [tarea concreta].
+
+### Interacción local de UI (16 de octubre de 2026)
+
+El lateral, dropdowns ResourcePicker, pestañas Create/Edit/ResourceDetails, apertura
+de filtros y Read more ya responden en el navegador. No volver a añadir onclick de
+Blazor para su apertura/cierre: eso devuelve la demora de red a cada interacción.
+local-controls.js y resource-pickers.js manejan solo estado visual; no permisos ni
+escrituras. El historial y las previews de edición siguen cargándose al abrir su tab.
+El diagnóstico y los límites de la navegación Interactive Server están en
+`docs/rendimiento-produccion-2026-10-16.md`.
+
+### Arranque HTTP (16 de octubre de 2026, segunda tanda)
+
+`BrowserReadStartup` y `read-startup.js` unen import y primera lectura. La vista
+individual inicia el overview en JS tras el GET principal, con promesas consumibles
+por sección e historial diferido. El editor agrupa sus lecturas en un bootstrap del
+navegador. PageAccessGuard conserva los controles y precarga los módulos del formulario.
+`resource-options.js` comparte/cachea solo el catálogo público cinco minutos en memoria
+de la pestaña. Validadores de archivos y CAPTCHA se cargan al validar/enviar. Los
+contratos del servidor siguen intactos. Las propuestas para backend están en
+`docs/mejoras-backend-carga-2026-10-16.md` y aún no están implementadas.

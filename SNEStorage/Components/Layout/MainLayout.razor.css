@@ -1,7 +1,7 @@
 .app-shell {
     --site-header-height: 72px;
     --site-divider-color: #543285;
-    --site-sidebar-width: 232px;
+    --site-sidebar-width: 216px;
     display: flex;
     min-height: 100vh;
     flex-direction: column;
@@ -18,6 +18,11 @@
     box-shadow: 0 4px 22px #04020d50;
 }
 .page-region { display: flex; flex: 1; min-width: 0; flex-direction: column; }
+.vote-background-notice { position: fixed; bottom: 1rem; left: 1rem; z-index: 1090; width: min(380px, calc(100vw - 2rem)); padding: 1rem; border: 1px solid #cd91ae; border-radius: 12px; background: #231330f5; color: #f4d8e7; box-shadow: 0 8px 30px #0007; font-size: .85rem; }
+.vote-background-notice[hidden] { display: none; }
+.vote-background-notice p { margin: 0 0 .7rem; }
+.vote-background-notice a { color: #e2baff; margin-right: 1rem; }
+.vote-background-notice button { padding: .3rem .6rem; border: 1px solid #a075bf; border-radius: 6px; background: #40284f; color: #f1e1ff; }
 .header-inner { display: flex; height: 100%; align-items: center; justify-content: space-between; gap: .75rem; padding-top: .6rem; padding-bottom: .6rem; }
 .header-brand { display: inline-flex; flex: 0 0 auto; align-items: center; gap: .6rem; color: #f1eaff; text-decoration: none; }
 .header-brand:hover { color: #fff; }
@@ -25,6 +30,11 @@
 .header-brand span { font: italic 900 1.4rem "Exo 2", "Segoe UI", sans-serif; letter-spacing: -.035em; }
 .header-brand:focus-visible { outline: 3px solid #ffe14d; outline-offset: 3px; }
 .account-links { display: flex; min-width: 0; align-items: center; gap: .65rem; }
+.account-links ::deep .moderation-link { display: inline-flex; align-items: center; gap: .45rem; min-height: 40px; padding: .5rem .7rem; border: 1px solid #9972c0; border-radius: 8px; background: #302048; color: #edddff; font-size: .85rem; font-weight: 700; text-decoration: none; }
+.account-links ::deep .moderation-link svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.account-links ::deep .moderation-link:hover, .account-links ::deep .moderation-link.active { background: #4b2c66; border-color: #c5a0ef; color: #fff; }
+.account-links ::deep .moderation-link:focus-visible { outline: 2px solid #ffe14d; outline-offset: 3px; }
+@media (max-width: 575.98px) { .account-links ::deep .moderation-link span { display: none; } }
 .mobile-navigation { display: none; }
 .navigation-toggle { display: inline-flex; align-items: center; gap: .6rem; min-height: 42px; padding: .5rem .85rem; border: 1px solid #8254b5; border-radius: 5px; color: #e7dcff; background: #24133f; font: 700 .9rem "Exo 2", "Segoe UI", sans-serif; }
 .navigation-toggle svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }

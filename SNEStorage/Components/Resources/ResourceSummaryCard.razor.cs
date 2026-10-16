@@ -9,6 +9,7 @@ public partial class ResourceSummaryCard
 {
     private static readonly Regex HexColor = new("\\A#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})\\z", RegexOptions.CultureInvariant);
     [Parameter, EditorRequired] public ResourceFinderViewDTO Item { get; set; } = default!;
+    private ResourceFinderViewDTO? _preparedItem;
     private IReadOnlyList<ResourceListValue> Authors { get; set; } = [];
     private string PublicationDate => Item.CreatedAt.ToString("MMM d, yyyy", CultureInfo.InvariantCulture);
     private string? DownloadUrl => ResourceFileLinks.For(Item.ResourceIdName.Id, Item.MainVersion.Id, true);
@@ -17,6 +18,8 @@ public partial class ResourceSummaryCard
 
     protected override void OnParametersSet()
     {
+        if (ReferenceEquals(_preparedItem, Item)) return;
+        _preparedItem = Item;
         Authors = [.. Item.AuthorsUserSummary.OrderBy(author => author.Username, StringComparer.OrdinalIgnoreCase)
             .Select(author => new ResourceListValue($"user-{author.Id}", author.Username,
             $"/Profile/{Uri.EscapeDataString(author.Id)}", author.UsernameColor is { } color && HexColor.IsMatch(color) ? color : "#dcc8fa"))

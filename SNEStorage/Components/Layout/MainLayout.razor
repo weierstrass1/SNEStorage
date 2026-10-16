@@ -1,6 +1,6 @@
 @inherits LayoutComponentBase
 
-<div class="app-shell @(_sidebarMinimized ? "sidebar-minimized" : null)">
+<div class="app-shell">
     <header class="site-header">
         <div class="header-inner container">
             <a class="header-brand" href="/" aria-label="SNEStorage home">
@@ -8,12 +8,18 @@
                 <span>SNEStorage</span>
             </a>
             <div class="account-links">
+                <VerifiedAccountContent StaffOnly="true">
+                    <NavLink class="moderation-link" href="/Moderation" title="Moderation panel" aria-label="Moderation panel">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3Z" /><path d="m8 12 3 3 5-6" /></svg>
+                        <span>Moderation</span>
+                    </NavLink>
+                </VerifiedAccountContent>
                 <AccountNavigation />
             </div>
         </div>
     </header>
 
-    <SideNavigation Minimized="_sidebarMinimized" ToggleRequested="ToggleSidebar" />
+    <SideNavigation />
 
     <div class="page-region">
         <div class="mobile-navigation container">
@@ -68,3 +74,8 @@
 
 <CaptchaPrompt />
 <ReportPrompt />
+<aside id="vote-background-notice" class="vote-background-notice" hidden role="alert">
+    <p data-vote-notice-message></p>
+    <a data-vote-notice-link>Review vote</a>
+    <button type="button" data-vote-notice-dismiss aria-label="Dismiss notification">Dismiss</button>
+</aside>

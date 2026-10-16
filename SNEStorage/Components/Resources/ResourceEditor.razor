@@ -19,7 +19,7 @@ else if (_resource is { } resource)
     <section class="resource-editor">
         <NavLink class="editor-back" href="@($"/Resource/{ResourceId}")">← Back to resource</NavLink>
         <header><h1>@Title</h1><p>@resource.Name</p></header>
-        <EditForm Model="_form" OnSubmit="SaveAsync" FormName="resource-editor" id="@FormId" class="editor-form" enctype="multipart/form-data" novalidate data-resource-editor aria-busy="@_saving">
+        <EditForm Model="_form" OnSubmit="SaveAsync" FormName="resource-editor" id="@FormId" class="editor-form" data-ui-tabs enctype="multipart/form-data" novalidate data-resource-editor aria-busy="@_saving">
             <AntiforgeryToken />
             @if (Mode == ResourceEditorMode.Resource)
             {
@@ -27,13 +27,13 @@ else if (_resource is { } resource)
                     @for (var index = 0; index < TabTitles.Length; index++)
                     {
                         var tab = index;
-                        <button id="@TabId(tab)" class="editor-tab @(_activeTab == tab ? "active" : null)" type="button" role="tab" aria-selected="@(_activeTab == tab)" aria-controls="@PanelId(tab)" tabindex="@(_activeTab == tab ? 0 : -1)" @onclick="() => SelectTab(tab)" @onkeydown="args => TabKeyDown(tab, args)">
+                        <button id="@TabId(tab)" class="editor-tab" type="button" role="tab" aria-selected="@(tab == 0 ? "true" : "false")" aria-controls="@PanelId(tab)" tabindex="@(tab == 0 ? 0 : -1)" data-ui-tab="@tab" @onclick="@(tab == 1 && !_loadPreviewMedia ? EventCallback.Factory.Create<MouseEventArgs>(this, () => EnsurePreviewMedia(1)) : default)">
                             <span class="editor-tab-number">@(tab + 1)</span>@TabTitles[tab]
                         </button>
                     }
                 </div>
                 <div class="editor-panels" inert="@(_saving ? string.Empty : null)">
-                <section id="@PanelId(0)" role="tabpanel" aria-labelledby="@TabId(0)" hidden="@(_activeTab != 0)" tabindex="0" data-editor-panel="0">
+                <section id="@PanelId(0)" role="tabpanel" aria-labelledby="@TabId(0)" tabindex="0" data-editor-panel="0" data-ui-panel="0">
                 <fieldset inert="@(_saving ? string.Empty : null)">
                     <legend>General information</legend>
                     <div class="editor-fields">
@@ -50,17 +50,17 @@ else if (_resource is { } resource)
                     </div>
                 </fieldset>
                 </section>
-                <section id="@PanelId(1)" role="tabpanel" aria-labelledby="@TabId(1)" hidden="@(_activeTab != 1)" tabindex="0" data-editor-panel="1">
+                <section id="@PanelId(1)" role="tabpanel" aria-labelledby="@TabId(1)" hidden tabindex="0" data-editor-panel="1" data-ui-panel="1">
                     <fieldset>
                         <legend>Resource previews</legend>
                         <p class="editor-muted">Keep up to 20 previews in total. Images, GIFs, videos, audio, SPC and BRR samples must be no larger than 5 MB each.</p>
-                        <ResourceExistingPreviews ResourceId="ResourceId" ResourceName="@resource.Name" Previews="_existingPreviews" @bind-Values="_form.PreviewIDs" LoadMedia="@(_activeTab == 1)" />
+                        <ResourceExistingPreviews ResourceId="ResourceId" ResourceName="@resource.Name" Previews="_existingPreviews" @bind-Values="_form.PreviewIDs" LoadMedia="_loadPreviewMedia" />
                         <div class="editor-divider">
                             <ResourcePreviewPicker InputId="@PreviewInputId" MaxFiles="@(Math.Max(0, 20 - _form.PreviewIDs.Length))" />
                         </div>
                     </fieldset>
                 </section>
-                <section id="@PanelId(2)" role="tabpanel" aria-labelledby="@TabId(2)" hidden="@(_activeTab != 2)" tabindex="0" data-editor-panel="2">
+                <section id="@PanelId(2)" role="tabpanel" aria-labelledby="@TabId(2)" hidden tabindex="0" data-editor-panel="2" data-ui-panel="2">
                     <fieldset>
                         <legend>Authorship</legend>
                         <p class="editor-muted">Credit the people who made this resource. Add or remove accounts and external authors below.</p>
@@ -73,14 +73,14 @@ else if (_resource is { } resource)
                         <p class="editor-muted">Authors and submitters can manage this resource.</p>
                     </fieldset>
                 </section>
-                <section id="@PanelId(3)" role="tabpanel" aria-labelledby="@TabId(3)" hidden="@(_activeTab != 3)" tabindex="0" data-editor-panel="3">
+                <section id="@PanelId(3)" role="tabpanel" aria-labelledby="@TabId(3)" hidden tabindex="0" data-editor-panel="3" data-ui-panel="3">
                     <fieldset>
                         <legend>Dependencies</legend>
                         <ResourceDependencyPicker InitialChoices="_dependencyChoices" ExcludedResourceId="ResourceId" @bind-Values="_form.DependencyIDs" />
                         <div class="editor-divider"><ResourceExternalDependencyEditor @bind-Values="_form.ExternalDependencies" /></div>
                     </fieldset>
                 </section>
-                <section id="@PanelId(4)" role="tabpanel" aria-labelledby="@TabId(4)" hidden="@(_activeTab != 4)" tabindex="0" data-editor-panel="4">
+                <section id="@PanelId(4)" role="tabpanel" aria-labelledby="@TabId(4)" hidden tabindex="0" data-editor-panel="4" data-ui-panel="4">
                 <fieldset inert="@(_saving ? string.Empty : null)">
                     <legend>Content warnings</legend>
                     <ResourceContentWarnings @bind-IncludesPorn="_form.IncludesPorn" @bind-IncludesGore="_form.IncludesGore" @bind-IncludesPolitics="_form.IncludesPolitics" @bind-IncludesSlurs="_form.IncludesSlurs" @bind-IncludesSensitiveContent="_form.IncludesSensitiveContent" />
@@ -135,12 +135,13 @@ else if (_resource is { } resource)
                 <NavLink class="editor-cancel action-button" href="@($"/Resource/{ResourceId}")">Cancel</NavLink>
                 @if (Mode == ResourceEditorMode.Resource)
                 {
-                    <span class="editor-progress">@(_activeTab + 1) / @TabTitles.Length</span>
-                    <button type="button" class="editor-step action-button" disabled="@(_saving || _activeTab == 0)" @onclick="() => SelectTab(_activeTab - 1)"><ActionArrow Left="true" />Previous</button>
-                    <button type="button" class="editor-step action-button" disabled="@(_saving || _activeTab == TabTitles.Length - 1)" @onclick="() => SelectTab(_activeTab + 1)">Next <ActionArrow /></button>
+                    <span class="editor-progress"><span data-ui-progress>1</span> / @TabTitles.Length</span>
+                    <button type="button" class="editor-step action-button" disabled="@_saving" data-ui-step="-1" hidden><ActionArrow Left="true" />Previous</button>
+                    <button type="button" class="editor-step action-button" disabled="@_saving" data-ui-step="1">Next <ActionArrow /></button>
                 }
                 <button type="submit" class="editor-save action-button action-button-primary" disabled="@_saving">@SubmitLabel</button>
             </footer>
         </EditForm>
+        <SubmissionProgress FormId="@FormId" Title="@(Mode == ResourceEditorMode.CreateVersion ? "Submitting version…" : "Saving changes…")" />
     </section>
 }

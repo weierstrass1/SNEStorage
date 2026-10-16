@@ -52,6 +52,8 @@ public enum ServiceResultTypes
     ResourceTypeNotFound,
     VersionNotFound,
     VersionAlreadyExists,
+    VersionHasSealOfQuality,
+    CantDeleteOnlyVersion,
     CommentNotFound,
     LikeNotFound,
 
@@ -114,6 +116,9 @@ public enum ServiceResultTypes
 
     //Reasons
     ReasonNotFound,
+    InvalidSearch,
+    ResourceHasSealOfQuality,
+    ResourceHasDependents,
 
     // Discord
     InvalidUserId,
@@ -136,7 +141,6 @@ public enum ServiceResultTypes
 
     InvalidTag,
     InvalidExternalAuthor,
-    InvalidSearch
 }
 public enum ActionResultType
 {

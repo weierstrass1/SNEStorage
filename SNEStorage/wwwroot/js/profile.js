@@ -1,6 +1,5 @@
 import { getAccountSession, invalidateAccountSession } from "./account-session.js?v=2";
 import { antiforgeryFetch } from "./antiforgery.js?v=1";
-import { validateUpload } from "./upload-validation.js?v=2";
 
 const profileRequests = new Map();
 
@@ -109,6 +108,7 @@ export async function updateProfile(url, fields, fileInputId) {
 
     const file = document.getElementById(fileInputId)?.files?.[0];
     if (file) {
+        const { validateUpload } = await import("./upload-validation.js?v=2");
         const message = await validateUpload(file, "avatar");
         if (message) return JSON.stringify({ status: 0, body: "", validationMessage: message });
         formData.append("File", file, file.name);

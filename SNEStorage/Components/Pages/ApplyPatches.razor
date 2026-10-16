@@ -40,7 +40,10 @@
         <p class="patch-note" data-patcher-note></p>
         <p class="patch-error" data-patcher-error role="alert" hidden></p>
         <div class="patch-actions">
-            <button type="button" class="patch-apply action-button action-button-primary" data-patcher-apply disabled>Apply patch &amp; download <ActionArrow /></button>
+            <button type="button" class="patch-apply action-button action-button-primary" data-patcher-apply disabled>
+                <span class="patch-apply-label">Apply patch &amp; download <ActionArrow /></span>
+                <small class="patch-usage" data-patcher-usage>Uses: …</small>
+            </button>
             <button type="button" class="action-button" data-patcher-cancel hidden>Cancel</button>
         </div>
         <p class="patch-status" data-patcher-status role="status" aria-live="polite">Choose a ROM and its patch to begin.</p>

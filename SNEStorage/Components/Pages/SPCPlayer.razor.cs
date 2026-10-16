@@ -16,7 +16,7 @@ public partial class SPCPlayer : IAsyncDisposable
         if (!firstRender || _disposed) return;
         try
         {
-            var module = await JavaScript.InvokeAsync<IJSObjectReference>("import", "./js/spc-playlist.js?v=4");
+            var module = await JavaScript.InvokeAsync<IJSObjectReference>("import", "./js/spc-playlist.js?v=5");
             if (_disposed) { await module.DisposeAsync(); return; }
             _module = module;
             await module.InvokeVoidAsync("mountPage", _playerId);

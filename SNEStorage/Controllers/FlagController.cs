@@ -25,7 +25,7 @@ public class FlagController(FlagsService flagsService,
     }
     [EnableRateLimiting("reads")]
     [HttpGet]
-    [AllowAnonymous]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public async Task<ActionResult<List<FlagReadDTO>>> FullGet([FromQuery] FlagFilterDTO filter,
     [FromQuery] FlagSort sort = FlagSort.HighestPriority, [FromQuery] int maxAmount = 10,
     [FromQuery] int page = 0, CancellationToken ct = default)

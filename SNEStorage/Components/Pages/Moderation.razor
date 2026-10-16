@@ -1,0 +1,142 @@
+@page "/Moderation"
+@using SNEStorage.Components.Resources
+
+<PageTitle>Moderation | SNEStorage</PageTitle>
+
+<div class="moderation-page">
+    <header class="moderation-heading">
+        <p class="moderation-kicker">SNESTORAGE STAFF</p>
+        <h1>Moderation</h1>
+        <p>Review community reports and keep SNEStorage welcoming.</p>
+    </header>
+
+    <nav class="moderation-sections" aria-label="Moderation sections">
+        <span class="selected" aria-current="page">Resources</span>
+        <button type="button" disabled title="Comment moderation is coming later">Comments <small>Coming later</small></button>
+        <button type="button" disabled title="Seal of Quality reviews are coming later">Seal of Quality requests <small>Coming later</small></button>
+    </nav>
+
+    <section class="moderation-queue" aria-labelledby="resource-reports-heading">
+        <div class="queue-heading">
+            <div><h2 id="resource-reports-heading">Resource reports</h2><p>Open the resource to review it, then resolve or reopen its report.</p></div>
+            <button class="moderation-button" type="button" @onclick="RefreshAsync" disabled="@Busy">Refresh</button>
+        </div>
+        <form @onsubmit="ApplyFiltersAsync" @onsubmit:preventDefault>
+            <fieldset class="moderation-filters" disabled="@Busy">
+                <legend class="visually-hidden">Filter resource reports</legend>
+                <label>Status<select @bind="_status"><option value="false">Open</option><option value="true">Resolved</option><option value="">All statuses</option></select></label>
+                <label>Minimum priority<select @bind="_lowestPriority"><option value="">Any</option>@for (var i = 1; i <= 5; i++) { <option value="@i">@i — @PriorityName(i)</option> }</select></label>
+                <label>Maximum priority<select @bind="_highestPriority"><option value="">Any</option>@for (var i = 5; i >= 1; i--) { <option value="@i">@i — @PriorityName(i)</option> }</select></label>
+                <label>Sort by<select @bind="_sort"><option value="HighestPriority">Highest priority</option><option value="LowestPriority">Lowest priority</option><option value="RecentFirst">Newest first</option><option value="RecentLast">Oldest first</option></select></label>
+                <div class="reason-filter">
+                    <span class="filter-label" id="moderation-reason-label">Reason</span>
+                    <details class="reason-picker" data-ui-dismiss-details>
+                        <summary aria-labelledby="moderation-reason-label moderation-selected-reason" aria-controls="moderation-reason-options">
+                            <span id="moderation-selected-reason" title="@SelectedReason">@SelectedReason</span>
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+                        </summary>
+                        <div class="reason-options" id="moderation-reason-options">
+                            <label class="reason-option"><input type="radio" name="moderation-reason" data-ui-close-details checked="@(_reasonId is null)" @onchange="() => SelectReason(null)" /><span>All reasons</span></label>
+                            @if (_reasonsLoading)
+                            {
+                                <p class="reason-options-message" role="status">Loading reasons…</p>
+                            }
+                            else if (_reasonsError is not null)
+                            {
+                                <div class="reason-options-message" role="alert"><p>@_reasonsError</p><button class="moderation-button" type="button" @onclick="LoadReasonsAsync">Try again</button></div>
+                            }
+                            else if (_reasons.Count == 0)
+                            {
+                                <p class="reason-options-message">No reasons are available.</p>
+                            }
+                            else
+                            {
+                                @foreach (var category in _reasons.GroupBy(r => r.ReasonCategoryId).OrderBy(g => g.First().ReasonCategory?.Name ?? "Other reasons", StringComparer.OrdinalIgnoreCase))
+                                {
+                                    <details class="reason-category" @key="category.Key">
+                                        <summary><span>@(category.First().ReasonCategory?.Name ?? "Other reasons")</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></summary>
+                                        @foreach (var reason in category.OrderByDescending(r => r.Priority).ThenBy(r => r.Description, StringComparer.OrdinalIgnoreCase))
+                                        {
+                                            <label class="reason-option" @key="reason.Id"><input type="radio" name="moderation-reason" data-ui-close-details checked="@(_reasonId == reason.Id)" @onchange="() => SelectReason(reason.Id)" /><span>@reason.Description</span></label>
+                                        }
+                                    </details>
+                                }
+                            }
+                        </div>
+                    </details>
+                </div>
+                <fieldset class="created-at-filter">
+                    <legend>Created at <small>UTC</small></legend>
+                    <label>From<input type="date" @bind="_createdAtFrom" max="9999-12-30" /></label>
+                    <label>To<input type="date" @bind="_createdAtTo" max="9999-12-30" /></label>
+                </fieldset>
+                <div class="filter-actions">
+                    @if (_filterError is not null) { <p class="filter-error" role="alert">@_filterError</p> }
+                    <div><button class="moderation-button apply-filters" type="submit">Apply filters</button><button class="moderation-button" type="button" @onclick="ResetFiltersAsync">Reset filters</button></div>
+                </div>
+            </fieldset>
+        </form>
+
+        @if (_notice is not null) { <p class="moderation-notice" role="status">@_notice</p> }
+        @if (_error is { } error)
+        {
+            <div class="moderation-error" role="alert"><strong>@error.Title</strong><p>@error.Message</p><button class="moderation-button" type="button" @onclick="RefreshAsync" disabled="@Busy">Refresh reports</button></div>
+        }
+        @if (_loading)
+        {
+            <BoxLoader Label="Loading resource reports…" Compact="true" />
+        }
+        else if (_error is null && _reports.Count == 0)
+        {
+            <div class="moderation-empty"><EmptyBoxIllustration /><h3>No reports to review</h3><p>No resource reports match these filters.</p></div>
+        }
+        else if (_reports.Count > 0)
+        {
+            <ul class="report-list" aria-label="Resource reports" aria-busy="@(_savingId is not null)">
+                @foreach (var report in _reports)
+                {
+                    <li @key="report.Id" class="report-card @(report.Resolved ? "resolved" : null)">
+                        <div class="report-topline"><span class="report-priority priority-@report.Priority">Priority @report.Priority · @PriorityName(report.Priority)</span><span class="report-state">@(report.Resolved ? "Resolved" : "Open")</span><span class="report-number">Report #@report.Id</span></div>
+                        <div class="report-content">
+                            <div class="report-details">
+                                <h3>
+                                    @if (report.Resource is { } resource)
+                                    {
+                                        <NavLink href="@($"/Resource/{resource.Id}")">@resource.Name</NavLink>
+                                    }
+                                    else { <span>Resource unavailable</span> }
+                                </h3>
+                                <p class="report-reason">@report.ReasonDescription</p>
+                                <div class="report-metadata">
+                                    <span>Reported by</span>
+                                    <NavLink class="report-user" href="@($"/Profile/{Uri.EscapeDataString(report.UserSummary.Id)}")" style="@($"color: {UsernameColor(report.UserSummary.UsernameColor)}")">
+                                        <img src="@AvatarUrl(report.UserSummary)" alt="" width="30" height="30" loading="lazy" @onerror="() => AvatarFailed(report.UserSummary.Id)" />
+                                        @report.UserSummary.Username
+                                    </NavLink>
+                                    <time datetime="@report.CreatedAt.ToString("O")" title="UTC">@FormatDate(report.CreatedAt) UTC</time>
+                                    @if (report.ResolvedAt is { } resolvedAt) { <span>Resolved <time datetime="@resolvedAt.ToString("O")">@FormatDate(resolvedAt) UTC</time></span> }
+                                </div>
+                            </div>
+                            <div class="report-actions">
+                                @if (report.Resource is { } target) { <NavLink class="moderation-button" href="@($"/Resource/{target.Id}")">Review resource <ActionArrow /></NavLink> }
+                                @if (report.Resource is { } deletableResource)
+                                {
+                                    <ResourceDeleteButton ResourceId="deletableResource.Id" ResourceName="@deletableResource.Name"
+                                                          CurrentUserId="@VerifiedAccount?.Profile.UserId" CanDelete="true" IsStaff="true"
+                                                          Disabled="Busy" BusyChanged="ResourceDeletionBusyChanged" OnDeleted="ResourceDeletedAsync" />
+                                }
+                                <button class="moderation-button @(report.Resolved ? null : "resolve-button")" type="button" @onclick="() => SetResolvedAsync(report)" disabled="@(Busy || _uncertain)">
+                                    @(_savingId == report.Id ? "Saving…" : report.Resolved ? "Reopen report" : "Resolve report")
+                                </button>
+                            </div>
+                        </div>
+                    </li>
+                }
+            </ul>
+        }
+        <nav class="moderation-pagination" aria-label="Report pages">
+            <span>Page @(_page + 1) · Up to 20 reports per page</span>
+            <div><button class="moderation-button" type="button" @onclick="PreviousAsync" disabled="@(Busy || _page == 0)"><ActionArrow Left="true" /> Previous</button><button class="moderation-button" type="button" @onclick="NextAsync" disabled="@(Busy || !_canGoNext || _error is not null)">Next <ActionArrow /></button></div>
+        </nav>
+    </section>
+</div>

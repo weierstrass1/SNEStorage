@@ -189,6 +189,7 @@ services.AddHttpContextAccessor();
 services.AddMemoryCache();
 services.AddSingleton<CacheService>();
 services.AddSingleton<CaptchaFrequencyService>();
+services.AddSingleton<ToolUsageService>();
 services.AddTransient<APIConfig>();
 services.AddTransient<FileService>();
 services.AddTransient<AccountService>();

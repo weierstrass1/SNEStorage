@@ -25,15 +25,17 @@ td { padding: .5rem .7rem; border-bottom: 1px solid #352343; vertical-align: top
 .tags-heading button { border: 0; background: transparent; color: #d7b6ff; font-size: 1.5rem; }
 .tag-chips { display: flex; flex-wrap: wrap; gap: .5rem; }
 .tag-chips span { max-width: 100%; border: 1px solid #75518e; border-radius: 7px; padding: .25rem .5rem; color: #d9c2ef; font-size: .8rem; overflow-wrap: anywhere; }
-.rating-cell { min-width: 95px; }
-.stars { display: block; position: relative; width: max-content; color: #51435e; font-size: .96rem; letter-spacing: 1px; white-space: nowrap; }
+.rating-cell { min-width: 95px; text-align: center; }
+.stars { display: block; position: relative; width: max-content; margin-inline: auto; color: #51435e; font-size: .96rem; letter-spacing: 1px; white-space: nowrap; }
 .stars > span { position: absolute; left: 0; top: 0; color: #f5ce64; overflow: hidden; }
 .rating-cell strong { display: block; color: #f5ce64; font-size: .83rem; margin-top: .15rem; }
 .rating-cell small { font-size: .65rem; color: #a99aba; }
 .votes { display: block; color: #b8a4ca; font-size: .65rem; margin-top: .15rem; }
+.rating-summary { display: flex; align-items: baseline; justify-content: center; flex-wrap: wrap; gap: .15rem .4rem; margin-top: .15rem; }
+.rating-summary strong, .rating-summary .votes { margin: 0; }
 .download-cell { text-align: center; min-width: 125px; }
 .download-count { display: block; font-weight: 400; font-size: .65rem; color: #a99aba; margin-top: .35rem; }
-.download-count span { color: #cab8da; font-weight: 650; }
+.download-count strong { color: #cab8da; font-weight: 700; }
 .download-button { display: inline-block; white-space: nowrap; color: #e9dcff; text-decoration: none; font-weight: 700; font-size: .75rem; padding: .45rem .65rem; border: 1px solid #8557ac; border-radius: 7px; background: #3b2354; }
 .download-button:hover { background: #593379; border-color: #c392ff; }
 .quality-name { color: #edbd4b; min-width: 0; max-width: 100%; }

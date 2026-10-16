@@ -1,10 +1,10 @@
 <div class="picker-field">
     <span id="@(PickerId + "-label")" class="picker-label">@Label @if (Required) { <span aria-hidden="true">*</span> }</span>
-    <div id="@PickerId" class="picker" data-resource-picker data-open="@(_isOpen ? "true" : "false")" data-hover="@(_openedByHover ? "true" : "false")" @onkeydown="KeyDownAsync">
-        <button type="button" class="picker-trigger" data-picker-trigger @onclick="Toggle" @onmouseenter="OpenFromHover" aria-expanded="@(_isOpen ? "true" : "false")" aria-controls="@(PickerId + "-options")" aria-labelledby="@(PickerId + "-label " + PickerId + "-value")">
+    <div id="@PickerId" class="picker" data-resource-picker data-open="false" data-open-on-hover="@OpenOnHover.ToString().ToLowerInvariant()" data-focus-search="@FocusSearch.ToString().ToLowerInvariant()">
+        <button type="button" class="picker-trigger" data-picker-trigger aria-expanded="false" aria-controls="@(PickerId + "-options")" aria-labelledby="@(PickerId + "-label " + PickerId + "-value")">
             <span id="@(PickerId + "-value")" class="picker-value">@SummaryContent</span>
             <svg class="picker-arrow" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="m4 6 4 4 4-4" /></svg>
         </button>
-        <div id="@(PickerId + "-options")" class="picker-options" hidden="@(!_isOpen)">@ChildContent</div>
+        <div id="@(PickerId + "-options")" class="picker-options" hidden>@ChildContent</div>
     </div>
 </div>

@@ -122,9 +122,11 @@ internal sealed class CommentApiClient(IJSRuntime javascript, ILogger logger) : 
         if (_disposed) return new() { Cancelled = true };
         try
         {
-            _module ??= await javascript.InvokeAsync<IJSObjectReference>("import", _lifetime.Token, "./js/comment-api.js?v=8");
+            _module ??= await javascript.InvokeAsync<IJSObjectReference>("import", _lifetime.Token, "./js/comment-api.js?v=10");
             if (_disposed) return new() { Cancelled = true };
-            var json = await _module.InvokeAsync<string>(function, _lifetime.Token, arguments);
+            // The vote finishes independently; its caller ignores UI updates after disposal.
+            var token = function == "submitCommentVote" ? CancellationToken.None : _lifetime.Token;
+            var json = await _module.InvokeAsync<string>(function, token, arguments);
             return JsonSerializer.Deserialize<BrowserResponse>(json, JsonOptions) ?? new() { Status = 502 };
         }
         catch (Exception exception) when (exception is JSDisconnectedException or JSException or JsonException or OperationCanceledException)

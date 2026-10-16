@@ -30,6 +30,9 @@
 .patch-warning { margin: .8rem 0; padding: .75rem; border: 1px solid #a88a4655; border-radius: 6px; color: #ecd39c; background: #a57b180b; }
 .patch-error { margin: 1rem 0; padding: .8rem; border: 1px solid #a5517680; border-radius: 6px; color: #ffbdce; background: #a3294b0c; font-size: .85rem; line-height: 1.6; }
 .patch-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; margin-top: 1.25rem; }
+.patch-apply { flex-direction: column; gap: .3rem; white-space: normal; text-align: center; }
+.patch-apply-label { display: inline-flex; align-items: center; justify-content: center; gap: .65rem; }
+.patch-usage { display: block; color: inherit; font-size: .72rem; font-weight: 500; line-height: 1.4; opacity: .85; }
 .patch-status { margin: .85rem 0 0; color: #c1a9d4; font-size: .8rem; line-height: 1.6; }
 .patch-result { display: grid; justify-items: start; gap: .55rem; margin-top: 1.25rem; padding: 1rem; border: 1px solid #6aaa8299; border-radius: 8px; color: #b4edca; background: #5585660b; }
 .patch-result p { margin: 0; color: #c8ded0; font-size: .8rem; }

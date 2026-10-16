@@ -35,12 +35,18 @@
         </div>
     </td>
     @if (ShowGame) { <td class="game-cell">@Item.Videogame?.Name</td> }
-    <td class="authors-cell"><ResourceListValues Items="Authors" /></td>
+    <td class="authors-cell"><ResourceListValues Items="Authors" Inline="true" /></td>
     @if (ShowTypes) { <td><ResourceListValues Items="Types" /></td> }
     @if (ShowCategories) { <td><ResourceListValues Items="Categories" /></td> }
     <td class="rating-cell" aria-label="@(Item.Votes > 0 ? $"Rating {Item.Score.ToString("0.0", CultureInfo.InvariantCulture)} out of 5" : "Not rated")">
         <span class="stars" aria-hidden="true">★★★★★<span style="@RatingWidth">★★★★★</span></span>
-        @if (Item.Votes > 0) { <strong>@Item.Score.ToString("0.0", CultureInfo.InvariantCulture)<small>/5</small></strong><span class="votes">@Item.Votes.ToString("N0", CultureInfo.InvariantCulture) @(Item.Votes == 1 ? "vote" : "votes")</span> }
+        @if (Item.Votes > 0)
+        {
+            <div class="rating-summary">
+                <strong>@Item.Score.ToString("0.0", CultureInfo.InvariantCulture)<small>/5</small></strong>
+                <span class="votes">@Item.Votes.ToString("N0", CultureInfo.InvariantCulture) @(Item.Votes == 1 ? "vote" : "votes")</span>
+            </div>
+        }
         else { <span class="votes">Not rated</span> }
     </td>
     <td class="download-cell">
@@ -49,6 +55,6 @@
             <a class="download-button" href="@($"/api/resource/{Item.ResourceIdName.Id}/file/{file.Id}/download")" data-enhance-nav="false" aria-label="@($"Download {Item.ResourceIdName.Name} {Item.Version}")">↓ Download</a>
         }
         else { <small>Unavailable</small> }
-        <small class="download-count" title="Total downloads across all versions">Downloads: <span>@Item.Downloads.ToString("N0", CultureInfo.InvariantCulture)</span></small>
+        <small class="download-count" title="Total downloads across all versions"><strong>Downloads:</strong> @Item.Downloads.ToString("N0", CultureInfo.InvariantCulture)</small>
     </td>
 </tr>

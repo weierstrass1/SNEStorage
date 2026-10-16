@@ -4,6 +4,7 @@
 @using SNEStorage.Components.Resources
 
 <PageTitle>Resources | SNEStorage</PageTitle>
+<HeadContent><link rel="modulepreload" href="js/resource-list.js?v=6" /></HeadContent>
 <section class="library">
     <header class="library-heading">
         <div><p class="library-kicker">SNESTORAGE ARCHIVE</p><h1>Resources</h1><p>Discover the next piece of your project.</p></div>
@@ -12,12 +13,13 @@
         </VerifiedAccountContent>
     </header>
     <div class="library-toolbar">
-        <button class="filters-button" type="button" aria-expanded="@_filtersOpen" aria-controls="library-filter-panel" @onclick="ToggleFiltersAsync">☷ Filters @(HasActiveFilters ? "•" : "")</button>
+        <button class="filters-button" type="button" data-ui-toggle aria-expanded="false" aria-controls="library-filter-panel" @onclick="@(!_filtersInitialized ? EventCallback.Factory.Create<MouseEventArgs>(this, InitializeFiltersAsync) : default)">☷ Filters @(HasActiveFilters ? "•" : "")</button>
         <label>Sort by<InputSelect @bind-Value="_sort" @bind-Value:after="OrderChangedAsync"><option value="@ResourceSorting.CreatedAt">Creation date</option><option value="@ResourceSorting.VersionCreatedAt">Latest release</option><option value="@ResourceSorting.Name">Name</option><option value="@ResourceSorting.Downloads">Downloads</option><option value="@ResourceSorting.BestScore">Rating</option><option value="@ResourceSorting.NumberOfVotes">Votes</option></InputSelect></label>
         <label>Order<InputSelect @bind-Value="_descending" @bind-Value:after="OrderChangedAsync"><option value="true">Descending</option><option value="false">Ascending</option></InputSelect></label>
         <label>Per page<InputSelect @bind-Value="_pageSize" @bind-Value:after="PageSizeChangedAsync"><option value="20">20</option><option value="50">50</option><option value="100">100</option><option value="200">200</option><option value="0">All</option></InputSelect></label>
     </div>
-    <div id="library-filter-panel" hidden="@(!_filtersOpen)">
+    <div id="library-filter-panel" hidden>
+        @if (!_filtersInitialized) { <BoxLoader Label="Loading filters…" Compact="true" /> }
         @if (_filtersInitialized)
         {
             @if (_optionsLoading) { <BoxLoader Label="Loading filter choices…" Compact="true" /> }

@@ -28,7 +28,7 @@ internal sealed class ResourceListApiClient(IJSObjectReference module, string re
                 Sorting = new() { SortType = ResourceSorting.CreatedAt, SortOrderDescending = true }
             }, 5, 0));
 
-    private static ResourceReadResult<T> Decode<T>(string json) where T : class
+    internal static ResourceReadResult<T> Decode<T>(string json) where T : class
     {
         var response = JsonSerializer.Deserialize<BrowserResponse>(json, JsonOptions);
         if (response is null) return new(502, null, null);

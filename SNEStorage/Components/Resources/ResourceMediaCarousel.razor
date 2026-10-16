@@ -1,70 +1,63 @@
-<section class="media-carousel @(Kind == PreviewKind.Video && _playRequested && !_failed ? "is-video-playing" : null) @(IsSound ? "is-sound" : null)" aria-label="Resource previews" aria-roledescription="carousel" @onkeydown="HandleKeyDown" tabindex="0">
-    @if (Previews.Count == 0)
-    {
-        <div class="media-empty">
-            <img src="/images/caja.png" alt="" />
-            <p>No previews have been provided.</p>
-        </div>
-    }
-    else
-    {
-        <div class="media-stage" @key="ActiveFileId" role="group" aria-roledescription="slide" aria-label="@($"Preview {_activeIndex + 1} of {Previews.Count}")">
-            @if (_failed)
-            {
-                <div class="media-empty" role="status">
-                    <span aria-hidden="true">◇</span>
-                    <p>@(_errorMessage ?? "This preview could not be loaded.")</p>
-                    <button class="media-button" type="button" @onclick="RetryMedia">Try again</button>
+@* Navigation and media leaves are managed in the browser, without per-click Blazor events. *@
+<section id="@_carouselId" class="media-carousel" aria-label="Resource previews" aria-roledescription="carousel" tabindex="0">
+    <div class="media-empty" data-media-empty hidden>
+        <img src="/images/caja.png" alt="" />
+        <p>No previews have been provided.</p>
+    </div>
+    <div data-media-content>
+        <div class="media-reel" data-media-reel>
+            <button type="button" class="media-peek media-peek-previous" data-media-direction="-1" tabindex="-1" aria-label="Previous preview" disabled>
+                <img data-media-peek="previous" alt="" decoding="async" hidden />
+                <svg data-media-placeholder="previous" viewBox="0 0 48 48" aria-hidden="true"><rect x="5" y="8" width="38" height="32" rx="6" /><circle cx="17" cy="19" r="4" /><path d="m7 35 11-10 8 7 7-9 8 10" /></svg>
+            </button>
+            <button type="button" class="media-peek media-peek-next" data-media-direction="1" tabindex="-1" aria-label="Next preview" disabled>
+                <img data-media-peek="next" alt="" decoding="async" hidden />
+                <svg data-media-placeholder="next" viewBox="0 0 48 48" aria-hidden="true"><rect x="5" y="8" width="38" height="32" rx="6" /><circle cx="17" cy="19" r="4" /><path d="m7 35 11-10 8 7 7-9 8 10" /></svg>
+            </button>
+            <div class="media-stage" data-media-stage role="group" aria-roledescription="slide" aria-busy="true">
+                <div class="media-empty" data-media-loading><BoxLoader Label="Loading preview…" Compact="true" /></div>
+                <div class="media-empty" data-media-error hidden>
+                    <img src="/images/caja.png" alt="" />
+                    <p data-media-error-message role="status"></p>
+                    <button class="media-button" type="button" data-media-retry>Try again</button>
                 </div>
-            }
-            else if (_loading)
-            {
-                <div class="media-empty" role="status" aria-live="polite"><p>Loading preview…</p></div>
-            }
-            else if (Kind == PreviewKind.Image && ActiveUrl is not null)
-            {
-                <img class="media-image" src="@ActiveUrl" alt="@($"{ResourceName}, preview {_activeIndex + 1}")" loading="lazy" decoding="async" @onerror="MediaFailed" />
-            }
-            else if (IsSound && ActiveUrl is not null)
-            {
-                <ResourceAudioPreview SourceUrl="@ActiveUrl" Kind="@SoundKind" FileName="@PreviewFileName" Enabled="LoadMedia" />
-            }
-            else if (Kind == PreviewKind.Video && !_playRequested)
-            {
-                <button type="button" class="media-play" @onclick="Play" aria-label="Play video preview">
-                    <span class="media-play-icon" aria-hidden="true">▶</span>
+                <img class="media-image" data-media-image alt="" loading="eager" decoding="async" hidden />
+                <div class="media-audio-host" data-media-audio hidden>
+                    <ResourceAudioPreview PlayerId="@AudioPlayerId" BrowserManaged="true" />
+                </div>
+                <button type="button" class="media-play" data-media-play aria-label="Play video preview" hidden>
+                    <span class="media-play-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m9 5 11 7-11 7Z" /></svg></span>
                     <span>Play video preview</span>
                     <small>The video loads when you press play.</small>
                 </button>
-            }
-            else if (Kind == PreviewKind.Video && ActiveUrl is not null)
-            {
-                <video class="media-video" src="@ActiveUrl" controls autoplay="@LoadMedia" playsinline preload="none" @onerror="MediaFailed">
-                    Your browser does not support this video format.
-                </video>
-            }
-            else
-            {
-                <div class="media-empty">
+                <video class="media-video" data-media-video controls playsinline preload="none" hidden>Your browser does not support this video format.</video>
+                <div class="media-empty" data-media-other hidden>
                     <p>This preview format cannot be displayed here.</p>
-                    <a class="media-button" href="@ResourceFileLinks.For(ResourceId, ActiveFileId, true)" data-enhance-nav="false">Download preview</a>
+                    <a class="media-button" data-media-download data-enhance-nav="false">Download preview</a>
                 </div>
-            }
+            </div>
         </div>
         <div class="media-controls">
-            <button class="media-button" type="button" @onclick="Previous" disabled="@(Previews.Count < 2)" aria-label="Previous preview">←</button>
-            <p aria-live="polite" aria-atomic="true">Preview @(_activeIndex + 1) / @Previews.Count</p>
-            <button class="media-button" type="button" @onclick="Next" disabled="@(Previews.Count < 2)" aria-label="Next preview">→</button>
-        </div>
-        @if (Previews.Count > 1)
-        {
-            <div class="media-indicators" aria-label="Choose a preview">
-                @for (var index = 0; index < Previews.Count; index++)
-                {
-                    var previewIndex = index;
-                    <button type="button" class="media-indicator @(_activeIndex == index ? "is-active" : null)" @onclick="() => Select(previewIndex)" aria-label="@($"Show preview {index + 1}")" aria-current="@(_activeIndex == index ? "true" : null)">@(index + 1)</button>
-                }
+            <button class="media-button media-arrow" type="button" data-media-direction="-1" disabled aria-label="Previous preview" title="Previous preview (←)">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6" /></svg>
+            </button>
+            <div class="media-caption">
+                <span data-media-label>Preview</span>
+                <p aria-live="polite" aria-atomic="true"><strong data-media-position>0</strong><span aria-hidden="true"> / </span><span class="visually-hidden"> of </span><span class="media-count-total" data-media-total>0</span><span class="visually-hidden"> previews</span></p>
             </div>
-        }
-    }
+            <button class="media-button media-arrow" type="button" data-media-direction="1" disabled aria-label="Next preview" title="Next preview (→)">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 6 6 6-6 6" /></svg>
+            </button>
+        </div>
+        <div class="media-indicators" data-media-indicators aria-label="Choose a preview">
+            @for (var index = 0; index < Previews.Count; index++)
+            {
+                <button type="button" class="media-indicator" data-media-index="@index" disabled aria-label="@($"Show preview {index + 1}")" title="@($"Preview {index + 1}")"><span></span></button>
+            }
+        </div>
+    </div>
 </section>
+@if (_initializationError is not null)
+{
+    <p role="alert">@_initializationError</p>
+}

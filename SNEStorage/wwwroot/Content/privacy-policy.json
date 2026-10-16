@@ -3,27 +3,37 @@
   "kicker": "SNESTORAGE · YOUR INFORMATION",
   "introduction": "This page explains the information SNEStorage handles when you browse, create an account, publish resources, or participate in the community.",
   "updatedLabel": "Last updated:",
-  "updatedOn": "2026-10-09",
+  "updatedOn": "2026-10-16",
   "navigationTitle": "On this page",
   "summaryTitle": "Know what you share",
   "summaryText": "Your contributions can identify you through your username, avatar, and author credits. Choose your email and resource visibility carefully, and avoid putting private information in public profiles, comments, archives, or previews.",
   "contactTitle": "Privacy questions or requests?",
   "contact": {
     "label": "Contact SNEStorage staff",
-    "description": "Contact staff through the SNEStorage community Discord and ask for a private conversation about your request. Do not post your email, identity documents, passwords, or confirmation links in public channels.",
-    "url": "https://discord.gg/NpUXn7H"
+    "description": "Join the official SNEStorage Discord server and contact staff privately about your request. Do not post your email, identity documents, passwords, or account confirmation or password-reset links in public channels.",
+    "url": "https://discord.gg/e8bHBcRKX9"
   },
   "providerLinksTitle": "Provider privacy information",
   "providerLinks": [
+    {
+      "label": "Cloudflare",
+      "description": "Privacy information for the network and security services protecting SNEStorage.",
+      "url": "https://www.cloudflare.com/privacypolicy/"
+    },
     {
       "label": "Cloudflare Turnstile",
       "description": "Information about the signals processed for bot detection.",
       "url": "https://www.cloudflare.com/turnstile-privacy-policy/"
     },
     {
-      "label": "Mailtrap",
-      "description": "Privacy information for the currently configured email provider.",
-      "url": "https://mailtrap.io/privacy/"
+      "label": "Cloudflare security cookies",
+      "description": "How Cloudflare uses cookies for challenges, bot detection, and traffic controls.",
+      "url": "https://developers.cloudflare.com/fundamentals/reference/policies-compliances/cloudflare-cookies/"
+    },
+    {
+      "label": "MonsterASP.NET",
+      "description": "Hosting, email, and infrastructure privacy information. Contact SNEStorage staff about data held in your SNEStorage account.",
+      "url": "https://www.monsterasp.net/Privacy/"
     },
     {
       "label": "Google",
@@ -62,7 +72,7 @@
         {
           "id": "privacy-account-information",
           "title": "Account and registration details",
-          "text": "Registration collects your username, email address, password, date of birth, avatar, username color, time zone, and email visibility preference. The account system stores a password hash for authentication rather than a readable password. Your date of birth is stored as an account detail; it is not a substitute for identity verification."
+          "text": "Registration collects your username, email address, password, date of birth, avatar, username color, time zone, and email visibility preference. The account system stores a password hash for authentication rather than a readable password. Your date of birth is private account information and is hidden from other users' profile views. It is used to determine eligibility for sensitive content: access requires signing in with an account whose recorded date of birth indicates an age of at least 18. A recorded date of birth is not identity verification."
         },
         {
           "id": "privacy-profile-information",
@@ -73,6 +83,11 @@
           "id": "privacy-contributions",
           "title": "Resources and participation",
           "text": "We store submitted resource files, versions, release notes, previews, descriptions, classifications, tags, author credits, dependencies, visibility settings, comments, ratings, and reactions. Contributions are associated with the relevant account, including resource and version submitters. Archives and previews may themselves contain personal information you include in them."
+        },
+        {
+          "id": "privacy-reports",
+          "title": "Reports and moderation",
+          "text": "When you report a resource or comment, we store the selected reason, the reported item, your account association, and report dates and resolution status. Reports are available to authorized moderation staff to investigate rule violations."
         },
         {
           "id": "privacy-technical-information",
@@ -99,7 +114,7 @@
         {
           "id": "privacy-security-purpose",
           "title": "Security, moderation, and support",
-          "text": "Access information, technical signals, and relevant contributions help authenticate requests, detect automated abuse, investigate errors, enforce site rules, and handle support or privacy requests. Authorized staff may review information needed for those tasks."
+          "text": "Access information, technical signals, reports, and relevant contributions help authenticate requests, detect automated abuse, investigate errors, enforce site rules, and handle support or privacy requests. Authorized staff may review information needed for those tasks. Cloudflare security services and hosting protections help filter malicious traffic. The application also limits request frequency by account identifier or network address, depending on the action, and limits simultaneous uploads. Requests may be challenged, temporarily limited, or blocked when these protections apply."
         }
       ]
     },
@@ -146,9 +161,24 @@
           "text": "The interface temporarily reuses account information in the current page's memory to avoid repeating the same request during navigation. This account snapshot is not persisted in localStorage or sessionStorage. It is separate from the account and session cookies."
         },
         {
+          "id": "privacy-security-cookies",
+          "title": "Cloudflare security checks",
+          "text": "Cloudflare may use security cookies or similar browser mechanisms to validate challenges and protect the site against automated abuse. Which cookies are set depends on the security features and checks applied to your visit. See Cloudflare's cookie documentation below for their purposes and lifetimes. Blocking required security mechanisms can prevent a challenge or protected request from completing."
+        },
+        {
+          "id": "privacy-spc-library",
+          "title": "Your local SPC library",
+          "text": "The SPC Player saves the tracks you select, their metadata, playlist order, and player settings in IndexedDB in your browser. These local library files are not uploaded to SNEStorage or stored in its database. The library remains on that browser and device until you remove its contents or clear the site's browser storage; browsers may also remove stored data. It is not synchronized with your account."
+        },
+        {
+          "id": "privacy-local-patching",
+          "title": "Applying IPS and BPS patches",
+          "text": "The patching tool reads the ROM and patch you select and creates the patched file in your browser. These selected files are not uploaded to SNEStorage or stored in its database. After successfully creating a patched file, the tool sends a request to increment a shared usage counter stored in a file on the server. This request does not include the ROM, patch, or their filenames. The counter stores an aggregate total, not a history of individual users; normal security checks and request logs may still apply. This differs from resource submission, where files are uploaded to the server."
+        },
+        {
           "id": "privacy-browser-controls",
           "title": "Your browser controls",
-          "text": "You can manage cookies and cached website files through your browser. Clearing them may sign you out or require the website to reload its assets. Provider-specific browser storage, when used, is described in the relevant provider's privacy information."
+          "text": "You can manage cookies, cached website files, and stored site data through your browser. Clearing them may sign you out, remove your local SPC library and settings, or require the website to reload its assets. Removing a track from the SPC Player removes its local library copy, not the original file on your device. Provider-specific browser storage, when used, is described in the relevant provider's privacy information."
         }
       ]
     },
@@ -159,8 +189,13 @@
       "rules": [
         {
           "id": "privacy-hosting",
-          "title": "Hosting in the United States",
-          "text": "SNEStorage is hosted with MonsterASP.NET on servers located in the United States. Account data, stored contributions, and files hosted there may therefore be processed in the United States even if you access the website from another country. External providers may process their own service data in additional locations."
+          "title": "MonsterASP.NET Premium hosting",
+          "text": "SNEStorage uses MonsterASP.NET Premium hosting in the United States for its application, database, and uploaded files, with the infrastructure security protections included in that plan. The provider describes measures including firewalls, intrusion detection, automated blocking of malicious traffic, server security updates, and protected backups. Hosting operations may involve access logs, diagnostics, and backup copies. Data hosted there may be processed in the United States even if you visit from another country; external providers may process service data in additional locations."
+        },
+        {
+          "id": "privacy-cloudflare-network",
+          "title": "Cloudflare network and bot protection",
+          "text": "SNEStorage routes website traffic through Cloudflare and uses its denial-of-service (DDoS) protection, rate limiting, and Bot Fight Mode to help detect and block malicious or automated traffic. Cloudflare processes request and connection information, such as IP addresses, browser headers, requested addresses, timing, and security signals, to deliver and protect the website. A request may be challenged or blocked before it reaches SNEStorage's hosting server."
         },
         {
           "id": "privacy-turnstile",
@@ -170,7 +205,7 @@
         {
           "id": "privacy-email-provider",
           "title": "Account emails",
-          "text": "Confirmation messages are processed through the configured email provider, currently Mailtrap. The provider processes the recipient email address and message content, which includes the username and confirmation link. Treat confirmation links as private and do not share them."
+          "text": "SNEStorage sends account confirmation and password-reset emails from support@snestorage.dev through MonsterASP.NET's SMTP email service. Delivering these messages involves the recipient email address, username, message content, and the private confirmation or password-reset link, as well as delivery information handled by the mail servers. Your own email provider also processes messages delivered to your mailbox. Treat account links as private and do not share them."
         },
         {
           "id": "privacy-fonts",
@@ -179,8 +214,8 @@
         },
         {
           "id": "privacy-discord",
-          "title": "Community support",
-          "text": "The current contact link directs you to the community on Discord. Discord processes your use of that service under its own policy. Staff can receive the information you send when discussing a support or privacy request. Do not send passwords or account confirmation tokens."
+          "title": "Discord linking and community support",
+          "text": "You can choose to link your SNEStorage account with Discord. Linking stores your Discord user ID, Discord username, and linking date alongside your SNEStorage account. The integration exchanges account and membership information needed to link accounts and manage server access and supported community roles. Discord processes its service under its own policy. The privacy contact link opens the official SNEStorage Discord server, where staff can receive information you send privately about a request. Do not send passwords or account confirmation or password-reset tokens."
         }
       ]
     },
@@ -203,6 +238,11 @@
           "id": "privacy-deleted-comments",
           "title": "Comments with replies",
           "text": "A deleted comment may remain as a deleted placeholder when it has replies, so the conversation structure is preserved. Removal from the visible interface does not by itself confirm that every associated record, diagnostic log, or provider copy has been erased."
+        },
+        {
+          "id": "privacy-provider-records",
+          "title": "Provider records and backups",
+          "text": "Hosting backups, email delivery records, and security logs may retain information separately from the live website. Their retention and replacement depend on the relevant service and configuration. Removing information from a live page does not immediately remove every backup or provider record. Contact SNEStorage staff about a request involving these copies."
         }
       ]
     },

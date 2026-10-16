@@ -16,6 +16,8 @@
 .comment-deleted { white-space: pre-wrap; }
 .comment-deleted { color: #a990c3; font-style: italic; }
 .comment-votes { display: flex; flex-wrap: wrap; gap: .4rem .9rem; margin: .5rem 0 0; color: #b59bcd; font-size: .75rem; }
+.comment-votes[hidden] { display: none; }
+.resource-comment[data-vote-busy="true"] > .comment-actions .comment-vote-button:disabled { opacity: 1; }
 .comment-approval { color: #ceb1ef; }
 .comment-replies { margin: .8rem 0 0 .8rem; padding-left: .8rem; border-left: 2px solid #694394; }
 .comment-replies ::deep .comment-replies { margin-left: 0; }

@@ -3,6 +3,7 @@
 @using SNEStorage.Components.Resources
 
 <PageTitle>Submit a resource | SNEStorage</PageTitle>
+<HeadContent><link rel="modulepreload" href="js/resource-create.js?v=19" /><link rel="modulepreload" href="js/page-access.js?v=7" /></HeadContent>
 
 <div class="resource-create-page">
     @if (_forbidden)
@@ -47,7 +48,7 @@
         }
         else
         {
-            <EditForm Model="_form" OnSubmit="SubmitAsync" id="resource-create-form" class="resource-create-form" action="/api/resource/create/submit" method="post" enctype="multipart/form-data" novalidate aria-busy="@_saving">
+            <EditForm Model="_form" OnSubmit="SubmitAsync" id="resource-create-form" class="resource-create-form" data-ui-tabs action="/api/resource/create/submit" method="post" enctype="multipart/form-data" novalidate aria-busy="@_saving">
                 <AntiforgeryToken />
                 <input type="hidden" name="Id" value="0" />
                 @if (!string.IsNullOrWhiteSpace(_error))
@@ -70,14 +71,14 @@
                     @for (var index = 0; index < TabTitles.Length; index++)
                     {
                         var tab = index;
-                        <button id="@($"resource-tab-{tab}")" class="resource-tab @(_activeTab == tab ? "active" : null)" type="button" role="tab" aria-selected="@(_activeTab == tab)" aria-controls="@($"resource-panel-{tab}")" tabindex="@(_activeTab == tab ? 0 : -1)" data-resource-tab @onclick="() => SelectTab(tab)" @onkeydown="args => TabKeyDownAsync(tab, args)">
+                        <button id="@($"resource-tab-{tab}")" class="resource-tab" type="button" role="tab" aria-selected="@(tab == 0 ? "true" : "false")" aria-controls="@($"resource-panel-{tab}")" tabindex="@(tab == 0 ? 0 : -1)" data-resource-tab data-ui-tab="@tab">
                             <span class="resource-tab-number">@(tab + 1)</span><span>@TabTitles[tab]</span>
                         </button>
                     }
                 </div>
 
                 <div class="resource-form-sections" inert="@(_saving ? string.Empty : null)">
-                    <section id="resource-panel-0" class="resource-tab-panel" role="tabpanel" aria-labelledby="resource-tab-0" hidden="@(_activeTab != 0)" tabindex="0" data-resource-tab-panel="0">
+                    <section id="resource-panel-0" class="resource-tab-panel" role="tabpanel" aria-labelledby="resource-tab-0" tabindex="0" data-resource-tab-panel="0" data-ui-panel="0">
                         <fieldset class="resource-section">
                             <legend>General information</legend>
                             <div class="resource-grid resource-general-grid">
@@ -129,7 +130,7 @@
                             </div>
                         </fieldset>
                     </section>
-                    <section id="resource-panel-1" class="resource-tab-panel" role="tabpanel" aria-labelledby="resource-tab-1" hidden="@(_activeTab != 1)" tabindex="0" data-resource-tab-panel="1">
+                    <section id="resource-panel-1" class="resource-tab-panel" role="tabpanel" aria-labelledby="resource-tab-1" hidden tabindex="0" data-resource-tab-panel="1" data-ui-panel="1">
                         <fieldset class="resource-section">
                             <legend>File and release</legend>
                             <div class="resource-upload">
@@ -162,13 +163,13 @@
                             <ResourceQualityRequest @bind-Value="_form.SealOfQualityRequested" />
                         </fieldset>
                     </section>
-                    <section id="resource-panel-2" class="resource-tab-panel" role="tabpanel" aria-labelledby="resource-tab-2" hidden="@(_activeTab != 2)" tabindex="0" data-resource-tab-panel="2">
+                    <section id="resource-panel-2" class="resource-tab-panel" role="tabpanel" aria-labelledby="resource-tab-2" hidden tabindex="0" data-resource-tab-panel="2" data-ui-panel="2">
                         <fieldset class="resource-section">
                             <legend>Previews</legend>
                             <ResourcePreviewPicker />
                         </fieldset>
                     </section>
-                    <section id="resource-panel-3" class="resource-tab-panel" role="tabpanel" aria-labelledby="resource-tab-3" hidden="@(_activeTab != 3)" tabindex="0" data-resource-tab-panel="3">
+                    <section id="resource-panel-3" class="resource-tab-panel" role="tabpanel" aria-labelledby="resource-tab-3" hidden tabindex="0" data-resource-tab-panel="3" data-ui-panel="3">
                         <fieldset class="resource-section">
                             <legend>Authorship</legend>
                             <label class="resource-check resource-author-check">
@@ -180,7 +181,7 @@
                             <ResourceAuthorPicker External="true" @bind-Values="_form.ExternalAuthors" />
                         </fieldset>
                     </section>
-                    <section id="resource-panel-4" class="resource-tab-panel" role="tabpanel" aria-labelledby="resource-tab-4" hidden="@(_activeTab != 4)" tabindex="0" data-resource-tab-panel="4">
+                    <section id="resource-panel-4" class="resource-tab-panel" role="tabpanel" aria-labelledby="resource-tab-4" hidden tabindex="0" data-resource-tab-panel="4" data-ui-panel="4">
                         <fieldset class="resource-section">
                             <legend>Dependencies</legend>
                             <p class="resource-help resource-panel-intro">List the resources needed to use this submission. Leave this tab empty if none are required.</p>
@@ -188,7 +189,7 @@
                             <ResourceExternalDependencyEditor @bind-Values="_form.ExternalDependencies" />
                         </fieldset>
                     </section>
-                    <section id="resource-panel-5" class="resource-tab-panel" role="tabpanel" aria-labelledby="resource-tab-5" hidden="@(_activeTab != 5)" tabindex="0" data-resource-tab-panel="5">
+                    <section id="resource-panel-5" class="resource-tab-panel" role="tabpanel" aria-labelledby="resource-tab-5" hidden tabindex="0" data-resource-tab-panel="5" data-ui-panel="5">
                         <fieldset class="resource-section">
                             <legend>Content warnings</legend>
                             <ResourceContentWarnings @bind-IncludesPorn="_form.IncludesPorn" @bind-IncludesGore="_form.IncludesGore" @bind-IncludesPolitics="_form.IncludesPolitics" @bind-IncludesSlurs="_form.IncludesSlurs" @bind-IncludesSensitiveContent="_form.IncludesSensitiveContent" />
@@ -198,7 +199,7 @@
 
                 <div class="resource-submit-bar">
                     <div>
-                        <p class="resource-tab-progress">Section @(_activeTab + 1) of @TabTitles.Length</p>
+                        <p class="resource-tab-progress">Section <span data-ui-progress>1</span> of @TabTitles.Length</p>
                         <p class="resource-required-note"><span aria-hidden="true">*</span> Required fields</p>
                         @if (_saving)
                         {
@@ -207,23 +208,15 @@
                     </div>
                     <div class="resource-actions">
                         <a class="resource-secondary action-button" href="/Resources">Cancel</a>
-                        @if (_activeTab > 0)
-                        {
-                            <button class="resource-secondary action-button" type="button" disabled="@_saving" @onclick="() => SelectTab(_activeTab - 1)"><ActionArrow Left="true" />Previous</button>
-                        }
-                        @if (_activeTab < TabTitles.Length - 1)
-                        {
-                            <button class="resource-primary action-button action-button-primary" type="button" disabled="@_saving" @onclick="() => SelectTab(_activeTab + 1)">Next <ActionArrow /></button>
-                        }
-                        else
-                        {
-                            <button class="resource-primary action-button action-button-primary" type="submit" disabled="@_saving">
-                                @(_saving ? "Uploading…" : "Submit resource") <span aria-hidden="true">↑</span>
-                            </button>
-                        }
+                        <button class="resource-secondary action-button" type="button" disabled="@_saving" data-ui-step="-1" hidden><ActionArrow Left="true" />Previous</button>
+                        <button class="resource-primary action-button action-button-primary" type="button" disabled="@_saving" data-ui-step="1">Next <ActionArrow /></button>
+                        <button class="resource-primary action-button action-button-primary" type="submit" disabled="@_saving" data-ui-last hidden>
+                            @(_saving ? "Uploading…" : "Submit resource") <span aria-hidden="true">↑</span>
+                        </button>
                     </div>
                 </div>
             </EditForm>
+            <SubmissionProgress FormId="@FormId" />
         }
     }
 </div>

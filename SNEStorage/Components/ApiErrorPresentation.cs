@@ -144,6 +144,10 @@ internal static class ApiErrorPresentation
         if (!Enum.TryParse<ServiceResultTypes>(code, true, out var error) || !Enum.IsDefined(error)) return null;
         return error switch
         {
+            ServiceResultTypes.ResourceHasSealOfQuality => new("Resource cannot be deleted", "This resource cannot be deleted because one of its versions has the Seal of Quality. Contact a moderator or administrator if you need it removed.", error.ToString()),
+            ServiceResultTypes.ResourceHasDependents => new("Resource cannot be deleted", "This resource cannot be deleted because other resources depend on it. Contact a moderator or administrator if you need it removed.", error.ToString()),
+            ServiceResultTypes.VersionHasSealOfQuality => new("Version cannot be deleted", "This version has the Seal of Quality. Contact a moderator or administrator if you need it removed.", error.ToString()),
+            ServiceResultTypes.CantDeleteOnlyVersion => new("Keep at least one version", "The last version cannot be deleted. Every resource must keep at least one version, including when managed by staff.", error.ToString()),
             ServiceResultTypes.CacheError => new("Resource options are unavailable", "Resource options could not be loaded. Please try again later. Your submission was not completed.", error.ToString()),
             ServiceResultTypes.InvalidMaxAmount => new("Choose a valid page size", "Select a positive number of resources per request.", error.ToString()),
             ServiceResultTypes.MaxAmountSurpassTheLimit => new("The page size is too large", "Resources must be requested in blocks of at most 50.", error.ToString()),

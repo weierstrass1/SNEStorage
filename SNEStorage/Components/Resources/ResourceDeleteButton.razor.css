@@ -1,0 +1,22 @@
+.delete-button-wrapper { display: inline-flex; border-radius: 7px; }
+.delete-button-wrapper:has(button:disabled) { cursor: not-allowed; }
+.resource-delete-button { display: inline-flex; align-items: center; justify-content: center; gap: .45rem; min-height: 40px; padding: .6rem .85rem; border: 1px solid #a66386; border-radius: 7px; background: #622c478c; color: #ffd5e5; font: inherit; font-size: .8rem; font-weight: 650; cursor: pointer; }
+.resource-delete-button svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.resource-delete-button:not(:disabled):hover { background: #873756; border-color: #e6a0bd; color: #fff; }
+.resource-delete-button:disabled { opacity: .5; cursor: not-allowed; pointer-events: none; }
+.resource-delete-button:focus-visible, .delete-button-wrapper:focus-visible, .delete-cancel:focus-visible { outline: 2px solid #ffe14d; outline-offset: 3px; }
+.resource-delete-dialog { width: min(510px, calc(100vw - 2rem)); max-height: calc(100dvh - 3rem); overflow-y: auto; padding: clamp(1.2rem, 4vw, 1.8rem); border: 1px solid #a263a6; border-radius: 15px; background: #21112ff5; color: #eadbf6; box-shadow: 0 20px 70px #0009; }
+.resource-delete-dialog::backdrop { background: #080410b8; backdrop-filter: blur(3px); }
+.resource-delete-dialog h2 { margin: 0 0 .5rem; font: 800 1.5rem "Exo 2", sans-serif; color: #fff0f6; }
+.resource-delete-dialog p { color: #cbb6dc; font-size: .9rem; line-height: 1.65; }
+.resource-delete-dialog .delete-resource-name { color: #f0d3e7; font-weight: 750; overflow-wrap: anywhere; }
+.resource-delete-dialog .delete-staff-warning { padding: .7rem .8rem; border: 1px solid #98704a; border-radius: 7px; background: #51392266; color: #f1d7ad; font-size: .82rem; }
+.delete-error { padding: .8rem; margin: .8rem 0; border: 1px solid #ab6585; border-radius: 8px; background: #5c27405c; }
+.delete-error p { margin: .3rem 0 0; font-size: .82rem; }
+.delete-dialog-actions { display: flex; justify-content: flex-end; align-items: center; flex-wrap: wrap; gap: .65rem; margin-top: 1.4rem; }
+.delete-cancel { min-height: 40px; padding: .6rem .9rem; border: 1px solid #82629e; border-radius: 7px; background: #352143; color: #edddf7; font: inherit; font-size: .8rem; cursor: pointer; }
+.delete-cancel:hover { background: #50325e; }
+.delete-cancel:disabled { opacity: .5; cursor: wait; }
+.delete-confirm { background: #873450; border-color: #ce799b; }
+.delete-open-error { display: block; color: #ffc0d7; font-size: .78rem; max-width: 320px; }
+.delete-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }

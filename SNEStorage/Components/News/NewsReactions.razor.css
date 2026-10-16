@@ -8,6 +8,8 @@
 .reaction-button.is-liked { color: #b2f0c6; border-color: #6abf88; background: #1d3a2bbd; }
 .reaction-button.is-disliked { color: #ffc0cd; border-color: #d47d94; background: #482533bd; }
 .reaction-button:disabled { opacity: .55; cursor: default; }
+.news-reactions[data-vote-busy="true"] .reaction-button:disabled { opacity: 1; }
+.reaction-counts[hidden] { display: none; }
 .reaction-counts { display: flex; flex-wrap: wrap; gap: .3rem .7rem; color: #c9b3da; font-size: .75rem; }
 .approval { color: #e0c4ff; }
 .reaction-status { color: #bba4cf; font-size: .75rem; }

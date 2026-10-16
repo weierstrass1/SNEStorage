@@ -32,7 +32,6 @@ public partial class CreateResource : IAsyncDisposable
     private string? _currentUserId;
     private int _activeTab;
     private bool _focusInvalid;
-    private bool _focusTab;
     private bool _tabChanged;
     protected string LoginUrl => LoginNavigation.GetLoginUrl(Navigation);
 
@@ -40,24 +39,6 @@ public partial class CreateResource : IAsyncDisposable
     {
         _activeTab = Math.Clamp(tab, 0, TabTitles.Length - 1);
         _tabChanged = true;
-    }
-
-    protected Task TabKeyDownAsync(int tab, KeyboardEventArgs args)
-    {
-        var target = args.Key switch
-        {
-            "ArrowRight" => (tab + 1) % TabTitles.Length,
-            "ArrowLeft" => (tab + TabTitles.Length - 1) % TabTitles.Length,
-            "Home" => 0,
-            "End" => TabTitles.Length - 1,
-            _ => -1
-        };
-        if (target >= 0)
-        {
-            SelectTab(target);
-            _focusTab = true;
-        }
-        return Task.CompletedTask;
     }
 
     [CascadingParameter(Name = "VerifiedPageAccount")]
@@ -88,17 +69,15 @@ public partial class CreateResource : IAsyncDisposable
 
         if (!firstRender)
         {
-            if (_module is not null && (_focusInvalid || _focusTab || _tabChanged))
+            if (_module is not null && (_focusInvalid || _tabChanged))
             {
                 var focusInvalid = _focusInvalid;
-                var focusTab = _focusTab;
-                _focusInvalid = _focusTab = false;
+                _focusInvalid = false;
                 _tabChanged = false;
                 try
                 {
                     await _module.InvokeVoidAsync("syncTabs", FormId, $"resource-tab-{_activeTab}");
                     if (focusInvalid) await _module.InvokeVoidAsync("focusInvalidField", FormId);
-                    else if (focusTab) await _module.InvokeVoidAsync("focusTab", $"resource-tab-{_activeTab}");
                 }
                 catch (JSDisconnectedException) { }
             }
@@ -107,15 +86,12 @@ public partial class CreateResource : IAsyncDisposable
 
         try
         {
-            var module = await JavaScript.InvokeAsync<IJSObjectReference>("import", "./js/resource-create.js?v=15");
-            if (_disposed)
-            {
-                await module.DisposeAsync();
-                return;
-            }
-
-            _module = module;
-            await LoadOptionsAsync();
+            var initial = await BrowserReadStartup.LoadAsync<BrowserResponse>(JavaScript,
+                "./js/resource-create.js?v=19", "getCreateOptions", [], FormId);
+            if (_disposed) { if (initial.Module is not null) await initial.Module.DisposeAsync(); return; }
+            if (initial.Cancelled || initial.Module is null || initial.Response is null) return;
+            _module = initial.Module;
+            await ReadOptionsAsync(initial.Response);
         }
         catch (JSException exception)
         {
@@ -130,7 +106,9 @@ public partial class CreateResource : IAsyncDisposable
         }
     }
 
-    protected async Task LoadOptionsAsync()
+    protected Task LoadOptionsAsync() => ReadOptionsAsync();
+
+    private async Task ReadOptionsAsync(BrowserResponse? initial = null)
     {
         if (_module is null || _disposed || _forbidden)
         {
@@ -141,7 +119,7 @@ public partial class CreateResource : IAsyncDisposable
         _error = null;
         try
         {
-            var response = await _module.InvokeAsync<BrowserResponse>("getCreateOptions");
+            var response = initial ?? await _module.InvokeAsync<BrowserResponse>("getCreateOptions");
             if (_disposed)
             {
                 return;
@@ -210,11 +188,42 @@ public partial class CreateResource : IAsyncDisposable
             return;
         }
 
+        _saving = true;
+        StateHasChanged();
+        try
+        {
+            await _module.InvokeVoidAsync("beginSubmission", FormId);
+            if (_disposed) return;
+            await ValidateAndSubmitAsync();
+        }
+        catch (JSDisconnectedException) { }
+        catch (JSException exception)
+        {
+            Logger.LogWarning(exception, "Resource submission could not be started.");
+            _error = "The submission could not start. Your form has been kept. Please try again.";
+        }
+        finally
+        {
+            if (!_disposed && _module is not null)
+            {
+                try
+                {
+                    using var cleanup = new CancellationTokenSource(TimeSpan.FromSeconds(1));
+                    await _module.InvokeVoidAsync("endSubmission", cleanup.Token, FormId);
+                }
+                catch (Exception exception) when (exception is JSDisconnectedException or JSException or OperationCanceledException) { }
+            }
+            _saving = false;
+        }
+    }
+
+    private async Task ValidateAndSubmitAsync()
+    {
         _error = null;
         _validationErrors.Clear();
         try
         {
-            var validation = await _module.InvokeAsync<FormValidation>("validateResourceForm", FormId);
+            var validation = await _module!.InvokeAsync<FormValidation>("validateResourceForm", FormId);
             if (_disposed) return;
             if (!validation.Valid)
             {
@@ -243,10 +252,9 @@ public partial class CreateResource : IAsyncDisposable
             return;
         }
 
-        _saving = true;
         try
         {
-            var response = await _module.InvokeAsync<BrowserResponse>("submitResource", FormId);
+            var response = await _module!.InvokeAsync<BrowserResponse>("submitResource", FormId);
             if (_disposed)
             {
                 return;
@@ -269,10 +277,6 @@ public partial class CreateResource : IAsyncDisposable
         {
             Logger.LogWarning(exception, "Resource submission did not return a response.");
             _error = "The upload response could not be received. Check your resources before submitting again.";
-        }
-        finally
-        {
-            _saving = false;
         }
     }
 
@@ -334,6 +338,12 @@ public partial class CreateResource : IAsyncDisposable
     public async ValueTask DisposeAsync()
     {
         _disposed = true;
+        try
+        {
+            using var cleanup = new CancellationTokenSource(TimeSpan.FromSeconds(1));
+            await BrowserReadStartup.CancelAsync(JavaScript, FormId, cleanup.Token);
+        }
+        catch (Exception exception) when (exception is JSDisconnectedException or JSException or OperationCanceledException) { }
         if (_module is not null)
         {
             try

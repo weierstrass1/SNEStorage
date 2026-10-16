@@ -51,7 +51,7 @@
                 </div>
                 @if (!string.IsNullOrWhiteSpace(Profile.Bio))
                 {
-                    <p class="profile-bio">@Profile.Bio</p>
+                    <div class="profile-bio"><MarkdownText Text="@Profile.Bio" /></div>
                 }
                 else
                 {

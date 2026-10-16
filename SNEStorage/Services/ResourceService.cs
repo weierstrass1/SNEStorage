@@ -20,7 +20,8 @@ public partial class ResourceService(SnestorageContext context, CacheService cac
     ILogger<ResourceService> logger) :
     IFullGet<Resource, ResourceFinderDTO, ResourceSortingDTO, ResourceFinderViewDTO>,
     IEditSingle<long, ResourceEditDTO, Resource>,
-    ICreate<ResourceCreateDTO, Resource>
+    ICreate<ResourceCreateDTO, Resource>,
+    IDeleteSingle<long, Resource>
 {
     public const int MIN_NAME_SIZE = 2;
     public const int MAX_NAME_SIZE = 100;
@@ -117,6 +118,7 @@ public partial class ResourceService(SnestorageContext context, CacheService cac
             return accessError;
 
         bool canEdit = access.IsContributor;
+        bool isStaff = _accountService.IsModeratorOrAdmin();
 
         var query = _context.Resources
             .AsNoTracking()
@@ -132,6 +134,15 @@ public partial class ResourceService(SnestorageContext context, CacheService cac
                 RepositoryURL = resource.RepositoryURL,
                 AlreadyModerated = resource.AlreadyModerated,
                 CanEdit = canEdit,
+                CanDelete = isStaff || (canEdit &&
+                    !resource.ResourceVersions.Any(version => version.SealOfQuality) &&
+                    !resource.Dependents.Any(dependency => dependency.ResourceId != resourceId)),
+                DeleteBlockReason = isStaff || !canEdit ? null :
+                    resource.ResourceVersions.Any(version => version.SealOfQuality) ?
+                        ServiceResultTypes.ResourceHasSealOfQuality :
+                    resource.Dependents.Any(dependency => dependency.ResourceId != resourceId) ?
+                        ServiceResultTypes.ResourceHasDependents :
+                    (ServiceResultTypes?)null,
 
                 IncludesPorn = resource.IncludesPorn,
                 IncludesGore = resource.IncludesGore,
@@ -507,6 +518,11 @@ public partial class ResourceService(SnestorageContext context, CacheService cac
             .OrderBy(preview => preview.Id);
 
         return await _getPreviewList.Execute(query, ct: ct);
+    }
+    public Task<ServiceResultContext> Delete(long key, CancellationToken ct = default)
+    {
+        IDeleteSingle<long, Resource> deleter = this;
+        return deleter.DeleteSingle(key, ct);
     }
 
     private static bool IsValidRepositoryUrl(string value)

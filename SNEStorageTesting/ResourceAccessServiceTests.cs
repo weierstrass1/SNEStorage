@@ -102,6 +102,57 @@ public class ResourceAccessServiceTests
         Assert.Same(ServiceResult.ResourceNotFound, result.AsT1.Result);
     }
 
+    [Fact(DisplayName = "Anonymous users cannot view age-restricted resources")]
+    public async Task GetViewAccess_ReturnsUnauthorized_ForAnonymousSensitiveContent()
+    {
+        await using var database = new TestDatabase();
+        await AddResource(database, visibilityId: 1, includesSensitiveContent: true);
+        var service = CreateService(database);
+
+        var result = await service.GetViewAccess(1);
+
+        Assert.True(result.IsT1);
+        Assert.Same(ServiceResult.UserNotFoundUnauthorized, result.AsT1.Result);
+    }
+
+    [Fact(DisplayName = "Underage users cannot view age-restricted resources")]
+    public async Task GetViewAccess_ReturnsForbidden_ForUnderageSensitiveContent()
+    {
+        await using var database = new TestDatabase();
+        await AddResource(database, visibilityId: 1, includesSensitiveContent: true);
+        database.Context.UserInfos.Add(new UserInfo
+        {
+            UserId = "viewer",
+            Birthday = DateOnly.FromDateTime(DateTime.UtcNow).AddYears(-17)
+        });
+        await database.Context.SaveChangesAsync();
+        var service = CreateService(database, "viewer");
+
+        var result = await service.GetViewAccess(1);
+
+        Assert.True(result.IsT1);
+        Assert.Same(ServiceResult.Forbidden, result.AsT1.Result);
+    }
+
+    [Fact(DisplayName = "Adult users can view age-restricted public resources")]
+    public async Task GetViewAccess_AllowsAdultSensitiveContent()
+    {
+        await using var database = new TestDatabase();
+        await AddResource(database, visibilityId: 1, includesSensitiveContent: true);
+        database.Context.UserInfos.Add(new UserInfo
+        {
+            UserId = "viewer",
+            Birthday = DateOnly.FromDateTime(DateTime.UtcNow).AddYears(-18)
+        });
+        await database.Context.SaveChangesAsync();
+        var service = CreateService(database, "viewer");
+
+        var result = await service.GetViewAccess(1);
+
+        Assert.True(result.IsT0);
+        Assert.True(result.AsT0.ContentAllowed);
+    }
+
     private static ResourceAccessService CreateService(TestDatabase database,
         string? userId = null, bool isModerator = false)
     {
@@ -114,7 +165,7 @@ public class ResourceAccessServiceTests
 
     private static async Task AddResource(TestDatabase database, long visibilityId,
         string submitterId = "owner", string? authorId = null,
-        string? versionSubmitterId = null)
+        string? versionSubmitterId = null, bool includesSensitiveContent = false)
     {
         Resource resource = new()
         {
@@ -126,7 +177,8 @@ public class ResourceAccessServiceTests
             ScoreId = 10,
             Score = new Score { Id = 10 },
             VisibilityId = visibilityId,
-            SubmitterId = submitterId
+            SubmitterId = submitterId,
+            IncludesSensitiveContent = includesSensitiveContent
         };
 
         if (authorId is not null)

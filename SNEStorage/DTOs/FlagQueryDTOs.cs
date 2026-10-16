@@ -1,6 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
 namespace SNEStorage.DTOs;
+public enum FlagType
+{
+    Resource,
+    Comment
+}
 public class ResourceFlagCreateDTO
 {
     [Required]
@@ -18,13 +23,14 @@ public class CommentFlagCreateDTO
 public class FlagFilterDTO
 {
     [Range(1,5)]
-    public int? LowestPriority;
+    public int? LowestPriority { get; set; }
     [Range(1, 5)]
-    public int? HighestPriority;
-    public bool? Resolved;
-    public long? ReasonID;
-    public DateTime? CreatedAtFrom;
-    public DateTime? CreatedAtTo;
+    public int? HighestPriority { get; set; }
+    public bool? Resolved { get; set; }
+    public long? ReasonID { get; set; }
+    public DateTime? CreatedAtFrom { get; set; }
+    public DateTime? CreatedAtTo { get; set; }
+    public FlagType? Type { get; set; }
 }
 public enum FlagSort
 {
@@ -43,4 +49,6 @@ public class FlagReadDTO
     public int Priority { get; set; }
     public required DateTime CreatedAt { get; set; }
     public DateTime? ResolvedAt { get; set; }
+    public IdNamePair? Resource { get; set; }
+    public long? CommentId { get; set; }
 }

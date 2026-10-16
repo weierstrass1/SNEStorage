@@ -16,6 +16,8 @@ public partial class ResourceDetails
     private ResourceSectionState<RatingReadDto> _rating = new();
     private ResourceSectionState<List<ResourcePreview>> _previews = new();
     private ResourceSectionState<List<ResourceVersion>> _versions = new() { Loading = false };
+    private bool _refreshingVersionDetails;
+    private string? _versionDeletionNotice;
 
     private void ResetSections()
     {
@@ -27,6 +29,8 @@ public partial class ResourceDetails
         _rating = new();
         _previews = new();
         _versions = new() { Loading = false };
+        _refreshingVersionDetails = false;
+        _versionDeletionNotice = null;
     }
 
     private Task LoadOverviewSectionsAsync() => Task.WhenAll(
@@ -42,6 +46,63 @@ public partial class ResourceDetails
     private Task LoadPreviewsAsync() => LoadSectionAsync(_previews, "previews");
     private Task LoadVersionsAsync() => LoadSectionAsync(_versions, "versions");
 
+    private async Task RefreshVersionDetailsAsync()
+    {
+        if (_disposed || _module is null || _resource is null || _refreshingVersionDetails) return;
+        var generation = _generation;
+        _refreshingVersionDetails = true;
+        _versionDeletionNotice = "Version removed. Updating resource details…";
+        _versions = new() { Loading = false };
+        _latest = new();
+        var summaryTask = RefreshVersionSummaryAsync();
+        await Task.WhenAll(LoadVersionsAsync(), LoadLatestAsync(), summaryTask);
+        if (_disposed || generation != _generation) return;
+        _refreshingVersionDetails = false;
+        _versionDeletionNotice = _versions.Ready && _latest.Ready && await summaryTask ?
+            "The version was removed. Resource details are up to date." :
+            "The version was removed, but some resource details could not be refreshed. Please try refreshing the details.";
+    }
+
+    private async Task<bool> RefreshVersionSummaryAsync()
+    {
+        var resource = _resource!;
+        var generation = _generation;
+        try
+        {
+            var json = await _module!.InvokeAsync<string>("getResource", _lifetime.Token, resource.Id, _requestKey);
+            if (_disposed || generation != _generation || !ReferenceEquals(resource, _resource)) return false;
+            var response = JsonSerializer.Deserialize<BrowserResponse>(json, JsonOptions);
+            if (response is { Status: 401 or 403 or 404, Cancelled: false })
+            {
+                _resource = null;
+                _errorStatus = response.Status;
+                _errorBody = response.Body;
+                return false;
+            }
+            if (response is { Status: 200, Cancelled: false } && !string.IsNullOrWhiteSpace(response.Body) &&
+                JsonSerializer.Deserialize<ResourceReadDTO>(response.Body, JsonOptions) is { } updated && updated.Id == resource.Id)
+            {
+                // Keep the same resource instance so pending comments and their drafts survive.
+                resource.Downloads = updated.Downloads;
+                resource.UpdatedAt = updated.UpdatedAt;
+                resource.CanEdit = updated.CanEdit;
+                resource.CanDelete = updated.CanDelete;
+                resource.DeleteBlockReason = updated.DeleteBlockReason;
+                return true;
+            }
+        }
+        catch (Exception exception) when (exception is JSDisconnectedException or JSException or JsonException or OperationCanceledException)
+        {
+            if (!_disposed) Logger.LogDebug(exception, "Resource details could not be refreshed after a version deletion.");
+        }
+        if (!_disposed && generation == _generation && ReferenceEquals(resource, _resource))
+        {
+            resource.CanDelete = false;
+            resource.DeleteBlockReason = null;
+        }
+        return false;
+    }
+
     private async Task LoadSectionAsync<T>(ResourceSectionState<T> section, string route) where T : class
     {
         if (_module is null || _resource is null || _disposed || (section.Started && section.Loading)) return;
@@ -52,7 +113,6 @@ public partial class ResourceDetails
         section.Loading = true;
         section.ErrorStatus = null;
         section.ErrorBody = null;
-        StateHasChanged();
         bool IsCurrent() => !_disposed && generation == _generation && resourceId == ResourceId &&
             _resource?.Id == resourceId && section.Revision == revision;
         try

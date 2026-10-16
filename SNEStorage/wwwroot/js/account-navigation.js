@@ -1,4 +1,4 @@
-import { accountAvatarUrl } from "./profile.js?v=10";
+import { accountAvatarUrl } from "./profile.js?v=14";
 import { getAccountSession, watchAccountSession } from "./account-session.js?v=2";
 
 export function watchAccount(receiver) {

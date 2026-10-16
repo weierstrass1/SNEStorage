@@ -171,10 +171,101 @@ public class SearchServiceTests
         Assert.Equal(["banana", "manual"], result.AsT0.Select(user => user.Username));
     }
 
-    private static void AddUser(SnestorageContext context, string id, string username,
-        string color)
+    [Fact(DisplayName = "User search excludes accounts without confirmed email")]
+    public async Task UserSearch_ExcludesUnconfirmedAccounts()
     {
-        var user = new ApplicationUser { Id = id, UserName = username };
+        await using var database = new TestDatabase();
+        AddUser(database.Context, "confirmed", "alpha", "#111111");
+        AddUser(database.Context, "unconfirmed", "bravo", "#222222",
+            emailConfirmed: false);
+        await database.Context.SaveChangesAsync();
+        var service = new UserService(database.Context,
+            database.CreateGetLikeBySelector<UserInfo, UserNameDTO>());
+
+        var result = await service.GetUserLike(string.Empty);
+
+        Assert.True(result.IsT0);
+        Assert.Equal("confirmed", Assert.Single(result.AsT0).Id);
+    }
+
+    [Fact(DisplayName = "User search applies page offset after sorting")]
+    public async Task UserSearch_ReturnsRequestedPage()
+    {
+        await using var database = new TestDatabase();
+        AddUser(database.Context, "user-a", "alpha", "#111111");
+        AddUser(database.Context, "user-b", "bravo", "#222222");
+        AddUser(database.Context, "user-c", "charlie", "#333333");
+        await database.Context.SaveChangesAsync();
+        var service = new UserService(database.Context,
+            database.CreateGetLikeBySelector<UserInfo, UserNameDTO>());
+
+        var result = await service.GetUserLike(string.Empty, maxAmount: 2, page: 1);
+
+        Assert.True(result.IsT0);
+        Assert.Equal("charlie", Assert.Single(result.AsT0).Username);
+    }
+
+    [Theory(DisplayName = "User search rejects invalid page offsets")]
+    [InlineData(-1, ServiceResultTypes.NegativePage)]
+    [InlineData(int.MaxValue, ServiceResultTypes.SkipOutOfRange)]
+    public async Task UserSearch_RejectsInvalidPage(int page, ServiceResultTypes expected)
+    {
+        await using var database = new TestDatabase();
+        var service = new UserService(database.Context,
+            database.CreateGetLikeBySelector<UserInfo, UserNameDTO>());
+
+        var result = await service.GetUserLike(string.Empty, 2, page);
+
+        Assert.True(result.IsT1);
+        Assert.Equal(expected, result.AsT1.Result.Type);
+    }
+
+    [Fact(DisplayName = "User search can include avatar metadata when requested")]
+    public async Task UserSearch_IncludesAvatar_WhenRequested()
+    {
+        await using var database = new TestDatabase();
+        var avatar = new SNEStorage.Models.File
+        {
+            Id = 7,
+            URL = "avatars/user.png",
+            FileTypeId = 3
+        };
+        var user = new ApplicationUser
+        {
+            Id = "user-1",
+            UserName = "alpha",
+            EmailConfirmed = true
+        };
+        database.Context.UserInfos.Add(new UserInfo
+        {
+            UserId = user.Id,
+            User = user,
+            UsernameColor = "#111111",
+            AvatarId = avatar.Id,
+            Avatar = avatar
+        });
+        await database.Context.SaveChangesAsync();
+        var service = new UserService(database.Context,
+            database.CreateGetLikeBySelector<UserInfo, UserNameDTO>());
+
+        var result = await service.GetUserLike(string.Empty, withAvatar: true);
+
+        Assert.True(result.IsT0);
+        var response = Assert.Single(result.AsT0);
+        Assert.NotNull(response.Avatar);
+        Assert.Equal(7, response.Avatar.Id);
+        Assert.Equal("avatars/user.png", response.Avatar.URL);
+    }
+
+    private static void AddUser(SnestorageContext context, string id, string username,
+        string color, bool emailConfirmed = true)
+    {
+        var user = new ApplicationUser
+        {
+            Id = id,
+            UserName = username,
+            EmailConfirmed = emailConfirmed
+        };
         context.UserInfos.Add(new UserInfo
         {
             UserId = id,

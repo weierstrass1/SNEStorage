@@ -16,12 +16,17 @@ internal sealed class NewsApiClient(IJSObjectReference module, string requestKey
     public Task<NewsWriteResponse> EditAsync(long newsId, NewsEditDTO dto, CancellationToken ct) =>
         module.InvokeAsync<NewsWriteResponse>("editNews", ct, requestKey, newsId, dto).AsTask();
 
-    public Task<NewsWriteResponse> VoteAsync(long newsId, LikeValues value, string userId, CancellationToken ct) =>
-        module.InvokeAsync<NewsWriteResponse>("submitNewsVote", ct, $"{requestKey}-vote", newsId, value.ToString(), userId).AsTask();
+    public Task<NewsWriteResponse> VoteAsync(long newsId, LikeValues value, string userId) =>
+        module.InvokeAsync<NewsWriteResponse>("submitNewsVote", CancellationToken.None, $"{requestKey}-vote", newsId, value.ToString(), userId).AsTask();
 
     public async Task<NewsReadResponse> ReadOneAsync(long newsId, CancellationToken ct)
     {
         var json = await module.InvokeAsync<string>("readNewsItem", ct, requestKey, newsId);
+        return DecodeOne(json, newsId);
+    }
+
+    internal static NewsReadResponse DecodeOne(string json, long newsId)
+    {
         var response = JsonSerializer.Deserialize<BrowserResponse>(json, JsonOptions)
             ?? throw new JsonException("The news endpoint returned no response.");
         if (response.Status is < 200 or >= 300) return new(response.Status, null, response.Body);
@@ -33,10 +38,14 @@ internal sealed class NewsApiClient(IJSObjectReference module, string requestKey
     public async Task<List<NewsReadDTO>> ReadAsync(int amount, int page, NewsSorting sort)
     {
         var json = await module.InvokeAsync<string>("readNews", requestKey, amount, page, sort.ToString());
+        return DecodeList(json);
+    }
+
+    internal static List<NewsReadDTO> DecodeList(string json)
+    {
         var response = JsonSerializer.Deserialize<BrowserResponse>(json, JsonOptions);
         if (response is null || response.Status is < 200 or >= 300)
             throw new JsonException("The news endpoint did not return a successful response.");
-
         return JsonSerializer.Deserialize<List<NewsReadDTO>>(response.Body, JsonOptions)
             ?? throw new JsonException("The news endpoint returned no list.");
     }

@@ -1,4 +1,4 @@
 <div class="sound-preview @(Compact ? "is-compact" : null)" role="group" aria-label="Sound preview: @FileName" @onkeydown:stopPropagation>
-    <div id="@_playerId" class="sound-player-host"></div>
+    <div id="@HostId" class="sound-player-host"></div>
     @if (_error is not null) { <p role="status">@_error</p> }
 </div>

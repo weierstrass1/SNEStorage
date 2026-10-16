@@ -186,6 +186,7 @@
 }
 
 .profile-panel {
+    min-width: 0;
     padding: clamp(1rem, 3vw, 1.5rem);
 }
 
@@ -217,11 +218,11 @@
     margin: 0;
     color: #c4bddc;
     line-height: 1.8;
-    white-space: pre-wrap;
     overflow-wrap: anywhere;
 }
 
 .profile-empty-copy {
+    white-space: pre-wrap;
     color: #9389b6;
     font-style: italic;
 }

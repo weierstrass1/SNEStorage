@@ -4,11 +4,16 @@ const previews = new Map();
 const maxPreviewBytes = 5 * 1024 * 1024;
 
 export function releasePreview(key) {
-    const preview = previews.get(key);
-    if (!preview) return;
-    preview.controller.abort();
-    if (preview.url) URL.revokeObjectURL(preview.url);
+    const gallery = previews.get(key);
+    if (!gallery) return;
+    for (const entry of gallery.entries.values()) releaseEntry(entry);
     previews.delete(key);
+}
+
+function releaseEntry(entry) {
+    entry.controller.abort();
+    if (entry.image) entry.image.removeAttribute("src");
+    if (entry.url) URL.revokeObjectURL(entry.url);
 }
 
 function mediaType(file) {
@@ -54,14 +59,81 @@ export async function readPreviewBlob(response, mime, signal) {
     }
 }
 
-// File metadata stays JSON. Bytes come from the existing protected download action.
-// Only the active preview is retained; video and sound bytes are requested only after Play.
-export async function loadPreview(metadataUrl, downloadUrl, fileId, key, playVideo, knownFile = null) {
-    releasePreview(key);
-    const preview = { controller: new AbortController(), url: null };
-    previews.set(key, preview);
-    const signal = preview.controller.signal;
-    const request = { credentials: "same-origin", signal };
+export function previewKind(file) { return mediaType(file ?? {}).kind; }
+
+export function getReadyPreview(key, fileId) {
+    return previews.get(key)?.entries.get(String(fileId))?.result ?? null;
+}
+
+// Keep only the current slide and its two neighbors. URLs never leave this page.
+export async function loadPreview(metadataUrl, downloadUrl, fileId, key, playVideo,
+    knownFile = null, neighbors = [], onImageReady = null, resourceId = 0, forceReload = false) {
+    let gallery = previews.get(key);
+    if (gallery && gallery.resourceId !== resourceId) {
+        releasePreview(key);
+        gallery = null;
+    }
+    if (!gallery) {
+        gallery = { entries: new Map(), activeId: null, resourceId };
+        previews.set(key, gallery);
+    }
+    const activeId = String(fileId);
+    gallery.activeId = activeId;
+    const retained = new Set([activeId, ...neighbors.map(item => String(item.fileId))]);
+    for (const [id, entry] of gallery.entries) {
+        if (!retained.has(id) || (id === activeId && forceReload)) {
+            releaseEntry(entry);
+            gallery.entries.delete(id);
+        }
+    }
+    const active = { metadataUrl, downloadUrl, fileId, knownFile };
+    const entry = getEntry(gallery, active, playVideo, "high");
+    const result = await entry.promise;
+    if (previews.get(key) !== gallery || gallery.activeId !== activeId)
+        return { cancelled: true };
+    if (result.status !== 200) return result;
+
+    // Start neighbors after the main image is ready so it gets the bandwidth first.
+    for (const neighbor of neighbors) {
+        if (String(neighbor.fileId) === activeId ||
+            mediaType(neighbor.knownFile ?? {}).kind !== "image") continue;
+        const upcoming = getEntry(gallery, neighbor, false, "low");
+        void upcoming.promise.then(response => {
+            if (response.kind !== "image" || !response.url || typeof onImageReady !== "function" ||
+                previews.get(key) !== gallery ||
+                gallery.entries.get(String(neighbor.fileId)) !== upcoming) return;
+            return onImageReady(neighbor.fileId, response.url);
+        }).catch(() => { /* A discarded carousel no longer consumes this image. */ });
+    }
+    return result;
+}
+
+function getEntry(gallery, descriptor, playVideo, priority) {
+    const id = String(descriptor.fileId);
+    let entry = gallery.entries.get(id);
+    if (entry && playVideo && !entry.playVideo) {
+        releaseEntry(entry);
+        gallery.entries.delete(id);
+        entry = null;
+    }
+    if (entry) return entry;
+    entry = { controller: new AbortController(), url: null, image: null, playVideo };
+    gallery.entries.set(id, entry);
+    entry.promise = fetchPreview(entry, descriptor, playVideo, priority).then(result => {
+        entry.result = result;
+        if (result.status !== 200 && gallery.entries.get(id) === entry) {
+            releaseEntry(entry);
+            gallery.entries.delete(id);
+        }
+        return result;
+    });
+    return entry;
+}
+
+// Metadata stays JSON; bytes always go through the existing access-checked action.
+async function fetchPreview(entry, { metadataUrl, downloadUrl, fileId, knownFile }, playVideo, priority) {
+    const signal = entry.controller.signal;
+    const request = { credentials: "same-origin", signal, priority };
     try {
         let file = knownFile;
         // The detail response already includes each preview's File. Avoid loading it a second time.
@@ -93,13 +165,24 @@ export async function loadPreview(metadataUrl, downloadUrl, fileId, key, playVid
         const blob = await readPreviewBlob(response, mime, signal);
         if (!blob) return { status: 413, message: "Previews must be nonempty and no larger than 5 MB." };
         signal.throwIfAborted();
-        if (previews.get(key) !== preview) return { cancelled: true };
-        preview.url = URL.createObjectURL(blob);
-        return { status: 200, kind, url: preview.url };
+        entry.url = URL.createObjectURL(blob);
+        if (kind === "image") {
+            entry.image = new Image();
+            entry.image.decoding = "async";
+            entry.image.src = entry.url;
+            await entry.image.decode();
+            signal.throwIfAborted();
+        }
+        return { status: 200, kind, url: entry.url };
     } catch (error) {
         if (signal.aborted || error.name === "AbortError") return { cancelled: true };
         if (error instanceof SyntaxError) return { status: 502 };
         if (error instanceof TypeError) return { status: 0 };
-        throw error;
+        return { status: 502, message: "This preview could not be decoded. Try another preview or retry." };
     }
 }
+
+window.addEventListener("pagehide", event => {
+    if (event.persisted) return;
+    for (const key of [...previews.keys()]) releasePreview(key);
+});

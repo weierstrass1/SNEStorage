@@ -2,6 +2,7 @@
 using OneOf;
 using SNEStorage.DTOs;
 using SNEStorage.Models;
+using SNEStorage.Services.Interfaces;
 using SNEStorage.Services.QueryComponents;
 using System.Globalization;
 using System.Text.RegularExpressions;
@@ -15,7 +16,10 @@ public partial class ResourceVersionService(IWebHostEnvironment environment,
     GetFirstOrErrorQueryOperation<Models.File> getFile,
     GetListQueryOperation<ResourceVersion> getVersions,
     GetFirstOrErrorQueryOperation<ResourceVersion> getVersion,
-    ILogger<ResourceVersionService> logger)
+    ILogger<ResourceVersionService> logger) :
+    ICreate<(long ResourceId, ResourceVersionCreateDTO Dto), ResourceVersion>,
+    IEditSingle<(long ResourceId, long VersionId), ResourceVersionEditDTO, ResourceVersion>,
+    IDeleteSingle<(long ResourceId, long VersionId), ResourceVersion>
 {
     private const int MIN_DESCRIPTION_SIZE = 10;
     private const int MAX_DESCRIPTION_SIZE = 10000;
@@ -34,136 +38,50 @@ public partial class ResourceVersionService(IWebHostEnvironment environment,
     private readonly GetFirstOrErrorQueryOperation<ResourceVersion> _getVersion = getVersion;
     private readonly ILogger<ResourceVersionService> _logger = logger;
 
-    public async Task<OneOf<ResourceVersion, ServiceResultContext>> AddVersion(
+    public Task<OneOf<ResourceVersion, ServiceResultContext>> AddVersion(
         long resourceId, ResourceVersionCreateDTO dto, CancellationToken ct = default)
     {
-        if (dto.File.Length > FILE_MAX_SIZE)
-            return ServiceResult.FileSizeSurpassTheLimit.Return(_logger);
+        return Create((resourceId, dto), ct);
+    }
 
-        string? userId = _accountService.GetUserID();
-        if (userId is null)
-            return ServiceResult.Forbidden.Return(_logger);
-
-        dto.Version = dto.Version.ToLower().Trim();
-
-        var versionValidation = await ValidateVersion(resourceId, null, dto.Version, ct);
-        if (!versionValidation.TryPickT0(out bool validVersion, out var validationError))
-            return validationError;
-
-        if (!validVersion)
-            return ServiceResult.InvalidVersion.Return(_logger);
-
-        dto.ReleaseNotes = dto.ReleaseNotes.Trim();
-
-        if (dto.ReleaseNotes.Length < MIN_DESCRIPTION_SIZE ||
-            dto.ReleaseNotes.Length > MAX_DESCRIPTION_SIZE)
-            return ServiceResult.InvalidReleaseNote.Return(_logger);
-
-        var accessResult = await _accessService.GetEditAccess(resourceId, ct);
-        if (!accessResult.TryPickT0(out _, out var accessError))
-            return accessError;
-
-        var resourceQuery = _context.Resources
-            .Include(resource => resource.ResourceVersions)
-                .ThenInclude(version => version.File)
-            .Where(resource => resource.Id == resourceId);
-
-        var resourceResult = await _getResource.Execute(
-            resourceQuery, ServiceResult.ResourceNotFound, ct: ct);
-
-        if (!resourceResult.TryPickT0(out var resource, out var resourceError))
-            return resourceError;
-
-        if (resource.ResourceVersions.Any(version => version.Version == dto.Version))
-            return ServiceResult.VersionAlreadyExists.Return(_logger);
-
-        var batchResult = await _fileService.BeginBatch(ct);
-        if (!batchResult.TryPickT0(out var batchPath, out var batchError))
-            return batchError;
-
-        string mainFolder = ResourcePathHelper.GetMainResourceFolder(resource);
-        string versionName = GetFullVersion(dto.Version);
-        string versionFolder = ResourcePathHelper.SanitizeFolderName(versionName);
-        string path = GetVersionPath(dto.File.FileName, versionFolder, mainFolder);
-
-        var fileResult = await _fileService.PrepareFile(
-            FileContext.Resource, dto.File, path, batchPath, ct: ct);
-
-        if (!fileResult.TryPickT0(out var file, out var fileError))
-            return fileError;
-
-        ResourceVersion version = new()
-        {
-            Id = 0,
-            FileId = 0,
-            ResourceId = 0,
-            SubmitterUserId = userId,
-            Resource = resource,
-            CreatedAt = DateTime.UtcNow,
-            File = file,
-            ChangeLog = dto.ReleaseNotes,
-            Version = versionName,
-            SealOfQualityRequested = dto.SealOfQualityRequested
-        };
-
-        _context.ResourceVersions.Add(version);
-        return await _fileService.TrySyncContextWithFiles(batchPath, version, ct);
+    public Task<OneOf<ResourceVersion, ServiceResultContext>> Create(
+        (long ResourceId, ResourceVersionCreateDTO Dto) create,
+        CancellationToken ct = default)
+    {
+        ICreate<(long ResourceId, ResourceVersionCreateDTO Dto), ResourceVersion> creator = this;
+        return creator.CreateItem(create, ct);
     }
 
     public async Task<ServiceResultContext> EditVersion(long resourceId, long versionId,
         ResourceVersionEditDTO dto, CancellationToken ct = default)
     {
-        var accessResult = await _accessService.GetEditAccess(resourceId, ct);
-        if (!accessResult.TryPickT0(out _, out var accessError))
-            return accessError;
+        var result = await Edit((resourceId, versionId), dto, ct);
 
-        var resourceQuery = _context.Resources
-            .Include(resource => resource.ResourceVersions)
-            .Where(resource => resource.Id == resourceId);
+        return result.TryPickT0(out _, out var editError) ?
+            ServiceResult.Success.Return(_logger) :
+            editError;
+    }
 
-        var resourceResult = await _getResource.Execute(
-            resourceQuery, ServiceResult.ResourceNotFound, ct: ct);
+    public Task<OneOf<ResourceVersion, ServiceResultContext>> Edit(
+        (long ResourceId, long VersionId) key, ResourceVersionEditDTO dto,
+        CancellationToken ct = default)
+    {
+        IEditSingle<(long ResourceId, long VersionId), ResourceVersionEditDTO,
+            ResourceVersion> editor = this;
+        return editor.EditSingle(key, dto, ct);
+    }
 
-        if (!resourceResult.TryPickT0(out var resource, out var resourceError))
-            return resourceError;
+    public Task<ServiceResultContext> DeleteVersion(
+        long resourceId, long versionId, CancellationToken ct = default)
+    {
+        return Delete((resourceId, versionId), ct);
+    }
 
-        if (dto.Version is not null)
-        {
-            dto.Version = dto.Version.ToLower().Trim();
-
-            var validation = await ValidateVersion(resourceId, versionId, dto.Version, ct);
-            if (!validation.TryPickT0(out bool validVersion, out var validationError))
-                return validationError;
-
-            if (!validVersion)
-                return ServiceResult.InvalidVersion.Return(_logger);
-        }
-
-        if (dto.ReleaseNotes is not null)
-        {
-            dto.ReleaseNotes = dto.ReleaseNotes.Trim();
-
-            if (dto.ReleaseNotes.Length < MIN_DESCRIPTION_SIZE ||
-                dto.ReleaseNotes.Length > MAX_DESCRIPTION_SIZE)
-                return ServiceResult.InvalidReleaseNote.Return(_logger);
-        }
-
-        var version = resource.ResourceVersions
-            .FirstOrDefault(version => version.Id == versionId);
-
-        if (version is null)
-            return ServiceResult.VersionNotFound.Return(_logger);
-
-        version.ChangeLog = _dbHelperService.GetEditString(
-            dto.ReleaseNotes, version.ChangeLog);
-        version.Version = _dbHelperService.GetEditString(
-            dto.Version, version.Version);
-        version.UpdatedAt = DateTime.UtcNow;
-        version.AlreadyModerated = false;
-        version.SealOfQualityRequested = version.SealOfQuality ||
-            (dto.SealOfQualityRequested ?? version.SealOfQualityRequested);
-
-        return await _dbHelperService.TrySyncContext(ct: ct);
+    public Task<ServiceResultContext> Delete(
+        (long ResourceId, long VersionId) key, CancellationToken ct = default)
+    {
+        IDeleteSingle<(long ResourceId, long VersionId), ResourceVersion> deleter = this;
+        return deleter.DeleteSingle(key, ct);
     }
 
     public async Task<OneOf<Models.File, ServiceResultContext>> GetFile(

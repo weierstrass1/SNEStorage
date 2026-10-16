@@ -7,6 +7,30 @@ function closeSidebar() {
 }
 
 document.addEventListener("click", event => {
+    if (!(event.target instanceof Element)) return;
+    const minimize = event.target.closest("[data-sidebar-minimize]");
+    if (minimize && desktop.matches) {
+        const sidebar = minimize.closest("#site-sidebar");
+        if (!sidebar) return;
+        const minimized = sidebar.classList.toggle("is-minimized");
+        sidebar.closest(".app-shell")?.classList.toggle("sidebar-minimized", minimized);
+        minimize.setAttribute("aria-expanded", String(!minimized));
+        const label = minimized ? "Expand navigation" : "Minimize navigation";
+        minimize.setAttribute("aria-label", label);
+        minimize.title = label;
+        return;
+    }
+    const group = event.target.closest("[data-sidebar-group]");
+    if (group) {
+        const panel = document.getElementById(group.getAttribute("aria-controls"));
+        if (!panel) return;
+        panel.hidden = !panel.hidden;
+        group.setAttribute("aria-expanded", String(!panel.hidden));
+        const label = `${panel.hidden ? "Expand" : "Collapse"} ${group.closest(".navigation-group").getAttribute("aria-label")}`;
+        group.setAttribute("aria-label", label);
+        group.title = label;
+        return;
+    }
     if (!desktop.matches && event.target instanceof Element &&
         event.target.closest("#site-sidebar a[href]")) closeSidebar();
 });

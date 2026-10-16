@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using SNEStorage.DTOs;
 using SNEStorage.Services;
+using SNEStorage.Components.Shared;
 
 namespace SNEStorage.Components.News;
 
@@ -12,6 +13,8 @@ public partial class NewsFeed : IAsyncDisposable
     private readonly string _requestKey = Guid.NewGuid().ToString("N");
     private readonly List<NewsReadDTO> _items = [];
     private IJSObjectReference? _module;
+    private IJSObjectReference? _accountMonitor;
+    private NewsFeedContext? _reactionsContext;
     private DotNetObjectReference<NewsFeed>? _reference;
     private NewsApiClient? _api;
     private ElementReference _sentinel;
@@ -56,16 +59,33 @@ public partial class NewsFeed : IAsyncDisposable
         _error = null;
         try
         {
-            var module = await JavaScript.InvokeAsync<IJSObjectReference>("import", "./js/news.js?v=7");
-            if (_disposed) { await module.DisposeAsync(); return; }
-            _module = module;
+            var initial = await BrowserReadStartup.LoadAsync<string>(JavaScript,
+                "./js/news.js?v=9", "readNews", [_requestKey, PageSize, 0, Sort.ToString()], _requestKey, "dispose");
+            if (_disposed) { if (initial.Module is not null) await initial.Module.DisposeAsync(); return; }
+            if (initial.Cancelled || initial.Module is null || initial.Response is null) return;
+            var module = _module = initial.Module;
             _api = new(module, _requestKey);
-            if (Infinite) _reference = DotNetObjectReference.Create(this);
-            await LoadMoreAsync();
+            _reactionsContext = new(module, null);
+            var items = NewsApiClient.DecodeList(initial.Response);
+            _items.AddRange(items);
+            _page = 1;
+            _endReached = !Infinite || items.Count < PageSize;
+            _initializing = false;
+            _syncObserver = true;
+            _focusPending = Infinite;
+            _reference ??= DotNetObjectReference.Create(this);
+            StateHasChanged();
+            try
+            {
+                var monitor = await module.InvokeAsync<IJSObjectReference>("watchAccount", _reference);
+                if (_disposed) { await monitor.InvokeVoidAsync("stop"); await monitor.DisposeAsync(); }
+                else _accountMonitor = monitor;
+            }
+            catch (JSException exception) { if (!_disposed) Logger.LogDebug(exception, "News account monitoring could not be initialized."); }
         }
         catch (JSDisconnectedException) { }
         catch (OperationCanceledException) when (_disposed) { }
-        catch (JSException exception)
+        catch (Exception exception) when (exception is JSException or JsonException)
         {
             Logger.LogWarning(exception, "The news feed could not be initialized.");
             _error = "News could not be loaded. Please try again.";
@@ -75,6 +95,14 @@ public partial class NewsFeed : IAsyncDisposable
             if (!_disposed) { _initializing = false; await InvokeAsync(StateHasChanged); }
         }
     }
+
+    [JSInvokable]
+    public Task UpdateAccount(VerifiedAccountContent.BrowserAccount account) => InvokeAsync(() =>
+    {
+        if (_disposed || _module is null || account.Authenticated is null) return;
+        _reactionsContext = new(_module, account);
+        StateHasChanged();
+    });
     [JSInvokable]
     public async Task LoadMoreAsync()
     {
@@ -118,9 +146,15 @@ public partial class NewsFeed : IAsyncDisposable
         _disposed = true;
         try
         {
+            using var cleanup = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+            await BrowserReadStartup.CancelAsync(JavaScript, _requestKey, cleanup.Token);
             if (_module is not null)
             {
-                using var cleanup = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+                if (_accountMonitor is not null)
+                {
+                    await _accountMonitor.InvokeVoidAsync("stop", cleanup.Token);
+                    await _accountMonitor.DisposeAsync();
+                }
                 await _module.InvokeVoidAsync("dispose", cleanup.Token, _requestKey);
                 await _module.DisposeAsync();
             }

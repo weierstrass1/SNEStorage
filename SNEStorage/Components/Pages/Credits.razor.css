@@ -5,18 +5,22 @@
 h1, h2, h3 { font-family: 'Exo 2', sans-serif; font-weight: 800; }
 h1 { margin: 0 0 .65rem; color: #f5edff; font-size: clamp(2rem, 4vw, 3rem); }
 .credits-hero > div > p:last-child { margin: 0; max-width: 650px; color: #c9b9dd; line-height: 1.7; }
-.credits-creator { display: flex; align-items: center; gap: 1.3rem; margin: 1.3rem 0 2rem; padding: 1.5rem; border: 1px solid #72509c; border-left: 4px solid #b488ef; border-radius: 14px; background: linear-gradient(120deg, rgba(53, 31, 76, var(--ui-surface-alpha)), rgba(23, 16, 36, var(--ui-surface-alpha))); }
-.credits-avatar { flex-shrink: 0; display: block; padding: 6px; border: 1px solid #9d73cd; border-radius: 16px; background: #241733; }
-.credits-avatar img { display: block; width: 64px; height: 64px; object-fit: contain; border-radius: 10px; }
-.credits-fallback { object-fit: contain; }
-.credits-creator h2 { margin: 0 0 .3rem; font-size: 1.8rem; overflow-wrap: anywhere; }
+.credits-creator { display: flex; align-items: center; gap: 2rem; margin: 1.5rem 0 2.2rem; padding: 2.2rem; border: 1px solid #aa7ddc; border-left: 5px solid #c69aff; border-radius: 20px; background: radial-gradient(ellipse at top left, #a26ae52b, transparent 70%), linear-gradient(120deg, rgba(53, 31, 76, var(--ui-surface-alpha)), rgba(23, 16, 36, var(--ui-surface-alpha))); box-shadow: 0 8px 30px #08051025; }
+.credits-creator > div { min-width: 0; }
+.credits-avatar { flex-shrink: 0; display: block; padding: 10px; border: 1px solid #b98ae9; border-radius: 24px; background: #241733; box-shadow: 0 0 24px #b488ef20; }
+.credits-avatar img { display: block; width: 128px; height: 128px; object-fit: contain; border-radius: 15px; }
+.credits-creator h2 { margin: 0 0 .55rem; font-size: clamp(2rem, 4vw, 2.7rem); overflow-wrap: anywhere; }
 .credits-creator h2 a { color: #e7e2ff; text-decoration: none; }
-.credits-creator p:last-child { color: #c9b9dd; margin: 0; }
-.credits-creator .credits-kicker { margin-bottom: .25rem; }
+.credits-creator p:last-child { color: #d9c7ee; margin: 0; font-size: 1.05rem; line-height: 1.65; }
+.credits-creator .credits-kicker { margin-bottom: .5rem; color: #d2b0ff; font-size: .7rem; }
 .credits-section { margin-top: 1.8rem; }
 .credits-section > h2 { font-size: 1.35rem; margin: 0 0 1rem; }
 .credits-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.credits-grid.single-entry { grid-template-columns: minmax(0, 1fr); }
 .credit-card { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; padding: 1.5rem; border: 1px solid #543a71; border-radius: 14px; background: rgba(23, 16, 36, var(--ui-surface-alpha)); }
+.credit-card.has-image { flex-direction: row; align-items: center; gap: 1.4rem; }
+.credit-copy { display: flex; flex: 1; flex-direction: column; align-items: flex-start; width: 100%; min-width: 0; }
+.credit-image { flex: 0 0 88px; width: 88px; height: 88px; padding: 4px; object-fit: cover; border: 1px solid #9871bd; border-radius: 18px; background: #2c1c40; }
 .credit-card h3 { font-size: 1.2rem; color: #f2e5ff; margin: 0 0 .5rem; }
 .credit-by { color: #cda6fd; font-weight: 600; margin: 0 0 .8rem; }
 .credit-description { color: #c4b5d7; line-height: 1.7; margin: 0 0 1rem; }
@@ -30,10 +34,15 @@ a:focus-visible { outline: 2px solid #ffe14d; outline-offset: 4px; border-radius
 .credits-notices h2 { font-size: 1.15rem; margin: 0 0 .8rem; }
 .credits-notices p { color: #beaed1; line-height: 1.7; }
 @media (max-width: 600px) {
+    .credit-card.has-image { gap: 1rem; align-items: flex-start; }
+    .credit-image { flex-basis: 64px; width: 64px; height: 64px; border-radius: 13px; }
     .credits-grid { grid-template-columns: 1fr; }
     .credits-hero { padding: 1.4rem; gap: 1rem; }
     .credits-hero img { width: 66px; height: auto; }
-    .credits-creator { padding: 1.2rem; gap: 1rem; }
-    .credits-creator h2 { font-size: 1.5rem; }
+    .credits-creator { padding: 1.5rem; gap: 1.2rem; }
+    .credits-avatar { padding: 8px; border-radius: 20px; }
+    .credits-avatar img { width: 96px; height: 96px; }
+    .credits-creator h2 { font-size: 2rem; }
 }
-@media (max-width: 380px) { .credits-hero { flex-direction: column; align-items: flex-start; } }
+@media (max-width: 420px) { .credits-creator { flex-direction: column; align-items: flex-start; } }
+@media (max-width: 380px) { .credits-hero, .credit-card.has-image { flex-direction: column; align-items: flex-start; } .credit-image { flex-basis: auto; } }

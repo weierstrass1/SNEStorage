@@ -39,7 +39,7 @@ public partial class AccountNavigation : IAsyncDisposable
         _initializing = true;
         try
         {
-            _module ??= await JavaScript.InvokeAsync<IJSObjectReference>("import", "./js/account-navigation.js?v=9");
+            _module ??= await JavaScript.InvokeAsync<IJSObjectReference>("import", "./js/account-navigation.js?v=10");
             if (_disposed) { await _module.DisposeAsync(); return; }
             _reference ??= DotNetObjectReference.Create(this);
             _monitor = await _module.InvokeAsync<IJSObjectReference>("watchAccount", _reference);

@@ -1,3 +1,18 @@
+@if (_requirement is not null && _access is null)
+{
+    <HeadContent>
+        <link rel="modulepreload" href="js/page-access.js?v=7" />
+        @if (RouteData.PageType == typeof(SNEStorage.Components.Pages.CreateResource))
+        {
+            <link rel="modulepreload" href="js/resource-create.js?v=19" />
+        }
+        else if (_requirement.ResourceManagement)
+        {
+            <link rel="modulepreload" href="js/resource-editor.js?v=25" />
+        }
+    </HeadContent>
+}
+
 @if (_requirement is null)
 {
     @ChildContent

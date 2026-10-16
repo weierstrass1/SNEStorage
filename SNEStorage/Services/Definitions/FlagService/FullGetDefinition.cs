@@ -25,6 +25,10 @@ public partial class FlagsService
             query = query.Where(r => r.Resolved == filter.Resolved);
         if (filter.ReasonID != null)
             query = query.Where(r => r.ReasonId == filter.ReasonID);
+        if (filter.Type != null)
+            query = query.Where(r =>
+            (filter.Type == FlagType.Resource && r.ResourceFlags != null) ||
+            (filter.Type == FlagType.Comment && r.CommentFlags != null));
         return query;
     }
     public IQueryable<FlagReadDTO> GetSelect(IQueryable<Flag> query)
@@ -49,7 +53,13 @@ public partial class FlagsService
                     FileTypeId = f.User.UserInfo.Avatar!.FileTypeId,
                     URL = f.User.UserInfo.Avatar.URL
                 }
-            }
+            },
+            Resource = f.ResourceFlags == null ?
+                null : new IdNamePair
+                {
+                    Id = f.ResourceFlags.ResourceId,
+                    Name = f.ResourceFlags.Resource!.Name
+                },
         });
     }
     public IQueryable<Flag> GetSort(IQueryable<Flag> query, FlagSort sort)

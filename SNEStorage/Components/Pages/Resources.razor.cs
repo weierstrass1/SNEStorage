@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using SNEStorage.Components.Resources;
 using SNEStorage.DTOs;
+using SNEStorage.Components.Shared;
 
 namespace SNEStorage.Components.Pages;
 
@@ -24,7 +25,7 @@ public partial class Resources : IAsyncDisposable
     private bool _descending = true;
     private int _pageSize = 20, _page, _blocks, _revision, _errorStatus;
     private int? _lastPage;
-    private bool _loading = true, _loadingMore, _endReached, _filtersOpen, _filtersInitialized, _optionsLoading, _syncObserver, _disposed, _scrollPending;
+    private bool _loading = true, _loadingMore, _endReached, _filtersInitialized, _optionsLoading, _syncObserver, _disposed, _scrollPending;
     private string? _error, _errorBody, _filterError, _optionsError, _announcement;
     [Inject] private IJSRuntime JavaScript { get; set; } = default!;
     [Inject] private ILogger<Resources> Logger { get; set; } = default!;
@@ -54,18 +55,28 @@ public partial class Resources : IAsyncDisposable
         {
             if (firstRender)
             {
-                _module = await JavaScript.InvokeAsync<IJSObjectReference>("import", "./js/resource-list.js?v=4");
-                if (_disposed) { await _module.DisposeAsync(); return; }
+                var initial = await BrowserReadStartup.LoadAsync<string>(JavaScript,
+                    "./js/resource-list.js?v=6", "findResources",
+                    [_requestKey, _applied.Finder, _applied.AuthorLike, BlockSize, 0], _requestKey, "dispose");
+                if (_disposed) { if (initial.Module is not null) await initial.Module.DisposeAsync(); return; }
+                if (initial.Cancelled || initial.Module is null || initial.Response is null) return;
+                _module = initial.Module;
                 _reference = DotNetObjectReference.Create(this);
                 _api = new(_module, _requestKey);
-                _contentMonitor = await _module.InvokeAsync<IJSObjectReference>("watchContentAccount", _reference);
-                if (_disposed)
+                // Start the list before waiting for the independent account controls.
+                var listLoad = ReloadAsync(0, initial.Response);
+                try
                 {
-                    await _contentMonitor.InvokeVoidAsync("stop");
-                    await _contentMonitor.DisposeAsync();
-                    return;
+                    var monitor = await _module.InvokeAsync<IJSObjectReference>("watchContentAccount", _reference);
+                    if (_disposed)
+                    {
+                        await monitor.InvokeVoidAsync("stop");
+                        await monitor.DisposeAsync();
+                    }
+                    else _contentMonitor = monitor;
                 }
-                await ReloadAsync(0);
+                catch (JSException exception) { if (!_disposed) Logger.LogDebug(exception, "Content account controls could not be initialized."); }
+                await listLoad;
                 return;
             }
             if (_module is not null && _syncObserver)
@@ -89,7 +100,7 @@ public partial class Resources : IAsyncDisposable
         }
     }
 
-    private async Task ReloadAsync(int targetPage)
+    private async Task ReloadAsync(int targetPage, string? initialJson = null)
     {
         if (_api is null || _module is null || _disposed) return;
         var oldItems = _resources;
@@ -105,10 +116,8 @@ public partial class Resources : IAsyncDisposable
         _endReached = false;
         _error = _announcement = null;
         StateHasChanged();
-        try { await _module.InvokeVoidAsync("cancelList", _requestKey); }
-        catch (JSDisconnectedException) { return; }
-        if (_disposed || revision != _revision) return;
-        await ReadBlockAsync(revision);
+        // findResources cancels the previous read in the browser before starting the next.
+        await ReadBlockAsync(revision, initialJson);
         if (_disposed || revision != _revision) return;
         if (targetPage > oldPage && _error is null && _resources.Count == 0 && oldItems.Count > 0)
         {
@@ -124,7 +133,7 @@ public partial class Resources : IAsyncDisposable
         StateHasChanged();
     }
 
-    private async Task ReadBlockAsync(int revision)
+    private async Task ReadBlockAsync(int revision, string? initialJson = null)
     {
         if (_api is null) return;
         if (!_canChooseSensitiveContent) HideSensitiveContent(_applied);
@@ -137,7 +146,8 @@ public partial class Resources : IAsyncDisposable
         }
         try
         {
-            var result = await _api.FindAsync(_applied.Copy(), BlockSize, (int)backendPage);
+            var result = initialJson is null ? await _api.FindAsync(_applied.Copy(), BlockSize, (int)backendPage)
+                : ResourceListApiClient.Decode<List<ResourceFinderViewDTO>>(initialJson);
             if (_disposed || revision != _revision) return;
             if (!result.Success) { SetError(result.Status, result.Body); return; }
             var items = result.Data!;
@@ -198,14 +208,11 @@ public partial class Resources : IAsyncDisposable
         _draft = new();
         await ApplyFiltersAsync();
     }
-    private async Task ToggleFiltersAsync()
+    private async Task InitializeFiltersAsync()
     {
-        _filtersOpen = !_filtersOpen;
-        if (_filtersOpen)
-        {
-            _filtersInitialized = true;
-            await LoadOptionsAsync();
-        }
+        if (_filtersInitialized) return;
+        _filtersInitialized = true;
+        await LoadOptionsAsync();
     }
     private async Task LoadOptionsAsync()
     {
@@ -277,20 +284,20 @@ public partial class Resources : IAsyncDisposable
         ++_revision;
         try
         {
+            using var cleanup = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+            await BrowserReadStartup.CancelAsync(JavaScript, _requestKey, cleanup.Token);
             if (_contentMonitor is not null)
             {
-                using var cleanup = new CancellationTokenSource(TimeSpan.FromSeconds(2));
                 await _contentMonitor.InvokeVoidAsync("stop", cleanup.Token);
                 await _contentMonitor.DisposeAsync();
             }
             if (_module is not null)
             {
-                await _module.InvokeVoidAsync("dispose", _requestKey);
+                await _module.InvokeVoidAsync("dispose", cleanup.Token, _requestKey);
                 await _module.DisposeAsync();
             }
         }
-        catch (JSDisconnectedException) { }
-        catch (OperationCanceledException) { }
+        catch (Exception exception) when (exception is JSDisconnectedException or JSException or OperationCanceledException) { }
         finally { _reference?.Dispose(); }
     }
 }

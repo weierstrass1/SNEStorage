@@ -1,5 +1,8 @@
-<div class="markdown-content @(Compact ? "markdown-compact" : null) @(IsExcerpt ? "markdown-excerpt" : null)" style="@(IsExcerpt ? $"--markdown-lines: {MaxLines}" : null)">
-    <div class="markdown-fallback" hidden="@_ready">@Text</div>
-    @* JavaScript owns only the contents of this leaf; Blazor owns its visibility. *@
-    <div class="markdown-rendered" @ref="_content" hidden="@(!_ready)"></div>
+<div class="markdown-content @(Compact ? "markdown-compact" : null) @(IsExcerpt ? "markdown-excerpt" : null)"
+     style="@(IsExcerpt ? $"--markdown-lines: {MaxLines}" : null)" data-markdown-text data-markdown-excerpt="@(IsExcerpt ? "true" : "false")" aria-busy="true">
+    @* Razor encodes the source; it stays hidden. JS owns only the rendered leaf. *@
+    <span data-markdown-source hidden>@Text</span>
+    <div class="markdown-placeholder" aria-hidden="true"><span></span><span></span></div>
+    <div class="markdown-rendered" data-markdown-output></div>
+    <noscript><div class="markdown-fallback">@Text</div></noscript>
 </div>

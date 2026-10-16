@@ -1,4 +1,4 @@
-import { accountAvatarUrl } from "./profile.js?v=10";
+import { accountAvatarUrl } from "./profile.js?v=14";
 
 const batchSize = 20;
 let current;

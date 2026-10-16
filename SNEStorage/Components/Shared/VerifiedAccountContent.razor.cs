@@ -23,7 +23,7 @@ public partial class VerifiedAccountContent : IAsyncDisposable
         if (!firstRender || _disposed) return;
         try
         {
-            var module = await JavaScript.InvokeAsync<IJSObjectReference>("import", "./js/account-navigation.js?v=9");
+            var module = await JavaScript.InvokeAsync<IJSObjectReference>("import", "./js/account-navigation.js?v=10");
             if (_disposed) { await module.DisposeAsync(); return; }
             _module = module;
             _receiver = DotNetObjectReference.Create(this);

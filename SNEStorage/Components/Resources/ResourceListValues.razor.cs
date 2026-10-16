@@ -7,7 +7,6 @@ public partial class ResourceListValues
 {
     [Parameter] public IReadOnlyList<ResourceListValue> Items { get; set; } = [];
     [Parameter] public int Limit { get; set; } = 3;
-    private bool _expanded;
-    private IEnumerable<ResourceListValue> Visible => _expanded ? Items : Items.Take(Limit);
-    private void Toggle() => _expanded = !_expanded;
+    [Parameter] public bool Inline { get; set; }
+    private readonly string _itemsId = $"resource-values-{Guid.NewGuid():N}";
 }

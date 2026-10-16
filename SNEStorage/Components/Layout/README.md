@@ -2,8 +2,9 @@
 
 The header renders the SNEStorage logo on the left and account controls on the right.
 SideNavigation renders site links in a fixed right rail on desktop. Its arrow button
-minimizes the rail to 72px with labeled icons, or expands it to 232px. MainLayout
-holds only this UI state in its code-behind; it remains while navigating in that layout.
+minimizes the rail to 72px with labeled icons, or expands it to 216px. side-navigation.js owns minimization and group expansion
+in the browser, without a circuit call or rerender. This state remains while navigating
+in that layout. Buttons use compact text, thin borders and restrained shadows.
 Mobile navigation always displays full labels in the drawer.
 Links are grouped into Resources, collapsible Info, Community and Tools.
 Info starts collapsed and contains News, About, Credits, Rules, Privacy and Seal of Quality;
@@ -23,6 +24,10 @@ navigation or resizing to desktop. It performs no API requests.
 SpcPlaylistHost lives in MainLayout outside PageAccessGuard. Its native browser
 controls and JavaScript playback state survive navigation within the document.
 The full library is at /Tools/SPCPlayer; its dock appears when leaving that page.
+The browser stores the dock's open/closed, minimized and expanded preferences in
+localStorage (`snestorage-spc-player-ui`). Closing writes immediately, so a later
+visit keeps it hidden; opening the tool or playing a track reopens it. A library
+without this preference defaults to a hidden dock. Playback never starts on reload.
 Files and preferences stay in IndexedDB, without uploading files or invoking a
 backend service. The emulator loads only after playback is requested. The dock
 queue is rendered only when expanded, avoiding hidden lists on unrelated pages.

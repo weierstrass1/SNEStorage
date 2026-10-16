@@ -1,12 +1,25 @@
 {
   "title": "Credits",
-  "introduction": "SNEStorage brings together community work and open-source tools. Meet the creator and the people whose projects help make the site possible.",
+  "introduction": "SNEStorage brings together art, community support, and open-source tools. Meet the people whose work, testing, and feedback help make the site possible.",
   "creator": {
     "userId": "79b39789-949b-4e0a-9ef9-78eabaf4c3c5",
     "name": "anonimzwx",
     "role": "Creator, developer, and maintainer of SNEStorage"
   },
   "sections": [
+    {
+      "title": "Art & design",
+      "entries": [
+        {
+          "title": "SNEStorage logo",
+          "by": "Leonardo Pinto",
+          "description": "Created the SNEStorage logo, giving the project its distinctive visual identity. Thank you for bringing SNEStorage's look to life.",
+          "image": "/images/credits/leonardo-pinto.jpg",
+          "imageAlt": "Leonardo Pinto",
+          "links": [{ "label": "Leonardo Pinto's portfolio", "url": "https://www.leopintoart.cl/" }]
+        }
+      ]
+    },
     {
       "title": "SNES tools & audio",
       "entries": [
@@ -72,6 +85,16 @@
           "description": "Interface foundations, including the mobile navigation drawer.",
           "license": "MIT",
           "links": [{ "label": "Project repository", "url": "https://github.com/twbs/bootstrap" }]
+        }
+      ]
+    },
+    {
+      "title": "Special thanks",
+      "entries": [
+        {
+          "title": "Community testing & feedback",
+          "by": "Everyone who helped shape SNEStorage",
+          "description": "Thank you to everyone who tested the site, reported bugs, shared suggestions, and gave feedback throughout development. Your time, patience, and support have helped make SNEStorage better for the whole community."
         }
       ]
     }

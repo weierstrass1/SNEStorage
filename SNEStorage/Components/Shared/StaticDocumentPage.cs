@@ -1,12 +1,14 @@
+using System.Text.Json;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 
 namespace SNEStorage.Components.Shared;
 
-// Browser loading and cleanup shared by public pages backed by static JSON.
+// Read public presentation files locally, before rendering, without an API or a shared cache.
 public abstract class StaticDocumentPage<TDocument> : ComponentBase, IAsyncDisposable where TDocument : class
 {
-    private readonly string _requestKey = Guid.NewGuid().ToString("N");
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
     private readonly CancellationTokenSource _lifetime = new();
     private IJSObjectReference? _module;
     private bool _disposed;
@@ -20,20 +22,27 @@ public abstract class StaticDocumentPage<TDocument> : ComponentBase, IAsyncDispo
     protected virtual void OnDocumentLoaded(TDocument document) { }
 
     [Inject] private IJSRuntime JavaScript { get; set; } = default!;
+    [Inject] private IWebHostEnvironment Environment { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
     [Inject] private ILogger<StaticDocumentPage<TDocument>> Logger { get; set; } = default!;
 
+    protected override Task OnInitializedAsync() => LoadAsync();
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
-            await LoadAsync();
-        else if (_scrollToAnchor && _module is not null && !_disposed)
+        if (!_scrollToAnchor || _disposed) return;
+        _scrollToAnchor = false;
+        // Normal navigation needs no JS interop. Only deep links need a scroll after render.
+        if (!Uri.TryCreate(Navigation.Uri, UriKind.Absolute, out var uri) || string.IsNullOrEmpty(uri.Fragment)) return;
+        try
         {
-            _scrollToAnchor = false;
-            try { await _module.InvokeVoidAsync("scrollToAnchor", _lifetime.Token); }
-            catch (JSDisconnectedException) { }
-            catch (OperationCanceledException) when (_disposed) { }
+            var module = await JavaScript.InvokeAsync<IJSObjectReference>("import", _lifetime.Token, "./js/site-rules.js?v=4");
+            if (_disposed) { await module.DisposeAsync(); return; }
+            _module = module;
+            await module.InvokeVoidAsync("scrollToAnchor", _lifetime.Token);
         }
+        catch (Exception exception) when (exception is JSException or OperationCanceledException)
+        { Logger.LogDebug(exception, "The public document anchor could not be scrolled into view."); }
     }
 
     protected async Task LoadAsync()
@@ -43,15 +52,15 @@ public abstract class StaticDocumentPage<TDocument> : ComponentBase, IAsyncDispo
         _error = null;
         try
         {
-            _module ??= await JavaScript.InvokeAsync<IJSObjectReference>("import", "./js/site-rules.js?v=3");
-            if (_disposed)
-            {
-                await _module.DisposeAsync();
-                return;
-            }
-
-            var document = await _module.InvokeAsync<TDocument>(
-                "readDocument", _lifetime.Token, Navigation.BaseUri, _requestKey, DocumentPath);
+            var file = Environment.WebRootFileProvider.GetFileInfo(DocumentPath);
+            if (!file.Exists) throw new FileNotFoundException("The public document was not found.", DocumentPath);
+            await using var stream = file.CreateReadStream();
+            using var json = await JsonDocument.ParseAsync(stream, cancellationToken: _lifetime.Token);
+            if (!json.RootElement.TryGetProperty("sections", out var sections) ||
+                sections.ValueKind != JsonValueKind.Array || sections.GetArrayLength() == 0)
+                throw new JsonException("The public document needs at least one section.");
+            var document = json.Deserialize<TDocument>(JsonOptions)
+                ?? throw new JsonException("The public document is empty.");
             if (!_disposed)
             {
                 OnDocumentLoaded(document);
@@ -59,7 +68,6 @@ public abstract class StaticDocumentPage<TDocument> : ComponentBase, IAsyncDispo
                 _scrollToAnchor = true;
             }
         }
-        catch (JSDisconnectedException) { }
         catch (OperationCanceledException) when (_disposed) { }
         catch (Exception exception)
         {
@@ -71,11 +79,7 @@ public abstract class StaticDocumentPage<TDocument> : ComponentBase, IAsyncDispo
         }
         finally
         {
-            if (!_disposed)
-            {
-                _loading = false;
-                await InvokeAsync(StateHasChanged);
-            }
+            if (!_disposed) _loading = false;
         }
     }
 
@@ -87,12 +91,9 @@ public abstract class StaticDocumentPage<TDocument> : ComponentBase, IAsyncDispo
         {
             try
             {
-                using var cleanup = new CancellationTokenSource(TimeSpan.FromSeconds(2));
-                await _module.InvokeVoidAsync("cancelRead", cleanup.Token, _requestKey);
                 await _module.DisposeAsync();
             }
-            catch (JSDisconnectedException) { }
-            catch (OperationCanceledException) { }
+            catch (Exception exception) when (exception is JSException or OperationCanceledException) { }
         }
         _lifetime.Dispose();
     }

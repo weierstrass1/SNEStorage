@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging.Abstractions;
+using SNEStorage.Controllers;
 using SNEStorage.DTOs;
 using SNEStorage.Models;
 using SNEStorage.Services;
@@ -90,6 +92,84 @@ public class ResourceVersionServiceTests
         Assert.Equal("2.0", result.AsT0.Version);
     }
 
+    [Fact(DisplayName = "Deleting an unknown resource version returns VersionNotFound")]
+    public async Task DeleteVersion_ReturnsVersionNotFound_WhenVersionDoesNotExist()
+    {
+        await using var database = new TestDatabase();
+        await AddResourceWithVersions(database);
+        var service = CreateService(database, "owner");
+
+        var result = await service.DeleteVersion(1, 999);
+
+        Assert.Same(ServiceResult.VersionNotFound, result.Result);
+    }
+
+    [Fact(DisplayName = "The only version of a resource cannot be deleted")]
+    public async Task DeleteVersion_ReturnsCantDeleteOnlyVersion_ForSingleVersion()
+    {
+        await using var database = new TestDatabase();
+        await AddResourceWithVersions(database, singleVersion: true);
+        var service = CreateService(database, "owner");
+
+        var result = await service.DeleteVersion(1, 1);
+
+        Assert.Same(ServiceResult.CantDeleteOnlyVersion, result.Result);
+    }
+
+    [Fact(DisplayName = "Contributors cannot delete quality-sealed versions")]
+    public async Task DeleteVersion_ReturnsVersionHasSealOfQuality_ForContributor()
+    {
+        await using var database = new TestDatabase();
+        await AddResourceWithVersions(database);
+        (await database.Context.ResourceVersions.FindAsync(2L))!.SealOfQuality = true;
+        await database.Context.SaveChangesAsync();
+        var service = CreateService(database, "owner");
+
+        var result = await service.DeleteVersion(1, 2);
+
+        Assert.Same(ServiceResult.VersionHasSealOfQuality, result.Result);
+    }
+
+    [Fact(DisplayName = "Unsealed non-final versions pass deletion validation")]
+    public async Task ValidateDelete_ReturnsSuccess_ForUnsealedNonFinalVersion()
+    {
+        await using var database = new TestDatabase();
+        await AddResourceWithVersions(database);
+        var service = CreateService(database, "owner");
+        var findResult = await service.FindDelete((1, 2));
+        Assert.True(findResult.IsT0);
+
+        var result = await service.ValidateDelete(findResult.AsT0);
+
+        Assert.Same(ServiceResult.Success, result.Result);
+    }
+
+    [Fact(DisplayName = "Unrelated users cannot delete resource versions")]
+    public async Task DeleteVersion_ReturnsForbidden_ForUnrelatedUser()
+    {
+        await using var database = new TestDatabase();
+        await AddResourceWithVersions(database);
+        var service = CreateService(database, "viewer");
+
+        var result = await service.DeleteVersion(1, 2);
+
+        Assert.Same(ServiceResult.Forbidden, result.Result);
+    }
+
+    [Fact(DisplayName = "Delete-version endpoint maps final-version conflicts to HTTP 409")]
+    public async Task ResourceController_DeleteVersion_ReturnsConflict_ForOnlyVersion()
+    {
+        await using var database = new TestDatabase();
+        await AddResourceWithVersions(database, singleVersion: true);
+        var service = CreateService(database, "owner");
+        var controller = new ResourceController(null!, null!, null!, service);
+
+        var action = await controller.DeleteVersion(1, 1);
+
+        var conflict = Assert.IsType<ConflictObjectResult>(action);
+        Assert.Equal("ResourceController-CantDeleteOnlyVersion", conflict.Value);
+    }
+
     private static ResourceVersionService CreateService(TestDatabase database,
         string? userId = null)
     {
@@ -109,7 +189,7 @@ public class ResourceVersionServiceTests
     }
 
     private static async Task AddResourceWithVersions(TestDatabase database,
-        bool useEqualLatestDates = false)
+        bool useEqualLatestDates = false, bool singleVersion = false)
     {
         DateTime firstDate = new(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         DateTime secondDate = firstDate.AddDays(1);
@@ -127,7 +207,10 @@ public class ResourceVersionServiceTests
             VisibilityId = 1,
             SubmitterId = "owner"
         };
-        resource.ResourceVersions =
+        resource.ResourceVersions = singleVersion ?
+        [
+            CreateVersion(1, resource, "1.0", firstDate)
+        ] :
         [
             CreateVersion(1, resource, "1.0", firstDate),
             CreateVersion(2, resource, "1.5", secondDate, alreadyModerated: true),

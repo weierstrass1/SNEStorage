@@ -1,4 +1,5 @@
-<article class="resource-comment" id="@($"comment-{Comment.Id}")" data-comment-id="@Comment.Id" tabindex="-1">
+<article class="resource-comment" id="@($"comment-{Comment.Id}")" data-comment-id="@Comment.Id" tabindex="-1"
+         data-vote-feedback data-vote-state="@VoteState" data-vote-busy="@(Saving ? "true" : "false")">
     <header>
         <img class="comment-avatar" src="@AvatarUrl" alt="" width="40" height="40" loading="lazy" />
         <div class="comment-author">
@@ -34,26 +35,23 @@
     else
     {
         <div class="comment-text"><MarkdownText Text="@Comment.Text" /></div>
-        @if (Likes + Dislikes > 0)
-        {
-            <p class="comment-votes" aria-live="polite">
-                <span>@Likes @(Likes == 1 ? "like" : "likes")</span>
-                <span>@Dislikes @(Dislikes == 1 ? "dislike" : "dislikes")</span>
-                <span class="comment-approval" title="Likes as a percentage of all votes">@Approval% approval</span>
-            </p>
-        }
+        <p class="comment-votes" aria-live="polite" data-vote-counts hidden="@(Likes + (long)Dislikes == 0)">
+            <span data-vote-likes>@($"{Likes} {(Likes == 1 ? "like" : "likes")}")</span>
+            <span data-vote-dislikes>@($"{Dislikes} {(Dislikes == 1 ? "dislike" : "dislikes")}")</span>
+            <span class="comment-approval" data-vote-approval title="Likes as a percentage of all votes">@($"{(Likes + (long)Dislikes > 0 ? Approval : "0")}% approval")</span>
+        </p>
     }
     <div class="comment-actions">
         @if (CanVote)
         {
             <button type="button" class="comment-vote-button @(MyVote == true ? "is-liked" : "")"
-                    @onclick="LikeAsync" disabled="@Saving" aria-pressed="@(MyVote == true ? "true" : "false")"
+                    @onclick="LikeAsync" disabled="@Saving" data-vote-command="Like" aria-pressed="@(MyVote == true ? "true" : "false")"
                     aria-label="@(MyVote == true ? "Remove your like" : "Like this comment")"
                     title="@(MyVote == true ? "Remove your like" : "Like this comment")">
                 <span aria-hidden="true">👍</span> Like
             </button>
             <button type="button" class="comment-vote-button @(MyVote == false ? "is-disliked" : "")"
-                    @onclick="DislikeAsync" disabled="@Saving" aria-pressed="@(MyVote == false ? "true" : "false")"
+                    @onclick="DislikeAsync" disabled="@Saving" data-vote-command="Dislike" aria-pressed="@(MyVote == false ? "true" : "false")"
                     aria-label="@(MyVote == false ? "Remove your dislike" : "Dislike this comment")"
                     title="@(MyVote == false ? "Remove your dislike" : "Dislike this comment")">
                 <span aria-hidden="true">👎</span> Dislike

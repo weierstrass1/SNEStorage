@@ -7,16 +7,21 @@ namespace SNEStorage.Services;
 
 public partial class FlagsService
 {
-    public Task<ServiceResultContext> EditInternal(Flag item, bool edit, CancellationToken ct = default)
+    public Task<ServiceResultContext> EditInternal(
+        Flag item, bool edit, CancellationToken ct = default)
     {
+        if (item.Resolved == edit)
+            return Task.FromResult(ServiceResult.Success.Return(_logger));
+
         item.Resolved = edit;
+        item.ResolvedAt = edit ? DateTime.UtcNow : null;
 
         return _dbHelperService.TrySyncContext(ct: ct);
     }
     public Task<OneOf<Flag, ServiceResultContext>> FindEdit(long key, CancellationToken ct = default)
     {
         var parameter = new GetByPropertyQuery<Flag, long>(
-            news => news.Id, key, ServiceResult.NewNotFound);
+            flag => flag.Id, key, ServiceResult.FlagNotFound);
 
         return _getById.Execute(_context.Flags, parameter, ct: ct);
     }

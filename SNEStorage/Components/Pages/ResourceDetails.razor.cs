@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
 using SNEStorage.Components.Resources;
 using SNEStorage.DTOs;
+using SNEStorage.Components.Shared;
 using SNEStorage.Models;
 
 namespace SNEStorage.Components.Pages;
@@ -21,6 +22,7 @@ public partial class ResourceDetails : IAsyncDisposable
     private readonly CancellationTokenSource _lifetime = new();
     private IJSObjectReference? _module;
     private IJSObjectReference? _accountWatcher;
+    private Task? _accountWatcherLoad;
     private DotNetObjectReference<ResourceDetails>? _accountReceiver;
     private ResourceReadDTO? _resource;
     private long? _requestedId;
@@ -29,7 +31,6 @@ public partial class ResourceDetails : IAsyncDisposable
     private bool _disposed;
     private int? _errorStatus;
     private string? _errorBody;
-    private bool _showVersions;
     private bool _isAuthenticated;
     private bool _canModerateComments;
     private string? _currentUserId;
@@ -44,6 +45,7 @@ public partial class ResourceDetails : IAsyncDisposable
     [Inject] private IJSRuntime JavaScript { get; set; } = default!;
     [Inject] private ILogger<ResourceDetails> Logger { get; set; } = default!;
     [Inject] private AuthenticationStateProvider Authentication { get; set; } = default!;
+    [Inject] private NavigationManager Navigation { get; set; } = default!;
 
     protected string ResourceName => string.IsNullOrWhiteSpace(_resource?.Name) ? "Resource" : _resource.Name;
     protected IReadOnlyList<IdNamePair> Categories => _resource?.Types
@@ -161,22 +163,8 @@ public partial class ResourceDetails : IAsyncDisposable
         finally { _accountRefreshRunning = false; }
     }
 
-    protected Task ShowOverview() => SetTabAsync(false);
-    protected Task ShowVersions() => SetTabAsync(true);
-    private async Task SetTabAsync(bool versions, bool focus = false)
-    {
-        _showVersions = versions;
-        if (_module is null || _disposed) return;
-        try { await _module.InvokeVoidAsync("selectResourceTab", _lifetime.Token, versions, focus); }
-        catch (JSDisconnectedException) { }
-        catch (OperationCanceledException) when (_disposed) { }
-        if (versions && !_versions.Started) await LoadVersionsAsync();
-    }
-    protected Task HandleTabKeyDown(KeyboardEventArgs args) => args.Key switch
-    {
-        "ArrowLeft" or "ArrowRight" => SetTabAsync(!_showVersions, true),
-        "Home" => SetTabAsync(false, true), "End" => SetTabAsync(true, true), _ => Task.CompletedTask
-    };
+    protected Task ShowVersions() =>
+        !_versions.Started && !_disposed ? LoadVersionsAsync() : Task.CompletedTask;
 
     protected override void OnParametersSet()
     {
@@ -188,7 +176,6 @@ public partial class ResourceDetails : IAsyncDisposable
         _errorStatus = null;
         _errorBody = null;
         _loading = true;
-        _showVersions = false;
         ResetSections();
         InvalidateAccount();
     }
@@ -220,19 +207,25 @@ public partial class ResourceDetails : IAsyncDisposable
         try
         {
             if (requestedId <= 0) { _errorStatus = 404; return; }
-            _module ??= await JavaScript.InvokeAsync<IJSObjectReference>("import", _lifetime.Token, "./js/resource-details.js?v=14");
-            if (_disposed || generation != _generation) return;
-            await _module.InvokeVoidAsync("cancelResourceContent", _lifetime.Token, _requestKey);
-            if (_disposed || generation != _generation) return;
-            if (_accountWatcher is null)
+            string json;
+            if (_module is null)
             {
-                _accountReceiver = DotNetObjectReference.Create(this);
-                _accountWatcher = await _module.InvokeAsync<IJSObjectReference>("watchPageAccess", _lifetime.Token, _accountReceiver);
+                var initial = await BrowserReadStartup.LoadAsync<string>(JavaScript,
+                    "./js/resource-details.js?v=18", "beginResourceRead", [requestedId, _requestKey], _requestKey, "cancelResourceRequest");
+                if (_disposed || generation != _generation)
+                {
+                    if (initial.Module is not null) await initial.Module.DisposeAsync();
+                    return;
+                }
+                if (initial.Cancelled || initial.Module is null || initial.Response is null) return;
+                _module = initial.Module;
+                json = initial.Response;
             }
+            else json = await _module.InvokeAsync<string>("beginResourceRead", _lifetime.Token, requestedId, _requestKey);
             if (_disposed || generation != _generation) return;
+            _accountWatcherLoad ??= InitializeAccountWatcherAsync();
             // Account controls load independently; the public resource content does not wait for them.
             accountLoad = RefreshAccountAsync();
-            var json = await _module.InvokeAsync<string>("getResource", _lifetime.Token, requestedId, _requestKey);
             if (_disposed || generation != _generation || requestedId != ResourceId) return;
             var response = JsonSerializer.Deserialize<BrowserResponse>(json, JsonOptions);
             if (response is null) { _errorStatus = 502; return; }
@@ -281,7 +274,26 @@ public partial class ResourceDetails : IAsyncDisposable
         }
     }
 
+    private async Task InitializeAccountWatcherAsync()
+    {
+        if (_module is null || _disposed) return;
+        try
+        {
+            _accountReceiver ??= DotNetObjectReference.Create(this);
+            var watcher = await _module.InvokeAsync<IJSObjectReference>("watchPageAccess", _lifetime.Token, _accountReceiver);
+            if (_disposed)
+            {
+                await watcher.InvokeVoidAsync("stop");
+                await watcher.DisposeAsync();
+            }
+            else _accountWatcher = watcher;
+        }
+        catch (Exception exception) when (exception is JSException or OperationCanceledException or ObjectDisposedException)
+        { if (!_disposed) Logger.LogDebug(exception, "Resource account monitoring could not be initialized."); }
+    }
+
     protected void Reload() { _requestedId = null; }
+    private void ResourceDeleted() => Navigation.NavigateTo("/Resources");
 
     public async ValueTask DisposeAsync()
     {
@@ -290,6 +302,12 @@ public partial class ResourceDetails : IAsyncDisposable
         Authentication.AuthenticationStateChanged -= AuthenticationChanged;
         _generation++;
         _lifetime.Cancel();
+        try
+        {
+            using var cleanup = new CancellationTokenSource(TimeSpan.FromSeconds(1));
+            await BrowserReadStartup.CancelAsync(JavaScript, _requestKey, cleanup.Token);
+        }
+        catch (Exception exception) when (exception is JSDisconnectedException or JSException or OperationCanceledException) { }
         if (_module is not null)
         {
             try

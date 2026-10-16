@@ -11,7 +11,6 @@ public partial class SearchableVideogamePicker : IAsyncDisposable
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
     private readonly string _searchKey = Guid.NewGuid().ToString("N");
     private IJSObjectReference? _module;
-    private ResourcePicker? _picker;
     private CancellationTokenSource? _pending;
     private List<SelectOptionDto> _defaults = [];
     private List<SelectOptionDto> _matches = [];
@@ -91,12 +90,11 @@ public partial class SearchableVideogamePicker : IAsyncDisposable
 
     protected Task RetryAsync() => SearchAsync(debounce: false);
 
-    protected async Task SelectAsync(SelectOptionDto game, bool closePicker = true)
+    protected async Task SelectAsync(SelectOptionDto game)
     {
         _selected = game;
         await ValueChanged.InvokeAsync(game.Id);
         await SelectionChanged.InvokeAsync(game);
-        if (closePicker && _picker is not null && !_disposed) await _picker.CloseAsync();
     }
 
     private async Task SearchAsync(bool debounce)
@@ -161,7 +159,7 @@ public partial class SearchableVideogamePicker : IAsyncDisposable
                 _matches = _defaults;
                 if (AutoSelectAny && Value is null && _defaults.FirstOrDefault(game => game.Id == 1) is { } anyGame)
                 {
-                    await SelectAsync(anyGame, closePicker: false);
+                    await SelectAsync(anyGame);
                 }
             }
             else

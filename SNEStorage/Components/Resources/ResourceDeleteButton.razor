@@ -1,0 +1,44 @@
+<span class="delete-button-wrapper" title="@DisabledDescription" tabindex="@(Allowed ? null : "0")" aria-describedby="@(Allowed ? null : _descriptionId)">
+    <button class="resource-delete-button" type="button" disabled="@(!Allowed || Disabled || _opening || _saving)" @onclick="OpenAsync" aria-haspopup="dialog">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7" /></svg>
+        Delete @TargetLabel
+    </button>
+</span>
+@if (!Allowed)
+{
+    <span class="delete-sr-only" id="@_descriptionId">@DisabledDescription</span>
+}
+@if (_openError is not null) { <span class="delete-open-error" role="alert">@_openError</span> }
+
+<dialog class="resource-delete-dialog" @ref="_dialog" aria-labelledby="@_headingId" aria-describedby="@_confirmationId" @oncancel="CloseAsync" @oncancel:preventDefault>
+    <h2 id="@_headingId">Delete this @TargetLabel?</h2>
+    <p class="delete-resource-name">@ResourceName</p>
+    @if (IsVersion)
+    {
+        <p class="delete-resource-name">Version @(VersionName ?? VersionId?.ToString())</p>
+        <p id="@_confirmationId">This permanently removes this version and its download. The resource and its other versions will be kept. This cannot be undone.</p>
+    }
+    else
+    {
+        <p id="@_confirmationId">This permanently removes the resource, all its versions, previews and comments. This cannot be undone.</p>
+    }
+    @if (IsStaff && !IsVersion)
+    {
+        <p class="delete-staff-warning">Links from other resources that depend on this resource will also be removed.</p>
+    }
+    @if (_error is { } error)
+    {
+        <div class="delete-error" role="alert"><strong>@error.Title</strong><p>@error.Message</p></div>
+    }
+    <div class="delete-dialog-actions">
+        <button class="delete-cancel" type="button" disabled="@(_saving || _checking)" @onclick="CloseAsync" autofocus>Cancel</button>
+        @if (_uncertain)
+        {
+            <button class="delete-cancel" type="button" @onclick="CheckStatusAsync" disabled="@_checking">@(_checking ? "Checking…" : $"Check {TargetLabel} status")</button>
+        }
+        else
+        {
+            <button class="resource-delete-button delete-confirm" type="button" disabled="@(_saving || !Allowed)" @onclick="DeleteAsync">@(_saving ? "Deleting…" : "Permanently delete")</button>
+        }
+    </div>
+</dialog>

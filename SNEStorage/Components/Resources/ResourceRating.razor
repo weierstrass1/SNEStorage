@@ -1,26 +1,27 @@
-<div class="resource-rating">
+<div class="resource-rating" data-vote-feedback data-vote-state="@VoteState" data-vote-busy="@(Saving ? "true" : "false")"
+     data-vote-enabled="@(CanSubmit ? "true" : "false")">
     <div class="rating-summary">
-        <span class="rating-stars" role="img" aria-label="@RatingLabel">
+        <span class="rating-stars" data-vote-stars role="img" aria-label="@RatingLabel">
             <span aria-hidden="true">☆☆☆☆☆</span>
-            <span class="rating-fill" style="width: @FillWidth" aria-hidden="true">★★★★★</span>
+            <span class="rating-fill" data-vote-fill style="width: @FillWidth" aria-hidden="true">★★★★★</span>
         </span>
-        <strong>@Average.ToString("0.#", DisplayCulture) / 5</strong>
-        <span class="rating-count">@(VoteCount == 0 ? "Not rated" : $"{VoteCount.ToString("N0", DisplayCulture)} {(VoteCount == 1 ? "vote" : "votes")}")</span>
+        <strong data-vote-average>@($"{Average.ToString("0.#", DisplayCulture)} / 5")</strong>
+        <span class="rating-count" data-vote-total>@(VoteCount == 0 ? "Not rated" : $"{VoteCount.ToString("N0", DisplayCulture)} {(VoteCount == 1 ? "vote" : "votes")}")</span>
     </div>
     @if (IsAuthenticated && !IsOwnResource && !IsPrivate)
     {
         <div class="rating-input" role="group" aria-label="Your rating" aria-busy="@Saving">
             <span>Your rating</span>
-            <div class="rating-choices" @onmouseleave="ClearHover">
+            <div class="rating-choices" data-rating-choices>
                 @for (var value = 1; value <= 5; value++)
                 {
                     var star = value;
-                    <button type="button" class="rating-choice @(star <= HighlightedValue ? "is-filled" : null)"
+                    <button type="button" class="rating-choice @(star <= SelectedValue ? "is-filled" : null)" data-rating-choice="@star"
                             disabled="@(!CanSubmit || Saving)" aria-label="@($"Rate {star} {(star == 1 ? "star" : "stars")}")"
-                            aria-pressed="@(SelectedValue == star)" @onmouseenter="() => Hover(star)" @onclick="() => Select(star)">★</button>
+                            aria-pressed="@(SelectedValue == star)" @onclick="() => Select(star)">★</button>
                 }
             </div>
-            <button type="button" class="rating-save" disabled="@(!CanSubmit || Saving || SelectedValue == 0)" @onclick="SaveAsync">@(Saving ? "Saving…" : "Save rating")</button>
+            <button type="button" class="rating-save" data-vote-command="save" disabled="@(!CanSubmit || Saving || SelectedValue == 0)" @onclick="SaveAsync">Save rating</button>
         </div>
         @if (!CanSubmit)
         {

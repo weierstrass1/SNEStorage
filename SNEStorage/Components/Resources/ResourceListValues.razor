@@ -1,15 +1,22 @@
-<div class="value-list">
-    @foreach (var item in Visible)
-    {
-        @if (item.Href is not null)
+<div class="value-list @(Inline ? "value-list-inline" : null)" data-ui-values>
+    <div class="value-items" id="@_itemsId">
+        @for (var index = 0; index < Items.Count; index++)
         {
-            <a href="@item.Href" style="color:@item.Color" @key="item.Key">@item.Name</a>
+            var item = Items[index];
+            <span class="value-item" @key="item.Key" hidden="@(index >= Limit)" data-ui-values-extra="@(index >= Limit ? "true" : null)">
+                @if (item.Href is not null)
+                {
+                    <a href="@item.Href" style="color:@item.Color">@item.Name</a>
+                }
+                else { <span>@item.Name</span> }
+            </span>
         }
-        else { <span @key="item.Key">@item.Name</span> }
-    }
-    @if (Items.Count == 0) { <span class="empty">—</span> }
+        @if (Items.Count == 0) { <span class="empty">—</span> }
+    </div>
     @if (Items.Count > Limit)
     {
-        <button type="button" aria-expanded="@_expanded" @onclick="Toggle">@(_expanded ? "Show less" : $"Read more (+{Items.Count - Limit})")</button>
+        <button type="button" class="value-toggle" data-ui-values-toggle aria-expanded="false" aria-controls="@_itemsId">
+            <span class="more-label">Read more (+@(Items.Count - Limit))</span><span class="less-label">Show less</span>
+        </button>
     }
 </div>

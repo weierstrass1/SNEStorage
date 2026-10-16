@@ -11,6 +11,11 @@ internal sealed class ResourceApiClient(IJSObjectReference module, string reques
     public async Task<ResourceReadResult<T>> ReadSectionAsync<T>(long resourceId, string section) where T : class
     {
         var json = await module.InvokeAsync<string>("getResourceSection", cancellationToken, resourceId, section, requestKey);
+        return Decode<T>(json);
+    }
+
+    internal static ResourceReadResult<T> Decode<T>(string json) where T : class
+    {
         var response = JsonSerializer.Deserialize<BrowserResponse>(json, JsonOptions);
         if (response is null) return new(502, null, null);
         if (response.Cancelled) return new(0, response.Body, null);

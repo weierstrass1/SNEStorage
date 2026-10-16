@@ -18,7 +18,7 @@
 .date-range legend { float: none; width: auto; margin: 0; padding: 0 .3rem; font-size: .75rem; font-weight: 650; color: #c9ace4; }
 .date-inputs > label { font-size: .7rem; }
 .date-inputs ::deep input { min-height: 36px; font-size: .75rem; }
-.category-choice { display: flex; align-items: center; gap: .65rem; cursor: pointer; padding: .65rem; border-radius: 7px; }
+.category-choice { display: flex; align-items: center; gap: .65rem; cursor: pointer; min-height: 34px; padding: .4rem .5rem; border-radius: 6px; font-size: .82rem; }
 .category-choice:hover { background: #302044; }
 .category-choice span { min-width: 0; white-space: normal; overflow-wrap: break-word; }
 input[type=checkbox] { accent-color: #b883ff; width: 17px; height: 17px; flex: none; }
@@ -36,3 +36,5 @@ button:disabled { opacity: .55; cursor: wait; }
 @media(max-width: 1000px) { .classification-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); } .date-filters { grid-template-columns: 1fr; } }
 @media(max-width: 560px) { .text-filters, .classification-filters, .rating-filters { grid-template-columns: 1fr; } .content-settings small { display: block; margin: .4rem 0 0; } .library-filters { padding: 1rem; } }
 @media(max-width: 380px) { .date-inputs { grid-template-columns: 1fr; } }
+
+@media (pointer: coarse) { .category-choice { min-height: 44px; } }

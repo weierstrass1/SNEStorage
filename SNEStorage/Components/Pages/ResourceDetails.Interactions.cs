@@ -27,16 +27,23 @@ public partial class ResourceDetails
 
     protected async Task RateAsync(int value)
     {
-        if (_savingRating || !RatingPermissionsReady || !_isAuthenticated || CanManage || value is < 1 or > 5 || _module is null || _resource is null || _resource.Visibility.Id == 3) return;
+        if (_savingRating || !RatingPermissionsReady || !_isAuthenticated || CanManage || value is < 1 or > 5 || _module is null || _resource is null || _resource.Visibility.Id == 3 || _rating.Data is not { } previous) return;
         var resource = _resource;
         var userId = _currentUserId;
         var generation = _generation;
         var accountGeneration = _accountGeneration;
+        var section = _rating;
+        var confirmed = false;
         _savingRating = true;
         _ratingMessage = null;
+        var hadRating = previous.MyRating is >= 1 and <= 5;
+        var count = previous.VoteCount + (hadRating ? 0 : 1);
+        _rating.Data = new RatingReadDto(
+            (previous.Average * previous.VoteCount - (hadRating ? previous.MyRating!.Value : 0) + value) / Math.Max(1, count), count, value);
+        StateHasChanged();
         try
         {
-            var json = await _module.InvokeAsync<string>("rateResource", _lifetime.Token, resource.Id, value, _requestKey);
+            var json = await _module.InvokeAsync<string>("rateResource", CancellationToken.None, resource.Id, value, _requestKey);
             if (!InteractionIsCurrent(resource, generation, accountGeneration)) return;
             var response = JsonSerializer.Deserialize<BrowserResponse>(json, JsonOptions);
             if (response is not { Status: >= 200 and < 300, Cancelled: false })
@@ -50,11 +57,7 @@ public partial class ResourceDetails
                 _ratingMessage = "We could not confirm your saved rating. Reload the resource to check it.";
                 return;
             }
-            // Refresh only the aggregate returned by the rating action.
-            await LoadRatingAsync();
-            if (!InteractionIsCurrent(resource, generation, accountGeneration)) return;
-            _ratingMessage = _rating.Ready ? "Your rating has been saved."
-                : "Your rating has been saved. Retry loading the rating to refresh the summary.";
+            confirmed = true;
         }
         catch (Exception exception) when (exception is JSDisconnectedException or JSException or JsonException or OperationCanceledException)
         {
@@ -66,7 +69,9 @@ public partial class ResourceDetails
         }
         finally
         {
-            if (!_disposed && generation == _generation) _savingRating = false;
+            if (InteractionIsCurrent(resource, generation, accountGeneration) && ReferenceEquals(section, _rating) && !confirmed)
+                _rating.Data = previous;
+            if (!_disposed && generation == _generation) { _savingRating = false; StateHasChanged(); }
         }
     }
 

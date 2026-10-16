@@ -9,7 +9,7 @@
     }
     @foreach (var version in OrderedVersions)
     {
-        <details class="release-item" open="@(version == OrderedVersions.First())">
+        <details class="release-item" @key="version.Id" open="@(version == OrderedVersions.First())">
             <summary>
                 <span class="release-label">@VersionName(version)</span>
                 <span class="release-date">@version.CreatedAt.ToString("MMM d, yyyy", DisplayCulture)</span>
@@ -27,18 +27,25 @@
                     {
                         <NavLink class="release-edit" href="@($"/Resource/{ResourceId}/Versions/{version.Id}/Edit")">Edit version</NavLink>
                     }
+                    @if (CanManage || IsStaff)
+                    {
+                        <ResourceDeleteButton ResourceId="ResourceId" ResourceName="@ResourceName" VersionId="version.Id" VersionName="@VersionName(version)"
+                                              CurrentUserId="@CurrentUserId" IsStaff="IsStaff" CanDelete="@(DeleteBlockReason(version) is null)"
+                                              BlockReason="DeleteBlockReason(version)" Disabled="_deletingVersion"
+                                              BusyChanged="VersionDeletionBusyChanged" OnDeleted="VersionDeletedAsync" />
+                    }
                     @if (DownloadUrl(version) is { } downloadUrl)
                     {
                         <div class="release-download-group">
                             <a class="release-download" href="@downloadUrl" data-enhance-nav="false">Download @VersionName(version) <span aria-hidden="true">↓</span></a>
-                            <small class="release-download-count">Downloads: @version.Downloads.ToString("N0", DisplayCulture)</small>
+                            <small class="release-download-count"><strong>Downloads:</strong> @version.Downloads.ToString("N0", DisplayCulture)</small>
                         </div>
                     }
                     else
                     {
                         <div class="release-download-group">
                             <span>Download unavailable</span>
-                            <small class="release-download-count">Downloads: @version.Downloads.ToString("N0", DisplayCulture)</small>
+                            <small class="release-download-count"><strong>Downloads:</strong> @version.Downloads.ToString("N0", DisplayCulture)</small>
                         </div>
                     }
                     </div>

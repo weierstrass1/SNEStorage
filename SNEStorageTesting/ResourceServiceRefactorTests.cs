@@ -95,6 +95,38 @@ public class ResourceServiceRefactorTests
         Assert.Same(ServiceResult.InvalidDateRange, result.AsT1.Result);
     }
 
+    [Fact(DisplayName = "Resource finder rejects oversized search text before querying")]
+    public async Task Find_ReturnsInvalidSearch_ForOversizedNameSearch()
+    {
+        await using var database = new TestDatabase();
+        var service = CreateService(database);
+        ResourceFinderDTO finder = new()
+        {
+            NameLike = new string('a', TextLimits.RESOURCE_NAME_SEARCH + 1)
+        };
+
+        var result = await service.Find(finder);
+
+        Assert.True(result.IsT1);
+        Assert.Same(ServiceResult.InvalidSearch, result.AsT1.Result);
+    }
+
+    [Fact(DisplayName = "Resource finder rejects oversized author identifiers before querying")]
+    public async Task Find_ReturnsInvalidUserId_ForOversizedAuthorId()
+    {
+        await using var database = new TestDatabase();
+        var service = CreateService(database);
+        ResourceFinderDTO finder = new()
+        {
+            AuthorsIDs = [new string('a', TextLimits.USER_ID + 1)]
+        };
+
+        var result = await service.Find(finder);
+
+        Assert.True(result.IsT1);
+        Assert.Same(ServiceResult.InvalidUserId, result.AsT1.Result);
+    }
+
     [Theory(DisplayName = "Resource finder validates pagination before querying")]
     [InlineData(0, 0, ServiceResultTypes.InvalidMaxAmount)]
     [InlineData(ResourceService.MAX_AMOUNT_PER_PAGE + 1, 0,

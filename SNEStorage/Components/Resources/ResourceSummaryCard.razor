@@ -16,7 +16,7 @@
         <span>@Item.Videogame.Name</span>
         <time datetime="@Item.CreatedAt.ToString("O")">@PublicationDate</time>
     </div>
-    <div class="summary-authors"><ResourceListValues Items="Authors" Limit="2" /></div>
+    <div class="summary-authors"><ResourceListValues Items="Authors" Inline="true" Limit="2" /></div>
     @if (Item.Tags.Length > 0)
     {
         <div class="summary-tags" aria-label="Tags">
@@ -31,7 +31,7 @@
             {
                 <a href="@DownloadUrl" data-enhance-nav="false" aria-label="@($"Download {Item.ResourceIdName.Name} {Item.Version}")">↓ Download</a>
             }
-            <small title="Total downloads across all versions">Downloads: @Item.Downloads.ToString("N0", System.Globalization.CultureInfo.InvariantCulture)</small>
+            <small title="Total downloads across all versions"><strong>Downloads:</strong> @Item.Downloads.ToString("N0", System.Globalization.CultureInfo.InvariantCulture)</small>
         </div>
     </div>
 </article>
