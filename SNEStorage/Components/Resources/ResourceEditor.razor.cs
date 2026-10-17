@@ -208,7 +208,9 @@ public partial class ResourceEditor : IAsyncDisposable
             }
             _useAccessResource = false;
             if (_resource is null || _resource.Id != ResourceId) { _errorStatus = 502; return; }
-            if (!ResourceManagementAccess.CanDisplay(_resource, userId)) { _errorStatus = 403; return; }
+            if (!ResourceManagementAccess.CanDisplay(_resource, userId,
+                Mode != ResourceEditorMode.CreateVersion && PageAccount?.StaffResourceEdit == true))
+            { _errorStatus = 403; return; }
             var dataLoad = LoadEditorDataAsync(initialReads);
             var optionsLoad = Mode == ResourceEditorMode.Resource ? LoadOptionsAsync(initialReads.GetValueOrDefault("options")) : Task.FromResult(true);
             await Task.WhenAll(dataLoad, optionsLoad);

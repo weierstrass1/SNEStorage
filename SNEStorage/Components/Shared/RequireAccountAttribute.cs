@@ -5,5 +5,6 @@ namespace SNEStorage.Components.Shared;
 public sealed class RequireAccountAttribute : Attribute
 {
     public bool ResourceManagement { get; init; }
+    public bool AllowStaffResourceEdit { get; init; }
     public bool StaffOnly { get; init; }
 }

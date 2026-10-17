@@ -47,7 +47,9 @@ public partial class ResourceService
     public async Task<OneOf<Resource, ServiceResultContext>> FindEdit(
         long resourceId, CancellationToken ct = default)
     {
-        var accessResult = await _accessService.GetEditAccess(resourceId, ct);
+        var accessResult = await (_accountService.IsModeratorOrAdmin() ?
+            _accessService.GetViewAccess(resourceId, ct) :
+            _accessService.GetEditAccess(resourceId, ct));
         if (!accessResult.TryPickT0(out _, out var accessError))
             return accessError;
 
@@ -75,6 +77,26 @@ public partial class ResourceService
         var userId = _accountService.GetUserID();
         if (string.IsNullOrWhiteSpace(userId))
             return ServiceResult.UserNotFoundBadRequest.Return(_logger);
+
+        bool hasSeal = resource.ResourceVersions.Any(version => version.SealOfQuality);
+        bool isStaff = _accountService.IsModeratorOrAdmin();
+        long visibilityId = dto.VisibilityId ?? resource.VisibilityId;
+
+        if (hasSeal && (!isStaff || visibilityId != 1))
+            return ServiceResult.ResourceHasSealOfQuality.Return(_logger);
+
+        if (visibilityId == 3)
+        {
+            var dependentsResult = await _dbHelperService.TryFunction(
+                cancel => _context.ResourceDependencies.AsNoTracking()
+                    .AnyAsync(dependency => dependency.DependencyResourceId == resourceId &&
+                        dependency.ResourceId != resourceId, cancel), ct: ct);
+
+            if (!dependentsResult.TryPickT0(out bool hasDependents, out var dependentsError))
+                return dependentsError;
+            if (hasDependents)
+                return ServiceResult.ResourceHasDependents.Return(_logger);
+        }
 
         string mainFolder = ResourcePathHelper.GetMainResourceFolder(resource);
         var batchResult = await _fileService.BeginBatch(ct);
@@ -232,9 +254,9 @@ public partial class ResourceService
             return filesError;
         }
 
-        var saveResult = await _fileService.TrySyncContextWithFiles(batchfile, ct);
-        if (saveResult.Result != ServiceResult.Success)
-            return saveResult;
+        var saveResult = await SaveResourceChanges(resource, batchfile, ct);
+        if (!saveResult.TryPickT0(out _, out var saveError))
+            return saveError;
 
         _ = _fileService.FinishDeletion(files);
         return ServiceResult.Success.Return(_logger);

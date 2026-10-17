@@ -23,7 +23,7 @@
                 <div class="release-notes"><MarkdownText Text="@(string.IsNullOrWhiteSpace(version.ChangeLog) ? "No release notes were provided." : version.ChangeLog)" /></div>
                 <div class="release-footer">
                     <div class="release-actions">
-                    @if (CanManage)
+                    @if (IsStaff || CanManage && !version.SealOfQuality)
                     {
                         <NavLink class="release-edit" href="@($"/Resource/{ResourceId}/Versions/{version.Id}/Edit")">Edit version</NavLink>
                     }

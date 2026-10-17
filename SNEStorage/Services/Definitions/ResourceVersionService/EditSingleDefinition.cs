@@ -31,7 +31,10 @@ public partial class ResourceVersionService
     public async Task<OneOf<ResourceVersion, ServiceResultContext>> FindEdit(
         (long ResourceId, long VersionId) key, CancellationToken ct = default)
     {
-        var accessResult = await _accessService.GetEditAccess(key.ResourceId, ct);
+        var accessResult = await (_accountService.IsModeratorOrAdmin() ?
+            _accessService.GetViewAccess(key.ResourceId, ct) :
+            _accessService.GetEditAccess(key.ResourceId, ct));
+
         if (!accessResult.TryPickT0(out _, out var accessError))
             return accessError;
 
@@ -55,6 +58,9 @@ public partial class ResourceVersionService
     public async Task<ServiceResultContext> EditInternal(
         ResourceVersion item, ResourceVersionEditDTO dto, CancellationToken ct = default)
     {
+        if (item.SealOfQuality && !_accountService.IsModeratorOrAdmin())
+            return ServiceResult.VersionHasSealOfQuality.Return(_logger);
+
         if (dto.Version is not null)
         {
             var validation = await ValidateVersion(item.ResourceId, item.Id, dto.Version, ct);

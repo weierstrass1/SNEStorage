@@ -74,6 +74,7 @@ public partial class PageAccessGuard : IAsyncDisposable
         _errorDomain = "profile";
         var management = _requirement.ResourceManagement;
         var staffOnly = _requirement.StaffOnly;
+        var allowStaffResourceEdit = _requirement.AllowStaffResourceEdit;
         var resourceId = RouteData.RouteValues.GetValueOrDefault("ResourceId") as long?;
         try
         {
@@ -108,11 +109,14 @@ public partial class PageAccessGuard : IAsyncDisposable
             if (!AcceptResponse(accountResponse)) return;
             var profile = JsonSerializer.Deserialize<UserInfo>(accountResponse.Body, JsonOptions);
             if (string.IsNullOrWhiteSpace(profile?.UserId)) { Deny(502); return; }
-            if (staffOnly)
+            bool staffResourceEdit = false;
+            if (staffOnly || management && allowStaffResourceEdit)
             {
                 var state = AuthenticationStateTask is null ? null : await AuthenticationStateTask;
                 if (_disposed || generation != _generation) return;
-                if (state is null || !StaffAccess.IsAllowed(state.User, profile.UserId)) { Deny(403); return; }
+                var isStaff = state is not null && StaffAccess.IsAllowed(state.User, profile.UserId);
+                if (staffOnly && !isStaff) { Deny(403); return; }
+                staffResourceEdit = management && allowStaffResourceEdit && isStaff;
             }
             if (_access is not null && _access.Profile.UserId != profile.UserId)
             {
@@ -131,11 +135,12 @@ public partial class PageAccessGuard : IAsyncDisposable
                 if (!AcceptResponse(resourceResponse)) return;
                 resource = JsonSerializer.Deserialize<ResourceReadDTO>(resourceResponse.Body, JsonOptions);
                 if (resource is null || resource.Id != resourceId) { Deny(502); return; }
-                if (!ResourceManagementAccess.CanDisplay(resource, profile.UserId)) { Deny(403); return; }
+                if (!ResourceManagementAccess.CanDisplay(resource, profile.UserId, staffResourceEdit)) { Deny(403); return; }
             }
 
             // Keep the editor's current draft when a recheck confirms the same account and permissions.
-            _access ??= new(profile, resource);
+            if (_access is null || _access.StaffResourceEdit != staffResourceEdit)
+                _access = new(profile, resource, staffResourceEdit);
             _accessBlocked = false;
             _errorStatus = null;
             _errorBody = null;

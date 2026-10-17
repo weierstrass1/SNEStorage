@@ -155,7 +155,7 @@ public partial class ResourceService
         };
 
         _context.Resources.Add(resource);
-        var result = await _fileService.TrySyncContextWithFiles(batchfile, resource, ct);
+        var result = await SaveResourceChanges(resource, batchfile, ct);
         if (!result.TryPickT0(out var createdResource, out var saveError))
             return saveError;
 

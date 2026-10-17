@@ -269,7 +269,7 @@ public partial class ResourceService(SnestorageContext context, CacheService cac
         var existingIds = await _dbHelperService.TryFunction(
             cancel => _context.Resources
                 .AsNoTracking()
-                .Where(resource => ids.Contains(resource.Id))
+                .Where(resource => ids.Contains(resource.Id) && resource.VisibilityId != 3)
                 .Select(resource => resource.Id)
                 .ToListAsync(cancel), ct: ct);
         if (!existingIds.TryPickT0(out var foundIds, out var queryError))

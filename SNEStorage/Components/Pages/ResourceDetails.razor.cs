@@ -60,6 +60,8 @@ public partial class ResourceDetails : IAsyncDisposable
     protected string? LatestDownload => LatestVersion is { } version ? ResourceFileLinks.For(ResourceId, version.FileId > 0 ? version.FileId : version.File?.Id ?? 0, true) : null;
     protected long Downloads => _resource?.Downloads ?? 0L;
     protected bool CanManage => _isAuthenticated && ResourceManagementAccess.CanDisplay(_resource, _currentUserId);
+    protected bool CanEditResource => _isAuthenticated && _resource is not null &&
+        (CanManage || _canModerateComments);
     protected bool RatingPermissionsReady => _resource is not null && _accountVerifiedOnce && !_accountRefreshPending && !_accountRefreshRunning;
     protected bool HasQualitySeal => LatestVersion?.SealOfQuality == true;
     protected IReadOnlyList<string> ContentWarnings => _resource is { } resource

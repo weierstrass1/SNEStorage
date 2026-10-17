@@ -47,7 +47,7 @@ else if (_resource is { } resource)
                     }
                 </div>
                 <div class="detail-header-actions">
-                    @if (CanManage)
+                    @if (CanEditResource)
                     {
                         <NavLink class="detail-action" href="@($"/Resource/{ResourceId}/Edit")">Edit resource</NavLink>
                     }

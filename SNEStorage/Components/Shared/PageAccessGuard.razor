@@ -24,7 +24,7 @@ else
         @* Keep the verified page mounted so a rejected recheck cannot erase files or drafts.
            Hidden/inert prevents interaction until the same account regains access. *@
         <div class="access-content" hidden="@_accessBlocked" inert="@(_accessBlocked ? string.Empty : null)">
-            <CascadingValue Name="VerifiedPageAccount" Value="_access" IsFixed="true" @key="@($"{_pageKey}:{_access.Profile.UserId}")">
+            <CascadingValue Name="VerifiedPageAccount" Value="_access" @key="@($"{_pageKey}:{_access.Profile.UserId}")">
                 @ChildContent
             </CascadingValue>
         </div>

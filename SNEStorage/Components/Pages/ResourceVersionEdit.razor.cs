@@ -3,7 +3,7 @@ using SNEStorage.Components.Shared;
 
 namespace SNEStorage.Components.Pages;
 
-[RequireAccount(ResourceManagement = true)]
+[RequireAccount(ResourceManagement = true, AllowStaffResourceEdit = true)]
 public partial class ResourceVersionEdit
 {
     [Parameter] public long ResourceId { get; set; }
